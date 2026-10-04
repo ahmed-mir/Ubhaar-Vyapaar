@@ -1,0 +1,46 @@
+{% extends "marketplace/base.html" %}
+
+{% block title %}Request a quote | Ubhaar-Vyapaar{% endblock %}
+
+{% block content %}
+    <section class="auth-card" aria-labelledby="quote-title">
+        <a href="{% url 'listing_detail' listing.pk %}">
+            ← Back to listing
+        </a>
+
+        <h1 id="quote-title">Request a quote</h1>
+
+        <p class="auth-intro">
+            <strong>{{ listing.title }}</strong><br>
+            {{ listing.manufacturer.business_name }}
+        </p>
+
+        {% if recent_quote %}
+            <div class="message">
+                <strong>Your latest saved request: #{{ recent_quote.pk }}</strong>
+                <p>
+                    Quantity: {{ recent_quote.quantity }} units<br>
+                    Status: {{ recent_quote.get_status_display }}
+                </p>
+                <a href="{% url 'my_quote_requests' %}">
+                    View my quote requests
+                </a>
+            </div>
+        {% endif %}
+
+        <p class="auth-intro">
+            Share your quantity, requirements, and delivery location.
+            Submitting this form creates a new request and does
+            not place an order.
+        </p>
+
+        <form method="post" class="styled-form">
+            {% csrf_token %}
+            {{ form.as_p }}
+
+            <button class="button form-submit" type="submit">
+                Submit quote request
+            </button>
+        </form>
+    </section>
+{% endblock %}

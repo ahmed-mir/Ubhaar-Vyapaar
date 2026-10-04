@@ -1,0 +1,39 @@
+{% extends "marketplace/base.html" %}
+
+{% block title %}Buyer registration | Ubhaar-Vyapaar{% endblock %}
+
+{% block content %}
+    <section class="auth-card" aria-labelledby="register-title">
+        <a href="{% url 'home' %}">← Browse listings</a>
+
+        <h1 id="register-title">Find your manufacturing partner</h1>
+
+        <p class="auth-intro">
+            Create a buyer account to request quotes and track
+            responses from manufacturers.
+        </p>
+
+        <form method="post" class="styled-form">
+            {% csrf_token %}
+            {{ form.as_p }}
+
+            <button class="button form-submit" type="submit">
+                Create buyer account
+            </button>
+        </form>
+
+        <div class="auth-links">
+            <p>
+                Already have an account?
+                <a href="{% url 'login' %}">Log in</a>
+            </p>
+
+            <p>
+                Want to offer manufacturing services?
+                <a href="{% url 'register_manufacturer' %}">
+                    Register your business
+                </a>
+            </p>
+        </div>
+    </section>
+{% endblock %}

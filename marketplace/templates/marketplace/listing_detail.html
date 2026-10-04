@@ -1,0 +1,271 @@
+{% extends "marketplace/base.html" %}
+
+{% block title %}{{ listing.title }} | Ubhaar-Vyapaar{% endblock %}
+
+{% block extra_css %}
+<style>
+    .back-link {
+        display: inline-block;
+        margin-bottom: 24px;
+        font-size: 14px;
+    }
+
+    .detail-layout {
+        display: grid;
+        grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr);
+        gap: 24px;
+        align-items: start;
+    }
+
+    .detail-panel {
+        padding: 32px;
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        background: white;
+        overflow-wrap: anywhere;
+    }
+
+    .detail-panel h1 {
+        margin: 16px 0;
+        font-size: clamp(28px, 4vw, 40px);
+        line-height: 1.2;
+        letter-spacing: -1px;
+    }
+
+    .detail-panel h2 {
+        margin: 0 0 14px;
+        font-size: 20px;
+    }
+
+    .badge {
+        display: inline-block;
+        padding: 5px 10px;
+        border-radius: 6px;
+        background: #edf8f1;
+        color: #24633f;
+        font-size: 12px;
+        font-weight: 700;
+    }
+
+    .business-location,
+    .muted {
+        color: var(--muted);
+    }
+
+    .description {
+        margin-top: 28px;
+        padding-top: 24px;
+        border-top: 1px solid var(--border);
+    }
+
+    .description p {
+        margin: 0 0 16px;
+    }
+
+    .price-label {
+        margin: 0;
+        color: var(--muted);
+        font-size: 14px;
+    }
+
+    .detail-price {
+        margin: 4px 0 24px;
+        color: var(--navy);
+        font-size: 36px;
+        font-weight: 800;
+    }
+
+    .detail-price span {
+        color: var(--muted);
+        font-size: 14px;
+        font-weight: 400;
+    }
+
+    .detail-facts {
+        margin: 0 0 24px;
+    }
+
+    .detail-facts div {
+        display: flex;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 6px 16px;
+        padding: 14px 0;
+        border-bottom: 1px solid var(--border);
+    }
+
+    .detail-facts dt {
+        color: var(--muted);
+    }
+
+    .detail-facts dd {
+        margin: 0;
+        font-weight: 700;
+    }
+
+    .quote-button {
+        width: 100%;
+    }
+
+    .quote-note {
+        margin-bottom: 0;
+        color: var(--muted);
+        font-size: 13px;
+    }
+
+    .manufacturer-panel {
+        margin-top: 24px;
+    }
+
+    .manufacturer-name {
+        margin: 0 0 4px;
+        font-weight: 700;
+        font-size: 18px;
+    }
+
+    @media (max-width: 760px) {
+        .detail-layout {
+            grid-template-columns: 1fr;
+        }
+
+        .detail-panel {
+            padding: 24px;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+    <a class="back-link" href="{% url 'home' %}">
+        ← Browse all listings
+    </a>
+
+    <div class="detail-layout">
+        <article class="detail-panel">
+            {% if listing.image %}
+    <img
+        class="detail-image"
+        src="{{ listing.image.url }}"
+        alt="{{ listing.title }}"
+    >
+{% endif %}
+            {% if listing.manufacturer.is_verified %}
+                <span class="badge">Verified business</span>
+            {% endif %}
+
+            <h1>{{ listing.title }}</h1>
+
+            <p class="business-location">
+                {{ listing.manufacturer.business_name }}<br>
+                {{ listing.manufacturer.city }},
+                {{ listing.manufacturer.state }}
+            </p>
+
+            <div class="description">
+                <h2>About this service</h2>
+
+                {% if listing.description %}
+                    {{ listing.description|linebreaks }}
+                {% else %}
+                    <p class="muted">
+                        The manufacturer hasn’t added a description yet.
+                    </p>
+                {% endif %}
+            </div>
+        </article>
+
+        <aside aria-label="Pricing and manufacturer information">
+            <section class="detail-panel">
+                <h2>Order information</h2>
+                {% if user.is_authenticated and user.role == "BUYER" %}
+    {% if is_saved %}
+        <p>
+            Saved to your list.
+            <a href="{% url 'saved_listings' %}">
+                View saved listings
+            </a>
+        </p>
+    {% else %}
+        <form
+            method="post"
+            action="{% url 'save_listing' listing.pk %}"
+        >
+            {% csrf_token %}
+            <button class="button button-secondary" type="submit">
+                Save listing
+            </button>
+        </form>
+    {% endif %}
+{% endif %}
+
+                <p class="price-label">Listed price</p>
+                <p class="detail-price">
+                    ₹{{ listing.price_per_unit }}
+                    <span>per unit</span>
+                </p>
+
+                <dl class="detail-facts">
+                    <div>
+                        <dt>Minimum order</dt>
+                        <dd>{{ listing.minimum_quantity }} units</dd>
+                    </div>
+                    <div>
+                        <dt>Production time</dt>
+                        <dd>{{ listing.production_days }} days</dd>
+                    </div>
+                </dl>
+
+                {% if user.is_authenticated %}
+                    {% if user.role == "BUYER" %}
+                        <a
+                            class="button quote-button"
+                            href="{% url 'request_quote' listing.pk %}"
+                        >
+                            Request a quote
+                        </a>
+                        <p class="quote-note">
+                            Share your requirements with the manufacturer.
+                            Sending a request does not place an order.
+                        </p>
+                    {% else %}
+                        <p class="quote-note">
+                            Quote requests are available to buyer accounts.
+                        </p>
+                    {% endif %}
+                {% else %}
+                    <a
+                        class="button quote-button"
+                        href="{% url 'request_quote' listing.pk %}"
+                    >
+                        Log in to request a quote
+                    </a>
+                    <p class="quote-note">
+                        New here?
+                        <a href="{% url 'register' %}">
+                            Create a buyer account
+                        </a>.
+                    </p>
+                {% endif %}
+            </section>
+
+            <section class="detail-panel manufacturer-panel">
+                <h2>About the manufacturer</h2>
+
+                <p class="manufacturer-name">
+                    <a href="{% url 'manufacturer_profile' listing.manufacturer.pk %}">
+                        {{ listing.manufacturer.business_name }}
+                    </a>
+                </p>
+
+                <p class="business-location">
+                    {{ listing.manufacturer.city }},
+                    {{ listing.manufacturer.state }}
+                </p>
+
+                {% if listing.manufacturer.description %}
+                    {{ listing.manufacturer.description|linebreaks }}
+                {% endif %}
+            </section>
+        </aside>
+    </div>
+{% endblock %}

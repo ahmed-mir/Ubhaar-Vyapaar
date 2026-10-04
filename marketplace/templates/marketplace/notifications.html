@@ -1,0 +1,85 @@
+{% extends "marketplace/base.html" %}
+
+{% block title %}Notifications | Ubhaar-Vyapaar{% endblock %}
+
+{% block content %}
+    <div class="page-heading">
+        <div>
+            <h1>Notifications</h1>
+            <p>Updates about your requests and quotations.</p>
+        </div>
+    </div>
+
+    {% if unread_notification_count %}
+    <form
+        method="post"
+        action="{% url 'mark_all_notifications_read' %}"
+        style="margin-bottom: 24px;"
+    >
+        {% csrf_token %}
+        <button class="button button-secondary" type="submit">
+            Mark all as read
+        </button>
+    </form>
+{% endif %}
+
+    <div class="record-grid">
+        {% for notification in page_obj %}
+            <article class="record-card">
+                {% if notification.is_read %}
+                    <span class="status-pill">Read</span>
+                {% else %}
+                    <span class="status-pill status-pending">New</span>
+                {% endif %}
+
+                <p>{{ notification.message }}</p>
+
+                <p class="record-meta">
+                    {{ notification.created_at|date:"d M Y, H:i" }}
+                </p>
+
+                <form
+                    method="post"
+                    action="{% url 'open_notification' notification.pk %}"
+                >
+                    {% csrf_token %}
+                    <button class="button button-secondary" type="submit">
+                        View details
+                    </button>
+                </form>
+            </article>
+        {% empty %}
+            <div class="empty-panel">
+                <h2>No notifications yet</h2>
+                <p>New activity updates will appear here.</p>
+            </div>
+        {% endfor %}
+    </div>
+
+    {% if page_obj.has_other_pages %}
+        <nav class="record-actions" aria-label="Notification pages">
+            {% if page_obj.has_previous %}
+                <a
+                    class="button button-secondary"
+                    href="?page={{ page_obj.previous_page_number }}"
+                >
+                    Previous
+                </a>
+            {% endif %}
+
+            <span>
+                Page {{ page_obj.number }}
+                of {{ page_obj.paginator.num_pages }}
+            </span>
+
+            {% if page_obj.has_next %}
+                <a
+                    class="button button-secondary"
+                    href="?page={{ page_obj.next_page_number }}"
+                >
+                    Next
+                </a>
+            {% endif %}
+        </nav>
+    {% endif %}
+{% endblock %}

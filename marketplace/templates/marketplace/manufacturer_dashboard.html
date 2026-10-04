@@ -1,0 +1,152 @@
+{% extends "marketplace/base.html" %}
+
+{% block title %}Manufacturer dashboard | Ubhaar-Vyapaar{% endblock %}
+
+{% block content %}
+    <div class="page-heading">
+        <div>
+            <h1>Manufacturer dashboard</h1>
+            <p>Review and respond to requests for your business.</p>
+        </div>
+
+        <div class="action-links">
+            <a
+    class="button button-secondary"
+    href="{% url 'edit_business_profile' %}"
+>
+    Edit business profile
+</a>
+            <a class="button button-secondary" href="{% url 'my_listings' %}">
+                My listings
+            </a>
+            <a class="button" href="{% url 'create_listing' %}">
+                + Create listing
+            </a>
+        </div>
+    </div>
+
+    <dl class="stats-grid" aria-label="Business summary">
+        <div class="stat-card">
+            <dt>Total listings</dt>
+            <dd>{{ stats.total_listings }}</dd>
+        </div>
+    
+        <div class="stat-card">
+            <dt>Public listings</dt>
+            <dd>{{ stats.public_listings }}</dd>
+        </div>
+    
+        <div class="stat-card stat-card-attention">
+            <dt>Pending requests</dt>
+            <dd>{{ stats.pending_requests }}</dd>
+        </div>
+    
+        <div class="stat-card">
+            <dt>Accepted requests</dt>
+            <dd>{{ stats.accepted_requests }}</dd>
+        </div>
+    </dl>
+    
+    <h2 class="dashboard-section-title">Quote requests</h2>
+
+    <div class="record-grid">
+        {% for quote in quotes %}
+            <article class="record-card">
+                <span class="status-pill status-{{ quote.status|lower }}">
+                    Request: {{ quote.get_status_display }}
+                </span>
+
+                <h2>{{ quote.listing.title }}</h2>
+
+                <p class="record-meta">
+                    Request #{{ quote.pk }} ·
+                    {{ quote.created_at|date:"d M Y, H:i" }}
+                </p>
+
+                <dl class="record-facts">
+                    <dt>Buyer</dt>
+                    <dd>{{ quote.buyer.username }}</dd>
+
+                    <dt>Quantity</dt>
+                    <dd>{{ quote.quantity }} units</dd>
+
+                    <dt>Requirements</dt>
+                    <dd>{{ quote.requirements|linebreaksbr }}</dd>
+
+                    <dt>Delivery location</dt>
+                    <dd>{{ quote.delivery_location }}</dd>
+                </dl>
+
+                {% if quote.quotation %}
+    <div class="message">
+        <strong>Quotation sent</strong>
+
+        <p>
+            ₹{{ quote.quotation.price_per_unit }} per unit<br>
+            Quantity: {{ quote.quotation.quantity }} units<br>
+            Subtotal: ₹{{ quote.quotation.subtotal|floatformat:2 }}<br>
+            Production: {{ quote.quotation.production_days }} days<br>
+            Buyer response: {{ quote.quotation.get_status_display }}
+        </p>
+
+        {% if quote.quotation.message %}
+            <p>{{ quote.quotation.message|linebreaksbr }}</p>
+        {% endif %}
+    </div>
+{% elif quote.status != "REJECTED" %}
+    <p>
+        <a
+            class="button"
+            href="{% url 'send_quotation' quote.pk %}"
+        >
+            Send quotation
+        </a>
+    </p>
+{% endif %}
+
+                {% if quote.status == "PENDING" %}
+                    <form
+                        method="post"
+                        action="{% url 'update_quote_status' quote.pk %}"
+                        class="record-actions"
+                    >
+                        {% csrf_token %}
+
+                        <button
+                            class="button button-accept"
+                            type="submit"
+                            name="status"
+                            value="ACCEPTED"
+                        >
+                            Accept request
+                        </button>
+
+                        <button
+                            class="button button-reject"
+                            type="submit"
+                            name="status"
+                            value="REJECTED"
+                        >
+                            Reject request
+                        </button>
+                    </form>
+                {% else %}
+                    <p class="record-meta">
+                        This request has been processed.
+                    </p>
+                {% endif %}
+            </article>
+        {% empty %}
+            <div class="empty-panel">
+                <h2>No quote requests yet</h2>
+                <p>
+                    Requests from buyers will appear here.
+                    You can manage your services in My listings.
+                </p>
+                <a class="button" href="{% url 'my_listings' %}">
+                    View my listings
+                </a>
+            </div>
+        {% endfor %}
+    </div>
+{% endblock %}

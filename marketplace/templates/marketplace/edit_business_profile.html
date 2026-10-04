@@ -1,0 +1,51 @@
+{% extends "marketplace/base.html" %}
+
+{% block title %}Edit business profile | Ubhaar-Vyapaar{% endblock %}
+
+{% block content %}
+    <section class="auth-card" aria-labelledby="profile-title">
+        <a href="{% url 'manufacturer_dashboard' %}">
+            ← Dashboard
+        </a>
+
+        <h1 id="profile-title">Business profile</h1>
+
+        {% if manufacturer.is_verified %}
+            <span class="status-pill status-accepted">
+                Verified business
+            </span>
+
+            <p>
+                <a href="{% url 'manufacturer_profile' manufacturer.pk %}">
+                    View public profile
+                </a>
+            </p>
+        {% else %}
+            <p class="message">
+                Your business is awaiting verification.
+                Your profile and listings are currently hidden
+                from public browsing.
+            </p>
+        {% endif %}
+
+        <p class="auth-intro">
+            Keep your business information accurate so buyers
+            can understand your services.
+        </p>
+
+        <p class="message">
+            Changing your business name, city, or state requires
+            verification again. Your listings will remain saved
+            but hidden until approval.
+        </p>
+
+        <form method="post" class="styled-form">
+            {% csrf_token %}
+            {{ form.as_p }}
+
+            <button class="button form-submit" type="submit">
+                Save business details
+            </button>
+        </form>
+    </section>
+{% endblock %}

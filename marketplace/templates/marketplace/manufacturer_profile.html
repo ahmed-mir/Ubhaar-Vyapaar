@@ -1,0 +1,148 @@
+{% extends "marketplace/base.html" %}
+
+{% block title %}{{ manufacturer.business_name }} | Ubhaar-Vyapaar{% endblock %}
+
+{% block extra_css %}
+<style>
+    .business-profile {
+        margin: 24px 0 32px;
+    }
+
+    .business-profile h1 {
+        margin: 16px 0 8px;
+        font-size: clamp(28px, 4vw, 40px);
+        line-height: 1.2;
+    }
+
+    .business-description {
+        max-width: 760px;
+        margin-top: 24px;
+    }
+
+    .profile-pagination {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 16px;
+        margin-top: 28px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+    <a href="{% url 'home' %}">← Browse all listings</a>
+
+    <section class="record-card business-profile">
+        <span class="status-pill status-accepted">
+            Verified business
+        </span>
+
+        <h1>{{ manufacturer.business_name }}</h1>
+
+        <p class="record-meta">
+            {{ manufacturer.city }}, {{ manufacturer.state }}
+        </p>
+
+        <div class="business-description">
+            <h2>About the business</h2>
+
+            {% if manufacturer.description %}
+                {{ manufacturer.description|linebreaks }}
+            {% else %}
+                <p class="record-meta">
+                    This business has not added a description yet.
+                </p>
+            {% endif %}
+        </div>
+    </section>
+
+    <div class="page-heading">
+        <div>
+            <h2>Manufacturing services</h2>
+            <p>
+                {{ page_obj.paginator.count }}
+                active service{{ page_obj.paginator.count|pluralize }}
+            </p>
+        </div>
+    </div>
+
+    <div class="record-grid">
+        {% for listing in page_obj %}
+            <article class="record-card">
+                {% if listing.image %}
+                    <img
+                        class="listing-image"
+                        src="{{ listing.image.url }}"
+                        alt="{{ listing.title }}"
+                        loading="lazy"
+                    >
+                {% else %}
+                    <div class="listing-image-placeholder">
+                        Product photo coming soon
+                    </div>
+                {% endif %}
+
+                <p class="record-meta">
+                    {{ listing.get_category_display }}
+                </p>
+
+                <h2>{{ listing.title }}</h2>
+
+                <p>{{ listing.description|truncatewords:24 }}</p>
+
+                <dl class="record-facts">
+                    <dt>Price per unit</dt>
+                    <dd>&#8377;{{ listing.price_per_unit }}</dd>
+
+                    <dt>Minimum order</dt>
+                    <dd>{{ listing.minimum_quantity }} units</dd>
+
+                    <dt>Production time</dt>
+                    <dd>{{ listing.production_days }} days</dd>
+                </dl>
+
+                <a
+                    class="button"
+                    href="{% url 'listing_detail' listing.pk %}"
+                >
+                    View details
+                </a>
+            </article>
+        {% empty %}
+            <div class="empty-panel">
+                <h2>No active services currently</h2>
+                <p>
+                    This manufacturer has no public listings available.
+                </p>
+            </div>
+        {% endfor %}
+    </div>
+
+    {% if page_obj.has_other_pages %}
+        <nav class="profile-pagination" aria-label="Service pages">
+            {% if page_obj.has_previous %}
+                <a
+                    class="button button-secondary"
+                    href="?page={{ page_obj.previous_page_number }}"
+                >
+                    ← Previous
+                </a>
+            {% endif %}
+
+            <span aria-current="page">
+                Page {{ page_obj.number }}
+                of {{ page_obj.paginator.num_pages }}
+            </span>
+
+            {% if page_obj.has_next %}
+                <a
+                    class="button button-secondary"
+                    href="?page={{ page_obj.next_page_number }}"
+                >
+                    Next →
+                </a>
+            {% endif %}
+        </nav>
+    {% endif %}
+{% endblock %}

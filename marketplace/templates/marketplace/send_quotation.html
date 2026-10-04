@@ -1,0 +1,46 @@
+{% extends "marketplace/base.html" %}
+
+{% block title %}Send quotation | Ubhaar-Vyapaar{% endblock %}
+
+{% block content %}
+    <section class="auth-card" aria-labelledby="quotation-title">
+        <a href="{% url 'manufacturer_dashboard' %}">
+            ← Dashboard
+        </a>
+
+        <h1 id="quotation-title">Send quotation</h1>
+
+        <p class="auth-intro">
+            {{ quote_request.listing.title }}<br>
+            Request #{{ quote_request.pk }}
+            from {{ quote_request.buyer.username }}
+        </p>
+
+        <dl class="record-facts">
+            <dt>Requested quantity</dt>
+            <dd>{{ quote_request.quantity }} units</dd>
+
+            <dt>Requirements</dt>
+            <dd>{{ quote_request.requirements|linebreaksbr }}</dd>
+
+            <dt>Delivery location</dt>
+            <dd>{{ quote_request.delivery_location }}</dd>
+        </dl>
+
+        <p class="message">
+            The subtotal will be your price per unit multiplied by
+            {{ quote_request.quantity }} units.
+            Explain any delivery charges or taxes in your message.
+            You cannot edit the quotation after sending it in this version.
+        </p>
+
+        <form method="post" class="styled-form">
+            {% csrf_token %}
+            {{ form.as_p }}
+
+            <button class="button form-submit" type="submit">
+                Send quotation
+            </button>
+        </form>
+    </section>
+{% endblock %}

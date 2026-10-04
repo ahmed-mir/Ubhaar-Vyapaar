@@ -1,0 +1,25 @@
+{% extends "marketplace/base.html" %}
+
+{% block title %}Create listing | Ubhaar-Vyapaar{% endblock %}
+
+{% block content %}
+    <section class="auth-card" aria-labelledby="create-title">
+        <a href="{% url 'my_listings' %}">← My listings</a>
+
+        <h1 id="create-title">Create a listing</h1>
+
+        <p class="auth-intro">
+            Describe your service so buyers can understand
+            what you offer. Enter the price per unit in rupees.
+        </p>
+
+        <form method="post" enctype="multipart/form-data" class="styled-form"></form>
+            {% csrf_token %}
+            {{ form.as_p }}
+
+            <button class="button form-submit" type="submit">
+                Save listing
+            </button>
+        </form>
+    </section>
+{% endblock %}

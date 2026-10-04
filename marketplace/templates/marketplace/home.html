@@ -1,0 +1,462 @@
+{% extends "marketplace/base.html" %}
+
+{% block title %}Find manufacturing partners | Ubhaar-Vyapaar{% endblock %}
+
+{% block extra_css %}
+<style>
+    .hero {
+        padding: 44px;
+        border: 1px solid #d8e6e2;
+        border-radius: 18px;
+        background: #eaf3f0;
+        margin-bottom: 36px;
+    }
+
+    .eyebrow {
+        margin: 0 0 12px;
+        color: var(--accent);
+        font-size: 12px;
+        font-weight: 800;
+        letter-spacing: 1.5px;
+        text-transform: uppercase;
+    }
+
+    .hero h1 {
+        max-width: 720px;
+        margin: 0 0 16px;
+        font-size: clamp(30px, 5vw, 48px);
+        line-height: 1.15;
+        letter-spacing: -1.5px;
+    }
+
+    .hero-description {
+        max-width: 640px;
+        margin: 0 0 26px;
+        color: var(--muted);
+        font-size: 17px;
+    }
+
+    .search-form label {
+        display: block;
+        margin-bottom: 8px;
+        font-size: 14px;
+        font-weight: 600;
+    }
+
+    .search-controls {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .search-controls input {
+        flex: 1 1 260px;
+        min-width: 0;
+        min-height: 48px;
+        padding: 12px 16px;
+        border: 1px solid #b5c6c0;
+        border-radius: 8px;
+        background: white;
+    }
+
+    .search-controls .button {
+        min-height: 48px;
+    }
+
+    .section-heading {
+        margin-bottom: 22px;
+    }
+
+    .section-heading h2 {
+        margin: 0 0 4px;
+        font-size: 26px;
+        letter-spacing: -0.5px;
+    }
+
+    .section-heading p {
+        margin: 0;
+        color: var(--muted);
+        overflow-wrap: anywhere;
+    }
+
+    .listings {
+        display: grid;
+        grid-template-columns: repeat(
+            auto-fit, minmax(min(100%, 300px), 1fr)
+        );
+        gap: 22px;
+    }
+
+    .listing-card {
+        display: flex;
+        flex-direction: column;
+        padding: 26px;
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        background: white;
+        overflow-wrap: anywhere;
+    }
+
+    .listing-card h3 {
+        margin: 14px 0 6px;
+        font-size: 22px;
+        line-height: 1.3;
+    }
+
+    .listing-card h3 a {
+        text-decoration: none;
+    }
+
+    .listing-card h3 a:hover {
+        text-decoration: underline;
+    }
+
+    .badge {
+        align-self: flex-start;
+        padding: 4px 9px;
+        border-radius: 5px;
+        background: #edf8f1;
+        color: #24633f;
+        font-size: 12px;
+        font-weight: 700;
+    }
+
+    .company,
+    .description {
+        color: var(--muted);
+        font-size: 14px;
+    }
+
+    .company {
+        margin: 0;
+    }
+
+    .description {
+        margin-block: 16px;
+    }
+
+    .price {
+        margin: auto 0 16px;
+        padding-top: 12px;
+        font-size: 26px;
+        font-weight: 800;
+        color: var(--navy);
+    }
+
+    .price span {
+        font-size: 13px;
+        font-weight: 400;
+        color: var(--muted);
+    }
+
+    .listing-meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px 28px;
+        margin: 0 0 22px;
+        padding-top: 16px;
+        border-top: 1px solid var(--border);
+    }
+
+    .listing-meta dt {
+        color: var(--muted);
+        font-size: 12px;
+    }
+
+    .listing-meta dd {
+        margin: 2px 0 0;
+        font-size: 14px;
+        font-weight: 700;
+    }
+
+    .empty-state {
+        grid-column: 1 / -1;
+        padding: 40px 24px;
+        border: 1px dashed #bac6d2;
+        border-radius: 12px;
+        background: white;
+        text-align: center;
+    }
+
+    .empty-state h3 {
+        margin-top: 0;
+    }
+
+    .empty-state p {
+        color: var(--muted);
+    }
+
+    @media (max-width: 700px) {
+        .hero {
+            padding: 26px 20px;
+            margin-bottom: 28px;
+        }
+
+        .hero-description {
+            font-size: 15px;
+        }
+
+        .search-controls input {
+            flex-basis: 100%;
+        }
+
+        .listing-card {
+            padding: 22px;
+        }
+    }
+    .search-fields {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    gap: 12px;
+}
+
+.search-field {
+    flex: 2 1 250px;
+    min-width: 0;
+}
+
+.category-field {
+    flex: 1 1 200px;
+    min-width: 0;
+}
+
+.search-fields input,
+.search-fields select {
+    width: 100%;
+    min-height: 48px;
+    padding: 12px;
+    border: 1px solid #b5c6c0;
+    border-radius: 8px;
+    background: white;
+    color: var(--text);
+}
+
+.search-fields .button {
+    min-height: 48px;
+}
+
+@media (max-width: 600px) {
+    .search-field,
+    .category-field {
+        flex-basis: 100%;
+    }
+
+    .search-fields .button {
+        width: 100%;
+    }
+}
+
+.pagination-summary {
+    margin-top: 28px;
+    color: var(--muted);
+    font-size: 14px;
+    text-align: center;
+}
+
+.pagination {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 16px;
+    margin-top: 16px;
+}
+
+.pagination span {
+    color: var(--muted);
+    font-size: 14px;
+}
+</style>
+
+{% endblock %}
+
+{% block content %}
+    <section class="hero" aria-labelledby="hero-title">
+        <p class="eyebrow">Built for business connections</p>
+
+        <h1 id="hero-title">Find the right manufacturing partner.</h1>
+
+        <p class="hero-description">
+            Explore services from verified businesses, compare minimum
+            quantities, and request a quote for your next project.
+        </p>
+
+        <form method="get" action="{% url 'home' %}" class="search-form">
+            <div class="search-fields">
+                <div class="search-field">
+                    <label for="search">What are you looking for?</label>
+                    <input
+                        id="search"
+                        type="search"
+                        name="q"
+                        value="{{ query }}"
+                        placeholder="Product, manufacturer, or city"
+                    >
+                </div>
+        
+                <div class="category-field">
+                    <label for="category">Category</label>
+                    <select id="category" name="category">
+                        <option value="">All categories</option>
+        
+                        {% for value, label in categories %}
+                            <option
+                                value="{{ value }}"
+                                {% if selected_category == value %}selected{% endif %}
+                            >
+                                {{ label }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+        
+                <button class="button" type="submit">
+                    Search listings
+                </button>
+            </div>
+        
+            {% if query or selected_category %}
+                <p>
+                    <a href="{% url 'home' %}">Clear all filters</a>
+                </p>
+            {% endif %}
+        </form>
+    </section>
+
+    <section aria-labelledby="listings-title">
+        <div class="section-heading">
+            <h2 id="listings-title">
+                {% if query or selected_category %}
+                    Search results
+                {% else %}
+                    Explore manufacturing services
+                {% endif %}
+            </h2>
+            
+            <p>
+                {% if query %}
+                    Showing matches for “{{ query }}”
+                {% elif selected_category %}
+                    Showing services in your selected category.
+                {% else %}
+                    Find a service that fits your business requirements.
+                {% endif %}
+            </p>
+        </div>
+
+        <div class="listings">
+            {% for listing in listings %}
+                <article class="listing-card">
+                    {% if listing.image %}
+    <img
+        class="listing-image"
+        src="{{ listing.image.url }}"
+        alt="{{ listing.title }}"
+        loading="lazy"
+        width="800"
+        height="600"
+    >
+{% else %}
+    <div class="listing-image-placeholder">
+        Product photo coming soon
+    </div>
+{% endif %}
+                    {% if listing.manufacturer.is_verified %}
+                        <span class="badge">Verified business</span>
+                    {% endif %}
+
+                    <h3>
+                        <a href="{% url 'listing_detail' listing.pk %}">
+                            {{ listing.title }}
+                        </a>
+                    </h3>
+
+                    <p class="record-meta">{{ listing.get_category_display }}</p>
+
+                    <p class="company">
+                        <a href="{% url 'manufacturer_profile' listing.manufacturer.pk %}">
+                            {{ listing.manufacturer.business_name }}
+                        </a><br>
+                        {{ listing.manufacturer.city }},
+                        {{ listing.manufacturer.state }}
+                    </p>
+
+                    <p class="description">
+                        {{ listing.description|truncatewords:24 }}
+                    </p>
+
+                    <p class="price">
+                        ₹{{ listing.price_per_unit }}
+                        <span>per unit</span>
+                    </p>
+
+                    <dl class="listing-meta">
+                        <div>
+                            <dt>Minimum order</dt>
+                            <dd>{{ listing.minimum_quantity }} units</dd>
+                        </div>
+                        <div>
+                            <dt>Production time</dt>
+                            <dd>{{ listing.production_days }} days</dd>
+                        </div>
+                    </dl>
+
+                    <a
+                        class="button button-secondary"
+                        href="{% url 'listing_detail' listing.pk %}"
+                    >
+                        View details
+                    </a>
+                </article>
+             {% empty %}
+                <div class="empty-state">
+                    {% if query or selected_category %}
+                        <h3>No matching listings</h3>
+                        <p>Try another search term or category.</p>
+                        <a class="button" href="{% url 'home' %}">
+                            Clear all filters
+                        </a>
+                    {% else %}
+                        <h3>New manufacturing services are on the way</h3>
+                        <p>No public listings are available yet.</p>
+                    {% endif %}
+                </div>
+            {% endfor %}
+        </div>
+        {% if page_obj.paginator.count %}
+    <div class="pagination-summary">
+        Showing {{ page_obj.start_index }}–{{ page_obj.end_index }}
+        of {{ page_obj.paginator.count }} listings
+    </div>
+{% endif %}
+
+{% if page_obj.has_other_pages %}
+    <nav class="pagination" aria-label="Listing pages">
+        {% if page_obj.has_previous %}
+            <a
+                class="button button-secondary"
+                href="?q={{ query|urlencode }}&amp;category={{ selected_category|urlencode }}&amp;page={{ page_obj.previous_page_number }}"
+            >
+                ← Previous
+            </a>
+        {% endif %}
+
+        <span aria-current="page">
+            Page {{ page_obj.number }}
+            of {{ page_obj.paginator.num_pages }}
+        </span>
+
+        {% if page_obj.has_next %}
+            <a
+                class="button button-secondary"
+                href="?q={{ query|urlencode }}&amp;category={{ selected_category|urlencode }}&amp;page={{ page_obj.next_page_number }}"
+            >
+                Next →
+            </a>
+        {% endif %}
+    </nav>
+{% endif %}
+    </section>
+{% endblock %}

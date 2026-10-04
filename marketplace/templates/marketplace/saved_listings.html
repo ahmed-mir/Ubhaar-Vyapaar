@@ -1,0 +1,95 @@
+{% extends "marketplace/base.html" %}
+
+{% block title %}Saved listings | Ubhaar-Vyapaar{% endblock %}
+
+{% block content %}
+    <div class="page-heading">
+        <div>
+            <h1>Saved listings</h1>
+            <p>Services you want to revisit.</p>
+        </div>
+
+        <a class="button" href="{% url 'home' %}">
+            Browse listings
+        </a>
+    </div>
+
+    <div class="record-grid">
+        {% for item in saved_items %}
+            <article class="record-card">
+                {% if item.listing.is_active and item.listing.manufacturer.is_verified %}
+                    {% if item.listing.image %}
+                        <img
+                            class="listing-image"
+                            src="{{ item.listing.image.url }}"
+                            alt="{{ item.listing.title }}"
+                            loading="lazy"
+                        >
+                    {% endif %}
+
+                    <span class="status-pill status-accepted">
+                        Available
+                    </span>
+
+                    <h2>{{ item.listing.title }}</h2>
+
+                    <p>
+                        {{ item.listing.manufacturer.business_name }}<br>
+                        {{ item.listing.manufacturer.city }},
+                        {{ item.listing.manufacturer.state }}
+                    </p>
+
+                    <dl class="record-facts">
+                        <dt>Price per unit</dt>
+                        <dd>&#8377;{{ item.listing.price_per_unit }}</dd>
+
+                        <dt>Minimum order</dt>
+                        <dd>{{ item.listing.minimum_quantity }} units</dd>
+                    </dl>
+
+                    <a
+                        class="button"
+                        href="{% url 'listing_detail' item.listing.pk %}"
+                    >
+                        View details
+                    </a>
+                {% else %}
+                    <span class="status-pill">
+                        Currently unavailable
+                    </span>
+
+                    <h2>Unavailable listing</h2>
+
+                    <p class="record-meta">
+                        This saved service is no longer publicly available.
+                    </p>
+                {% endif %}
+
+                <form
+                    method="post"
+                    action="{% url 'remove_saved_listing' item.listing_id %}"
+                    class="record-actions"
+                >
+                    {% csrf_token %}
+                    <button
+                        class="button button-secondary"
+                        type="submit"
+                    >
+                        Remove from saved
+                    </button>
+                </form>
+            </article>
+        {% empty %}
+            <div class="empty-panel">
+                <h2>No saved listings yet</h2>
+                <p>
+                    Open a listing and choose Save listing
+                    to keep it here.
+                </p>
+                <a class="button" href="{% url 'home' %}">
+                    Explore listings
+                </a>
+            </div>
+        {% endfor %}
+    </div>
+{% endblock %}

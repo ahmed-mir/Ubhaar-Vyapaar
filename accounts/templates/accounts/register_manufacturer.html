@@ -1,0 +1,45 @@
+{% extends "marketplace/base.html" %}
+
+{% block title %}Register your business | Ubhaar-Vyapaar{% endblock %}
+
+{% block content %}
+    <section class="auth-card" aria-labelledby="business-title">
+        <a href="{% url 'home' %}">← Browse listings</a>
+
+        <h1 id="business-title">Bring your business to Ubhaar-Vyapaar</h1>
+
+        <p class="auth-intro">
+            Create listings, receive quote requests, and connect
+            with buyers looking for manufacturing services.
+        </p>
+
+        <p class="message">
+            You can create listings after registration.
+            They become public once an administrator verifies
+            your business.
+        </p>
+
+        <form method="post" class="styled-form">
+            {% csrf_token %}
+            {{ form.as_p }}
+
+            <button class="button form-submit" type="submit">
+                Create manufacturer account
+            </button>
+        </form>
+
+        <div class="auth-links">
+            <p>
+                Already registered?
+                <a href="{% url 'login' %}">Log in</a>
+            </p>
+
+            <p>
+                Looking for manufacturing services?
+                <a href="{% url 'register' %}">
+                    Create a buyer account
+                </a>
+            </p>
+        </div>
+    </section>
+{% endblock %}

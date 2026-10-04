@@ -1,0 +1,668 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{% block title %}Ubhaar-Vyapaar{% endblock %}</title>
+
+    <style>
+        :root {
+            --navy: #17324d;
+            --navy-dark: #10263b;
+            --accent: #146c60;
+            --background: #f5f7fa;
+            --surface: #ffffff;
+            --text: #172033;
+            --muted: #58677a;
+            --border: #dce3eb;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            background: var(--background);
+            color: var(--text);
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+        }
+
+        a {
+            color: var(--navy);
+            text-underline-offset: 3px;
+        }
+
+        button,
+        input,
+        select,
+        textarea {
+            font: inherit;
+        }
+
+        a:focus-visible,
+        button:focus-visible,
+        input:focus-visible,
+        select:focus-visible,
+        textarea:focus-visible,
+        summary:focus-visible {
+            outline: 3px solid #d18b19;
+            outline-offset: 4px;
+        }
+
+        .container {
+            width: min(1120px, calc(100% - 40px));
+            margin-inline: auto;
+        }
+
+        .skip-link {
+            position: absolute;
+            left: 16px;
+            top: -100px;
+            padding: 12px;
+            background: white;
+            z-index: 10;
+        }
+
+        .skip-link:focus {
+            top: 12px;
+        }
+
+        .site-header {
+            background: var(--surface);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .header-inner {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 20px;
+            padding-block: 18px;
+        }
+
+        .brand {
+            color: var(--navy);
+            font-size: 23px;
+            font-weight: 800;
+            letter-spacing: -0.7px;
+            text-decoration: none;
+        }
+
+        .brand span {
+            color: var(--accent);
+        }
+
+        .site-nav {
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 16px;
+        }
+
+        .site-nav > a {
+            font-size: 14px;
+            font-weight: 600;
+            text-decoration: none;
+        }
+
+        .site-nav > a:hover {
+            text-decoration: underline;
+        }
+
+        .site-nav form {
+            margin: 0;
+        }
+
+        .account-name {
+            max-width: 180px;
+            overflow-wrap: anywhere;
+            font-size: 13px;
+            color: var(--muted);
+        }
+
+        .button {
+            display: inline-flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 44px;
+            padding: 10px 18px;
+            border: 1px solid transparent;
+            border-radius: 8px;
+            background: var(--navy);
+            color: white;
+            font-weight: 600;
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+        .button:hover {
+            background: var(--navy-dark);
+        }
+
+        .button-secondary {
+            background: white;
+            color: var(--navy);
+            border-color: var(--border);
+        }
+
+        .button-secondary:hover {
+            background: #edf2f7;
+        }
+
+        .page-content {
+            flex: 1;
+            padding-block: 32px 56px;
+        }
+
+        .messages {
+            margin-bottom: 24px;
+        }
+
+        .message {
+            padding: 14px 18px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            background: white;
+            overflow-wrap: anywhere;
+        }
+
+        .message.success {
+            border-color: #acd5bd;
+            background: #edf8f1;
+        }
+
+        .message.error {
+            border-color: #e5b0ac;
+            background: #fff1f0;
+        }
+
+        .site-footer {
+            padding-block: 24px;
+            border-top: 1px solid var(--border);
+            background: white;
+            color: var(--muted);
+            font-size: 14px;
+        }
+
+        .footer-inner {
+            display: flex;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 8px 24px;
+        }
+
+        .footer-inner p {
+            margin: 0;
+        }
+
+        @media (max-width: 700px) {
+            .container {
+                width: calc(100% - 32px);
+            }
+
+            .header-inner {
+                align-items: flex-start;
+                gap: 12px;
+            }
+
+            .site-nav {
+                width: 100%;
+                gap: 10px 16px;
+            }
+
+            .site-nav > a {
+                display: inline-flex;
+                align-items: center;
+                min-height: 44px;
+            }
+
+            .account-name {
+                max-width: 100%;
+            }
+
+            .page-content {
+                padding-block: 24px 40px;
+            }
+        }
+        .auth-card {
+    max-width: 620px;
+    margin: 16px auto;
+    padding: 32px;
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    background: var(--surface);
+    overflow-wrap: anywhere;
+}
+
+.auth-card h1 {
+    margin: 16px 0 10px;
+    font-size: clamp(26px, 4vw, 34px);
+    line-height: 1.2;
+    letter-spacing: -0.7px;
+}
+
+.auth-intro {
+    margin-bottom: 26px;
+    color: var(--muted);
+}
+
+.styled-form p {
+    margin: 0 0 20px;
+}
+
+.styled-form label {
+    display: block;
+    margin-bottom: 7px;
+    font-weight: 600;
+}
+
+.styled-form input:not([type="hidden"]),
+.styled-form textarea,
+.styled-form select {
+    width: 100%;
+    min-height: 46px;
+    padding: 11px 13px;
+    border: 1px solid #aab8c7;
+    border-radius: 8px;
+    background: white;
+    color: var(--text);
+}
+
+.styled-form textarea {
+    resize: vertical;
+}
+
+.styled-form input[type="checkbox"],
+.styled-form input[type="radio"] {
+    width: auto;
+    min-height: auto;
+}
+
+.styled-form .helptext {
+    display: block;
+    margin-top: 7px;
+    color: var(--muted);
+    font-size: 13px;
+}
+
+.styled-form .helptext ul {
+    margin: 8px 0;
+    padding-left: 20px;
+}
+
+.styled-form .errorlist {
+    padding: 12px 12px 12px 30px;
+    border: 1px solid #e5b0ac;
+    border-radius: 8px;
+    background: #fff1f0;
+    color: #a3231b;
+    font-size: 14px;
+}
+
+.styled-form input[aria-invalid="true"] {
+    border-color: #b42318;
+}
+
+.form-submit {
+    width: 100%;
+}
+
+.auth-links {
+    margin-top: 24px;
+    padding-top: 20px;
+    border-top: 1px solid var(--border);
+    font-size: 14px;
+}
+
+.auth-links p {
+    margin: 8px 0;
+}
+
+@media (max-width: 600px) {
+    .auth-card {
+        margin-block: 0;
+        padding: 24px 20px;
+    }
+}
+.page-heading {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 16px;
+    margin-bottom: 28px;
+}
+
+.page-heading h1 {
+    margin: 0 0 6px;
+    font-size: clamp(28px, 4vw, 36px);
+    line-height: 1.2;
+    letter-spacing: -0.8px;
+}
+
+.page-heading p {
+    margin: 0;
+    color: var(--muted);
+}
+
+.action-links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.record-grid {
+    display: grid;
+    grid-template-columns: repeat(
+        auto-fit, minmax(min(100%, 320px), 1fr)
+    );
+    gap: 22px;
+}
+
+.record-card {
+    padding: 26px;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    background: var(--surface);
+    overflow-wrap: anywhere;
+}
+
+.record-card h2 {
+    margin: 12px 0;
+    font-size: 22px;
+    line-height: 1.3;
+}
+
+.record-meta {
+    color: var(--muted);
+    font-size: 13px;
+}
+
+.status-pill {
+    display: inline-block;
+    padding: 5px 10px;
+    border-radius: 6px;
+    background: #edf2f7;
+    color: #405268;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.status-pending {
+    background: #fff4d6;
+    color: #795500;
+}
+
+.status-accepted {
+    background: #eaf7ee;
+    color: #216e39;
+}
+
+.status-rejected {
+    background: #fff0ee;
+    color: #a3231b;
+}
+
+.record-facts {
+    margin: 20px 0;
+}
+
+.record-facts dt {
+    margin-top: 14px;
+    color: var(--muted);
+    font-size: 13px;
+}
+
+.record-facts dd {
+    margin: 4px 0 0;
+}
+
+.record-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 20px;
+}
+
+.button-accept {
+    background: #216e39;
+}
+
+.button-accept:hover {
+    background: #18552b;
+}
+
+.button-reject {
+    background: #b42318;
+}
+
+.button-reject:hover {
+    background: #8f1c13;
+}
+
+.empty-panel {
+    grid-column: 1 / -1;
+    padding: 40px 24px;
+    border: 1px dashed #bac6d2;
+    border-radius: 12px;
+    background: white;
+    text-align: center;
+}
+
+.empty-panel h2 {
+    margin-top: 0;
+}
+
+.empty-panel p {
+    color: var(--muted);
+}
+
+@media (max-width: 600px) {
+    .record-card {
+        padding: 22px;
+    }
+}
+.listing-image {
+    display: block;
+    width: 100%;
+    height: auto;
+    aspect-ratio: 4 / 3;
+    object-fit: contain;
+    border-radius: 8px;
+    margin-bottom: 18px;
+    background: #f0f4f7;
+}
+
+.listing-image-placeholder {
+    display: grid;
+    place-items: center;
+    width: 100%;
+    aspect-ratio: 4 / 3;
+    margin-bottom: 18px;
+    border: 1px dashed #bac6d2;
+    border-radius: 8px;
+    background: #f0f4f7;
+    color: var(--muted);
+    font-size: 14px;
+}
+
+.detail-image {
+    display: block;
+    width: 100%;
+    max-height: 480px;
+    object-fit: contain;
+    border-radius: 10px;
+    margin-bottom: 24px;
+    background: #f0f4f7;
+}
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 16px;
+    margin-bottom: 32px;
+}
+
+.stat-card {
+    padding: 22px;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    background: var(--surface);
+    overflow-wrap: anywhere;
+}
+
+.stat-card dt {
+    color: var(--muted);
+    font-size: 14px;
+}
+
+.stat-card dd {
+    margin: 8px 0 0;
+    color: var(--navy);
+    font-size: 34px;
+    font-weight: 800;
+    line-height: 1.2;
+}
+
+.stat-card-attention {
+    background: #fff9e9;
+    border-color: #ead69b;
+}
+
+.dashboard-section-title {
+    margin: 0 0 18px;
+    font-size: 23px;
+}
+
+@media (max-width: 850px) {
+    .stats-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 380px) {
+    .stats-grid {
+        grid-template-columns: 1fr;
+    }
+}
+.notification-count {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 22px;
+    min-height: 22px;
+    margin-left: 5px;
+    padding: 2px 6px;
+    border-radius: 999px;
+    background: #b42318;
+    color: white;
+    font-size: 12px;
+    font-weight: 700;
+    line-height: 1;
+}
+
+.visually-hidden {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+    border: 0;
+}
+    </style>
+
+{% block extra_css %}{% endblock %}
+</head>
+
+<body>
+    <a class="skip-link" href="#main-content">Skip to content</a>
+
+    <header class="site-header">
+        <div class="container header-inner">
+            <a class="brand" href="{% url 'home' %}">
+                Ubhaar<span>-Vyapaar</span>
+            </a>
+
+            <nav class="site-nav" aria-label="Main navigation">
+                <a href="{% url 'home' %}">Browse listings</a>
+
+                {% if user.is_authenticated %}
+                <a href="{% url 'notifications' %}">
+                    Notifications
+                    {% if unread_notification_count %}
+                        <span class="notification-count">
+                            {{ unread_notification_count }}
+                            <span class="visually-hidden">unread</span>
+                        </span>
+                    {% endif %}
+                </a>
+                    {% if user.role == "BUYER" %}
+                    <a href="{% url 'saved_listings' %}">
+                        Saved listings
+                    </a>
+                        <a href="{% url 'my_quote_requests' %}">
+                            My quote requests
+                        </a>
+                    {% elif user.role == "MANUFACTURER" %}
+                        <a href="{% url 'manufacturer_dashboard' %}">
+                            Dashboard
+                        </a>
+                        <a href="{% url 'my_listings' %}">
+                            My listings
+                        </a>
+                    {% endif %}
+
+                    <a
+    class="account-name"
+    href="{% url 'password_change' %}"
+>
+    {{ user.username }} · Change password
+</a>
+
+                    <form method="post" action="{% url 'logout' %}">
+                        {% csrf_token %}
+                        <button class="button button-secondary" type="submit">
+                            Log out
+                        </button>
+                    </form>
+                {% else %}
+                    <a href="{% url 'login' %}">Log in</a>
+                    <a href="{% url 'register' %}">Buyer registration</a>
+                    <a class="button" href="{% url 'register_manufacturer' %}">
+                        Register your business
+                    </a>
+                {% endif %}
+            </nav>
+        </div>
+    </header>
+
+    <main id="main-content" class="container page-content">
+        {% if messages %}
+            <div class="messages">
+                {% for message in messages %}
+                    <p class="message {{ message.tags }}" role="status">
+                        {{ message }}
+                    </p>
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        {% block content %}{% endblock %}
+    </main>
+
+    <footer class="site-footer">
+        <div class="container footer-inner">
+            <p>© {% now "Y" %} Ubhaar-Vyapaar</p>
+            <p>Connecting businesses with manufacturing partners.</p>
+        </div>
+    </footer>
+</body>
+</html>

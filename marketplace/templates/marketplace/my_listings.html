@@ -1,0 +1,86 @@
+{% extends "marketplace/base.html" %}
+
+{% block title %}My listings | Ubhaar-Vyapaar{% endblock %}
+
+{% block content %}
+    <div class="page-heading">
+        <div>
+            <h1>My listings</h1>
+            <p>Manage your services, pricing, and availability.</p>
+        </div>
+
+        <a class="button" href="{% url 'create_listing' %}">
+            + Create listing
+        </a>
+    </div>
+
+    <div class="record-grid">
+        {% for listing in listings %}
+            <article class="record-card">
+                {% if not listing.is_active %}
+                    <span class="status-pill">Inactive</span>
+                {% elif not listing.manufacturer.is_verified %}
+                    <span class="status-pill status-pending">
+                        Awaiting verification
+                    </span>
+                {% else %}
+                    <span class="status-pill status-accepted">
+                        Active
+                    </span>
+                {% endif %}
+
+                <h2>{{ listing.title }}</h2>
+
+                <dl class="record-facts">
+                    <dt>Price per unit</dt>
+                    <dd>₹{{ listing.price_per_unit }}</dd>
+
+                    <dt>Minimum order</dt>
+                    <dd>{{ listing.minimum_quantity }} units</dd>
+
+                    <dt>Production time</dt>
+                    <dd>{{ listing.production_days }} days</dd>
+                </dl>
+
+                <p class="record-meta">
+                    {% if not listing.is_active %}
+                        Hidden from buyers. Edit this listing to activate it.
+                    {% elif not listing.manufacturer.is_verified %}
+                        Hidden from buyers until your business is verified.
+                    {% else %}
+                        Visible to buyers on the marketplace.
+                    {% endif %}
+                </p>
+
+                <div class="record-actions">
+                    <a
+                        class="button"
+                        href="{% url 'edit_listing' listing.pk %}"
+                    >
+                        Edit listing
+                    </a>
+
+                    {% if listing.is_active and listing.manufacturer.is_verified %}
+                        <a
+                            class="button button-secondary"
+                            href="{% url 'listing_detail' listing.pk %}"
+                        >
+                            View public page
+                        </a>
+                    {% endif %}
+                </div>
+            </article>
+        {% empty %}
+            <div class="empty-panel">
+                <h2>Add your first service</h2>
+                <p>
+                    Tell buyers what you manufacture, your minimum
+                    quantity, and your production time.
+                </p>
+                <a class="button" href="{% url 'create_listing' %}">
+                    Create a listing
+                </a>
+            </div>
+        {% endfor %}
+    </div>
+{% endblock %}

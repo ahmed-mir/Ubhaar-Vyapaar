@@ -1,0 +1,61 @@
+{% extends "marketplace/base.html" %}
+
+{% block title %}Log in | Ubhaar-Vyapaar{% endblock %}
+
+{% block content %}
+<section class="auth-card" aria-labelledby="login-title">
+
+    <a href="{% url 'home' %}">
+        ← Browse listings
+    </a>
+
+    <h1 id="login-title">Welcome back</h1>
+
+    <p class="auth-intro">
+        Log in to manage your listings or quote requests.
+    </p>
+
+    <form method="post" class="styled-form">
+        {% csrf_token %}
+        {{ form.as_p }}
+
+        <input
+            type="hidden"
+            name="next"
+            value="{{ next }}"
+        >
+
+        <button
+            class="button form-submit"
+            type="submit"
+        >
+            Log in
+        </button>
+    </form>
+
+    <div class="auth-links">
+
+        <p>
+            <a href="{% url 'password_reset' %}">
+                Forgot your password?
+            </a>
+        </p>
+
+        <p>
+            Looking for manufacturing services?
+            <a href="{% url 'register' %}">
+                Create a buyer account
+            </a>
+        </p>
+
+        <p>
+            Own a manufacturing business?
+            <a href="{% url 'register_manufacturer' %}">
+                Register your business
+            </a>
+        </p>
+
+    </div>
+
+</section>
+{% endblock %}

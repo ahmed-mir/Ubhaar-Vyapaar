@@ -1,0 +1,176 @@
+{% extends "marketplace/base.html" %}
+
+{% block title %}My quote requests | Ubhaar-Vyapaar{% endblock %}
+
+{% block content %}
+    <div class="page-heading">
+        <div>
+            <h1>My quote requests</h1>
+            <p>Track your requests and responses from manufacturers.</p>
+        </div>
+
+        <a class="button" href="{% url 'home' %}">
+            Browse listings
+        </a>
+    </div>
+
+    <dl class="stats-grid" aria-label="Quote request summary">
+        <div class="stat-card">
+            <dt>Total requests</dt>
+            <dd>{{ stats.total_requests }}</dd>
+        </div>
+    
+        <div class="stat-card">
+            <dt>Awaiting manufacturer response</dt>
+            <dd>{{ stats.pending_requests }}</dd>
+        </div>
+    
+        <div class="stat-card stat-card-attention">
+            <dt>Quotations needing your response</dt>
+            <dd>{{ stats.awaiting_response }}</dd>
+        </div>
+    
+        <div class="stat-card">
+            <dt>Quotations you accepted</dt>
+            <dd>{{ stats.accepted_quotations }}</dd>
+        </div>
+    </dl>
+
+    <h2 class="dashboard-section-title">Your requests</h2>
+
+    <div class="record-grid">
+        {% for quote in quotes %}
+            <article class="record-card">
+                <span class="status-pill status-{{ quote.status|lower }}">
+                    Request: {{ quote.get_status_display }}
+                </span>
+
+                <h2>
+                    {% if quote.listing.is_active and quote.listing.manufacturer.is_verified %}
+                        <a href="{% url 'listing_detail' quote.listing.pk %}">
+                            {{ quote.listing.title }}
+                        </a>
+                    {% else %}
+                        {{ quote.listing.title }}
+                    {% endif %}
+                </h2>
+
+                <p>{{ quote.listing.manufacturer.business_name }}</p>
+
+                <p class="record-meta">
+                    Request #{{ quote.pk }} &middot;
+                    {{ quote.created_at|date:"d M Y, H:i" }}
+                </p>
+
+                <dl class="record-facts">
+                    <dt>Quantity</dt>
+                    <dd>{{ quote.quantity }} units</dd>
+
+                    <dt>Requirements</dt>
+                    <dd>{{ quote.requirements|linebreaksbr }}</dd>
+
+                    <dt>Delivery location</dt>
+                    <dd>{{ quote.delivery_location }}</dd>
+                </dl>
+
+                {% if quote.quotation %}
+                    <div class="message">
+                        <h3>Manufacturer's quotation</h3>
+
+                        <p>
+                            Price per unit:
+                            &#8377;{{ quote.quotation.price_per_unit }}<br>
+
+                            Quantity:
+                            {{ quote.quotation.quantity }} units<br>
+
+                            Subtotal:
+                            &#8377;{{ quote.quotation.subtotal|floatformat:2 }}<br>
+
+                            Production time:
+                            {{ quote.quotation.production_days }} days
+                        </p>
+
+                        {% if quote.quotation.message %}
+                            <p>
+                                {{ quote.quotation.message|linebreaksbr }}
+                            </p>
+                        {% endif %}
+
+                        <p>
+                            <strong>Quotation status:</strong>
+                            {{ quote.quotation.get_status_display }}
+                        </p>
+
+                        {% if quote.quotation.status == "SENT" %}
+                            <form
+                                method="post"
+                                action="{% url 'respond_to_quotation' quote.quotation.pk %}"
+                                class="record-actions"
+                            >
+                                {% csrf_token %}
+
+                                <button
+                                    class="button button-accept"
+                                    type="submit"
+                                    name="status"
+                                    value="ACCEPTED"
+                                >
+                                    Accept quotation
+                                </button>
+
+                                <button
+                                    class="button button-reject"
+                                    type="submit"
+                                    name="status"
+                                    value="DECLINED"
+                                >
+                                    Decline quotation
+                                </button>
+                            </form>
+
+                            <p class="record-meta">
+                                Your response cannot be changed through
+                                this page. Accepting does not create
+                                an order or take payment.
+                            </p>
+                        {% elif quote.quotation.responded_at %}
+                            <p class="record-meta">
+                                Responded on
+                                {{ quote.quotation.responded_at|date:"d M Y, H:i" }}.
+                            </p>
+                        {% endif %}
+
+                        <p class="record-meta">
+                            The subtotal excludes any separately stated
+                            charges. No order has been placed.
+                        </p>
+                    </div>
+                {% else %}
+                    <p class="record-meta">
+                        {% if quote.status == "PENDING" %}
+                            Awaiting a response from the manufacturer.
+                        {% elif quote.status == "ACCEPTED" %}
+                            The manufacturer accepted your request,
+                            but has not sent a priced quotation yet.
+                        {% elif quote.status == "REJECTED" %}
+                            The manufacturer declined this request.
+                            You can explore other available services.
+                        {% endif %}
+                    </p>
+                {% endif %}
+            </article>
+        {% empty %}
+            <div class="empty-panel">
+                <h2>You haven't requested a quote yet</h2>
+                <p>
+                    Find a service and share your requirements
+                    with its manufacturer.
+                </p>
+                <a class="button" href="{% url 'home' %}">
+                    Explore listings
+                </a>
+            </div>
+        {% endfor %}
+    </div>
+{% endblock %}

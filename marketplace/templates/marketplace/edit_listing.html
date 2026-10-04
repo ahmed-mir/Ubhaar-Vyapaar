@@ -1,0 +1,32 @@
+{% extends "marketplace/base.html" %}
+
+{% block title %}Edit listing | Ubhaar-Vyapaar{% endblock %}
+
+{% block content %}
+    <section class="auth-card" aria-labelledby="edit-title">
+        <a href="{% url 'my_listings' %}">← My listings</a>
+
+        <h1 id="edit-title">Edit listing</h1>
+
+        <p class="auth-intro">{{ listing.title }}</p>
+
+        <p class="message">
+            Uncheck “Is active” to hide this listing from buyers.
+            Existing quote requests will remain saved.
+        </p>
+
+        <form
+            method="post"
+            action="{% url 'edit_listing' listing.pk %}"
+            enctype="multipart/form-data"
+            class="styled-form"
+        >
+            {% csrf_token %}
+            {{ form.as_p }}
+
+            <button class="button form-submit" type="submit">
+                Save changes
+            </button>
+        </form>
+    </section>
+{% endblock %}
