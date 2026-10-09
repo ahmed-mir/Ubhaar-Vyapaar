@@ -45,6 +45,11 @@
         </div>
 
         <div class="stat-card">
+            <dt>Active orders</dt>
+            <dd>{{ stats.active_orders }}</dd>
+        </div>
+
+        <div class="stat-card">
             <dt>Unread notifications</dt>
             <dd>{{ stats.unread_notifications }}</dd>
         </div>
@@ -137,13 +142,13 @@
             <div>
                 <h2 id="accepted-title">Accepted quotations</h2>
                 <p>
-                    Quotations you accepted. Order tracking will appear here
-                    after the order workflow is added.
+                    Accepted quotations now create demo orders with locked
+                    terms. No real payment or escrow is started.
                 </p>
             </div>
 
-            <a class="button button-secondary" href="{% url 'my_quote_requests' %}">
-                View quote history
+            <a class="button button-secondary" href="{% url 'buyer_orders' %}">
+                View orders
             </a>
         </div>
 
@@ -171,10 +176,14 @@
                         <dd>{{ quotation.production_days }} days</dd>
                     </dl>
 
-                    <p class="message alert-info">
-                        No order or payment has been created yet. The order
-                        workflow is handled in the next implementation phase.
-                    </p>
+                    {% if quotation.order %}
+                        <a
+                            class="button button-secondary"
+                            href="{% url 'order_detail' quotation.order.pk %}"
+                        >
+                            View order
+                        </a>
+                    {% endif %}
                 </article>
             {% empty %}
                 <div class="empty-panel">
@@ -182,6 +191,58 @@
                     <p>
                         Accepted quotations will appear here after you review
                         a manufacturer response.
+                    </p>
+                </div>
+            {% endfor %}
+        </div>
+    </section>
+
+    <section class="dashboard-band" aria-labelledby="orders-title">
+        <div class="section-heading">
+            <div>
+                <h2 id="orders-title">Active orders</h2>
+                <p>
+                    Demo order tracking for accepted quotations. Funding states
+                    are simulated only.
+                </p>
+            </div>
+
+            <a class="button button-secondary" href="{% url 'buyer_orders' %}">
+                View all orders
+            </a>
+        </div>
+
+        <div class="record-grid">
+            {% for order in active_orders %}
+                <article class="record-card">
+                    <span class="status-pill status-{{ order.status|lower }}">
+                        {{ order.get_status_display }}
+                    </span>
+
+                    <h2>Order #{{ order.pk }}</h2>
+                    <p class="record-meta">
+                        {{ order.listing.title }} &middot;
+                        {{ order.manufacturer.business_name }}
+                    </p>
+
+                    <dl class="record-facts">
+                        <dt>Total amount</dt>
+                        <dd>&#8377;{{ order.total_amount|floatformat:2 }}</dd>
+
+                        <dt>Production time</dt>
+                        <dd>{{ order.agreed_production_days }} days</dd>
+                    </dl>
+
+                    <a class="button button-secondary" href="{% url 'order_detail' order.pk %}">
+                        Track order
+                    </a>
+                </article>
+            {% empty %}
+                <div class="empty-panel">
+                    <h2>No active orders</h2>
+                    <p>
+                        Orders will appear after you accept a manufacturer
+                        quotation.
                     </p>
                 </div>
             {% endfor %}

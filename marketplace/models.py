@@ -1,6 +1,7 @@
 from django.conf import settings
 from django.db import models
 from django.core.validators import MinValueValidator
+from django.utils import timezone
 from decimal import Decimal
 
 
@@ -168,6 +169,114 @@ class Quotation(models.Model):
 
     def __str__(self):
         return f"Quotation for request #{self.quote_request_id}"    
+
+
+class Order(models.Model):
+    class Status(models.TextChoices):
+        CONFIRMED = "CONFIRMED", "Confirmed"
+        AWAITING_FUNDING = "AWAITING_FUNDING", "Awaiting demo funding"
+        FUNDED = "FUNDED", "Demo funded"
+        IN_PRODUCTION = "IN_PRODUCTION", "In production"
+        MILESTONE_PENDING = "MILESTONE_PENDING", "Milestone pending review"
+        READY_TO_SHIP = "READY_TO_SHIP", "Ready to ship"
+        SHIPPED = "SHIPPED", "Shipped"
+        COMPLETED = "COMPLETED", "Completed"
+        CANCELLED = "CANCELLED", "Cancelled"
+        DISPUTED = "DISPUTED", "Disputed"
+
+    quotation = models.OneToOneField(
+        Quotation,
+        on_delete=models.PROTECT,
+        related_name="order",
+    )
+    buyer = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.PROTECT,
+        related_name="orders",
+        limit_choices_to={"role": "BUYER"},
+    )
+    manufacturer = models.ForeignKey(
+        ManufacturerProfile,
+        on_delete=models.PROTECT,
+        related_name="orders",
+    )
+    listing = models.ForeignKey(
+        CapacityListing,
+        on_delete=models.PROTECT,
+        related_name="orders",
+    )
+    specifications_snapshot = models.JSONField(default=dict)
+    quantity = models.PositiveIntegerField(
+        validators=[MinValueValidator(1)],
+    )
+    agreed_unit_price = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        validators=[MinValueValidator(Decimal("0.01"))],
+    )
+    total_amount = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        validators=[MinValueValidator(Decimal("0.01"))],
+    )
+    agreed_production_days = models.PositiveIntegerField(
+        validators=[MinValueValidator(1)],
+    )
+    status = models.CharField(
+        max_length=30,
+        choices=Status.choices,
+        default=Status.CONFIRMED,
+    )
+    terms_locked_at = models.DateTimeField(default=timezone.now)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["-created_at", "-pk"]
+
+    def __str__(self):
+        return f"Order #{self.pk} - {self.listing.title}"
+
+
+class Milestone(models.Model):
+    class Status(models.TextChoices):
+        PENDING = "PENDING", "Pending"
+        COMPLETED = "COMPLETED", "Awaiting buyer approval"
+        APPROVED = "APPROVED", "Approved"
+        REJECTED = "REJECTED", "Changes requested"
+        DISPUTED = "DISPUTED", "Disputed"
+
+    order = models.ForeignKey(
+        Order,
+        on_delete=models.CASCADE,
+        related_name="milestones",
+    )
+    title = models.CharField(max_length=160)
+    description = models.TextField(blank=True)
+    percentage = models.PositiveSmallIntegerField(default=0)
+    amount = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        null=True,
+        blank=True,
+    )
+    due_date = models.DateField(null=True, blank=True)
+    status = models.CharField(
+        max_length=20,
+        choices=Status.choices,
+        default=Status.PENDING,
+    )
+    completed_at = models.DateTimeField(null=True, blank=True)
+    approved_at = models.DateTimeField(null=True, blank=True)
+    buyer_feedback = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["pk"]
+
+    def __str__(self):
+        return f"{self.title} for order #{self.order_id}"
     
 class SavedListing(models.Model):
     buyer = models.ForeignKey(
@@ -198,6 +307,7 @@ class SavedListing(models.Model):
 class Notification(models.Model):
     class Destination(models.TextChoices):
         BUYER_REQUESTS = "BUYER_REQUESTS", "Buyer quote requests"
+        BUYER_DASHBOARD = "BUYER_DASHBOARD", "Buyer dashboard"
         MANUFACTURER_DASHBOARD = (
             "MANUFACTURER_DASHBOARD",
             "Manufacturer dashboard",

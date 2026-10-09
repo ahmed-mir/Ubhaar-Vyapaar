@@ -3,6 +3,8 @@ from django.contrib import admin
 from .models import (
     ManufacturerProfile,
     CapacityListing,
+    Order,
+    Milestone,
     QuoteRequest,
     Quotation,
     SavedListing,
@@ -88,6 +90,45 @@ class QuotationAdmin(admin.ModelAdmin):
         "quote_request",
         "quote_request__listing",
     )
+
+
+@admin.register(Order)
+class OrderAdmin(admin.ModelAdmin):
+    list_display = (
+        "id",
+        "buyer",
+        "manufacturer",
+        "listing",
+        "status",
+        "total_amount",
+        "terms_locked_at",
+    )
+    list_filter = ("status", "terms_locked_at")
+    search_fields = (
+        "buyer__username",
+        "manufacturer__business_name",
+        "listing__title",
+    )
+    readonly_fields = (
+        "terms_locked_at",
+        "created_at",
+        "updated_at",
+    )
+
+
+@admin.register(Milestone)
+class MilestoneAdmin(admin.ModelAdmin):
+    list_display = (
+        "id",
+        "order",
+        "title",
+        "status",
+        "percentage",
+        "amount",
+    )
+    list_filter = ("status",)
+    search_fields = ("title", "order__listing__title")
+    readonly_fields = ("completed_at", "approved_at", "created_at", "updated_at")
 
 
 @admin.register(SavedListing)

@@ -1,0 +1,193 @@
+{% extends "marketplace/base.html" %}
+
+{% block title %}Order #{{ order.pk }} | Ubhaar-Vyapaar{% endblock %}
+
+{% block content %}
+    <a
+        class="back-link"
+        href="{% if user.role == 'BUYER' %}{% url 'buyer_orders' %}{% else %}{% url 'manufacturer_orders' %}{% endif %}"
+    >
+        &larr; Orders
+    </a>
+
+    <div class="page-heading">
+        <div>
+            <p class="eyebrow">Demo order tracking</p>
+            <h1>Order #{{ order.pk }}</h1>
+            <p>
+                Terms are locked from the accepted quotation. Funding and
+                escrow states are simulated only; no real money is held.
+            </p>
+        </div>
+
+        <span class="status-pill status-{{ order.status|lower }}">
+            {{ order.get_status_display }}
+        </span>
+    </div>
+
+    <div class="record-grid">
+        <article class="record-card">
+            <h2>Locked terms</h2>
+
+            <dl class="record-facts">
+                <dt>Listing</dt>
+                <dd>{{ order.listing.title }}</dd>
+
+                <dt>Buyer</dt>
+                <dd>{{ order.buyer.username }}</dd>
+
+                <dt>Manufacturer</dt>
+                <dd>{{ order.manufacturer.business_name }}</dd>
+
+                <dt>Quantity</dt>
+                <dd>{{ order.quantity }} units</dd>
+
+                <dt>Agreed unit price</dt>
+                <dd>&#8377;{{ order.agreed_unit_price }}</dd>
+
+                <dt>Total amount</dt>
+                <dd>&#8377;{{ order.total_amount|floatformat:2 }}</dd>
+
+                <dt>Production time</dt>
+                <dd>{{ order.agreed_production_days }} days</dd>
+            </dl>
+        </article>
+
+        <article class="record-card">
+            <h2>Specification snapshot</h2>
+
+            <dl class="record-facts">
+                <dt>Requirements</dt>
+                <dd>{{ order.specifications_snapshot.requirements|linebreaksbr }}</dd>
+
+                <dt>Delivery location</dt>
+                <dd>{{ order.specifications_snapshot.delivery_location }}</dd>
+
+                {% if order.specifications_snapshot.machine_type %}
+                    <dt>Machine type</dt>
+                    <dd>{{ order.specifications_snapshot.machine_type }}</dd>
+                {% endif %}
+
+                {% if order.specifications_snapshot.materials %}
+                    <dt>Materials</dt>
+                    <dd>{{ order.specifications_snapshot.materials }}</dd>
+                {% endif %}
+            </dl>
+        </article>
+    </div>
+
+    <section class="dashboard-band" aria-labelledby="milestones-title">
+        <div class="section-heading">
+            <div>
+                <h2 id="milestones-title">Milestones</h2>
+                <p>
+                    Manufacturers mark milestones complete. Buyers approve
+                    them or request changes.
+                </p>
+            </div>
+        </div>
+
+        <div class="record-grid">
+            {% for milestone in order.milestones.all %}
+                <article class="record-card">
+                    <span class="status-pill status-{{ milestone.status|lower }}">
+                        {{ milestone.get_status_display }}
+                    </span>
+
+                    <h3>{{ milestone.title }}</h3>
+
+                    {% if milestone.description %}
+                        <p class="record-meta">{{ milestone.description }}</p>
+                    {% endif %}
+
+                    <dl class="record-facts">
+                        <dt>Share</dt>
+                        <dd>{{ milestone.percentage }}%</dd>
+
+                        {% if milestone.amount %}
+                            <dt>Demo amount</dt>
+                            <dd>&#8377;{{ milestone.amount|floatformat:2 }}</dd>
+                        {% endif %}
+
+                        {% if milestone.completed_at %}
+                            <dt>Completed</dt>
+                            <dd>{{ milestone.completed_at|date:"d M Y, H:i" }}</dd>
+                        {% endif %}
+
+                        {% if milestone.approved_at %}
+                            <dt>Approved</dt>
+                            <dd>{{ milestone.approved_at|date:"d M Y, H:i" }}</dd>
+                        {% endif %}
+
+                        {% if milestone.buyer_feedback %}
+                            <dt>Buyer feedback</dt>
+                            <dd>{{ milestone.buyer_feedback|linebreaksbr }}</dd>
+                        {% endif %}
+                    </dl>
+
+                    {% if user.role == "MANUFACTURER" %}
+                        {% if milestone.status == "PENDING" or milestone.status == "REJECTED" %}
+                            <form
+                                method="post"
+                                action="{% url 'mark_milestone_complete' milestone.pk %}"
+                                class="record-actions"
+                            >
+                                {% csrf_token %}
+                                <button class="button" type="submit">
+                                    Mark complete
+                                </button>
+                            </form>
+                        {% endif %}
+                    {% elif user.role == "BUYER" %}
+                        {% if milestone.status == "COMPLETED" %}
+                            <form
+                                method="post"
+                                action="{% url 'respond_to_milestone' milestone.pk %}"
+                                class="styled-form"
+                            >
+                                {% csrf_token %}
+
+                                <p>
+                                    <label for="feedback-{{ milestone.pk }}">
+                                        Feedback
+                                    </label>
+                                    <textarea
+                                        id="feedback-{{ milestone.pk }}"
+                                        name="buyer_feedback"
+                                        rows="3"
+                                        placeholder="Optional note for the manufacturer"
+                                    ></textarea>
+                                </p>
+
+                                <div class="record-actions">
+                                    <button
+                                        class="button button-accept"
+                                        type="submit"
+                                        name="status"
+                                        value="APPROVED"
+                                    >
+                                        Approve milestone
+                                    </button>
+
+                                    <button
+                                        class="button button-reject"
+                                        type="submit"
+                                        name="status"
+                                        value="REJECTED"
+                                    >
+                                        Request changes
+                                    </button>
+                                </div>
+                            </form>
+                        {% endif %}
+                    {% endif %}
+                </article>
+            {% empty %}
+                <div class="empty-panel">
+                    <h2>No milestones yet</h2>
+                    <p>Milestones are created when an order is created.</p>
+                </div>
+            {% endfor %}
+        </div>
+    </section>
+{% endblock %}

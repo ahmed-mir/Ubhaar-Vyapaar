@@ -96,6 +96,11 @@
         </div>
 
         <div class="stat-card">
+            <dt>Active orders</dt>
+            <dd>{{ stats.active_orders }}</dd>
+        </div>
+
+        <div class="stat-card">
             <dt>Unread notifications</dt>
             <dd>{{ stats.unread_notifications }}</dd>
         </div>
@@ -134,6 +139,9 @@
                 <div class="record-actions">
                     <a class="button button-secondary" href="#quote-requests">
                         View requests
+                    </a>
+                    <a class="button button-secondary" href="{% url 'manufacturer_orders' %}">
+                        Manage orders
                     </a>
                     <a class="button button-secondary" href="{% url 'notifications' %}">
                         Notifications

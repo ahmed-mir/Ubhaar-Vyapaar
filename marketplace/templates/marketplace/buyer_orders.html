@@ -1,0 +1,62 @@
+{% extends "marketplace/base.html" %}
+
+{% block title %}My orders | Ubhaar-Vyapaar{% endblock %}
+
+{% block content %}
+    <div class="page-heading">
+        <div>
+            <p class="eyebrow">Buyer workspace</p>
+            <h1>My orders</h1>
+            <p>
+                Track demo orders created from accepted quotations.
+                No real payment or escrow is handled in this version.
+            </p>
+        </div>
+
+        <a class="button button-secondary" href="{% url 'buyer_dashboard' %}">
+            Dashboard
+        </a>
+    </div>
+
+    <div class="record-grid">
+        {% for order in orders %}
+            <article class="record-card">
+                <span class="status-pill status-{{ order.status|lower }}">
+                    {{ order.get_status_display }}
+                </span>
+
+                <h2>Order #{{ order.pk }}</h2>
+                <p class="record-meta">
+                    {{ order.listing.title }} &middot;
+                    {{ order.manufacturer.business_name }}
+                </p>
+
+                <dl class="record-facts">
+                    <dt>Quantity</dt>
+                    <dd>{{ order.quantity }} units</dd>
+
+                    <dt>Total amount</dt>
+                    <dd>&#8377;{{ order.total_amount|floatformat:2 }}</dd>
+
+                    <dt>Terms locked</dt>
+                    <dd>{{ order.terms_locked_at|date:"d M Y, H:i" }}</dd>
+                </dl>
+
+                <a class="button" href="{% url 'order_detail' order.pk %}">
+                    Track order
+                </a>
+            </article>
+        {% empty %}
+            <div class="empty-panel">
+                <h2>No orders yet</h2>
+                <p>
+                    Orders are created after you accept a manufacturer
+                    quotation.
+                </p>
+                <a class="button" href="{% url 'home' %}">
+                    Browse capacity
+                </a>
+            </div>
+        {% endfor %}
+    </div>
+{% endblock %}

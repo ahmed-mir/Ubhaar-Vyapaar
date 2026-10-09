@@ -15,9 +15,99 @@ from .forms import (
     QuotationForm,
     ManufacturerProfileForm
 )
-from .models import CapacityListing, ManufacturerProfile, QuoteRequest, Quotation, SavedListing, Notification
+from .models import (
+    CapacityListing,
+    ManufacturerProfile,
+    Milestone,
+    Notification,
+    Order,
+    QuoteRequest,
+    Quotation,
+    SavedListing,
+)
 from django.db.models import Q
 from django.views.decorators.http import require_POST
+
+
+def create_order_from_quotation(quotation):
+    quote_request = quotation.quote_request
+    listing = quote_request.listing
+
+    order, created = Order.objects.get_or_create(
+        quotation=quotation,
+        defaults={
+            "buyer": quote_request.buyer,
+            "manufacturer": listing.manufacturer,
+            "listing": listing,
+            "specifications_snapshot": {
+                "listing_title": listing.title,
+                "listing_category": listing.get_category_display(),
+                "requirements": quote_request.requirements,
+                "delivery_location": quote_request.delivery_location,
+                "machine_type": listing.machine_type,
+                "materials": listing.materials,
+                "technical_capabilities": listing.technical_capabilities,
+            },
+            "quantity": quotation.quantity,
+            "agreed_unit_price": quotation.price_per_unit,
+            "total_amount": quotation.subtotal,
+            "agreed_production_days": quotation.production_days,
+        },
+    )
+
+    if created:
+        Milestone.objects.bulk_create(
+            [
+                Milestone(
+                    order=order,
+                    title="Production complete",
+                    description=(
+                        "Manufacturer marks this complete when production "
+                        "is ready for buyer review."
+                    ),
+                    percentage=80,
+                    amount=quotation.subtotal * Decimal("0.80"),
+                ),
+                Milestone(
+                    order=order,
+                    title="Ready to ship",
+                    description=(
+                        "Final packing or dispatch readiness checkpoint."
+                    ),
+                    percentage=20,
+                    amount=quotation.subtotal * Decimal("0.20"),
+                ),
+            ]
+        )
+
+    return order, created
+
+
+def refresh_order_status(order):
+    milestones = list(order.milestones.all())
+
+    if not milestones:
+        return
+
+    if all(
+        milestone.status == Milestone.Status.APPROVED
+        for milestone in milestones
+    ):
+        order.status = Order.Status.COMPLETED
+    elif any(
+        milestone.status == Milestone.Status.COMPLETED
+        for milestone in milestones
+    ):
+        order.status = Order.Status.MILESTONE_PENDING
+    elif any(
+        milestone.status == Milestone.Status.REJECTED
+        for milestone in milestones
+    ):
+        order.status = Order.Status.IN_PRODUCTION
+    else:
+        order.status = Order.Status.IN_PRODUCTION
+
+    order.save(update_fields=["status", "updated_at"])
 
 def home(request):
     query = request.GET.get("q", "").strip()
@@ -290,6 +380,20 @@ def buyer_dashboard(request):
         recipient=request.user,
     ).order_by("-created_at", "-pk")[:5]
 
+    active_order_queryset = Order.objects.filter(
+        buyer=request.user,
+    ).exclude(
+        status__in=[
+            Order.Status.COMPLETED,
+            Order.Status.CANCELLED,
+        ],
+    )
+
+    active_orders = active_order_queryset.select_related(
+        "listing",
+        "manufacturer",
+    )[:4]
+
     stats = {
         "active_requests": quote_requests.filter(
             status__in=[
@@ -309,6 +413,7 @@ def buyer_dashboard(request):
             recipient=request.user,
             is_read=False,
         ).count(),
+        "active_orders": active_order_queryset.count(),
     }
 
     return render(
@@ -319,10 +424,187 @@ def buyer_dashboard(request):
             "active_requests": active_requests,
             "pending_quotations": pending_quotations[:6],
             "accepted_quotations": accepted_quotations[:4],
+            "active_orders": active_orders,
             "saved_items": saved_items,
             "notifications": notifications,
         },
     )
+
+
+@login_required
+def buyer_orders(request):
+    if request.user.role != "BUYER":
+        raise PermissionDenied("Only buyer accounts can view orders.")
+
+    orders = Order.objects.filter(
+        buyer=request.user,
+    ).select_related("listing", "manufacturer").prefetch_related(
+        "milestones",
+    )
+
+    return render(
+        request,
+        "marketplace/buyer_orders.html",
+        {"orders": orders},
+    )
+
+
+@login_required
+def manufacturer_orders(request):
+    if request.user.role != "MANUFACTURER":
+        raise PermissionDenied("Only manufacturers can view orders.")
+
+    orders = Order.objects.filter(
+        manufacturer__user=request.user,
+    ).select_related("buyer", "listing").prefetch_related(
+        "milestones",
+    )
+
+    return render(
+        request,
+        "marketplace/manufacturer_orders.html",
+        {"orders": orders},
+    )
+
+
+@login_required
+def order_detail(request, pk):
+    if request.user.role == "BUYER":
+        order = get_object_or_404(
+            Order.objects.select_related(
+                "buyer",
+                "manufacturer",
+                "listing",
+                "quotation",
+            ).prefetch_related("milestones"),
+            pk=pk,
+            buyer=request.user,
+        )
+    elif request.user.role == "MANUFACTURER":
+        order = get_object_or_404(
+            Order.objects.select_related(
+                "buyer",
+                "manufacturer",
+                "listing",
+                "quotation",
+            ).prefetch_related("milestones"),
+            pk=pk,
+            manufacturer__user=request.user,
+        )
+    else:
+        raise PermissionDenied("You do not have access to this order.")
+
+    return render(
+        request,
+        "marketplace/order_detail.html",
+        {"order": order},
+    )
+
+
+@login_required
+@require_POST
+def mark_milestone_complete(request, pk):
+    if request.user.role != "MANUFACTURER":
+        raise PermissionDenied("Only manufacturers can update milestones.")
+
+    milestone = get_object_or_404(
+        Milestone.objects.select_related("order", "order__buyer"),
+        pk=pk,
+        order__manufacturer__user=request.user,
+    )
+
+    if milestone.status in {
+        Milestone.Status.PENDING,
+        Milestone.Status.REJECTED,
+    }:
+        milestone.status = Milestone.Status.COMPLETED
+        milestone.completed_at = timezone.now()
+        milestone.save(update_fields=["status", "completed_at", "updated_at"])
+        refresh_order_status(milestone.order)
+
+        Notification.objects.create(
+            recipient=milestone.order.buyer,
+            message=(
+                f"Milestone '{milestone.title}' is ready for review "
+                f"on order #{milestone.order_id}."
+            ),
+            destination=Notification.Destination.BUYER_DASHBOARD,
+        )
+
+        messages.success(
+            request,
+            "Milestone marked complete for buyer review.",
+        )
+    else:
+        messages.info(request, "This milestone cannot be marked complete.")
+
+    return redirect("order_detail", pk=milestone.order_id)
+
+
+@login_required
+@require_POST
+def respond_to_milestone(request, pk):
+    if request.user.role != "BUYER":
+        raise PermissionDenied("Only buyers can review milestones.")
+
+    milestone = get_object_or_404(
+        Milestone.objects.select_related(
+            "order",
+            "order__manufacturer",
+            "order__manufacturer__user",
+        ),
+        pk=pk,
+        order__buyer=request.user,
+    )
+
+    decision = request.POST.get("status")
+    feedback = request.POST.get("buyer_feedback", "").strip()
+
+    if decision not in {
+        Milestone.Status.APPROVED,
+        Milestone.Status.REJECTED,
+    }:
+        raise PermissionDenied("Invalid milestone response.")
+
+    if milestone.status != Milestone.Status.COMPLETED:
+        messages.info(request, "This milestone is not awaiting review.")
+        return redirect("order_detail", pk=milestone.order_id)
+
+    milestone.status = decision
+    milestone.buyer_feedback = feedback
+
+    if decision == Milestone.Status.APPROVED:
+        milestone.approved_at = timezone.now()
+
+    milestone.save(
+        update_fields=[
+            "status",
+            "buyer_feedback",
+            "approved_at",
+            "updated_at",
+        ]
+    )
+    refresh_order_status(milestone.order)
+
+    response_label = (
+        "approved"
+        if decision == Milestone.Status.APPROVED
+        else "requested changes for"
+    )
+
+    Notification.objects.create(
+        recipient=milestone.order.manufacturer.user,
+        message=(
+            f"The buyer {response_label} milestone "
+            f"'{milestone.title}' on order #{milestone.order_id}."
+        ),
+        destination=Notification.Destination.MANUFACTURER_DASHBOARD,
+    )
+
+    messages.success(request, "Milestone response saved.")
+    return redirect("order_detail", pk=milestone.order_id)
+
+
 @login_required
 def manufacturer_dashboard(request):
     if request.user.role != "MANUFACTURER":
@@ -364,6 +646,14 @@ def manufacturer_dashboard(request):
         "unread_notifications": Notification.objects.filter(
             recipient=request.user,
             is_read=False,
+        ).count(),
+        "active_orders": Order.objects.filter(
+            manufacturer__user=request.user,
+        ).exclude(
+            status__in=[
+                Order.Status.COMPLETED,
+                Order.Status.CANCELLED,
+            ],
         ).count(),
     }
 
@@ -652,6 +942,14 @@ def respond_to_quotation(request, pk):
                 else "declined"
             )
 
+            order = None
+            order_created = False
+
+            if new_status == Quotation.Status.ACCEPTED:
+                quotation.status = Quotation.Status.ACCEPTED
+                quotation.responded_at = timezone.now()
+                order, order_created = create_order_from_quotation(quotation)
+
             Notification.objects.create(
                 recipient_id=(
                     quotation.quote_request.listing.manufacturer.user_id
@@ -665,12 +963,22 @@ def respond_to_quotation(request, pk):
                 ),
             )
 
+            if order_created:
+                Notification.objects.create(
+                    recipient=request.user,
+                    message=(
+                        f"Order #{order.pk} was created from your "
+                        f"accepted quotation."
+                    ),
+                    destination=Notification.Destination.BUYER_DASHBOARD,
+                )
+
     if updated:
         if new_status == Quotation.Status.ACCEPTED:
             messages.success(
                 request,
-                "You accepted the quotation. "
-                "No order or payment has been created.",
+                "You accepted the quotation. A demo order was created. "
+                "No real payment or escrow has been started.",
             )
         else:
             messages.success(
@@ -866,6 +1174,8 @@ def open_notification(request, pk):
     destinations = {
         Notification.Destination.BUYER_REQUESTS:
             "my_quote_requests",
+        Notification.Destination.BUYER_DASHBOARD:
+            "buyer_dashboard",
         Notification.Destination.MANUFACTURER_DASHBOARD:
             "manufacturer_dashboard",
     }

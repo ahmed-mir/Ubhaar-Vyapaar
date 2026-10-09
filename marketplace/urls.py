@@ -25,9 +25,34 @@ urlpatterns = [
         name="buyer_dashboard",
     ),
     path(
+        "buyer/orders/",
+        views.buyer_orders,
+        name="buyer_orders",
+    ),
+    path(
         "manufacturer/dashboard/",
         views.manufacturer_dashboard,
         name="manufacturer_dashboard",
+    ),
+    path(
+        "manufacturer/orders/",
+        views.manufacturer_orders,
+        name="manufacturer_orders",
+    ),
+    path(
+        "orders/<int:pk>/",
+        views.order_detail,
+        name="order_detail",
+    ),
+    path(
+        "milestones/<int:pk>/complete/",
+        views.mark_milestone_complete,
+        name="mark_milestone_complete",
+    ),
+    path(
+        "milestones/<int:pk>/respond/",
+        views.respond_to_milestone,
+        name="respond_to_milestone",
     ),
     path(
         "manufacturer/quotes/<int:pk>/status/",

@@ -1285,3 +1285,30 @@
             background: #edf2f7;
             color: #405268;
         }
+
+        .status-confirmed,
+        .status-in_production,
+        .status-completed,
+        .status-approved,
+        .status-funded {
+            background: var(--success-bg);
+            color: var(--success-text);
+        }
+
+        .status-awaiting_funding,
+        .status-milestone_pending {
+            background: var(--warning-bg);
+            color: var(--warning-text);
+        }
+
+        .status-ready_to_ship,
+        .status-shipped {
+            background: var(--info-bg);
+            color: var(--info-text);
+        }
+
+        .status-cancelled,
+        .status-disputed {
+            background: var(--danger-bg);
+            color: var(--danger-text);
+        }

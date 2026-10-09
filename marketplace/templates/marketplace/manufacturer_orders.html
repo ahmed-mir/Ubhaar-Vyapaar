@@ -1,0 +1,58 @@
+{% extends "marketplace/base.html" %}
+
+{% block title %}Manufacturer orders | Ubhaar-Vyapaar{% endblock %}
+
+{% block content %}
+    <div class="page-heading">
+        <div>
+            <p class="eyebrow">Manufacturer workspace</p>
+            <h1>Orders</h1>
+            <p>
+                Manage demo orders and mark production milestones complete
+                for buyer review.
+            </p>
+        </div>
+
+        <a class="button button-secondary" href="{% url 'manufacturer_dashboard' %}">
+            Dashboard
+        </a>
+    </div>
+
+    <div class="record-grid">
+        {% for order in orders %}
+            <article class="record-card">
+                <span class="status-pill status-{{ order.status|lower }}">
+                    {{ order.get_status_display }}
+                </span>
+
+                <h2>Order #{{ order.pk }}</h2>
+                <p class="record-meta">
+                    {{ order.listing.title }} &middot;
+                    {{ order.buyer.username }}
+                </p>
+
+                <dl class="record-facts">
+                    <dt>Quantity</dt>
+                    <dd>{{ order.quantity }} units</dd>
+
+                    <dt>Total amount</dt>
+                    <dd>&#8377;{{ order.total_amount|floatformat:2 }}</dd>
+
+                    <dt>Production time</dt>
+                    <dd>{{ order.agreed_production_days }} days</dd>
+                </dl>
+
+                <a class="button" href="{% url 'order_detail' order.pk %}">
+                    Manage order
+                </a>
+            </article>
+        {% empty %}
+            <div class="empty-panel">
+                <h2>No orders yet</h2>
+                <p>
+                    Accepted buyer quotations will create orders here.
+                </p>
+            </div>
+        {% endfor %}
+    </div>
+{% endblock %}
