@@ -190,4 +190,60 @@
             {% endfor %}
         </div>
     </section>
+
+    {% if order.status == "COMPLETED" %}
+        <section class="dashboard-band" aria-labelledby="review-title">
+            <div class="section-heading">
+                <div>
+                    <h2 id="review-title">Order review</h2>
+                    <p>
+                        Completed orders can be reviewed once by the buyer.
+                    </p>
+                </div>
+            </div>
+
+            <div class="record-grid">
+                {% if order.review %}
+                    <article class="record-card">
+                        <span class="trust-badge">
+                            Overall {{ order.review.overall_rating }}/5
+                        </span>
+
+                        <h3>Buyer feedback</h3>
+
+                        <dl class="record-facts">
+                            <dt>Quality</dt>
+                            <dd>{{ order.review.quality_rating }}/5</dd>
+
+                            <dt>Timeliness</dt>
+                            <dd>{{ order.review.timeliness_rating }}/5</dd>
+
+                            <dt>Communication</dt>
+                            <dd>{{ order.review.communication_rating }}/5</dd>
+                        </dl>
+
+                        {% if order.review.comment %}
+                            <p>{{ order.review.comment|linebreaksbr }}</p>
+                        {% endif %}
+                    </article>
+                {% elif user.role == "BUYER" %}
+                    <article class="record-card">
+                        <h3>Share your experience</h3>
+                        <p class="record-meta">
+                            Your review will appear on the manufacturer's
+                            public profile.
+                        </p>
+                        <a class="button" href="{% url 'review_order' order.pk %}">
+                            Write review
+                        </a>
+                    </article>
+                {% else %}
+                    <div class="empty-panel">
+                        <h2>No review yet</h2>
+                        <p>The buyer can review this order after completion.</p>
+                    </div>
+                {% endif %}
+            </div>
+        </section>
+    {% endif %}
 {% endblock %}

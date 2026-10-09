@@ -48,6 +48,7 @@ def register_manufacturer(request):
                     city=form.cleaned_data["city"],
                     state=form.cleaned_data["state"],
                     is_verified=False,
+                    kyc_status=ManufacturerProfile.KycStatus.UNDER_REVIEW,
                 )
 
             login(request, user)

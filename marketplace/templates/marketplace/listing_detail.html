@@ -322,6 +322,21 @@
                     {{ listing.manufacturer.state }}
                 </p>
 
+                <div class="action-links">
+                    {% for badge in listing.manufacturer.earned_badges %}
+                        <span class="trust-badge">{{ badge }}</span>
+                    {% endfor %}
+                </div>
+
+                {% if listing.manufacturer.review_count %}
+                    <p class="record-meta">
+                        Average rating:
+                        {{ listing.manufacturer.average_rating|floatformat:1 }}/5
+                        from {{ listing.manufacturer.review_count }}
+                        review{{ listing.manufacturer.review_count|pluralize }}
+                    </p>
+                {% endif %}
+
                 {% if listing.manufacturer.description %}
                     {{ listing.manufacturer.description|linebreaks }}
                 {% endif %}

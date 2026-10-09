@@ -1,11 +1,17 @@
 from django.conf import settings
 from django.db import models
-from django.core.validators import MinValueValidator
+from django.core.validators import MaxValueValidator, MinValueValidator
 from django.utils import timezone
 from decimal import Decimal
 
 
 class ManufacturerProfile(models.Model):
+    class KycStatus(models.TextChoices):
+        APPLIED = "APPLIED", "Applied"
+        UNDER_REVIEW = "UNDER_REVIEW", "Under review"
+        VERIFIED = "VERIFIED", "Verified"
+        REJECTED = "REJECTED", "Rejected"
+
     user = models.OneToOneField(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
@@ -18,6 +24,36 @@ class ManufacturerProfile(models.Model):
     city = models.CharField(max_length=100)
     state = models.CharField(max_length=100)
     is_verified = models.BooleanField(default=False)
+    kyc_status = models.CharField(
+        max_length=20,
+        choices=KycStatus.choices,
+        default=KycStatus.APPLIED,
+    )
+
+    @property
+    def average_rating(self):
+        result = self.reviews.aggregate(
+            average=models.Avg("overall_rating")
+        )
+        return result["average"]
+
+    @property
+    def review_count(self):
+        return self.reviews.count()
+
+    @property
+    def earned_badges(self):
+        badges = []
+
+        if self.is_verified or self.kyc_status == self.KycStatus.VERIFIED:
+            badges.append("Verified Manufacturer")
+
+        average = self.average_rating
+
+        if self.review_count >= 10 and average and average >= Decimal("4.5"):
+            badges.append("Top Rated")
+
+        return badges
 
     def __str__(self):
         return self.business_name
@@ -277,6 +313,51 @@ class Milestone(models.Model):
 
     def __str__(self):
         return f"{self.title} for order #{self.order_id}"
+
+
+class Review(models.Model):
+    order = models.OneToOneField(
+        Order,
+        on_delete=models.CASCADE,
+        related_name="review",
+    )
+    buyer = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.PROTECT,
+        related_name="reviews",
+        limit_choices_to={"role": "BUYER"},
+    )
+    manufacturer = models.ForeignKey(
+        ManufacturerProfile,
+        on_delete=models.CASCADE,
+        related_name="reviews",
+    )
+    quality_rating = models.PositiveSmallIntegerField(
+        validators=[MinValueValidator(1), MaxValueValidator(5)],
+    )
+    timeliness_rating = models.PositiveSmallIntegerField(
+        validators=[MinValueValidator(1), MaxValueValidator(5)],
+    )
+    communication_rating = models.PositiveSmallIntegerField(
+        validators=[MinValueValidator(1), MaxValueValidator(5)],
+    )
+    overall_rating = models.PositiveSmallIntegerField(
+        validators=[MinValueValidator(1), MaxValueValidator(5)],
+    )
+    comment = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["order", "buyer"],
+                name="unique_buyer_review_per_order",
+            ),
+        ]
+        ordering = ["-created_at", "-pk"]
+
+    def __str__(self):
+        return f"Review for order #{self.order_id}"
     
 class SavedListing(models.Model):
     buyer = models.ForeignKey(

@@ -36,15 +36,30 @@
     </a>
 
     <section class="record-card business-profile">
-        <span class="status-pill status-accepted">
-            Verified business
-        </span>
+        <div class="action-links">
+            {% for badge in manufacturer.earned_badges %}
+                <span class="trust-badge">{{ badge }}</span>
+            {% empty %}
+                <span class="status-pill status-pending">
+                    Verification under review
+                </span>
+            {% endfor %}
+        </div>
 
         <h1>{{ manufacturer.business_name }}</h1>
 
         <p class="record-meta">
             {{ manufacturer.city }}, {{ manufacturer.state }}
         </p>
+
+        {% if manufacturer.review_count %}
+            <p class="record-meta">
+                Average rating:
+                {{ manufacturer.average_rating|floatformat:1 }}/5
+                from {{ manufacturer.review_count }}
+                completed order review{{ manufacturer.review_count|pluralize }}
+            </p>
+        {% endif %}
 
         <div class="business-description">
             <h2>About the business</h2>
@@ -58,6 +73,46 @@
             {% endif %}
         </div>
     </section>
+
+    {% if manufacturer.review_count %}
+        <section class="dashboard-band" aria-labelledby="reviews-title">
+            <div class="section-heading">
+                <div>
+                    <h2 id="reviews-title">Buyer reviews</h2>
+                    <p>Feedback from completed orders only.</p>
+                </div>
+            </div>
+
+            <div class="record-grid">
+                {% for review in manufacturer.reviews.all|slice:":3" %}
+                    <article class="record-card">
+                        <span class="trust-badge">
+                            Overall {{ review.overall_rating }}/5
+                        </span>
+
+                        <dl class="record-facts">
+                            <dt>Quality</dt>
+                            <dd>{{ review.quality_rating }}/5</dd>
+
+                            <dt>Timeliness</dt>
+                            <dd>{{ review.timeliness_rating }}/5</dd>
+
+                            <dt>Communication</dt>
+                            <dd>{{ review.communication_rating }}/5</dd>
+                        </dl>
+
+                        {% if review.comment %}
+                            <p>{{ review.comment|linebreaksbr }}</p>
+                        {% endif %}
+
+                        <p class="record-meta">
+                            {{ review.created_at|date:"d M Y" }}
+                        </p>
+                    </article>
+                {% endfor %}
+            </div>
+        </section>
+    {% endif %}
 
     <div class="page-heading">
         <div>

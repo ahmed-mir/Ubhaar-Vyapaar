@@ -45,6 +45,11 @@ urlpatterns = [
         name="order_detail",
     ),
     path(
+        "orders/<int:pk>/review/",
+        views.review_order,
+        name="review_order",
+    ),
+    path(
         "milestones/<int:pk>/complete/",
         views.mark_milestone_complete,
         name="mark_milestone_complete",

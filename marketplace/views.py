@@ -13,7 +13,8 @@ from .forms import (
     CapacityListingForm,
     QuoteRequestForm,
     QuotationForm,
-    ManufacturerProfileForm
+    ManufacturerProfileForm,
+    ReviewForm,
 )
 from .models import (
     CapacityListing,
@@ -23,6 +24,7 @@ from .models import (
     Order,
     QuoteRequest,
     Quotation,
+    Review,
     SavedListing,
 )
 from django.db.models import Q
@@ -497,7 +499,52 @@ def order_detail(request, pk):
     return render(
         request,
         "marketplace/order_detail.html",
-        {"order": order},
+        {
+            "order": order,
+            "review_form": ReviewForm(),
+        },
+    )
+
+
+@login_required
+@require_http_methods(["GET", "POST"])
+def review_order(request, pk):
+    if request.user.role != "BUYER":
+        raise PermissionDenied("Only buyers can review completed orders.")
+
+    order = get_object_or_404(
+        Order.objects.select_related("manufacturer", "listing"),
+        pk=pk,
+        buyer=request.user,
+        status=Order.Status.COMPLETED,
+    )
+
+    if Review.objects.filter(order=order, buyer=request.user).exists():
+        messages.info(request, "You already reviewed this order.")
+        return redirect("order_detail", pk=order.pk)
+
+    if request.method == "POST":
+        form = ReviewForm(request.POST)
+
+        if form.is_valid():
+            review = form.save(commit=False)
+            review.order = order
+            review.buyer = request.user
+            review.manufacturer = order.manufacturer
+            review.save()
+
+            messages.success(request, "Thank you for reviewing this order.")
+            return redirect("order_detail", pk=order.pk)
+    else:
+        form = ReviewForm()
+
+    return render(
+        request,
+        "marketplace/review_order.html",
+        {
+            "form": form,
+            "order": order,
+        },
     )
 
 
@@ -584,7 +631,9 @@ def respond_to_milestone(request, pk):
             "updated_at",
         ]
     )
+    previous_order_status = milestone.order.status
     refresh_order_status(milestone.order)
+    milestone.order.refresh_from_db(fields=["status"])
 
     response_label = (
         "approved"
@@ -600,6 +649,19 @@ def respond_to_milestone(request, pk):
         ),
         destination=Notification.Destination.MANUFACTURER_DASHBOARD,
     )
+
+    if (
+        previous_order_status != Order.Status.COMPLETED
+        and milestone.order.status == Order.Status.COMPLETED
+    ):
+        Notification.objects.create(
+            recipient=request.user,
+            message=(
+                f"Order #{milestone.order_id} is complete. "
+                "You can now leave a review."
+            ),
+            destination=Notification.Destination.BUYER_DASHBOARD,
+        )
 
     messages.success(request, "Milestone response saved.")
     return redirect("order_detail", pk=milestone.order_id)
@@ -1113,6 +1175,7 @@ def edit_business_profile(request):
 
             if needs_review:
                 profile.is_verified = False
+                profile.kyc_status = ManufacturerProfile.KycStatus.UNDER_REVIEW
 
             profile.save()
 

@@ -1,6 +1,12 @@
 from django import forms
 
-from .models import CapacityListing, Quotation, QuoteRequest, ManufacturerProfile
+from .models import (
+    CapacityListing,
+    ManufacturerProfile,
+    Quotation,
+    QuoteRequest,
+    Review,
+)
 
 
 class QuoteRequestForm(forms.ModelForm):
@@ -196,4 +202,34 @@ class ManufacturerProfileForm(forms.ModelForm):
                     ),
                 }
             ),
+        }
+
+
+class ReviewForm(forms.ModelForm):
+    class Meta:
+        model = Review
+        fields = (
+            "quality_rating",
+            "timeliness_rating",
+            "communication_rating",
+            "overall_rating",
+            "comment",
+        )
+        widgets = {
+            "quality_rating": forms.NumberInput(attrs={"min": 1, "max": 5}),
+            "timeliness_rating": forms.NumberInput(attrs={"min": 1, "max": 5}),
+            "communication_rating": forms.NumberInput(attrs={"min": 1, "max": 5}),
+            "overall_rating": forms.NumberInput(attrs={"min": 1, "max": 5}),
+            "comment": forms.Textarea(
+                attrs={
+                    "rows": 4,
+                    "placeholder": "Share practical feedback for other buyers.",
+                }
+            ),
+        }
+        help_texts = {
+            "quality_rating": "Rate from 1 to 5.",
+            "timeliness_rating": "Rate from 1 to 5.",
+            "communication_rating": "Rate from 1 to 5.",
+            "overall_rating": "Rate from 1 to 5.",
         }

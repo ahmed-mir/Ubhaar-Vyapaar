@@ -1,0 +1,47 @@
+{% extends "marketplace/base.html" %}
+
+{% block title %}Review order #{{ order.pk }} | Ubhaar-Vyapaar{% endblock %}
+
+{% block content %}
+    <section class="auth-card" aria-labelledby="review-title">
+        <a class="back-link" href="{% url 'order_detail' order.pk %}">
+            &larr; Order #{{ order.pk }}
+        </a>
+
+        <h1 id="review-title">Review this order</h1>
+
+        <p class="auth-intro">
+            Rate your completed order with {{ order.manufacturer.business_name }}.
+            Reviews help future buyers understand real performance.
+        </p>
+
+        <form method="post" class="styled-form form-grid" novalidate>
+            {% csrf_token %}
+            {{ form.non_field_errors }}
+
+            {% for field in form %}
+                <div
+                    class="form-field{% if field.errors %} form-field-error{% endif %}"
+                >
+                    {{ field.label_tag }}
+                    {{ field }}
+
+                    {% if field.help_text %}
+                        <p class="helptext">{{ field.help_text }}</p>
+                    {% endif %}
+
+                    {{ field.errors }}
+                </div>
+            {% endfor %}
+
+            <div class="form-actions">
+                <a class="button button-secondary" href="{% url 'order_detail' order.pk %}">
+                    Cancel
+                </a>
+                <button class="button" type="submit">
+                    Submit review
+                </button>
+            </div>
+        </form>
+    </section>
+{% endblock %}

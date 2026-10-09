@@ -7,6 +7,7 @@ from .models import (
     Milestone,
     QuoteRequest,
     Quotation,
+    Review,
     SavedListing,
     Notification,
 )
@@ -19,8 +20,9 @@ class ManufacturerProfileAdmin(admin.ModelAdmin):
         "user",
         "city",
         "is_verified",
+        "kyc_status",
     )
-    list_filter = ("is_verified", "state")
+    list_filter = ("is_verified", "kyc_status", "state")
     search_fields = ("business_name", "city")
 
 
@@ -129,6 +131,24 @@ class MilestoneAdmin(admin.ModelAdmin):
     list_filter = ("status",)
     search_fields = ("title", "order__listing__title")
     readonly_fields = ("completed_at", "approved_at", "created_at", "updated_at")
+
+
+@admin.register(Review)
+class ReviewAdmin(admin.ModelAdmin):
+    list_display = (
+        "order",
+        "buyer",
+        "manufacturer",
+        "overall_rating",
+        "created_at",
+    )
+    list_filter = ("overall_rating", "created_at")
+    search_fields = (
+        "buyer__username",
+        "manufacturer__business_name",
+        "comment",
+    )
+    readonly_fields = ("created_at",)
 
 
 @admin.register(SavedListing)

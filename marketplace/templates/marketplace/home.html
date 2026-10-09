@@ -239,6 +239,13 @@
                         {{ listing.manufacturer.state }}
                     </p>
 
+                    {% if listing.manufacturer.review_count %}
+                        <p class="record-meta">
+                            {{ listing.manufacturer.average_rating|floatformat:1 }}/5
+                            from completed order reviews
+                        </p>
+                    {% endif %}
+
                     <p class="description">
                         {{ listing.description|truncatewords:24 }}
                     </p>

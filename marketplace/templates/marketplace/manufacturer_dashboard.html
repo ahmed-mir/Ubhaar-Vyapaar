@@ -45,7 +45,7 @@
                 </p>
             {% else %}
                 <span class="status-pill status-pending">
-                    Awaiting verification
+                    {{ manufacturer.get_kyc_status_display }}
                 </span>
                 <p>
                     Your listings are saved, but buyers will see them only

@@ -22,7 +22,7 @@
             </p>
         {% else %}
             <p class="message">
-                Your business is awaiting verification.
+                KYC status: {{ manufacturer.get_kyc_status_display }}.
                 Your profile and listings are currently hidden
                 from public browsing.
             </p>
