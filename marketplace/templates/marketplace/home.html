@@ -2,305 +2,38 @@
 
 {% block title %}Find manufacturing partners | Ubhaar-Vyapaar{% endblock %}
 
-{% block extra_css %}
-<style>
-    .hero {
-        padding: 44px;
-        border: 1px solid #d8e6e2;
-        border-radius: 18px;
-        background: #eaf3f0;
-        margin-bottom: 36px;
-    }
-
-    .eyebrow {
-        margin: 0 0 12px;
-        color: var(--accent);
-        font-size: 12px;
-        font-weight: 800;
-        letter-spacing: 1.5px;
-        text-transform: uppercase;
-    }
-
-    .hero h1 {
-        max-width: 720px;
-        margin: 0 0 16px;
-        font-size: clamp(30px, 5vw, 48px);
-        line-height: 1.15;
-        letter-spacing: 0;
-    }
-
-    .hero-description {
-        max-width: 640px;
-        margin: 0 0 26px;
-        color: var(--muted);
-        font-size: 17px;
-    }
-
-    .search-form label {
-        display: block;
-        margin-bottom: 8px;
-        font-size: 14px;
-        font-weight: 600;
-    }
-
-    .search-controls {
-        display: flex;
-        flex-wrap: wrap;
-        align-items: center;
-        gap: 10px;
-    }
-
-    .search-controls input {
-        flex: 1 1 260px;
-        min-width: 0;
-        min-height: 48px;
-        padding: 12px 16px;
-        border: 1px solid #b5c6c0;
-        border-radius: 8px;
-        background: white;
-    }
-
-    .search-controls .button {
-        min-height: 48px;
-    }
-
-    .section-heading {
-        margin-bottom: 22px;
-    }
-
-    .section-heading h2 {
-        margin: 0 0 4px;
-        font-size: 26px;
-        letter-spacing: 0;
-    }
-
-    .section-heading p {
-        margin: 0;
-        color: var(--muted);
-        overflow-wrap: anywhere;
-    }
-
-    .listings {
-        display: grid;
-        grid-template-columns: repeat(
-            auto-fit, minmax(min(100%, 300px), 1fr)
-        );
-        gap: 22px;
-    }
-
-    .listing-card {
-        display: flex;
-        flex-direction: column;
-        padding: 26px;
-        border: 1px solid var(--border);
-        border-radius: 12px;
-        background: white;
-        overflow-wrap: anywhere;
-    }
-
-    .listing-card h3 {
-        margin: 14px 0 6px;
-        font-size: 22px;
-        line-height: 1.3;
-    }
-
-    .listing-card h3 a {
-        text-decoration: none;
-    }
-
-    .listing-card h3 a:hover {
-        text-decoration: underline;
-    }
-
-    .badge {
-        align-self: flex-start;
-        padding: 4px 9px;
-        border-radius: 5px;
-        background: #edf8f1;
-        color: #24633f;
-        font-size: 12px;
-        font-weight: 700;
-    }
-
-    .company,
-    .description {
-        color: var(--muted);
-        font-size: 14px;
-    }
-
-    .company {
-        margin: 0;
-    }
-
-    .description {
-        margin-block: 16px;
-    }
-
-    .price {
-        margin: auto 0 16px;
-        padding-top: 12px;
-        font-size: 26px;
-        font-weight: 800;
-        color: var(--navy);
-    }
-
-    .price span {
-        font-size: 13px;
-        font-weight: 400;
-        color: var(--muted);
-    }
-
-    .listing-meta {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 12px 28px;
-        margin: 0 0 22px;
-        padding-top: 16px;
-        border-top: 1px solid var(--border);
-    }
-
-    .listing-meta dt {
-        color: var(--muted);
-        font-size: 12px;
-    }
-
-    .listing-meta dd {
-        margin: 2px 0 0;
-        font-size: 14px;
-        font-weight: 700;
-    }
-
-    .empty-state {
-        grid-column: 1 / -1;
-        padding: 40px 24px;
-        border: 1px dashed #bac6d2;
-        border-radius: 12px;
-        background: white;
-        text-align: center;
-    }
-
-    .empty-state h3 {
-        margin-top: 0;
-    }
-
-    .empty-state p {
-        color: var(--muted);
-    }
-
-    @media (max-width: 700px) {
-        .hero {
-            padding: 26px 20px;
-            margin-bottom: 28px;
-        }
-
-        .hero-description {
-            font-size: 15px;
-        }
-
-        .search-controls input {
-            flex-basis: 100%;
-        }
-
-        .listing-card {
-            padding: 22px;
-        }
-    }
-    .search-fields {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: flex-end;
-    gap: 12px;
-}
-
-.search-field {
-    flex: 2 1 250px;
-    min-width: 0;
-}
-
-.category-field {
-    flex: 1 1 200px;
-    min-width: 0;
-}
-
-.search-fields input,
-.search-fields select {
-    width: 100%;
-    min-height: 48px;
-    padding: 12px;
-    border: 1px solid #b5c6c0;
-    border-radius: 8px;
-    background: white;
-    color: var(--text);
-}
-
-.search-fields .button {
-    min-height: 48px;
-}
-
-@media (max-width: 600px) {
-    .search-field,
-    .category-field {
-        flex-basis: 100%;
-    }
-
-    .search-fields .button {
-        width: 100%;
-    }
-}
-
-.pagination-summary {
-    margin-top: 28px;
-    color: var(--muted);
-    font-size: 14px;
-    text-align: center;
-}
-
-.pagination {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-wrap: wrap;
-    gap: 16px;
-    margin-top: 16px;
-}
-
-.pagination span {
-    color: var(--muted);
-    font-size: 14px;
-}
-</style>
-
-{% endblock %}
-
 {% block content %}
     <section class="hero" aria-labelledby="hero-title">
-        <p class="eyebrow">Built for business connections</p>
+        <p class="eyebrow">Verified manufacturing capacity</p>
 
-        <h1 id="hero-title">Find the right manufacturing partner.</h1>
+        <h1 id="hero-title">
+            Find verified manufacturing capacity for your next production run.
+        </h1>
 
         <p class="hero-description">
-            Explore services from verified businesses, compare minimum
-            quantities, and request a quote for your next project.
+            Source small-batch production from verified manufacturers.
+            Compare MOQ, pricing, locations, and lead times before you request
+            a quote.
         </p>
 
         <form method="get" action="{% url 'home' %}" class="search-form">
             <div class="search-fields">
                 <div class="search-field">
-                    <label for="search">What are you looking for?</label>
+                    <label for="search">Search capacity</label>
                     <input
                         id="search"
                         type="search"
                         name="q"
                         value="{{ query }}"
-                        placeholder="Product, manufacturer, or city"
+                        placeholder="Packaging, textiles, manufacturer, or city"
                     >
                 </div>
-        
+
                 <div class="category-field">
                     <label for="category">Category</label>
                     <select id="category" name="category">
                         <option value="">All categories</option>
-        
+
                         {% for value, label in categories %}
                             <option
                                 value="{{ value }}"
@@ -311,30 +44,128 @@
                         {% endfor %}
                     </select>
                 </div>
-        
-                <button class="button" type="submit">
-                    Search listings
-                </button>
+
+                <div class="category-field">
+                    <label for="location">Location</label>
+                    <input
+                        id="location"
+                        type="search"
+                        name="location"
+                        value="{{ location }}"
+                        placeholder="City or state"
+                    >
+                </div>
+
+                <div class="compact-field">
+                    <label for="moq">Max MOQ</label>
+                    <input
+                        id="moq"
+                        type="number"
+                        min="1"
+                        name="moq"
+                        value="{{ moq }}"
+                        placeholder="1000"
+                    >
+                </div>
+
+                <div class="compact-field">
+                    <label for="max_price">Max price</label>
+                    <input
+                        id="max_price"
+                        type="number"
+                        min="1"
+                        step="0.01"
+                        name="max_price"
+                        value="{{ max_price }}"
+                        placeholder="50"
+                    >
+                </div>
+
+                <div class="compact-field">
+                    <label for="lead_time">Max days</label>
+                    <input
+                        id="lead_time"
+                        type="number"
+                        min="1"
+                        name="lead_time"
+                        value="{{ lead_time }}"
+                        placeholder="14"
+                    >
+                </div>
+
+                <div class="category-field">
+                    <label for="verification">Verification</label>
+                    <select id="verification" name="verification">
+                        <option value="">Verified manufacturers</option>
+                        <option
+                            value="verified"
+                            {% if verification == "verified" %}selected{% endif %}
+                        >
+                            Verified only
+                        </option>
+                    </select>
+                </div>
+
+                <div class="category-field">
+                    <label for="sort">Sort by</label>
+                    <select id="sort" name="sort">
+                        <option value="newest" {% if sort == "newest" %}selected{% endif %}>
+                            Newest
+                        </option>
+                        <option value="price" {% if sort == "price" %}selected{% endif %}>
+                            Lowest price
+                        </option>
+                        <option value="lead_time" {% if sort == "lead_time" %}selected{% endif %}>
+                            Shortest lead time
+                        </option>
+                    </select>
+                </div>
+
+                <div class="search-actions">
+                    <button class="button" type="submit">
+                        Search listings
+                    </button>
+
+                    {% if query or selected_category or location or moq or max_price or lead_time or verification or sort != "newest" %}
+                        <a class="button button-secondary" href="{% url 'home' %}">
+                            Clear filters
+                        </a>
+                    {% endif %}
+                </div>
             </div>
-        
-            {% if query or selected_category %}
-                <p>
-                    <a href="{% url 'home' %}">Clear all filters</a>
-                </p>
-            {% endif %}
         </form>
+    </section>
+
+    <section class="category-discovery" aria-labelledby="categories-title">
+        <div class="section-heading">
+            <div>
+                <h2 id="categories-title">Browse by category</h2>
+                <p>Start with the most common small-batch manufacturing needs.</p>
+            </div>
+        </div>
+
+        <div class="category-list">
+            {% for value, label in categories %}
+                <a
+                    class="category-chip{% if selected_category == value %} category-chip-active{% endif %}"
+                    href="?category={{ value|urlencode }}"
+                >
+                    {{ label }}
+                </a>
+            {% endfor %}
+        </div>
     </section>
 
     <section aria-labelledby="listings-title">
         <div class="section-heading">
             <h2 id="listings-title">
-                {% if query or selected_category %}
+                {% if query or selected_category or location or moq or max_price or lead_time %}
                     Search results
                 {% else %}
-                    Explore manufacturing services
+                    Available capacity
                 {% endif %}
             </h2>
-            
+
             <p>
                 {% if query %}
                     Showing matches for "{{ query }}"
@@ -358,13 +189,24 @@
         width="800"
         height="600"
     >
-{% else %}
-    <div class="listing-image-placeholder">
-        Product photo coming soon
-    </div>
-{% endif %}
+                    {% else %}
+                        <div class="listing-image-placeholder">
+                            Product photo coming soon
+                        </div>
+                    {% endif %}
+
+                    <div class="listing-card-header">
+                        {% if listing.manufacturer.is_verified %}
+                            <span class="trust-badge">Verified manufacturer</span>
+                        {% endif %}
+
+                        <span class="status-pill status-accepted">
+                            Available
+                        </span>
+                    </div>
+
                     {% if listing.manufacturer.is_verified %}
-                        <span class="badge">Verified business</span>
+                        <span class="visually-hidden">Verified business</span>
                     {% endif %}
 
                     <h3>
@@ -393,6 +235,13 @@
                     </p>
 
                     <dl class="listing-meta">
+                        <div>
+                            <dt>Location</dt>
+                            <dd>
+                                {{ listing.manufacturer.city }},
+                                {{ listing.manufacturer.state }}
+                            </dd>
+                        </div>
                         <div>
                             <dt>Minimum order</dt>
                             <dd>{{ listing.minimum_quantity }} units</dd>
@@ -426,37 +275,37 @@
             {% endfor %}
         </div>
         {% if page_obj.paginator.count %}
-    <div class="pagination-summary">
+            <div class="pagination-summary">
                 Showing {{ page_obj.start_index }}-{{ page_obj.end_index }}
-        of {{ page_obj.paginator.count }} listings
-    </div>
-{% endif %}
-
-{% if page_obj.has_other_pages %}
-    <nav class="pagination" aria-label="Listing pages">
-        {% if page_obj.has_previous %}
-            <a
-                class="button button-secondary"
-                href="?q={{ query|urlencode }}&amp;category={{ selected_category|urlencode }}&amp;page={{ page_obj.previous_page_number }}"
-            >
-                &larr; Previous
-            </a>
+                of {{ page_obj.paginator.count }} listings
+            </div>
         {% endif %}
 
-        <span aria-current="page">
-            Page {{ page_obj.number }}
-            of {{ page_obj.paginator.num_pages }}
-        </span>
+        {% if page_obj.has_other_pages %}
+            <nav class="pagination" aria-label="Listing pages">
+                {% if page_obj.has_previous %}
+                    <a
+                        class="button button-secondary"
+                        href="?q={{ query|urlencode }}&amp;category={{ selected_category|urlencode }}&amp;location={{ location|urlencode }}&amp;moq={{ moq|urlencode }}&amp;max_price={{ max_price|urlencode }}&amp;lead_time={{ lead_time|urlencode }}&amp;verification={{ verification|urlencode }}&amp;sort={{ sort|urlencode }}&amp;page={{ page_obj.previous_page_number }}"
+                    >
+                        &larr; Previous
+                    </a>
+                {% endif %}
 
-        {% if page_obj.has_next %}
-            <a
-                class="button button-secondary"
-                href="?q={{ query|urlencode }}&amp;category={{ selected_category|urlencode }}&amp;page={{ page_obj.next_page_number }}"
-            >
-                Next &rarr;
-            </a>
+                <span aria-current="page">
+                    Page {{ page_obj.number }}
+                    of {{ page_obj.paginator.num_pages }}
+                </span>
+
+                {% if page_obj.has_next %}
+                    <a
+                        class="button button-secondary"
+                        href="?q={{ query|urlencode }}&amp;category={{ selected_category|urlencode }}&amp;location={{ location|urlencode }}&amp;moq={{ moq|urlencode }}&amp;max_price={{ max_price|urlencode }}&amp;lead_time={{ lead_time|urlencode }}&amp;verification={{ verification|urlencode }}&amp;sort={{ sort|urlencode }}&amp;page={{ page_obj.next_page_number }}"
+                    >
+                        Next &rarr;
+                    </a>
+                {% endif %}
+            </nav>
         {% endif %}
-    </nav>
-{% endif %}
     </section>
 {% endblock %}

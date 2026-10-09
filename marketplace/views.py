@@ -6,6 +6,7 @@ from django.core.paginator import Paginator
 from django.db import transaction
 from django.views.decorators.http import require_http_methods
 from django.utils import timezone
+from decimal import Decimal, InvalidOperation
 
 from .forms import (
     CapacityListingEditForm,
@@ -21,6 +22,12 @@ from django.views.decorators.http import require_POST
 def home(request):
     query = request.GET.get("q", "").strip()
     selected_category = request.GET.get("category", "").strip()
+    location = request.GET.get("location", "").strip()
+    moq = request.GET.get("moq", "").strip()
+    max_price = request.GET.get("max_price", "").strip()
+    lead_time = request.GET.get("lead_time", "").strip()
+    verification = request.GET.get("verification", "").strip()
+    sort = request.GET.get("sort", "newest").strip()
 
     valid_categories = {
         value for value, label in CapacityListing.Category.choices
@@ -29,20 +36,57 @@ def home(request):
     if selected_category not in valid_categories:
         selected_category = ""
 
+    valid_sorts = {"newest", "price", "lead_time"}
+
+    if sort not in valid_sorts:
+        sort = "newest"
+
     listings = CapacityListing.objects.filter(
         is_active=True,
         manufacturer__is_verified=True,
-    ).select_related("manufacturer").order_by("-pk")
+    ).select_related("manufacturer")
 
     if query:
         listings = listings.filter(
             Q(title__icontains=query)
             | Q(manufacturer__business_name__icontains=query)
             | Q(manufacturer__city__icontains=query)
+            | Q(manufacturer__state__icontains=query)
+            | Q(description__icontains=query)
         )
 
     if selected_category:
         listings = listings.filter(category=selected_category)
+
+    if location:
+        listings = listings.filter(
+            Q(manufacturer__city__icontains=location)
+            | Q(manufacturer__state__icontains=location)
+        )
+
+    if moq.isdigit():
+        listings = listings.filter(minimum_quantity__lte=int(moq))
+
+    try:
+        if max_price:
+            listings = listings.filter(
+                price_per_unit__lte=Decimal(max_price)
+            )
+    except (InvalidOperation, ValueError):
+        max_price = ""
+
+    if lead_time.isdigit():
+        listings = listings.filter(production_days__lte=int(lead_time))
+
+    if verification and verification != "verified":
+        verification = ""
+
+    if sort == "price":
+        listings = listings.order_by("price_per_unit", "-pk")
+    elif sort == "lead_time":
+        listings = listings.order_by("production_days", "-pk")
+    else:
+        listings = listings.order_by("-pk")
 
     paginator = Paginator(listings, 9)
     page_obj = paginator.get_page(request.GET.get("page"))
@@ -56,6 +100,12 @@ def home(request):
             "query": query,
             "categories": CapacityListing.Category.choices,
             "selected_category": selected_category,
+            "location": location,
+            "moq": moq,
+            "max_price": max_price,
+            "lead_time": lead_time,
+            "verification": verification,
+            "sort": sort,
         },
     )
 def listing_detail(request, pk):
