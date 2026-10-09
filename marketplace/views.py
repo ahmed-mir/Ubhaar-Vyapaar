@@ -255,13 +255,29 @@ def manufacturer_dashboard(request):
             is_active=True,
             manufacturer__is_verified=True,
         ).count(),
+        "active_listings": listings.filter(
+            is_active=True,
+        ).count(),
         "pending_requests": quotes.filter(
             status=QuoteRequest.Status.PENDING,
         ).count(),
-        "accepted_requests": quotes.filter(
-            status=QuoteRequest.Status.ACCEPTED,
+        "quotations_sent": Quotation.objects.filter(
+            quote_request__listing__manufacturer__user=request.user,
+        ).count(),
+        "quotations_accepted": Quotation.objects.filter(
+            quote_request__listing__manufacturer__user=request.user,
+            status=Quotation.Status.ACCEPTED,
+        ).count(),
+        "unread_notifications": Notification.objects.filter(
+            recipient=request.user,
+            is_read=False,
         ).count(),
     }
+
+    manufacturer = get_object_or_404(
+        ManufacturerProfile,
+        user=request.user,
+    )
 
     return render(
         request,
@@ -269,6 +285,7 @@ def manufacturer_dashboard(request):
         {
             "quotes": quotes,
             "stats": stats,
+            "manufacturer": manufacturer,
         },
     )
 @login_required
