@@ -5,6 +5,8 @@ from .models import (
     CapacityListing,
     QuoteRequest,
     Quotation,
+    SavedListing,
+    Notification,
 )
 
 
@@ -25,12 +27,23 @@ class CapacityListingAdmin(admin.ModelAdmin):
     list_display = (
         "title",
         "manufacturer",
+        "category",
         "minimum_quantity",
         "price_per_unit",
+        "production_days",
+        "availability_status",
         "is_active",
     )
-    list_filter = ("is_active",)
-    search_fields = ("title", "manufacturer__business_name")
+    list_filter = ("is_active", "availability_status", "category")
+    search_fields = (
+        "title",
+        "manufacturer__business_name",
+        "machine_type",
+        "materials",
+        "cluster",
+    )
+
+
 @admin.register(QuoteRequest)
 class QuoteRequestAdmin(admin.ModelAdmin):
     list_display = (
@@ -75,3 +88,18 @@ class QuotationAdmin(admin.ModelAdmin):
         "quote_request",
         "quote_request__listing",
     )
+
+
+@admin.register(SavedListing)
+class SavedListingAdmin(admin.ModelAdmin):
+    list_display = ("buyer", "listing", "created_at")
+    search_fields = ("buyer__username", "listing__title")
+    readonly_fields = ("created_at",)
+
+
+@admin.register(Notification)
+class NotificationAdmin(admin.ModelAdmin):
+    list_display = ("recipient", "destination", "is_read", "created_at")
+    list_filter = ("destination", "is_read")
+    search_fields = ("recipient__username", "message")
+    readonly_fields = ("created_at",)

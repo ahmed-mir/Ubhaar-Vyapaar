@@ -52,14 +52,31 @@ class CapacityListingForm(forms.ModelForm):
             "title",
             "category",
             "description",
+            "machine_type",
+            "materials",
+            "technical_capabilities",
             "image",
             "minimum_quantity",
             "price_per_unit",
+            "batch_price",
             "production_days",
+            "available_capacity",
+            "capacity_period",
+            "cluster",
+            "availability_status",
         )
         widgets = {
             "description": forms.Textarea(
                 attrs={"rows": 4}
+            ),
+            "technical_capabilities": forms.Textarea(
+                attrs={
+                    "rows": 4,
+                    "placeholder": (
+                        "Share machine limits, finishing options, tolerances, "
+                        "or other production capabilities."
+                    ),
+                }
             ),
             "image": forms.ClearableFileInput(
                 attrs={
@@ -68,6 +85,12 @@ class CapacityListingForm(forms.ModelForm):
             ),
         }
         help_texts = {
+            "machine_type": "Optional. Example: offset press, CNC router, stitching line.",
+            "materials": "Optional. Example: corrugated board, cotton, mild steel.",
+            "batch_price": "Optional. Use this when you price a full batch instead of only per unit.",
+            "available_capacity": "Optional. Enter the number of units available in the stated period.",
+            "capacity_period": "Optional. Example: per week, June slot, next 30 days.",
+            "cluster": "Optional. Manufacturing cluster or industrial area.",
             "image": (
                 "Optional. Upload a JPG, PNG, or WebP image "
                 "up to 5 MB and 20 megapixels."
@@ -111,7 +134,9 @@ class CapacityListingForm(forms.ModelForm):
         for field in (
             "minimum_quantity",
             "price_per_unit",
+            "batch_price",
             "production_days",
+            "available_capacity",
         ):
             value = cleaned_data.get(field)
 

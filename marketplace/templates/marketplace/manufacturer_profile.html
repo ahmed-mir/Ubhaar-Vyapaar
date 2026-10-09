@@ -89,6 +89,10 @@
                     {{ listing.get_category_display }}
                 </p>
 
+                <span class="status-pill status-{{ listing.availability_status|lower }}">
+                    {{ listing.get_availability_status_display }}
+                </span>
+
                 <h2>{{ listing.title }}</h2>
 
                 <p>{{ listing.description|truncatewords:24 }}</p>
@@ -102,6 +106,16 @@
 
                     <dt>Production time</dt>
                     <dd>{{ listing.production_days }} days</dd>
+
+                    {% if listing.machine_type %}
+                        <dt>Machine type</dt>
+                        <dd>{{ listing.machine_type }}</dd>
+                    {% endif %}
+
+                    {% if listing.materials %}
+                        <dt>Materials</dt>
+                        <dd>{{ listing.materials }}</dd>
+                    {% endif %}
                 </dl>
 
                 <a

@@ -53,6 +53,10 @@ def home(request):
             | Q(manufacturer__city__icontains=query)
             | Q(manufacturer__state__icontains=query)
             | Q(description__icontains=query)
+            | Q(machine_type__icontains=query)
+            | Q(materials__icontains=query)
+            | Q(technical_capabilities__icontains=query)
+            | Q(cluster__icontains=query)
         )
 
     if selected_category:
@@ -62,6 +66,7 @@ def home(request):
         listings = listings.filter(
             Q(manufacturer__city__icontains=location)
             | Q(manufacturer__state__icontains=location)
+            | Q(cluster__icontains=location)
         )
 
     if moq.isdigit():
@@ -144,6 +149,10 @@ def request_quote(request, pk):
         pk=pk,
         is_active=True,
         manufacturer__is_verified=True,
+        availability_status__in=[
+            CapacityListing.AvailabilityStatus.AVAILABLE,
+            CapacityListing.AvailabilityStatus.LIMITED,
+        ],
     )
 
     if request.method == "POST":

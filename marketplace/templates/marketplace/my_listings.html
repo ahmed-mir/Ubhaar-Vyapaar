@@ -24,8 +24,8 @@
                         Awaiting verification
                     </span>
                 {% else %}
-                    <span class="status-pill status-accepted">
-                        Active
+                    <span class="status-pill status-{{ listing.availability_status|lower }}">
+                        {{ listing.get_availability_status_display }}
                     </span>
                 {% endif %}
 
@@ -40,6 +40,26 @@
 
                     <dt>Production time</dt>
                     <dd>{{ listing.production_days }} days</dd>
+
+                    {% if listing.machine_type %}
+                        <dt>Machine type</dt>
+                        <dd>{{ listing.machine_type }}</dd>
+                    {% endif %}
+
+                    {% if listing.materials %}
+                        <dt>Materials</dt>
+                        <dd>{{ listing.materials }}</dd>
+                    {% endif %}
+
+                    {% if listing.available_capacity %}
+                        <dt>Available capacity</dt>
+                        <dd>
+                            {{ listing.available_capacity }} units
+                            {% if listing.capacity_period %}
+                                {{ listing.capacity_period }}
+                            {% endif %}
+                        </dd>
+                    {% endif %}
                 </dl>
 
                 <p class="record-meta">

@@ -1270,3 +1270,18 @@
                 flex-direction: column;
             }
         }
+
+        .status-available {
+            background: var(--success-bg);
+            color: var(--success-text);
+        }
+
+        .status-limited {
+            background: var(--warning-bg);
+            color: var(--warning-text);
+        }
+
+        .status-paused {
+            background: #edf2f7;
+            color: #405268;
+        }

@@ -152,6 +152,9 @@
             {% if listing.manufacturer.is_verified %}
                 <span class="badge">Verified business</span>
             {% endif %}
+            <span class="status-pill status-{{ listing.availability_status|lower }}">
+                {{ listing.get_availability_status_display }}
+            </span>
 
             <h1>{{ listing.title }}</h1>
 
@@ -171,6 +174,32 @@
                         The manufacturer has not added a description yet.
                     </p>
                 {% endif %}
+            </div>
+
+            <div class="description">
+                <h2>Capacity and capabilities</h2>
+
+                <dl class="record-facts">
+                    {% if listing.machine_type %}
+                        <dt>Machine type</dt>
+                        <dd>{{ listing.machine_type }}</dd>
+                    {% endif %}
+
+                    {% if listing.materials %}
+                        <dt>Materials</dt>
+                        <dd>{{ listing.materials }}</dd>
+                    {% endif %}
+
+                    {% if listing.technical_capabilities %}
+                        <dt>Technical capabilities</dt>
+                        <dd>{{ listing.technical_capabilities|linebreaksbr }}</dd>
+                    {% endif %}
+
+                    {% if listing.cluster %}
+                        <dt>Cluster</dt>
+                        <dd>{{ listing.cluster }}</dd>
+                    {% endif %}
+                </dl>
             </div>
         </article>
 
@@ -213,38 +242,69 @@
                         <dt>Production time</dt>
                         <dd>{{ listing.production_days }} days</dd>
                     </div>
+                    {% if listing.batch_price %}
+                        <div>
+                            <dt>Batch price</dt>
+                            <dd>&#8377;{{ listing.batch_price }}</dd>
+                        </div>
+                    {% endif %}
+                    {% if listing.available_capacity %}
+                        <div>
+                            <dt>Available capacity</dt>
+                            <dd>
+                                {{ listing.available_capacity }} units
+                                {% if listing.capacity_period %}
+                                    {{ listing.capacity_period }}
+                                {% endif %}
+                            </dd>
+                        </div>
+                    {% endif %}
                 </dl>
 
                 {% if user.is_authenticated %}
                     {% if user.role == "BUYER" %}
-                        <a
-                            class="button quote-button"
-                            href="{% url 'request_quote' listing.pk %}"
-                        >
-                            Request a quote
-                        </a>
-                        <p class="quote-note">
-                            Share your requirements with the manufacturer.
-                            Sending a request does not place an order.
-                        </p>
+                        {% if listing.availability_status == "PAUSED" %}
+                            <p class="message">
+                                This capacity is temporarily paused and is not
+                                accepting new quote requests.
+                            </p>
+                        {% else %}
+                            <a
+                                class="button quote-button"
+                                href="{% url 'request_quote' listing.pk %}"
+                            >
+                                Request a quote
+                            </a>
+                            <p class="quote-note">
+                                Share your requirements with the manufacturer.
+                                Sending a request does not place an order.
+                            </p>
+                        {% endif %}
                     {% else %}
                         <p class="quote-note">
                             Quote requests are available to buyer accounts.
                         </p>
                     {% endif %}
                 {% else %}
-                    <a
-                        class="button quote-button"
-                        href="{% url 'request_quote' listing.pk %}"
-                    >
-                        Log in to request a quote
-                    </a>
-                    <p class="quote-note">
-                        New here?
-                        <a href="{% url 'register' %}">
-                            Create a buyer account
-                        </a>.
-                    </p>
+                    {% if listing.availability_status == "PAUSED" %}
+                        <p class="message">
+                            This capacity is temporarily paused and is not
+                            accepting new quote requests.
+                        </p>
+                    {% else %}
+                        <a
+                            class="button quote-button"
+                            href="{% url 'request_quote' listing.pk %}"
+                        >
+                            Log in to request a quote
+                        </a>
+                        <p class="quote-note">
+                            New here?
+                            <a href="{% url 'register' %}">
+                                Create a buyer account
+                            </a>.
+                        </p>
+                    {% endif %}
                 {% endif %}
             </section>
 

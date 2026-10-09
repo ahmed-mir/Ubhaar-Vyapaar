@@ -27,8 +27,8 @@
                         >
                     {% endif %}
 
-                    <span class="status-pill status-accepted">
-                        Available
+                    <span class="status-pill status-{{ item.listing.availability_status|lower }}">
+                        {{ item.listing.get_availability_status_display }}
                     </span>
 
                     <h2>{{ item.listing.title }}</h2>
@@ -45,6 +45,9 @@
 
                         <dt>Minimum order</dt>
                         <dd>{{ item.listing.minimum_quantity }} units</dd>
+
+                        <dt>Production time</dt>
+                        <dd>{{ item.listing.production_days }} days</dd>
                     </dl>
 
                     <a

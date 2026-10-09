@@ -12,7 +12,11 @@
 
         <p class="auth-intro">
             <strong>{{ listing.title }}</strong><br>
-            {{ listing.manufacturer.business_name }}
+            {{ listing.manufacturer.business_name }}<br>
+            MOQ: {{ listing.minimum_quantity }} units
+            {% if listing.machine_type %}
+                &middot; {{ listing.machine_type }}
+            {% endif %}
         </p>
 
         {% if recent_quote %}

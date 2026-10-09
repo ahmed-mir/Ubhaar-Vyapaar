@@ -32,6 +32,11 @@ class CapacityListing(models.Model):
         ELECTRONICS = "ELECTRONICS", "Electronics"
         OTHER = "OTHER", "Other"
 
+    class AvailabilityStatus(models.TextChoices):
+        AVAILABLE = "AVAILABLE", "Available"
+        LIMITED = "LIMITED", "Limited capacity"
+        PAUSED = "PAUSED", "Temporarily paused"
+
     category = models.CharField(
         max_length=30,
         choices=Category.choices,
@@ -46,12 +51,32 @@ class CapacityListing(models.Model):
 
     title = models.CharField(max_length=200)
     description = models.TextField()
+    machine_type = models.CharField(max_length=160, blank=True)
+    materials = models.CharField(max_length=240, blank=True)
+    technical_capabilities = models.TextField(blank=True)
     minimum_quantity = models.PositiveIntegerField(default=100)
     price_per_unit = models.DecimalField(
         max_digits=10,
         decimal_places=2,
     )
+    batch_price = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        null=True,
+        blank=True,
+    )
     production_days = models.PositiveIntegerField(default=7)
+    available_capacity = models.PositiveIntegerField(
+        null=True,
+        blank=True,
+    )
+    capacity_period = models.CharField(max_length=120, blank=True)
+    cluster = models.CharField(max_length=120, blank=True)
+    availability_status = models.CharField(
+        max_length=20,
+        choices=AvailabilityStatus.choices,
+        default=AvailabilityStatus.AVAILABLE,
+    )
     is_active = models.BooleanField(default=True)
 
     image = models.ImageField(
