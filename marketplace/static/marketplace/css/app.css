@@ -7,6 +7,9 @@
             --teal-dark: #11635e;
             --teal-soft: #e8f5f3;
 
+            --accent: #b7791f;
+            --accent-soft: #fff7e6;
+
             --background: #f6f8fb;
             --surface: #ffffff;
             --surface-soft: #f9fbfc;
@@ -28,7 +31,8 @@
             --shadow:
                 0 8px 30px rgba(15, 37, 59, 0.07);
 
-            --radius: 16px;
+            --radius: 8px;
+            --radius-sm: 6px;
         }
 
         * {
@@ -191,7 +195,7 @@
 
             color: white;
             font-weight: 900;
-            letter-spacing: -1px;
+            letter-spacing: 0;
         }
 
         .brand-text {
@@ -386,7 +390,7 @@
             font-size: clamp(30px, 4vw, 42px);
             line-height: 1.12;
 
-            letter-spacing: -1px;
+            letter-spacing: 0;
         }
 
         .page-heading p {
@@ -407,6 +411,37 @@
 
             letter-spacing: 1.4px;
             text-transform: uppercase;
+        }
+
+        .section-heading {
+            display: flex;
+            align-items: flex-end;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 16px;
+            margin-bottom: 20px;
+        }
+
+        .section-heading h2 {
+            margin: 0 0 4px;
+            color: var(--navy);
+            font-size: 24px;
+            line-height: 1.2;
+        }
+
+        .section-heading p {
+            margin: 0;
+            color: var(--muted);
+        }
+
+        .dashboard-band {
+            margin-top: 34px;
+        }
+
+        .action-links {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
         }
 
 
@@ -906,5 +941,180 @@
         @media (max-width: 390px) {
             .stats-grid {
                 grid-template-columns: 1fr;
+            }
+        }
+
+
+        /* -------------------------
+           PHASE 1 SHARED REFINEMENTS
+        -------------------------- */
+
+        .record-card,
+        .stat-card,
+        .auth-card,
+        .empty-panel,
+        .listing-image,
+        .listing-image-placeholder,
+        .detail-image,
+        .message {
+            border-radius: var(--radius);
+        }
+
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            width: fit-content;
+            padding: 5px 10px;
+            border-radius: 999px;
+            background: var(--teal-soft);
+            color: var(--teal-dark);
+            font-size: 12px;
+            font-weight: 800;
+            line-height: 1.2;
+        }
+
+        .status-declined {
+            background: var(--danger-bg);
+            color: var(--danger-text);
+        }
+
+        .dashboard-section-title {
+            margin: 6px 0 18px;
+            color: var(--navy);
+            font-size: 22px;
+            line-height: 1.2;
+        }
+
+        .form-grid {
+            display: grid;
+            gap: 18px;
+        }
+
+        .form-field {
+            margin: 0;
+        }
+
+        .form-field label {
+            display: block;
+            margin-bottom: 7px;
+            color: var(--text);
+            font-size: 14px;
+            font-weight: 750;
+        }
+
+        .form-field input,
+        .form-field select,
+        .form-field textarea,
+        .search-fields input,
+        .search-fields select {
+            width: 100%;
+            min-height: 44px;
+            padding: 12px 13px;
+            border: 1px solid #bfc9d5;
+            border-radius: var(--radius);
+            background: #ffffff;
+            color: var(--text);
+            outline: none;
+        }
+
+        .form-field input[type="file"] {
+            padding: 10px;
+        }
+
+        .form-field input[type="checkbox"] {
+            width: auto;
+            min-height: 0;
+            margin-right: 8px;
+        }
+
+        .form-field input:focus,
+        .form-field select:focus,
+        .form-field textarea:focus,
+        .search-fields input:focus,
+        .search-fields select:focus {
+            border-color: var(--teal);
+            box-shadow: 0 0 0 3px rgba(22, 129, 122, 0.12);
+        }
+
+        .form-field-error input,
+        .form-field-error select,
+        .form-field-error textarea {
+            border-color: #b42318;
+        }
+
+        .form-actions {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-top: 4px;
+        }
+
+        .table-wrap {
+            overflow-x: auto;
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            background: var(--surface);
+        }
+
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .data-table th,
+        .data-table td {
+            padding: 13px 14px;
+            border-bottom: 1px solid var(--border);
+            text-align: left;
+            vertical-align: top;
+        }
+
+        .data-table th {
+            background: var(--surface-soft);
+            color: var(--navy);
+            font-size: 13px;
+            font-weight: 850;
+        }
+
+        .data-table tr:last-child td {
+            border-bottom: 0;
+        }
+
+        .pagination,
+        .profile-pagination {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-top: 28px;
+        }
+
+        .pagination-summary {
+            margin-top: 28px;
+            color: var(--muted);
+            font-size: 14px;
+            text-align: center;
+        }
+
+        .back-link {
+            display: inline-block;
+            margin-bottom: 24px;
+            font-size: 14px;
+            font-weight: 750;
+        }
+
+        .alert-info {
+            border-color: #bdd4f5;
+            background: #eaf2ff;
+            color: #1d4f91;
+        }
+
+        @media (max-width: 620px) {
+            .form-actions .button {
+                width: 100%;
             }
         }

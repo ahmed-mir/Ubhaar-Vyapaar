@@ -26,7 +26,7 @@
         margin: 0 0 16px;
         font-size: clamp(30px, 5vw, 48px);
         line-height: 1.15;
-        letter-spacing: -1.5px;
+        letter-spacing: 0;
     }
 
     .hero-description {
@@ -71,7 +71,7 @@
     .section-heading h2 {
         margin: 0 0 4px;
         font-size: 26px;
-        letter-spacing: -0.5px;
+        letter-spacing: 0;
     }
 
     .section-heading p {
@@ -337,7 +337,7 @@
             
             <p>
                 {% if query %}
-                    Showing matches for “{{ query }}”
+                    Showing matches for "{{ query }}"
                 {% elif selected_category %}
                     Showing services in your selected category.
                 {% else %}
@@ -388,7 +388,7 @@
                     </p>
 
                     <p class="price">
-                        ₹{{ listing.price_per_unit }}
+                        &#8377;{{ listing.price_per_unit }}
                         <span>per unit</span>
                     </p>
 
@@ -427,7 +427,7 @@
         </div>
         {% if page_obj.paginator.count %}
     <div class="pagination-summary">
-        Showing {{ page_obj.start_index }}–{{ page_obj.end_index }}
+                Showing {{ page_obj.start_index }}-{{ page_obj.end_index }}
         of {{ page_obj.paginator.count }} listings
     </div>
 {% endif %}
@@ -439,7 +439,7 @@
                 class="button button-secondary"
                 href="?q={{ query|urlencode }}&amp;category={{ selected_category|urlencode }}&amp;page={{ page_obj.previous_page_number }}"
             >
-                ← Previous
+                &larr; Previous
             </a>
         {% endif %}
 
@@ -453,7 +453,7 @@
                 class="button button-secondary"
                 href="?q={{ query|urlencode }}&amp;category={{ selected_category|urlencode }}&amp;page={{ page_obj.next_page_number }}"
             >
-                Next →
+                Next &rarr;
             </a>
         {% endif %}
     </nav>

@@ -59,7 +59,7 @@
                 <h2>{{ quote.listing.title }}</h2>
 
                 <p class="record-meta">
-                    Request #{{ quote.pk }} ·
+                    Request #{{ quote.pk }} &middot;
                     {{ quote.created_at|date:"d M Y, H:i" }}
                 </p>
 
@@ -82,9 +82,9 @@
         <strong>Quotation sent</strong>
 
         <p>
-            ₹{{ quote.quotation.price_per_unit }} per unit<br>
+            &#8377;{{ quote.quotation.price_per_unit }} per unit<br>
             Quantity: {{ quote.quotation.quantity }} units<br>
-            Subtotal: ₹{{ quote.quotation.subtotal|floatformat:2 }}<br>
+            Subtotal: &#8377;{{ quote.quotation.subtotal|floatformat:2 }}<br>
             Production: {{ quote.quotation.production_days }} days<br>
             Buyer response: {{ quote.quotation.get_status_display }}
         </p>

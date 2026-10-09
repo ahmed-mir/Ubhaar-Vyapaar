@@ -29,7 +29,7 @@
         margin: 16px 0;
         font-size: clamp(28px, 4vw, 40px);
         line-height: 1.2;
-        letter-spacing: -1px;
+        letter-spacing: 0;
     }
 
     .detail-panel h2 {
@@ -137,7 +137,7 @@
 
 {% block content %}
     <a class="back-link" href="{% url 'home' %}">
-        ← Browse all listings
+        &larr; Browse all listings
     </a>
 
     <div class="detail-layout">
@@ -168,7 +168,7 @@
                     {{ listing.description|linebreaks }}
                 {% else %}
                     <p class="muted">
-                        The manufacturer hasn’t added a description yet.
+                        The manufacturer has not added a description yet.
                     </p>
                 {% endif %}
             </div>
@@ -200,7 +200,7 @@
 
                 <p class="price-label">Listed price</p>
                 <p class="detail-price">
-                    ₹{{ listing.price_per_unit }}
+                    &#8377;{{ listing.price_per_unit }}
                     <span>per unit</span>
                 </p>
 

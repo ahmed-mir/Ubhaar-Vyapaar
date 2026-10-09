@@ -4,7 +4,9 @@
 
 {% block content %}
     <section class="auth-card" aria-labelledby="register-title">
-        <a href="{% url 'home' %}">← Browse listings</a>
+        <a class="back-link" href="{% url 'home' %}">
+            &larr; Browse listings
+        </a>
 
         <h1 id="register-title">Find your manufacturing partner</h1>
 

@@ -4,14 +4,16 @@
 
 {% block content %}
     <section class="auth-card" aria-labelledby="edit-title">
-        <a href="{% url 'my_listings' %}">← My listings</a>
+        <a class="back-link" href="{% url 'my_listings' %}">
+            &larr; My listings
+        </a>
 
         <h1 id="edit-title">Edit listing</h1>
 
         <p class="auth-intro">{{ listing.title }}</p>
 
         <p class="message">
-            Uncheck “Is active” to hide this listing from buyers.
+            Uncheck "Is active" to hide this listing from buyers.
             Existing quote requests will remain saved.
         </p>
 

@@ -265,7 +265,7 @@ def create_listing(request):
     )
 
     if request.method == "POST":
-        form = CapacityListingForm(request.POST)
+        form = CapacityListingForm(request.POST, request.FILES)
 
         if form.is_valid():
             listing = form.save(commit=False)

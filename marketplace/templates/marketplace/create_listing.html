@@ -4,22 +4,51 @@
 
 {% block content %}
     <section class="auth-card" aria-labelledby="create-title">
-        <a href="{% url 'my_listings' %}">← My listings</a>
+        <a class="back-link" href="{% url 'my_listings' %}">
+            &larr; My listings
+        </a>
 
         <h1 id="create-title">Create a listing</h1>
 
         <p class="auth-intro">
-            Describe your service so buyers can understand
-            what you offer. Enter the price per unit in rupees.
+            Describe your manufacturing capacity so buyers can understand
+            your service, minimum order, price, and production time.
         </p>
 
-        <form method="post" enctype="multipart/form-data" class="styled-form">
+        <form
+            method="post"
+            action="{% url 'create_listing' %}"
+            enctype="multipart/form-data"
+            class="styled-form form-grid"
+            novalidate
+        >
             {% csrf_token %}
-            {{ form.as_p }}
+            {{ form.non_field_errors }}
 
-            <button class="button form-submit" type="submit">
-                Save listing
-            </button>
+            {% for field in form %}
+                <div
+                    class="form-field{% if field.errors %} form-field-error{% endif %}"
+                >
+                    {{ field.label_tag }}
+                    {{ field }}
+
+                    {% if field.help_text %}
+                        <p class="helptext">{{ field.help_text }}</p>
+                    {% endif %}
+
+                    {{ field.errors }}
+                </div>
+            {% endfor %}
+
+            <div class="form-actions">
+                <a class="button button-secondary" href="{% url 'my_listings' %}">
+                    Cancel
+                </a>
+
+                <button class="button" type="submit">
+                    Save listing
+                </button>
+            </div>
         </form>
     </section>
 {% endblock %}

@@ -31,7 +31,9 @@
 {% endblock %}
 
 {% block content %}
-    <a href="{% url 'home' %}">← Browse all listings</a>
+    <a class="back-link" href="{% url 'home' %}">
+        &larr; Browse all listings
+    </a>
 
     <section class="record-card business-profile">
         <span class="status-pill status-accepted">
@@ -126,7 +128,7 @@
                     class="button button-secondary"
                     href="?page={{ page_obj.previous_page_number }}"
                 >
-                    ← Previous
+                    &larr; Previous
                 </a>
             {% endif %}
 
@@ -140,7 +142,7 @@
                     class="button button-secondary"
                     href="?page={{ page_obj.next_page_number }}"
                 >
-                    Next →
+                    Next &rarr;
                 </a>
             {% endif %}
         </nav>
