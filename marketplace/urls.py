@@ -14,27 +14,32 @@ urlpatterns = [
         views.request_quote,
         name="request_quote",
     ),
-        path(
+    path(
         "my-quote-requests/",
         views.my_quote_requests,
         name="my_quote_requests",
     ),
-        path(
+    path(
+        "buyer/dashboard/",
+        views.buyer_dashboard,
+        name="buyer_dashboard",
+    ),
+    path(
         "manufacturer/dashboard/",
         views.manufacturer_dashboard,
         name="manufacturer_dashboard",
     ),
-        path(
+    path(
         "manufacturer/quotes/<int:pk>/status/",
         views.update_quote_status,
         name="update_quote_status",
     ),
-        path(
+    path(
         "manufacturer/listings/create/",
         views.create_listing,
         name="create_listing",
     ),
-        path(
+    path(
         "manufacturer/listings/",
         views.my_listings,
         name="my_listings",
@@ -54,7 +59,7 @@ urlpatterns = [
         views.respond_to_quotation,
         name="respond_to_quotation",
     ),
-        path(
+    path(
         "saved-listings/",
         views.saved_listings,
         name="saved_listings",

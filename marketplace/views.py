@@ -230,6 +230,90 @@ def my_quote_requests(request):
             "stats": stats,
         },
     )
+
+
+@login_required
+def buyer_dashboard(request):
+    if request.user.role != "BUYER":
+        raise PermissionDenied(
+            "Only buyer accounts can view this page."
+        )
+
+    quote_requests = QuoteRequest.objects.filter(
+        buyer=request.user,
+    ).select_related(
+        "listing",
+        "listing__manufacturer",
+        "quotation",
+    ).order_by("-created_at", "-pk")
+
+    quotations = Quotation.objects.filter(
+        quote_request__buyer=request.user,
+    ).select_related(
+        "quote_request",
+        "quote_request__listing",
+        "quote_request__listing__manufacturer",
+    )
+
+    pending_quotations = quotations.filter(
+        status=Quotation.Status.SENT,
+    ).order_by("-created_at", "-pk")
+
+    accepted_quotations = quotations.filter(
+        status=Quotation.Status.ACCEPTED,
+    ).order_by("-responded_at", "-pk")
+
+    active_requests = quote_requests.filter(
+        status__in=[
+            QuoteRequest.Status.PENDING,
+            QuoteRequest.Status.ACCEPTED,
+        ],
+    )[:6]
+
+    saved_items = SavedListing.objects.filter(
+        buyer=request.user,
+    ).select_related(
+        "listing",
+        "listing__manufacturer",
+    ).order_by("-created_at", "-pk")[:4]
+
+    notifications = Notification.objects.filter(
+        recipient=request.user,
+    ).order_by("-created_at", "-pk")[:5]
+
+    stats = {
+        "active_requests": quote_requests.filter(
+            status__in=[
+                QuoteRequest.Status.PENDING,
+                QuoteRequest.Status.ACCEPTED,
+            ],
+        ).count(),
+        "quotations_received": quotations.count(),
+        "pending_actions": pending_quotations.count(),
+        "accepted_quotations": quotations.filter(
+            status=Quotation.Status.ACCEPTED,
+        ).count(),
+        "saved_listings": SavedListing.objects.filter(
+            buyer=request.user,
+        ).count(),
+        "unread_notifications": Notification.objects.filter(
+            recipient=request.user,
+            is_read=False,
+        ).count(),
+    }
+
+    return render(
+        request,
+        "marketplace/buyer_dashboard.html",
+        {
+            "stats": stats,
+            "active_requests": active_requests,
+            "pending_quotations": pending_quotations[:6],
+            "accepted_quotations": accepted_quotations[:4],
+            "saved_items": saved_items,
+            "notifications": notifications,
+        },
+    )
 @login_required
 def manufacturer_dashboard(request):
     if request.user.role != "MANUFACTURER":

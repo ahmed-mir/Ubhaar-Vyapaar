@@ -1,0 +1,343 @@
+{% extends "marketplace/base.html" %}
+
+{% block title %}Buyer dashboard | Ubhaar-Vyapaar{% endblock %}
+
+{% block content %}
+    <div class="page-heading">
+        <div>
+            <p class="eyebrow">Buyer workspace</p>
+            <h1>Buyer dashboard</h1>
+            <p>
+                Review quote activity, saved capacity, and the next actions
+                waiting for you.
+            </p>
+        </div>
+
+        <a class="button" href="{% url 'home' %}">
+            Browse capacity
+        </a>
+    </div>
+
+    <dl class="stats-grid" aria-label="Buyer summary">
+        <div class="stat-card">
+            <dt>Active requests</dt>
+            <dd>{{ stats.active_requests }}</dd>
+        </div>
+
+        <div class="stat-card stat-card-attention">
+            <dt>Pending actions</dt>
+            <dd>{{ stats.pending_actions }}</dd>
+        </div>
+
+        <div class="stat-card">
+            <dt>Quotations received</dt>
+            <dd>{{ stats.quotations_received }}</dd>
+        </div>
+
+        <div class="stat-card">
+            <dt>Accepted quotations</dt>
+            <dd>{{ stats.accepted_quotations }}</dd>
+        </div>
+
+        <div class="stat-card">
+            <dt>Saved listings</dt>
+            <dd>{{ stats.saved_listings }}</dd>
+        </div>
+
+        <div class="stat-card">
+            <dt>Unread notifications</dt>
+            <dd>{{ stats.unread_notifications }}</dd>
+        </div>
+    </dl>
+
+    <section class="dashboard-band" aria-labelledby="pending-title">
+        <div class="section-heading">
+            <div>
+                <h2 id="pending-title">Needs your response</h2>
+                <p>Quotations are shown only when manufacturers have sent them.</p>
+            </div>
+
+            <a class="button button-secondary" href="{% url 'my_quote_requests' %}">
+                View all requests
+            </a>
+        </div>
+
+        <div class="record-grid">
+            {% for quotation in pending_quotations %}
+                <article class="record-card">
+                    <span class="status-pill status-pending">
+                        Quotation received
+                    </span>
+
+                    <h2>{{ quotation.quote_request.listing.title }}</h2>
+
+                    <p class="record-meta">
+                        {{ quotation.quote_request.listing.manufacturer.business_name }}
+                    </p>
+
+                    <dl class="record-facts">
+                        <dt>Quantity</dt>
+                        <dd>{{ quotation.quantity }} units</dd>
+
+                        <dt>Unit price</dt>
+                        <dd>&#8377;{{ quotation.price_per_unit }}</dd>
+
+                        <dt>Subtotal</dt>
+                        <dd>&#8377;{{ quotation.subtotal|floatformat:2 }}</dd>
+
+                        <dt>Production time</dt>
+                        <dd>{{ quotation.production_days }} days</dd>
+                    </dl>
+
+                    <form
+                        method="post"
+                        action="{% url 'respond_to_quotation' quotation.pk %}"
+                        class="record-actions"
+                    >
+                        {% csrf_token %}
+
+                        <button
+                            class="button button-accept"
+                            type="submit"
+                            name="status"
+                            value="ACCEPTED"
+                        >
+                            Accept quotation
+                        </button>
+
+                        <button
+                            class="button button-reject"
+                            type="submit"
+                            name="status"
+                            value="DECLINED"
+                        >
+                            Decline
+                        </button>
+                    </form>
+
+                    <p class="record-meta">
+                        Accepting a quotation confirms your interest only.
+                        No order or payment is created in this version.
+                    </p>
+                </article>
+            {% empty %}
+                <div class="empty-panel">
+                    <h2>No quotations need review</h2>
+                    <p>
+                        New manufacturer quotations will appear here when
+                        they are ready for your response.
+                    </p>
+                </div>
+            {% endfor %}
+        </div>
+    </section>
+
+    <section class="dashboard-band" aria-labelledby="accepted-title">
+        <div class="section-heading">
+            <div>
+                <h2 id="accepted-title">Accepted quotations</h2>
+                <p>
+                    Quotations you accepted. Order tracking will appear here
+                    after the order workflow is added.
+                </p>
+            </div>
+
+            <a class="button button-secondary" href="{% url 'my_quote_requests' %}">
+                View quote history
+            </a>
+        </div>
+
+        <div class="record-grid">
+            {% for quotation in accepted_quotations %}
+                <article class="record-card">
+                    <span class="status-pill status-accepted">
+                        Accepted quotation
+                    </span>
+
+                    <h2>{{ quotation.quote_request.listing.title }}</h2>
+
+                    <p class="record-meta">
+                        {{ quotation.quote_request.listing.manufacturer.business_name }}
+                    </p>
+
+                    <dl class="record-facts">
+                        <dt>Quantity</dt>
+                        <dd>{{ quotation.quantity }} units</dd>
+
+                        <dt>Subtotal</dt>
+                        <dd>&#8377;{{ quotation.subtotal|floatformat:2 }}</dd>
+
+                        <dt>Production time</dt>
+                        <dd>{{ quotation.production_days }} days</dd>
+                    </dl>
+
+                    <p class="message alert-info">
+                        No order or payment has been created yet. The order
+                        workflow is handled in the next implementation phase.
+                    </p>
+                </article>
+            {% empty %}
+                <div class="empty-panel">
+                    <h2>No accepted quotations yet</h2>
+                    <p>
+                        Accepted quotations will appear here after you review
+                        a manufacturer response.
+                    </p>
+                </div>
+            {% endfor %}
+        </div>
+    </section>
+
+    <section class="dashboard-band" aria-labelledby="active-title">
+        <div class="section-heading">
+            <div>
+                <h2 id="active-title">Active quote requests</h2>
+                <p>Requests that are still open or awaiting a priced quotation.</p>
+            </div>
+        </div>
+
+        <div class="record-grid">
+            {% for quote in active_requests %}
+                <article class="record-card">
+                    <span class="status-pill status-{{ quote.status|lower }}">
+                        {{ quote.get_status_display }}
+                    </span>
+
+                    <h2>{{ quote.listing.title }}</h2>
+
+                    <p class="record-meta">
+                        {{ quote.listing.manufacturer.business_name }} &middot;
+                        Request #{{ quote.pk }}
+                    </p>
+
+                    <dl class="record-facts">
+                        <dt>Quantity</dt>
+                        <dd>{{ quote.quantity }} units</dd>
+
+                        <dt>Delivery location</dt>
+                        <dd>{{ quote.delivery_location }}</dd>
+                    </dl>
+
+                    {% if quote.listing.is_active and quote.listing.manufacturer.is_verified %}
+                        <a
+                            class="button button-secondary"
+                            href="{% url 'manufacturer_profile' quote.listing.manufacturer.pk %}"
+                        >
+                            View manufacturer
+                        </a>
+                    {% endif %}
+                </article>
+            {% empty %}
+                <div class="empty-panel">
+                    <h2>No active requests</h2>
+                    <p>
+                        Browse available manufacturing capacity and request
+                        a quote when you find a fit.
+                    </p>
+                    <a class="button" href="{% url 'home' %}">
+                        Browse listings
+                    </a>
+                </div>
+            {% endfor %}
+        </div>
+    </section>
+
+    <section class="dashboard-band" aria-labelledby="saved-title">
+        <div class="section-heading">
+            <div>
+                <h2 id="saved-title">Saved listings</h2>
+                <p>Capacity you saved for later comparison.</p>
+            </div>
+
+            <a class="button button-secondary" href="{% url 'saved_listings' %}">
+                View saved
+            </a>
+        </div>
+
+        <div class="record-grid">
+            {% for item in saved_items %}
+                <article class="record-card">
+                    <h2>{{ item.listing.title }}</h2>
+                    <p class="record-meta">
+                        {{ item.listing.manufacturer.business_name }} &middot;
+                        {{ item.listing.manufacturer.city }},
+                        {{ item.listing.manufacturer.state }}
+                    </p>
+
+                    <dl class="record-facts">
+                        <dt>Minimum order</dt>
+                        <dd>{{ item.listing.minimum_quantity }} units</dd>
+
+                        <dt>Unit price</dt>
+                        <dd>&#8377;{{ item.listing.price_per_unit }}</dd>
+                    </dl>
+
+                    {% if item.listing.is_active and item.listing.manufacturer.is_verified %}
+                        <a
+                            class="button button-secondary"
+                            href="{% url 'listing_detail' item.listing.pk %}"
+                        >
+                            View listing
+                        </a>
+                    {% else %}
+                        <p class="record-meta">
+                            This listing is currently unavailable.
+                        </p>
+                    {% endif %}
+                </article>
+            {% empty %}
+                <div class="empty-panel">
+                    <h2>No saved listings yet</h2>
+                    <p>Save listings to compare manufacturers later.</p>
+                </div>
+            {% endfor %}
+        </div>
+    </section>
+
+    <section class="dashboard-band" aria-labelledby="notifications-title">
+        <div class="section-heading">
+            <div>
+                <h2 id="notifications-title">Recent notifications</h2>
+                <p>Updates about quote requests and manufacturer responses.</p>
+            </div>
+
+            <a class="button button-secondary" href="{% url 'notifications' %}">
+                View all notifications
+            </a>
+        </div>
+
+        <div class="record-grid">
+            {% for notification in notifications %}
+                <article class="record-card">
+                    {% if notification.is_read %}
+                        <span class="status-pill">Read</span>
+                    {% else %}
+                        <span class="status-pill status-pending">New</span>
+                    {% endif %}
+
+                    <p>{{ notification.message }}</p>
+
+                    <p class="record-meta">
+                        {{ notification.created_at|date:"d M Y, H:i" }}
+                    </p>
+
+                    <form
+                        method="post"
+                        action="{% url 'open_notification' notification.pk %}"
+                        class="record-actions"
+                    >
+                        {% csrf_token %}
+                        <button class="button button-secondary" type="submit">
+                            View details
+                        </button>
+                    </form>
+                </article>
+            {% empty %}
+                <div class="empty-panel">
+                    <h2>No notifications yet</h2>
+                    <p>New activity updates will appear here.</p>
+                </div>
+            {% endfor %}
+        </div>
+    </section>
+{% endblock %}
