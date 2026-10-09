@@ -13,7 +13,7 @@
             what you offer. Enter the price per unit in rupees.
         </p>
 
-        <form method="post" enctype="multipart/form-data" class="styled-form"></form>
+        <form method="post" enctype="multipart/form-data" class="styled-form">
             {% csrf_token %}
             {{ form.as_p }}
 
