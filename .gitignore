@@ -16,3 +16,6 @@ staticfiles/
 
 .DS_Store
 Thumbs.db
+
+CODEX_TASK.md
+docs/
