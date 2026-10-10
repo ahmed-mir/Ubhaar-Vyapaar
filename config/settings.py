@@ -7,6 +7,7 @@ import dj_database_url
 import os
 from pathlib import Path
 
+from django.core.exceptions import ImproperlyConfigured
 from dotenv import load_dotenv
 
 
@@ -153,9 +154,56 @@ STATIC_URL = "/static/"
 
 STATIC_ROOT = BASE_DIR / "staticfiles"
 
+_cloudinary_credentials = {
+    "cloud_name": os.getenv("CLOUDINARY_CLOUD_NAME", ""),
+    "api_key": os.getenv("CLOUDINARY_API_KEY", ""),
+    "api_secret": os.getenv("CLOUDINARY_API_SECRET", ""),
+}
+
+_cloudinary_setting = os.getenv("DJANGO_USE_CLOUDINARY_MEDIA")
+
+if _cloudinary_setting is None:
+    USE_CLOUDINARY_MEDIA = not DEBUG
+else:
+    USE_CLOUDINARY_MEDIA = _cloudinary_setting.lower() in {
+        "1",
+        "true",
+        "yes",
+        "on",
+    }
+
+if USE_CLOUDINARY_MEDIA and not all(_cloudinary_credentials.values()):
+    missing_cloudinary_vars = [
+        env_name
+        for env_name, value in {
+            "CLOUDINARY_CLOUD_NAME": _cloudinary_credentials["cloud_name"],
+            "CLOUDINARY_API_KEY": _cloudinary_credentials["api_key"],
+            "CLOUDINARY_API_SECRET": _cloudinary_credentials["api_secret"],
+        }.items()
+        if not value
+    ]
+    raise ImproperlyConfigured(
+        "Cloudinary media storage is enabled, but these environment "
+        f"variables are missing: {', '.join(missing_cloudinary_vars)}"
+    )
+
+CLOUDINARY_CLOUD_NAME = _cloudinary_credentials["cloud_name"]
+CLOUDINARY_API_KEY = _cloudinary_credentials["api_key"]
+CLOUDINARY_API_SECRET = _cloudinary_credentials["api_secret"]
+CLOUDINARY_MEDIA_PREFIX = os.getenv(
+    "CLOUDINARY_MEDIA_PREFIX",
+    "marketplace",
+).strip("/")
+
+DEFAULT_MEDIA_STORAGE_BACKEND = (
+    "marketplace.storage.PublicMarketplaceCloudinaryStorage"
+    if USE_CLOUDINARY_MEDIA
+    else "django.core.files.storage.FileSystemStorage"
+)
+
 STORAGES = {
     "default": {
-        "BACKEND": "django.core.files.storage.FileSystemStorage",
+        "BACKEND": DEFAULT_MEDIA_STORAGE_BACKEND,
     },
 
     "staticfiles": {
