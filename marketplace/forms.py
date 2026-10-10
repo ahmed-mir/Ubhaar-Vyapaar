@@ -3,6 +3,7 @@ from django import forms
 from .models import (
     CapacityListing,
     ManufacturerProfile,
+    OrderMessage,
     Quotation,
     QuoteRequest,
     Review,
@@ -232,4 +233,23 @@ class ReviewForm(forms.ModelForm):
             "timeliness_rating": "Rate from 1 to 5.",
             "communication_rating": "Rate from 1 to 5.",
             "overall_rating": "Rate from 1 to 5.",
+        }
+
+
+class OrderMessageForm(forms.ModelForm):
+    class Meta:
+        model = OrderMessage
+        fields = ("body",)
+        labels = {
+            "body": "Message",
+        }
+        widgets = {
+            "body": forms.Textarea(
+                attrs={
+                    "rows": 4,
+                    "placeholder": (
+                        "Send an order-specific update or question."
+                    ),
+                }
+            ),
         }

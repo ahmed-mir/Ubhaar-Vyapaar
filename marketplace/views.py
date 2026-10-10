@@ -11,6 +11,7 @@ from decimal import Decimal, InvalidOperation
 from .forms import (
     CapacityListingEditForm,
     CapacityListingForm,
+    OrderMessageForm,
     QuoteRequestForm,
     QuotationForm,
     ManufacturerProfileForm,
@@ -85,11 +86,68 @@ def create_order_from_quotation(quotation):
     return order, created
 
 
+def order_queryset_for_user(user):
+    orders = Order.objects.select_related(
+        "buyer",
+        "manufacturer",
+        "manufacturer__user",
+        "listing",
+        "quotation",
+    ).prefetch_related(
+        "milestones",
+        "messages",
+        "messages__sender",
+    )
+
+    if user.role == "BUYER":
+        return orders.filter(buyer=user)
+
+    if user.role == "MANUFACTURER":
+        return orders.filter(manufacturer__user=user)
+
+    return Order.objects.none()
+
+
+def get_order_for_user(user, pk):
+    return get_object_or_404(order_queryset_for_user(user), pk=pk)
+
+
+def get_order_message_recipient(order, sender):
+    if sender == order.buyer:
+        return order.manufacturer.user
+
+    if sender == order.manufacturer.user:
+        return order.buyer
+
+    raise PermissionDenied("You do not have access to this order.")
+
+
+def create_order_notification(recipient, message, order):
+    return Notification.objects.create(
+        recipient=recipient,
+        message=message,
+        destination=Notification.Destination.ORDER_DETAIL,
+        order=order,
+    )
+
+
+def notify_order_status_change(order, previous_status):
+    if previous_status == order.status:
+        return
+
+    status_label = order.get_status_display()
+    message = f"Order #{order.pk} status changed to {status_label}."
+
+    create_order_notification(order.buyer, message, order)
+    create_order_notification(order.manufacturer.user, message, order)
+
+
 def refresh_order_status(order):
+    previous_status = order.status
     milestones = list(order.milestones.all())
 
     if not milestones:
-        return
+        return previous_status, order.status
 
     if all(
         milestone.status == Milestone.Status.APPROVED
@@ -109,7 +167,10 @@ def refresh_order_status(order):
     else:
         order.status = Order.Status.IN_PRODUCTION
 
-    order.save(update_fields=["status", "updated_at"])
+    if previous_status != order.status:
+        order.save(update_fields=["status", "updated_at"])
+
+    return previous_status, order.status
 
 def home(request):
     query = request.GET.get("q", "").strip()
@@ -471,39 +532,44 @@ def manufacturer_orders(request):
 
 @login_required
 def order_detail(request, pk):
-    if request.user.role == "BUYER":
-        order = get_object_or_404(
-            Order.objects.select_related(
-                "buyer",
-                "manufacturer",
-                "listing",
-                "quotation",
-            ).prefetch_related("milestones"),
-            pk=pk,
-            buyer=request.user,
-        )
-    elif request.user.role == "MANUFACTURER":
-        order = get_object_or_404(
-            Order.objects.select_related(
-                "buyer",
-                "manufacturer",
-                "listing",
-                "quotation",
-            ).prefetch_related("milestones"),
-            pk=pk,
-            manufacturer__user=request.user,
-        )
-    else:
-        raise PermissionDenied("You do not have access to this order.")
+    order = get_order_for_user(request.user, pk)
 
     return render(
         request,
         "marketplace/order_detail.html",
         {
             "order": order,
+            "message_form": OrderMessageForm(),
             "review_form": ReviewForm(),
         },
     )
+
+
+@login_required
+@require_POST
+def send_order_message(request, pk):
+    order = get_order_for_user(request.user, pk)
+    form = OrderMessageForm(request.POST)
+
+    if form.is_valid():
+        with transaction.atomic():
+            order_message = form.save(commit=False)
+            order_message.order = order
+            order_message.sender = request.user
+            order_message.save()
+
+            recipient = get_order_message_recipient(order, request.user)
+            create_order_notification(
+                recipient,
+                f"New message on order #{order.pk}.",
+                order,
+            )
+
+        messages.success(request, "Message sent.")
+    else:
+        messages.error(request, "Please enter a message before sending.")
+
+    return redirect("order_detail", pk=order.pk)
 
 
 @login_required
@@ -532,6 +598,12 @@ def review_order(request, pk):
             review.buyer = request.user
             review.manufacturer = order.manufacturer
             review.save()
+
+            create_order_notification(
+                order.manufacturer.user,
+                f"The buyer reviewed order #{order.pk}.",
+                order,
+            )
 
             messages.success(request, "Thank you for reviewing this order.")
             return redirect("order_detail", pk=order.pk)
@@ -567,16 +639,17 @@ def mark_milestone_complete(request, pk):
         milestone.status = Milestone.Status.COMPLETED
         milestone.completed_at = timezone.now()
         milestone.save(update_fields=["status", "completed_at", "updated_at"])
-        refresh_order_status(milestone.order)
+        previous_order_status, _ = refresh_order_status(milestone.order)
 
-        Notification.objects.create(
-            recipient=milestone.order.buyer,
+        create_order_notification(
+            milestone.order.buyer,
             message=(
                 f"Milestone '{milestone.title}' is ready for review "
                 f"on order #{milestone.order_id}."
             ),
-            destination=Notification.Destination.BUYER_DASHBOARD,
+            order=milestone.order,
         )
+        notify_order_status_change(milestone.order, previous_order_status)
 
         messages.success(
             request,
@@ -631,8 +704,7 @@ def respond_to_milestone(request, pk):
             "updated_at",
         ]
     )
-    previous_order_status = milestone.order.status
-    refresh_order_status(milestone.order)
+    previous_order_status, _ = refresh_order_status(milestone.order)
     milestone.order.refresh_from_db(fields=["status"])
 
     response_label = (
@@ -641,26 +713,27 @@ def respond_to_milestone(request, pk):
         else "requested changes for"
     )
 
-    Notification.objects.create(
-        recipient=milestone.order.manufacturer.user,
+    create_order_notification(
+        milestone.order.manufacturer.user,
         message=(
             f"The buyer {response_label} milestone "
             f"'{milestone.title}' on order #{milestone.order_id}."
         ),
-        destination=Notification.Destination.MANUFACTURER_DASHBOARD,
+        order=milestone.order,
     )
+    notify_order_status_change(milestone.order, previous_order_status)
 
     if (
         previous_order_status != Order.Status.COMPLETED
         and milestone.order.status == Order.Status.COMPLETED
     ):
-        Notification.objects.create(
-            recipient=request.user,
+        create_order_notification(
+            request.user,
             message=(
                 f"Order #{milestone.order_id} is complete. "
                 "You can now leave a review."
             ),
-            destination=Notification.Destination.BUYER_DASHBOARD,
+            order=milestone.order,
         )
 
     messages.success(request, "Milestone response saved.")
@@ -1012,27 +1085,35 @@ def respond_to_quotation(request, pk):
                 quotation.responded_at = timezone.now()
                 order, order_created = create_order_from_quotation(quotation)
 
-            Notification.objects.create(
-                recipient_id=(
-                    quotation.quote_request.listing.manufacturer.user_id
-                ),
-                message=(
-                    f"The buyer {response_label} your quotation "
-                    f"for request #{quotation.quote_request_id}."
-                ),
-                destination=(
-                    Notification.Destination.MANUFACTURER_DASHBOARD
-                ),
+            manufacturer_user = quotation.quote_request.listing.manufacturer.user
+            response_message = (
+                f"The buyer {response_label} your quotation "
+                f"for request #{quotation.quote_request_id}."
             )
 
-            if order_created:
+            if order is not None:
+                create_order_notification(
+                    manufacturer_user,
+                    response_message,
+                    order,
+                )
+            else:
                 Notification.objects.create(
-                    recipient=request.user,
+                    recipient=manufacturer_user,
+                    message=response_message,
+                    destination=(
+                        Notification.Destination.MANUFACTURER_DASHBOARD
+                    ),
+                )
+
+            if order_created:
+                create_order_notification(
+                    request.user,
                     message=(
                         f"Order #{order.pk} was created from your "
                         f"accepted quotation."
                     ),
-                    destination=Notification.Destination.BUYER_DASHBOARD,
+                    order=order,
                 )
 
     if updated:
@@ -1233,6 +1314,12 @@ def open_notification(request, pk):
         recipient=request.user,
         is_read=False,
     ).update(is_read=True)
+
+    if (
+        notification.destination == Notification.Destination.ORDER_DETAIL
+        and notification.order_id
+    ):
+        return redirect("order_detail", pk=notification.order_id)
 
     destinations = {
         Notification.Destination.BUYER_REQUESTS:

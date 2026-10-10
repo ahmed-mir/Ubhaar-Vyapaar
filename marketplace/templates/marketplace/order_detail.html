@@ -191,6 +191,65 @@
         </div>
     </section>
 
+    <section class="dashboard-band" aria-labelledby="conversation-title">
+        <div class="section-heading">
+            <div>
+                <h2 id="conversation-title">Order conversation</h2>
+                <p>
+                    Messages here are visible only to this order's buyer and
+                    manufacturer.
+                </p>
+            </div>
+        </div>
+
+        <div class="conversation-layout">
+            <div class="conversation-thread" aria-live="polite">
+                {% for order_message in order.messages.all %}
+                    <article
+                        class="conversation-message {% if order_message.sender == user %}conversation-message-own{% endif %}"
+                    >
+                        <div class="conversation-message-header">
+                            <strong>
+                                {% if order_message.sender == user %}
+                                    You
+                                {% else %}
+                                    {{ order_message.sender.username }}
+                                {% endif %}
+                            </strong>
+
+                            <span>
+                                {{ order_message.created_at|date:"d M Y, H:i" }}
+                            </span>
+                        </div>
+
+                        <p>{{ order_message.body|linebreaksbr }}</p>
+                    </article>
+                {% empty %}
+                    <div class="empty-panel">
+                        <h2>No messages yet</h2>
+                        <p>
+                            Start the order conversation with a scoped update
+                            or question.
+                        </p>
+                    </div>
+                {% endfor %}
+            </div>
+
+            <form
+                method="post"
+                action="{% url 'send_order_message' order.pk %}"
+                class="styled-form conversation-form"
+            >
+                {% csrf_token %}
+                {{ message_form.as_p }}
+
+                <button class="button" type="submit">
+                    Send message
+                </button>
+            </form>
+        </div>
+    </section>
+
     {% if order.status == "COMPLETED" %}
         <section class="dashboard-band" aria-labelledby="review-title">
             <div class="section-heading">

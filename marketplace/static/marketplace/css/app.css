@@ -816,6 +816,58 @@
             background: #f0f4f7;
         }
 
+        .conversation-layout {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) minmax(280px, 360px);
+            gap: 20px;
+            align-items: start;
+        }
+
+        .conversation-thread {
+            display: grid;
+            gap: 14px;
+        }
+
+        .conversation-message {
+            width: min(680px, 100%);
+            padding: 16px;
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            background: var(--surface);
+            box-shadow: 0 4px 18px rgba(15, 37, 59, 0.04);
+        }
+
+        .conversation-message-own {
+            justify-self: end;
+            border-color: #b8ddd4;
+            background: var(--teal-soft);
+        }
+
+        .conversation-message-header {
+            display: flex;
+            justify-content: space-between;
+            gap: 12px;
+            margin-bottom: 8px;
+            color: var(--muted);
+            font-size: 13px;
+        }
+
+        .conversation-message-header strong {
+            color: var(--navy);
+        }
+
+        .conversation-message p {
+            margin: 0;
+        }
+
+        .conversation-form {
+            padding: 20px;
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            background: var(--surface);
+            box-shadow: var(--shadow);
+        }
+
 
         /* -------------------------
            FOOTER
@@ -888,6 +940,10 @@
             .stats-grid {
                 grid-template-columns:
                     repeat(2, minmax(0, 1fr));
+            }
+
+            .conversation-layout {
+                grid-template-columns: 1fr;
             }
         }
 

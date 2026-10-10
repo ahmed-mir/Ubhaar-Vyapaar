@@ -5,6 +5,7 @@ from .models import (
     CapacityListing,
     Order,
     Milestone,
+    OrderMessage,
     QuoteRequest,
     Quotation,
     Review,
@@ -151,6 +152,14 @@ class ReviewAdmin(admin.ModelAdmin):
     readonly_fields = ("created_at",)
 
 
+@admin.register(OrderMessage)
+class OrderMessageAdmin(admin.ModelAdmin):
+    list_display = ("order", "sender", "created_at")
+    search_fields = ("order__listing__title", "sender__username", "body")
+    readonly_fields = ("created_at",)
+    list_select_related = ("order", "sender")
+
+
 @admin.register(SavedListing)
 class SavedListingAdmin(admin.ModelAdmin):
     list_display = ("buyer", "listing", "created_at")
@@ -160,7 +169,8 @@ class SavedListingAdmin(admin.ModelAdmin):
 
 @admin.register(Notification)
 class NotificationAdmin(admin.ModelAdmin):
-    list_display = ("recipient", "destination", "is_read", "created_at")
+    list_display = ("recipient", "destination", "order", "is_read", "created_at")
     list_filter = ("destination", "is_read")
-    search_fields = ("recipient__username", "message")
+    search_fields = ("recipient__username", "message", "order__listing__title")
     readonly_fields = ("created_at",)
+    list_select_related = ("recipient", "order")

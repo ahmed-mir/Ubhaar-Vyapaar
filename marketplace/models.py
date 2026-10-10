@@ -358,6 +358,27 @@ class Review(models.Model):
 
     def __str__(self):
         return f"Review for order #{self.order_id}"
+
+
+class OrderMessage(models.Model):
+    order = models.ForeignKey(
+        Order,
+        on_delete=models.CASCADE,
+        related_name="messages",
+    )
+    sender = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.PROTECT,
+        related_name="order_messages",
+    )
+    body = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["created_at", "pk"]
+
+    def __str__(self):
+        return f"Message for order #{self.order_id}"
     
 class SavedListing(models.Model):
     buyer = models.ForeignKey(
@@ -393,6 +414,7 @@ class Notification(models.Model):
             "MANUFACTURER_DASHBOARD",
             "Manufacturer dashboard",
         )
+        ORDER_DETAIL = "ORDER_DETAIL", "Order detail"
 
     recipient = models.ForeignKey(
         settings.AUTH_USER_MODEL,
@@ -405,6 +427,14 @@ class Notification(models.Model):
     destination = models.CharField(
         max_length=30,
         choices=Destination.choices,
+    )
+
+    order = models.ForeignKey(
+        Order,
+        on_delete=models.CASCADE,
+        related_name="notifications",
+        null=True,
+        blank=True,
     )
 
     is_read = models.BooleanField(default=False)
