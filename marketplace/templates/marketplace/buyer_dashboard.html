@@ -3,7 +3,7 @@
 {% block title %}Buyer dashboard | Ubhaar-Vyapaar{% endblock %}
 
 {% block content %}
-    <div class="page-heading">
+    <div class="page-heading dashboard-hero">
         <div>
             <p class="eyebrow">Buyer workspace</p>
             <h1>Buyer dashboard</h1>
@@ -13,9 +13,14 @@
             </p>
         </div>
 
-        <a class="button" href="{% url 'home' %}">
-            Browse capacity
-        </a>
+        <div class="action-links">
+            <a class="button button-secondary" href="{% url 'saved_listings' %}">
+                Saved listings
+            </a>
+            <a class="button button-primary" href="{% url 'home' %}">
+                Browse capacity
+            </a>
+        </div>
     </div>
 
     <dl class="stats-grid" aria-label="Buyer summary">
@@ -55,9 +60,10 @@
         </div>
     </dl>
 
-    <section class="dashboard-band" aria-labelledby="pending-title">
+    <section class="dashboard-band dashboard-spotlight" aria-labelledby="pending-title">
         <div class="section-heading">
             <div>
+                <p class="eyebrow">Priority queue</p>
                 <h2 id="pending-title">Needs your response</h2>
                 <p>Quotations are shown only when manufacturers have sent them.</p>
             </div>
@@ -69,7 +75,7 @@
 
         <div class="record-grid">
             {% for quotation in pending_quotations %}
-                <article class="record-card">
+                <article class="record-card action-card">
                     <span class="status-pill status-pending">
                         Quotation received
                     </span>
@@ -140,6 +146,7 @@
     <section class="dashboard-band" aria-labelledby="accepted-title">
         <div class="section-heading">
             <div>
+                <p class="eyebrow">Commercial progress</p>
                 <h2 id="accepted-title">Accepted quotations</h2>
                 <p>
                     Accepted quotations now create demo orders with locked
@@ -200,6 +207,7 @@
     <section class="dashboard-band" aria-labelledby="orders-title">
         <div class="section-heading">
             <div>
+                <p class="eyebrow">Fulfilment</p>
                 <h2 id="orders-title">Active orders</h2>
                 <p>
                     Demo order tracking for accepted quotations. Funding states
@@ -252,6 +260,7 @@
     <section class="dashboard-band" aria-labelledby="active-title">
         <div class="section-heading">
             <div>
+                <p class="eyebrow">Open requests</p>
                 <h2 id="active-title">Active quote requests</h2>
                 <p>Requests that are still open or awaiting a priced quotation.</p>
             </div>
@@ -306,6 +315,7 @@
     <section class="dashboard-band" aria-labelledby="saved-title">
         <div class="section-heading">
             <div>
+                <p class="eyebrow">Shortlist</p>
                 <h2 id="saved-title">Saved listings</h2>
                 <p>Capacity you saved for later comparison.</p>
             </div>
@@ -358,6 +368,7 @@
     <section class="dashboard-band" aria-labelledby="notifications-title">
         <div class="section-heading">
             <div>
+                <p class="eyebrow">Activity</p>
                 <h2 id="notifications-title">Recent notifications</h2>
                 <p>Updates about quote requests and manufacturer responses.</p>
             </div>

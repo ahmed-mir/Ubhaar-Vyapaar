@@ -3,7 +3,7 @@
 {% block title %}Manufacturer dashboard | Ubhaar-Vyapaar{% endblock %}
 
 {% block content %}
-    <div class="page-heading">
+    <div class="page-heading dashboard-hero manufacturer-hero">
         <div>
             <p class="eyebrow">Manufacturer workspace</p>
             <h1>Manufacturer dashboard</h1>
@@ -29,7 +29,7 @@
         </div>
     </div>
 
-    <section class="record-card dashboard-focus" aria-labelledby="verification-title">
+    <section class="record-card dashboard-focus verification-panel" aria-labelledby="verification-title">
         <div>
             <p class="eyebrow">Business verification</p>
             <h2 id="verification-title">{{ manufacturer.business_name }}</h2>
@@ -109,13 +109,14 @@
     <section class="dashboard-band" aria-labelledby="actions-title">
         <div class="section-heading">
             <div>
+                <p class="eyebrow">Operating actions</p>
                 <h2 id="actions-title">Next actions</h2>
                 <p>Keep capacity visible and respond quickly to buyers.</p>
             </div>
         </div>
 
         <div class="record-grid">
-            <article class="record-card">
+            <article class="record-card action-card">
                 <h3>Add or update capacity</h3>
                 <p class="record-meta">
                     Keep prices, minimum order, and production days accurate.
@@ -130,7 +131,7 @@
                 </div>
             </article>
 
-            <article class="record-card">
+            <article class="record-card action-card">
                 <h3>Respond to buyers</h3>
                 <p class="record-meta">
                     Accept workable requests, reject poor fits, or send a
@@ -154,6 +155,7 @@
     <section class="dashboard-band" id="quote-requests" aria-labelledby="quote-title">
         <div class="section-heading">
             <div>
+                <p class="eyebrow">Buyer demand</p>
                 <h2 id="quote-title">Quote requests</h2>
                 <p>Review buyer needs and send quotations for accepted work.</p>
             </div>

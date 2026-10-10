@@ -10,7 +10,7 @@
         &larr; Orders
     </a>
 
-    <div class="page-heading">
+    <div class="page-heading dashboard-hero order-hero">
         <div>
             <p class="eyebrow">Demo order tracking</p>
             <h1>Order #{{ order.pk }}</h1>
@@ -25,7 +25,48 @@
         </span>
     </div>
 
-    <div class="record-grid">
+    <section class="order-timeline-panel" aria-labelledby="order-timeline-title">
+        <div class="section-heading">
+            <div>
+                <p class="eyebrow">Status timeline</p>
+                <h2 id="order-timeline-title">Order progress</h2>
+            </div>
+        </div>
+
+        <ol class="order-timeline">
+            <li class="timeline-step timeline-step-complete">
+                <span class="timeline-dot"></span>
+                <strong>Terms locked</strong>
+                <span>Accepted quotation created this order.</span>
+            </li>
+
+            <li class="timeline-step {% if order.status == 'CONFIRMED' or order.status == 'AWAITING_FUNDING' or order.status == 'FUNDED' or order.status == 'IN_PRODUCTION' or order.status == 'MILESTONE_PENDING' or order.status == 'READY_TO_SHIP' or order.status == 'SHIPPED' or order.status == 'COMPLETED' %}timeline-step-complete{% endif %}">
+                <span class="timeline-dot"></span>
+                <strong>Production active</strong>
+                <span>Manufacturer works through agreed milestones.</span>
+            </li>
+
+            <li class="timeline-step {% if order.status == 'MILESTONE_PENDING' or order.status == 'READY_TO_SHIP' or order.status == 'SHIPPED' or order.status == 'COMPLETED' %}timeline-step-complete{% endif %}">
+                <span class="timeline-dot"></span>
+                <strong>Milestone review</strong>
+                <span>Buyer reviews completed production checkpoints.</span>
+            </li>
+
+            <li class="timeline-step {% if order.status == 'READY_TO_SHIP' or order.status == 'SHIPPED' or order.status == 'COMPLETED' %}timeline-step-complete{% endif %}">
+                <span class="timeline-dot"></span>
+                <strong>Ready to ship</strong>
+                <span>Final dispatch readiness is confirmed.</span>
+            </li>
+
+            <li class="timeline-step {% if order.status == 'COMPLETED' %}timeline-step-complete{% endif %}">
+                <span class="timeline-dot"></span>
+                <strong>Completed</strong>
+                <span>All milestones are approved.</span>
+            </li>
+        </ol>
+    </section>
+
+    <div class="record-grid order-summary-grid">
         <article class="record-card">
             <h2>Locked terms</h2>
 
@@ -79,6 +120,7 @@
     <section class="dashboard-band" aria-labelledby="milestones-title">
         <div class="section-heading">
             <div>
+                <p class="eyebrow">Production checkpoints</p>
                 <h2 id="milestones-title">Milestones</h2>
                 <p>
                     Manufacturers mark milestones complete. Buyers approve
@@ -89,7 +131,7 @@
 
         <div class="record-grid">
             {% for milestone in order.milestones.all %}
-                <article class="record-card">
+                <article class="record-card milestone-card">
                     <span class="status-pill status-{{ milestone.status|lower }}">
                         {{ milestone.get_status_display }}
                     </span>
@@ -191,9 +233,10 @@
         </div>
     </section>
 
-    <section class="dashboard-band" aria-labelledby="conversation-title">
+    <section class="dashboard-band conversation-band" aria-labelledby="conversation-title">
         <div class="section-heading">
             <div>
+                <p class="eyebrow">Collaboration</p>
                 <h2 id="conversation-title">Order conversation</h2>
                 <p>
                     Messages here are visible only to this order's buyer and
@@ -241,6 +284,7 @@
                 class="styled-form conversation-form"
             >
                 {% csrf_token %}
+                <h3>Send an update</h3>
                 {{ message_form.as_p }}
 
                 <button class="button" type="submit">

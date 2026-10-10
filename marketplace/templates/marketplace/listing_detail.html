@@ -2,231 +2,103 @@
 
 {% block title %}{{ listing.title }} | Ubhaar-Vyapaar{% endblock %}
 
-{% block extra_css %}
-<style>
-    .back-link {
-        display: inline-block;
-        margin-bottom: 24px;
-        font-size: 14px;
-    }
-
-    .detail-layout {
-        display: grid;
-        grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr);
-        gap: 24px;
-        align-items: start;
-    }
-
-    .detail-panel {
-        padding: 32px;
-        border: 1px solid var(--border);
-        border-radius: 14px;
-        background: white;
-        overflow-wrap: anywhere;
-    }
-
-    .detail-panel h1 {
-        margin: 16px 0;
-        font-size: clamp(28px, 4vw, 40px);
-        line-height: 1.2;
-        letter-spacing: 0;
-    }
-
-    .detail-panel h2 {
-        margin: 0 0 14px;
-        font-size: 20px;
-    }
-
-    .badge {
-        display: inline-block;
-        padding: 5px 10px;
-        border-radius: 6px;
-        background: #edf8f1;
-        color: #24633f;
-        font-size: 12px;
-        font-weight: 700;
-    }
-
-    .business-location,
-    .muted {
-        color: var(--muted);
-    }
-
-    .description {
-        margin-top: 28px;
-        padding-top: 24px;
-        border-top: 1px solid var(--border);
-    }
-
-    .description p {
-        margin: 0 0 16px;
-    }
-
-    .price-label {
-        margin: 0;
-        color: var(--muted);
-        font-size: 14px;
-    }
-
-    .detail-price {
-        margin: 4px 0 24px;
-        color: var(--navy);
-        font-size: 36px;
-        font-weight: 800;
-    }
-
-    .detail-price span {
-        color: var(--muted);
-        font-size: 14px;
-        font-weight: 400;
-    }
-
-    .detail-facts {
-        margin: 0 0 24px;
-    }
-
-    .detail-facts div {
-        display: flex;
-        justify-content: space-between;
-        flex-wrap: wrap;
-        gap: 6px 16px;
-        padding: 14px 0;
-        border-bottom: 1px solid var(--border);
-    }
-
-    .detail-facts dt {
-        color: var(--muted);
-    }
-
-    .detail-facts dd {
-        margin: 0;
-        font-weight: 700;
-    }
-
-    .quote-button {
-        width: 100%;
-    }
-
-    .quote-note {
-        margin-bottom: 0;
-        color: var(--muted);
-        font-size: 13px;
-    }
-
-    .manufacturer-panel {
-        margin-top: 24px;
-    }
-
-    .manufacturer-name {
-        margin: 0 0 4px;
-        font-weight: 700;
-        font-size: 18px;
-    }
-
-    @media (max-width: 760px) {
-        .detail-layout {
-            grid-template-columns: 1fr;
-        }
-
-        .detail-panel {
-            padding: 24px;
-        }
-    }
-</style>
-{% endblock %}
-
 {% block content %}
     <a class="back-link" href="{% url 'home' %}">
         &larr; Browse all listings
     </a>
 
-    <div class="detail-layout">
-        <article class="detail-panel">
-            {% if listing.image %}
-    <img
-        class="detail-image"
-        src="{{ listing.image.url }}"
-        alt="{{ listing.title }}"
-    >
-{% endif %}
-            {% if listing.manufacturer.is_verified %}
-                <span class="badge">Verified business</span>
-            {% endif %}
-            <span class="status-pill status-{{ listing.availability_status|lower }}">
-                {{ listing.get_availability_status_display }}
-            </span>
-
-            <h1>{{ listing.title }}</h1>
-
-            <p class="business-location">
-                {{ listing.manufacturer.business_name }}<br>
-                {{ listing.manufacturer.city }},
-                {{ listing.manufacturer.state }}
-            </p>
-
-            <div class="description">
-                <h2>About this service</h2>
-
-                {% if listing.description %}
-                    {{ listing.description|linebreaks }}
+    <div class="listing-detail-layout">
+        <article class="detail-main-panel">
+            <div class="detail-media-panel">
+                {% if listing.image %}
+                    <img
+                        class="detail-image"
+                        src="{{ listing.image.url }}"
+                        alt="{{ listing.title }}"
+                    >
                 {% else %}
-                    <p class="muted">
-                        The manufacturer has not added a description yet.
-                    </p>
+                    <div class="detail-image detail-image-placeholder">
+                        Product photo coming soon
+                    </div>
                 {% endif %}
             </div>
 
-            <div class="description">
-                <h2>Capacity and capabilities</h2>
+            <div class="detail-content-panel">
+                <div class="detail-badge-row">
+                    <span class="listing-category">{{ listing.get_category_display }}</span>
 
-                <dl class="record-facts">
-                    {% if listing.machine_type %}
-                        <dt>Machine type</dt>
-                        <dd>{{ listing.machine_type }}</dd>
+                    {% if listing.manufacturer.is_verified %}
+                        <span class="trust-badge">Verified manufacturer</span>
                     {% endif %}
 
-                    {% if listing.materials %}
-                        <dt>Materials</dt>
-                        <dd>{{ listing.materials }}</dd>
-                    {% endif %}
+                    <span class="status-pill status-{{ listing.availability_status|lower }}">
+                        {{ listing.get_availability_status_display }}
+                    </span>
+                </div>
 
-                    {% if listing.technical_capabilities %}
-                        <dt>Technical capabilities</dt>
-                        <dd>{{ listing.technical_capabilities|linebreaksbr }}</dd>
-                    {% endif %}
+                <h1>{{ listing.title }}</h1>
 
-                    {% if listing.cluster %}
-                        <dt>Cluster</dt>
-                        <dd>{{ listing.cluster }}</dd>
+                <p class="detail-manufacturer-line">
+                    <a href="{% url 'manufacturer_profile' listing.manufacturer.pk %}">
+                        {{ listing.manufacturer.business_name }}
+                    </a>
+                    <span>
+                        {{ listing.manufacturer.city }},
+                        {{ listing.manufacturer.state }}
+                    </span>
+                </p>
+
+                <section class="detail-section" aria-labelledby="service-title">
+                    <h2 id="service-title">Service overview</h2>
+
+                    {% if listing.description %}
+                        {{ listing.description|linebreaks }}
+                    {% else %}
+                        <p class="muted">
+                            The manufacturer has not added a description yet.
+                        </p>
                     {% endif %}
-                </dl>
+                </section>
+
+                <section class="detail-section" aria-labelledby="capabilities-title">
+                    <h2 id="capabilities-title">Capabilities and production details</h2>
+
+                    <dl class="detail-capability-grid">
+                        {% if listing.machine_type %}
+                            <div>
+                                <dt>Machine type</dt>
+                                <dd>{{ listing.machine_type }}</dd>
+                            </div>
+                        {% endif %}
+
+                        {% if listing.materials %}
+                            <div>
+                                <dt>Materials</dt>
+                                <dd>{{ listing.materials }}</dd>
+                            </div>
+                        {% endif %}
+
+                        {% if listing.technical_capabilities %}
+                            <div class="wide-fact">
+                                <dt>Technical capabilities</dt>
+                                <dd>{{ listing.technical_capabilities|linebreaksbr }}</dd>
+                            </div>
+                        {% endif %}
+
+                        {% if listing.cluster %}
+                            <div>
+                                <dt>Cluster</dt>
+                                <dd>{{ listing.cluster }}</dd>
+                            </div>
+                        {% endif %}
+                    </dl>
+                </section>
             </div>
         </article>
 
-        <aside aria-label="Pricing and manufacturer information">
-            <section class="detail-panel">
-                <h2>Order information</h2>
-                {% if user.is_authenticated and user.role == "BUYER" %}
-    {% if is_saved %}
-        <p>
-            Saved to your list.
-            <a href="{% url 'saved_listings' %}">
-                View saved listings
-            </a>
-        </p>
-    {% else %}
-        <form
-            method="post"
-            action="{% url 'save_listing' listing.pk %}"
-        >
-            {% csrf_token %}
-            <button class="button button-secondary" type="submit">
-                Save listing
-            </button>
-        </form>
-    {% endif %}
-{% endif %}
-
+        <aside class="detail-sidebar" aria-label="Pricing and manufacturer information">
+            <section class="summary-card commercial-card">
+                <p class="eyebrow">Commercial terms</p>
                 <p class="price-label">Listed price</p>
                 <p class="detail-price">
                     &#8377;{{ listing.price_per_unit }}
@@ -239,7 +111,7 @@
                         <dd>{{ listing.minimum_quantity }} units</dd>
                     </div>
                     <div>
-                        <dt>Production time</dt>
+                        <dt>Lead time</dt>
                         <dd>{{ listing.production_days }} days</dd>
                     </div>
                     {% if listing.batch_price %}
@@ -261,6 +133,24 @@
                     {% endif %}
                 </dl>
 
+                {% if user.is_authenticated and user.role == "BUYER" %}
+                    {% if is_saved %}
+                        <p class="message compact-message">
+                            Saved to your list.
+                            <a href="{% url 'saved_listings' %}">
+                                View saved listings
+                            </a>
+                        </p>
+                    {% else %}
+                        <form method="post" action="{% url 'save_listing' listing.pk %}">
+                            {% csrf_token %}
+                            <button class="button button-secondary full-width" type="submit">
+                                Save listing
+                            </button>
+                        </form>
+                    {% endif %}
+                {% endif %}
+
                 {% if user.is_authenticated %}
                     {% if user.role == "BUYER" %}
                         {% if listing.availability_status == "PAUSED" %}
@@ -269,14 +159,11 @@
                                 accepting new quote requests.
                             </p>
                         {% else %}
-                            <a
-                                class="button quote-button"
-                                href="{% url 'request_quote' listing.pk %}"
-                            >
+                            <a class="button button-primary full-width" href="{% url 'request_quote' listing.pk %}">
                                 Request a quote
                             </a>
                             <p class="quote-note">
-                                Share your requirements with the manufacturer.
+                                Share requirements with the manufacturer.
                                 Sending a request does not place an order.
                             </p>
                         {% endif %}
@@ -292,10 +179,7 @@
                             accepting new quote requests.
                         </p>
                     {% else %}
-                        <a
-                            class="button quote-button"
-                            href="{% url 'request_quote' listing.pk %}"
-                        >
+                        <a class="button button-primary full-width" href="{% url 'request_quote' listing.pk %}">
                             Log in to request a quote
                         </a>
                         <p class="quote-note">
@@ -308,16 +192,15 @@
                 {% endif %}
             </section>
 
-            <section class="detail-panel manufacturer-panel">
-                <h2>About the manufacturer</h2>
-
-                <p class="manufacturer-name">
+            <section class="summary-card manufacturer-trust-card">
+                <p class="eyebrow">Manufacturer trust</p>
+                <h2>
                     <a href="{% url 'manufacturer_profile' listing.manufacturer.pk %}">
                         {{ listing.manufacturer.business_name }}
                     </a>
-                </p>
+                </h2>
 
-                <p class="business-location">
+                <p class="record-meta">
                     {{ listing.manufacturer.city }},
                     {{ listing.manufacturer.state }}
                 </p>
@@ -325,6 +208,8 @@
                 <div class="action-links">
                     {% for badge in listing.manufacturer.earned_badges %}
                         <span class="trust-badge">{{ badge }}</span>
+                    {% empty %}
+                        <span class="status-pill">Profile available</span>
                     {% endfor %}
                 </div>
 

@@ -3,29 +3,59 @@
 {% block title %}Find manufacturing partners | Ubhaar-Vyapaar{% endblock %}
 
 {% block content %}
-    <section class="hero" aria-labelledby="hero-title">
-        <p class="eyebrow">Verified manufacturing capacity</p>
+    <section class="hero hero-marketplace" aria-labelledby="hero-title">
+        <div class="hero-copy">
+            <p class="eyebrow">B2B manufacturing marketplace</p>
 
-        <h1 id="hero-title">
-            Find verified manufacturing capacity for your next production run.
-        </h1>
+            <h1 id="hero-title">
+                Source verified manufacturing capacity with confidence.
+            </h1>
 
-        <p class="hero-description">
-            Source small-batch production from verified manufacturers.
-            Compare MOQ, pricing, locations, and lead times before you request
-            a quote.
-        </p>
+            <p class="hero-description">
+                Compare real manufacturer capacity by category, MOQ, price,
+                lead time, location, and availability before you request a
+                quote.
+            </p>
 
-        <form method="get" action="{% url 'home' %}" class="search-form">
+            <div class="hero-actions" aria-label="Primary marketplace actions">
+                <a class="button button-primary" href="#marketplace-listings">
+                    Browse marketplace
+                </a>
+                <a class="button button-dark-secondary" href="{% url 'register_manufacturer' %}">
+                    List manufacturing capacity
+                </a>
+            </div>
+
+            <div class="hero-proof">
+                <span>Verified manufacturers</span>
+                <span>Structured quote requests</span>
+                <span>Order tracking workflow</span>
+            </div>
+        </div>
+
+        <form method="get" action="{% url 'home' %}" class="search-form hero-search-panel">
+            <div class="search-panel-heading">
+                <div>
+                    <p class="eyebrow">Find capacity</p>
+                    <h2>Search the supplier network</h2>
+                </div>
+
+                {% if query or selected_category or location or moq or max_price or lead_time or verification or sort != "newest" %}
+                    <a class="clear-link" href="{% url 'home' %}">
+                        Clear filters
+                    </a>
+                {% endif %}
+            </div>
+
             <div class="search-fields">
-                <div class="search-field">
-                    <label for="search">Search capacity</label>
+                <div class="search-field search-field-wide">
+                    <label for="search">What do you need manufactured?</label>
                     <input
                         id="search"
                         type="search"
                         name="q"
                         value="{{ query }}"
-                        placeholder="Packaging, textiles, manufacturer, or city"
+                        placeholder="Packaging, textiles, metal fabrication, city"
                     >
                 </div>
 
@@ -122,15 +152,9 @@
                 </div>
 
                 <div class="search-actions">
-                    <button class="button" type="submit">
-                        Search listings
+                    <button class="button button-primary" type="submit">
+                        Search suppliers
                     </button>
-
-                    {% if query or selected_category or location or moq or max_price or lead_time or verification or sort != "newest" %}
-                        <a class="button button-secondary" href="{% url 'home' %}">
-                            Clear filters
-                        </a>
-                    {% endif %}
                 </div>
             </div>
         </form>
@@ -156,140 +180,161 @@
         </div>
     </section>
 
-    <section aria-labelledby="listings-title">
+    <section id="marketplace-listings" aria-labelledby="listings-title">
         <div class="section-heading">
-            <h2 id="listings-title">
-                {% if query or selected_category or location or moq or max_price or lead_time %}
-                    Search results
-                {% else %}
-                    Available capacity
-                {% endif %}
-            </h2>
+            <div>
+                <p class="eyebrow">Marketplace</p>
+                <h2 id="listings-title">
+                    {% if query or selected_category or location or moq or max_price or lead_time %}
+                        Matching capacity
+                    {% else %}
+                        Available verified capacity
+                    {% endif %}
+                </h2>
 
-            <p>
-                {% if query %}
-                    Showing matches for "{{ query }}"
-                {% elif selected_category %}
-                    Showing services in your selected category.
-                {% else %}
-                    Find a service that fits your business requirements.
-                {% endif %}
-            </p>
+                <p>
+                    {% if query %}
+                        Showing matches for "{{ query }}"
+                    {% elif selected_category %}
+                        Showing services in your selected category.
+                    {% else %}
+                        Evaluate manufacturers by capability, commercial fit, and delivery speed.
+                    {% endif %}
+                </p>
+            </div>
         </div>
 
         <div class="listings">
             {% for listing in listings %}
                 <article class="listing-card">
-                    {% if listing.image %}
-    <img
-        class="listing-image"
-        src="{{ listing.image.url }}"
-        alt="{{ listing.title }}"
-        loading="lazy"
-        width="800"
-        height="600"
-    >
-                    {% else %}
-                        <div class="listing-image-placeholder">
-                            Product photo coming soon
-                        </div>
-                    {% endif %}
-
-                    <div class="listing-card-header">
-                        {% if listing.manufacturer.is_verified %}
-                            <span class="trust-badge">Verified manufacturer</span>
+                    <div class="listing-media">
+                        {% if listing.image %}
+                            <img
+                                class="listing-image"
+                                src="{{ listing.image.url }}"
+                                alt="{{ listing.title }}"
+                                loading="lazy"
+                                width="800"
+                                height="600"
+                            >
+                        {% else %}
+                            <div class="listing-image-placeholder">
+                                Product photo coming soon
+                            </div>
                         {% endif %}
 
-                        <span class="status-pill status-{{ listing.availability_status|lower }}">
-                            {{ listing.get_availability_status_display }}
-                        </span>
+                        <div class="listing-card-header">
+                            {% if listing.manufacturer.is_verified %}
+                                <span class="trust-badge">Verified</span>
+                            {% endif %}
+
+                            <span class="status-pill status-{{ listing.availability_status|lower }}">
+                                {{ listing.get_availability_status_display }}
+                            </span>
+                        </div>
                     </div>
 
                     {% if listing.manufacturer.is_verified %}
                         <span class="visually-hidden">Verified business</span>
                     {% endif %}
 
-                    <h3>
-                        <a href="{% url 'listing_detail' listing.pk %}">
-                            {{ listing.title }}
-                        </a>
-                    </h3>
+                    <div class="listing-card-body">
+                        <div class="listing-title-row">
+                            <p class="listing-category">{{ listing.get_category_display }}</p>
+                            <h3>
+                                <a href="{% url 'listing_detail' listing.pk %}">
+                                    {{ listing.title }}
+                                </a>
+                            </h3>
+                        </div>
 
-                    <p class="record-meta">{{ listing.get_category_display }}</p>
-
-                    {% if listing.machine_type or listing.materials %}
-                        <p class="record-meta">
-                            {% if listing.machine_type %}
-                                {{ listing.machine_type }}
-                            {% endif %}
-                            {% if listing.machine_type and listing.materials %}
-                                &middot;
-                            {% endif %}
-                            {% if listing.materials %}
-                                {{ listing.materials }}
-                            {% endif %}
-                        </p>
-                    {% endif %}
-
-                    <p class="company">
-                        <a href="{% url 'manufacturer_profile' listing.manufacturer.pk %}">
-                            {{ listing.manufacturer.business_name }}
-                        </a><br>
-                        {{ listing.manufacturer.city }},
-                        {{ listing.manufacturer.state }}
-                    </p>
-
-                    {% if listing.manufacturer.review_count %}
-                        <p class="record-meta">
-                            {{ listing.manufacturer.average_rating|floatformat:1 }}/5
-                            from completed order reviews
-                        </p>
-                    {% endif %}
-
-                    <p class="description">
-                        {{ listing.description|truncatewords:24 }}
-                    </p>
-
-                    <p class="price">
-                        &#8377;{{ listing.price_per_unit }}
-                        <span>per unit</span>
-                    </p>
-
-                    <dl class="listing-meta">
-                        <div>
-                            <dt>Location</dt>
-                            <dd>
+                        <p class="company">
+                            <a href="{% url 'manufacturer_profile' listing.manufacturer.pk %}">
+                                {{ listing.manufacturer.business_name }}
+                            </a>
+                            <span>
                                 {{ listing.manufacturer.city }},
                                 {{ listing.manufacturer.state }}
-                            </dd>
-                        </div>
-                        <div>
-                            <dt>Minimum order</dt>
-                            <dd>{{ listing.minimum_quantity }} units</dd>
-                        </div>
-                        <div>
-                            <dt>Production time</dt>
-                            <dd>{{ listing.production_days }} days</dd>
-                        </div>
-                        {% if listing.available_capacity %}
-                            <div>
-                                <dt>Available capacity</dt>
+                            </span>
+                        </p>
+
+                        {% if listing.machine_type or listing.materials %}
+                            <p class="record-meta">
+                                {% if listing.machine_type %}
+                                    {{ listing.machine_type }}
+                                {% endif %}
+                                {% if listing.machine_type and listing.materials %}
+                                    &middot;
+                                {% endif %}
+                                {% if listing.materials %}
+                                    {{ listing.materials }}
+                                {% endif %}
+                            </p>
+                        {% endif %}
+
+                        {% if listing.manufacturer.review_count %}
+                            <p class="record-meta">
+                                {{ listing.manufacturer.average_rating|floatformat:1 }}/5
+                                from completed order reviews
+                            </p>
+                        {% endif %}
+
+                        <p class="description">
+                            {{ listing.description|truncatewords:22 }}
+                        </p>
+
+                        <dl class="listing-meta">
+                            <div class="listing-price-fact">
+                                <dt>Price</dt>
                                 <dd>
-                                    {{ listing.available_capacity }} units
-                                    {% if listing.capacity_period %}
-                                        {{ listing.capacity_period }}
-                                    {% endif %}
+                                    &#8377;{{ listing.price_per_unit }}
+                                    <span>per unit</span>
                                 </dd>
                             </div>
-                        {% endif %}
-                    </dl>
+                            <div>
+                                <dt>MOQ</dt>
+                                <dd>{{ listing.minimum_quantity }} units</dd>
+                            </div>
+                            <div>
+                                <dt>Lead time</dt>
+                                <dd>{{ listing.production_days }} days</dd>
+                            </div>
+                            <div>
+                                <dt>Availability</dt>
+                                <dd>{{ listing.get_availability_status_display }}</dd>
+                            </div>
+                            {% if listing.available_capacity %}
+                                <div>
+                                    <dt>Capacity</dt>
+                                    <dd>
+                                        {{ listing.available_capacity }} units
+                                        {% if listing.capacity_period %}
+                                            {{ listing.capacity_period }}
+                                        {% endif %}
+                                    </dd>
+                                </div>
+                            {% endif %}
+                        </dl>
 
-                    <a
-                        class="button button-secondary"
-                        href="{% url 'listing_detail' listing.pk %}"
-                    >
-                        View details
-                    </a>
+                        <div class="listing-actions">
+                            <a class="button button-secondary" href="{% url 'listing_detail' listing.pk %}">
+                                View details
+                            </a>
+                            {% if listing.availability_status == "PAUSED" %}
+                                <span class="button button-disabled" aria-disabled="true">
+                                    Requests paused
+                                </span>
+                            {% elif user.is_authenticated and user.role == "MANUFACTURER" %}
+                                <span class="button button-disabled" aria-disabled="true">
+                                    Buyer quote action
+                                </span>
+                            {% else %}
+                                <a class="button button-primary" href="{% url 'request_quote' listing.pk %}">
+                                    Request quote
+                                </a>
+                            {% endif %}
+                        </div>
+                    </div>
                 </article>
              {% empty %}
                 <div class="empty-state">
