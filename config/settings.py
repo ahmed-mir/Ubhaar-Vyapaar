@@ -7,6 +7,7 @@ import dj_database_url
 import os
 from pathlib import Path
 
+from django.conf import global_settings
 from django.core.exceptions import ImproperlyConfigured
 from dotenv import load_dotenv
 
@@ -16,6 +17,42 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 # Load values from the .env file in the main project folder.
 load_dotenv(BASE_DIR / ".env")
+
+
+def _env_bool(name, default):
+    value = os.getenv(name)
+    if value is None or value.strip() == "":
+        return default
+
+    normalized_value = value.strip().lower()
+    if normalized_value in {"1", "true", "yes", "on"}:
+        return True
+    if normalized_value in {"0", "false", "no", "off"}:
+        return False
+
+    raise ImproperlyConfigured(
+        f"{name} must be a boolean value: true/false, 1/0, yes/no, or on/off."
+    )
+
+
+def _env_int(name, default):
+    value = os.getenv(name)
+    if value is None or value.strip() == "":
+        return default
+
+    try:
+        return int(value)
+    except ValueError as exc:
+        raise ImproperlyConfigured(
+            f"{name} must be an integer value."
+        ) from exc
+
+
+def _env_str(name, default):
+    value = os.getenv(name)
+    if value is None or value.strip() == "":
+        return default
+    return value
 
 
 # Quick-start development settings
@@ -235,19 +272,37 @@ LOGOUT_REDIRECT_URL = "home"
 # Email
 # -----
 
-EMAIL_BACKEND = os.getenv(
+EMAIL_BACKEND = _env_str(
     "DJANGO_EMAIL_BACKEND",
     "django.core.mail.backends.console.EmailBackend",
 )
 
-DEFAULT_FROM_EMAIL = os.getenv(
-    "DJANGO_DEFAULT_FROM_EMAIL",
-    "webmaster@localhost",
+EMAIL_HOST = _env_str("EMAIL_HOST", global_settings.EMAIL_HOST)
+EMAIL_PORT = _env_int("EMAIL_PORT", global_settings.EMAIL_PORT)
+EMAIL_HOST_USER = _env_str(
+    "EMAIL_HOST_USER",
+    global_settings.EMAIL_HOST_USER,
+)
+EMAIL_HOST_PASSWORD = _env_str(
+    "EMAIL_HOST_PASSWORD",
+    global_settings.EMAIL_HOST_PASSWORD,
+)
+EMAIL_USE_TLS = _env_bool("EMAIL_USE_TLS", global_settings.EMAIL_USE_TLS)
+
+DEFAULT_FROM_EMAIL = _env_str(
+    "DEFAULT_FROM_EMAIL",
+    _env_str(
+        "DJANGO_DEFAULT_FROM_EMAIL",
+        global_settings.DEFAULT_FROM_EMAIL,
+    ),
 )
 
-SERVER_EMAIL = os.getenv(
-    "DJANGO_SERVER_EMAIL",
-    DEFAULT_FROM_EMAIL,
+SERVER_EMAIL = _env_str(
+    "SERVER_EMAIL",
+    _env_str(
+        "DJANGO_SERVER_EMAIL",
+        DEFAULT_FROM_EMAIL,
+    ),
 )
 
 ADMINS = [
