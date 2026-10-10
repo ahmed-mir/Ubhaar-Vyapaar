@@ -4,7 +4,7 @@
 
 {% block content %}
     <section class="auth-card" aria-labelledby="quotation-title">
-        <a href="{% url 'manufacturer_dashboard' %}">
+        <a class="back-link" href="{% url 'manufacturer_dashboard' %}">
             &larr; Dashboard
         </a>
 
@@ -34,9 +34,24 @@
             You cannot edit the quotation after sending it in this version.
         </p>
 
-        <form method="post" class="styled-form">
+        <form method="post" class="styled-form form-grid" novalidate>
             {% csrf_token %}
-            {{ form.as_p }}
+            {{ form.non_field_errors }}
+
+            {% for field in form %}
+                <div
+                    class="form-field{% if field.errors %} form-field-error{% endif %}"
+                >
+                    {{ field.label_tag }}
+                    {{ field }}
+
+                    {% if field.help_text %}
+                        <p class="helptext">{{ field.help_text }}</p>
+                    {% endif %}
+
+                    {{ field.errors }}
+                </div>
+            {% endfor %}
 
             <button class="button form-submit" type="submit">
                 Send quotation

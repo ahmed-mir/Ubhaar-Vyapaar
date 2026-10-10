@@ -14,7 +14,7 @@
     <form
         method="post"
         action="{% url 'mark_all_notifications_read' %}"
-        style="margin-bottom: 24px;"
+        class="action-links notification-actions"
     >
         {% csrf_token %}
         <button class="button button-secondary" type="submit">

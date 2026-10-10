@@ -444,6 +444,10 @@
             gap: 10px;
         }
 
+        .notification-actions {
+            margin-bottom: 24px;
+        }
+
 
         /* -------------------------
            MESSAGES

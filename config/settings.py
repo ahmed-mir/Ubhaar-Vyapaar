@@ -187,9 +187,27 @@ LOGOUT_REDIRECT_URL = "home"
 # Email
 # -----
 
-# During local development, password-reset emails are printed
-# in the VS Code terminal instead of being sent through email.
-EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
+EMAIL_BACKEND = os.getenv(
+    "DJANGO_EMAIL_BACKEND",
+    "django.core.mail.backends.console.EmailBackend",
+)
+
+DEFAULT_FROM_EMAIL = os.getenv(
+    "DJANGO_DEFAULT_FROM_EMAIL",
+    "webmaster@localhost",
+)
+
+SERVER_EMAIL = os.getenv(
+    "DJANGO_SERVER_EMAIL",
+    DEFAULT_FROM_EMAIL,
+)
+
+ADMINS = [
+    (name.strip(), email.strip())
+    for admin in os.getenv("DJANGO_ADMINS", "").split(",")
+    if admin.strip() and ":" in admin
+    for name, email in [admin.split(":", 1)]
+]
 
 if not DEBUG:
     SECURE_PROXY_SSL_HEADER = (

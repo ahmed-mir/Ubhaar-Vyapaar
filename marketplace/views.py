@@ -352,7 +352,6 @@ def request_quote(request, pk):
         },
     )
 @login_required
-@login_required
 def my_quote_requests(request):
     if request.user.role != "BUYER":
         raise PermissionDenied(
@@ -1319,7 +1318,16 @@ def open_notification(request, pk):
         notification.destination == Notification.Destination.ORDER_DETAIL
         and notification.order_id
     ):
-        return redirect("order_detail", pk=notification.order_id)
+        if order_queryset_for_user(request.user).filter(
+            pk=notification.order_id,
+        ).exists():
+            return redirect("order_detail", pk=notification.order_id)
+
+        messages.error(
+            request,
+            "That order is no longer available to your account.",
+        )
+        return redirect("notifications")
 
     destinations = {
         Notification.Destination.BUYER_REQUESTS:
