@@ -1,0 +1,72 @@
+{% extends "marketplace/base.html" %}
+
+{% block title %}Confirm demo funding | Ubhaar-Vyapaar{% endblock %}
+
+{% block content %}
+    <a class="back-link" href="{% url 'order_detail' order.pk %}">
+        &larr; Order #{{ order.pk }}
+    </a>
+
+    <section class="auth-card funding-confirmation" aria-labelledby="funding-title">
+        <span class="status-pill status-pending">
+            Demo funding only
+        </span>
+
+        <h1 id="funding-title">Confirm milestone funding</h1>
+
+        <p class="auth-intro">
+            This action updates the prototype workflow only. No real payment
+            will be processed, collected, held, or transferred.
+        </p>
+
+        <dl class="record-facts">
+            <dt>Order</dt>
+            <dd>#{{ order.pk }}</dd>
+
+            <dt>Milestone</dt>
+            <dd>{{ milestone.title }}</dd>
+
+            <dt>Manufacturer</dt>
+            <dd>{{ order.manufacturer.business_name }}</dd>
+
+            <dt>Demo amount</dt>
+            <dd>
+                {% if milestone.amount %}
+                    &#8377;{{ milestone.amount|floatformat:2 }}
+                {% else %}
+                    Not specified
+                {% endif %}
+            </dd>
+
+            <dt>Funding purpose</dt>
+            <dd>
+                Mark this milestone as demo-funded so the manufacturer can
+                start the related production work.
+            </dd>
+        </dl>
+
+        <p class="message">
+            Do not enter card, UPI, bank, or wallet details. Ubhaar-Vyapaar
+            does not process real payments in this prototype.
+        </p>
+
+        {% if milestone.can_fund %}
+            <form method="post" class="record-actions">
+                {% csrf_token %}
+                <button class="button button-primary" type="submit">
+                    Confirm demo funding
+                </button>
+                <a class="button button-secondary" href="{% url 'order_detail' order.pk %}">
+                    Cancel
+                </a>
+            </form>
+        {% else %}
+            <p class="message warning">
+                This milestone cannot be demo-funded in its current state.
+            </p>
+            <a class="button button-secondary" href="{% url 'order_detail' order.pk %}">
+                Back to order
+            </a>
+        {% endif %}
+    </section>
+{% endblock %}

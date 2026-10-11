@@ -103,10 +103,17 @@
                         </p>
 
                         {% if quote.quotation.status == "SENT" %}
+                            <p class="message warning">
+                                Accepting this quotation will create an order
+                                between you and the manufacturer. No real
+                                payment or escrow will be started.
+                            </p>
+
                             <form
                                 method="post"
                                 action="{% url 'respond_to_quotation' quote.quotation.pk %}"
                                 class="record-actions"
+                                data-confirm-accept="Accepting this quotation will create a demo order between you and the manufacturer. No real payment will be processed."
                             >
                                 {% csrf_token %}
 

@@ -60,9 +60,24 @@ urlpatterns = [
         name="mark_milestone_complete",
     ),
     path(
+        "milestones/<int:pk>/fund/",
+        views.fund_milestone,
+        name="fund_milestone",
+    ),
+    path(
+        "milestones/<int:pk>/start/",
+        views.start_milestone,
+        name="start_milestone",
+    ),
+    path(
         "milestones/<int:pk>/respond/",
         views.respond_to_milestone,
         name="respond_to_milestone",
+    ),
+    path(
+        "milestones/<int:pk>/release/",
+        views.release_milestone_payment,
+        name="release_milestone_payment",
     ),
     path(
         "manufacturer/quotes/<int:pk>/status/",

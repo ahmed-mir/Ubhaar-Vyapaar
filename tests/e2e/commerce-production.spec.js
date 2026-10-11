@@ -5,6 +5,7 @@ const {
   buildTestUser,
   completeVisibleMilestone,
   createListing,
+  fundVisibleMilestone,
   logout,
   openListing,
   registerBuyer,
@@ -13,6 +14,8 @@ const {
   requireEnv,
   sendOrderMessage,
   sendQuotation,
+  releaseVisibleMilestone,
+  startVisibleMilestone,
   submitReview,
   uniqueRunId,
   verifyManufacturerInAdmin,
@@ -333,8 +336,18 @@ test.describe("production commerce smoke", () => {
         );
 
         await test.step(
-          "milestone workflow completes order",
+          "demo milestone funding workflow completes order",
           async () => {
+            await fundVisibleMilestone(
+              buyerPage,
+              orderId
+            );
+
+            await startVisibleMilestone(
+              manufacturerPage,
+              orderId
+            );
+
             await completeVisibleMilestone(
               manufacturerPage,
               orderId
@@ -346,6 +359,21 @@ test.describe("production commerce smoke", () => {
               `Approved first milestone ${runId}`
             );
 
+            await releaseVisibleMilestone(
+              buyerPage,
+              orderId
+            );
+
+            await fundVisibleMilestone(
+              buyerPage,
+              orderId
+            );
+
+            await startVisibleMilestone(
+              manufacturerPage,
+              orderId
+            );
+
             await completeVisibleMilestone(
               manufacturerPage,
               orderId
@@ -355,6 +383,11 @@ test.describe("production commerce smoke", () => {
               buyerPage,
               orderId,
               `Approved final milestone ${runId}`
+            );
+
+            await releaseVisibleMilestone(
+              buyerPage,
+              orderId
             );
 
             await buyerPage.goto(

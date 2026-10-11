@@ -91,6 +91,11 @@
         </div>
 
         <div class="stat-card">
+            <dt>Awaiting buyer decision</dt>
+            <dd>{{ stats.quotations_waiting }}</dd>
+        </div>
+
+        <div class="stat-card">
             <dt>Accepted quotations</dt>
             <dd>{{ stats.quotations_accepted }}</dd>
         </div>
@@ -100,11 +105,86 @@
             <dd>{{ stats.active_orders }}</dd>
         </div>
 
+        <div class="stat-card stat-card-attention">
+            <dt>Milestones to start</dt>
+            <dd>{{ stats.milestones_to_start }}</dd>
+        </div>
+
+        <div class="stat-card stat-card-attention">
+            <dt>Milestones to submit</dt>
+            <dd>{{ stats.milestones_to_submit }}</dd>
+        </div>
+
         <div class="stat-card">
             <dt>Unread notifications</dt>
             <dd>{{ stats.unread_notifications }}</dd>
         </div>
     </dl>
+
+    <section class="dashboard-band dashboard-spotlight" aria-labelledby="production-title">
+        <div class="section-heading">
+            <div>
+                <p class="eyebrow">Production queue</p>
+                <h2 id="production-title">Milestone actions</h2>
+                <p>Funded work ready to start and in-progress milestones ready for buyer review.</p>
+            </div>
+
+            <a class="button button-secondary" href="{% url 'manufacturer_orders' %}">
+                View orders
+            </a>
+        </div>
+
+        <div class="record-grid">
+            {% for milestone in milestones_ready_to_start %}
+                <article class="record-card action-card">
+                    <span class="status-pill status-funded">Demo funded</span>
+                    <h3>{{ milestone.title }}</h3>
+                    <p class="record-meta">
+                        Order #{{ milestone.order.pk }} &middot;
+                        {{ milestone.order.listing.title }}
+                    </p>
+                    <form
+                        method="post"
+                        action="{% url 'start_milestone' milestone.pk %}"
+                        class="record-actions"
+                    >
+                        {% csrf_token %}
+                        <button class="button" type="submit">
+                            Start milestone
+                        </button>
+                    </form>
+                </article>
+            {% endfor %}
+
+            {% for milestone in milestones_ready_to_submit %}
+                <article class="record-card action-card">
+                    <span class="status-pill status-in_progress">In progress</span>
+                    <h3>{{ milestone.title }}</h3>
+                    <p class="record-meta">
+                        Order #{{ milestone.order.pk }} &middot;
+                        {{ milestone.order.listing.title }}
+                    </p>
+                    <form
+                        method="post"
+                        action="{% url 'mark_milestone_complete' milestone.pk %}"
+                        class="record-actions"
+                    >
+                        {% csrf_token %}
+                        <button class="button" type="submit">
+                            Submit for approval
+                        </button>
+                    </form>
+                </article>
+            {% endfor %}
+
+            {% if not milestones_ready_to_start and not milestones_ready_to_submit %}
+                <div class="empty-panel">
+                    <h2>No production actions right now</h2>
+                    <p>Demo-funded milestones and in-progress work will appear here when they need action.</p>
+                </div>
+            {% endif %}
+        </div>
+    </section>
 
     <section class="dashboard-band" aria-labelledby="actions-title">
         <div class="section-heading">
@@ -151,6 +231,62 @@
             </article>
         </div>
     </section>
+
+    <section class="dashboard-band" aria-labelledby="active-orders-title">
+        <div class="section-heading">
+            <div>
+                <p class="eyebrow">Active production</p>
+                <h2 id="active-orders-title">Orders in progress</h2>
+                <p>Open orders with milestone funding, production, or review activity.</p>
+            </div>
+        </div>
+
+        <div class="record-grid">
+            {% for order in active_orders %}
+                <article class="record-card">
+                    <span class="status-pill status-{{ order.status|lower }}">
+                        {{ order.get_status_display }}
+                    </span>
+                    <h3>Order #{{ order.pk }}</h3>
+                    <p class="record-meta">
+                        {{ order.listing.title }} &middot;
+                        Buyer: {{ order.buyer.username }}
+                    </p>
+                    <a class="button button-secondary" href="{% url 'order_detail' order.pk %}">
+                        Manage order
+                    </a>
+                </article>
+            {% empty %}
+                <div class="empty-panel">
+                    <h2>No active production orders</h2>
+                    <p>Orders appear after buyers accept quotations.</p>
+                </div>
+            {% endfor %}
+        </div>
+    </section>
+
+    {% if recent_reviews %}
+        <section class="dashboard-band" aria-labelledby="reviews-title">
+            <div class="section-heading">
+                <div>
+                    <p class="eyebrow">Recent feedback</p>
+                    <h2 id="reviews-title">Completed order reviews</h2>
+                </div>
+            </div>
+
+            <div class="record-grid">
+                {% for review in recent_reviews %}
+                    <article class="record-card">
+                        <span class="trust-badge">Overall {{ review.overall_rating }}/5</span>
+                        <h3>Order #{{ review.order.pk }}</h3>
+                        {% if review.comment %}
+                            <p>{{ review.comment|linebreaksbr }}</p>
+                        {% endif %}
+                    </article>
+                {% endfor %}
+            </div>
+        </section>
+    {% endif %}
 
     <section class="dashboard-band" id="quote-requests" aria-labelledby="quote-title">
         <div class="section-heading">

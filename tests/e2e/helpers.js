@@ -219,6 +219,9 @@ async function sendQuotation(page, quoteRequestId, quotation) {
 async function acceptQuotationAndOpenOrder(page) {
   await page.goto("/my-quote-requests/");
   await expect(page.getByRole("button", { name: /accept quotation/i })).toBeVisible();
+  page.once("dialog", async (dialog) => {
+    await dialog.accept();
+  });
   await page.getByRole("button", { name: /accept quotation/i }).first().click();
   await expect(page.getByText(/you accepted the quotation/i)).toBeVisible();
   await page.getByRole("link", { name: /view order/i }).first().click();
@@ -234,10 +237,24 @@ async function sendOrderMessage(page, orderId, body) {
   await expect(page.getByText(body)).toBeVisible();
 }
 
+async function fundVisibleMilestone(page, orderId) {
+  await page.goto(`/orders/${orderId}/`);
+  await page.getByRole("link", { name: /fund milestone \(demo\)/i }).first().click();
+  await expect(page.getByRole("heading", { name: /confirm milestone funding/i })).toBeVisible();
+  await page.getByRole("button", { name: /confirm demo funding/i }).click();
+  await expect(page.getByText(/demo funding confirmed/i)).toBeVisible();
+}
+
+async function startVisibleMilestone(page, orderId) {
+  await page.goto(`/orders/${orderId}/`);
+  await page.getByRole("button", { name: /start milestone/i }).first().click();
+  await expect(page.getByText(/milestone marked in progress/i)).toBeVisible();
+}
+
 async function completeVisibleMilestone(page, orderId) {
   await page.goto(`/orders/${orderId}/`);
-  await page.getByRole("button", { name: /mark complete/i }).first().click();
-  await expect(page.getByText(/milestone marked complete/i)).toBeVisible();
+  await page.getByRole("button", { name: /submit for approval/i }).first().click();
+  await expect(page.getByText(/milestone submitted for buyer approval/i)).toBeVisible();
 }
 
 async function approveVisibleMilestone(page, orderId, feedback) {
@@ -245,6 +262,12 @@ async function approveVisibleMilestone(page, orderId, feedback) {
   await page.locator('[name="buyer_feedback"]').first().fill(feedback);
   await page.getByRole("button", { name: /approve milestone/i }).first().click();
   await expect(page.getByText(/milestone response saved/i)).toBeVisible();
+}
+
+async function releaseVisibleMilestone(page, orderId) {
+  await page.goto(`/orders/${orderId}/`);
+  await page.getByRole("button", { name: /release demo payment/i }).first().click();
+  await expect(page.getByText(/demo payment released/i)).toBeVisible();
 }
 
 async function submitReview(page, orderId, comment) {
@@ -267,6 +290,7 @@ module.exports = {
   buildTestUser,
   completeVisibleMilestone,
   createListing,
+  fundVisibleMilestone,
   login,
   logout,
   openListing,
@@ -277,6 +301,8 @@ module.exports = {
   searchListing,
   sendOrderMessage,
   sendQuotation,
+  releaseVisibleMilestone,
+  startVisibleMilestone,
   submitReview,
   uniqueRunId,
   verifyManufacturerInAdmin,

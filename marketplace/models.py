@@ -277,10 +277,16 @@ class Order(models.Model):
 class Milestone(models.Model):
     class Status(models.TextChoices):
         PENDING = "PENDING", "Pending"
+        IN_PROGRESS = "IN_PROGRESS", "In progress"
         COMPLETED = "COMPLETED", "Awaiting buyer approval"
         APPROVED = "APPROVED", "Approved"
         REJECTED = "REJECTED", "Changes requested"
         DISPUTED = "DISPUTED", "Disputed"
+
+    class FundingStatus(models.TextChoices):
+        NOT_FUNDED = "NOT_FUNDED", "Not demo funded"
+        FUNDED = "FUNDED", "Demo funded"
+        RELEASED = "RELEASED", "Demo released"
 
     order = models.ForeignKey(
         Order,
@@ -302,6 +308,14 @@ class Milestone(models.Model):
         choices=Status.choices,
         default=Status.PENDING,
     )
+    funding_status = models.CharField(
+        max_length=20,
+        choices=FundingStatus.choices,
+        default=FundingStatus.NOT_FUNDED,
+    )
+    funded_at = models.DateTimeField(null=True, blank=True)
+    released_at = models.DateTimeField(null=True, blank=True)
+    started_at = models.DateTimeField(null=True, blank=True)
     completed_at = models.DateTimeField(null=True, blank=True)
     approved_at = models.DateTimeField(null=True, blank=True)
     buyer_feedback = models.TextField(blank=True)

@@ -346,7 +346,21 @@
             }
 
             document.querySelectorAll("form").forEach(function (form) {
-                form.addEventListener("submit", function () {
+                form.addEventListener("submit", function (event) {
+                    const submitter = event.submitter;
+                    const acceptMessage = form.getAttribute("data-confirm-accept");
+
+                    if (
+                        acceptMessage &&
+                        submitter &&
+                        submitter.name === "status" &&
+                        submitter.value === "ACCEPTED" &&
+                        !window.confirm(acceptMessage)
+                    ) {
+                        event.preventDefault();
+                        return;
+                    }
+
                     form.classList.add("form-submitting");
                     form.setAttribute("aria-busy", "true");
                 });

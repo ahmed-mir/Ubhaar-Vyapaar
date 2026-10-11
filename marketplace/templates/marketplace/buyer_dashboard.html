@@ -34,6 +34,21 @@
             <dd>{{ stats.pending_actions }}</dd>
         </div>
 
+        <div class="stat-card stat-card-attention">
+            <dt>Milestones to fund</dt>
+            <dd>{{ stats.milestones_to_fund }}</dd>
+        </div>
+
+        <div class="stat-card stat-card-attention">
+            <dt>Milestones to review</dt>
+            <dd>{{ stats.milestones_to_review }}</dd>
+        </div>
+
+        <div class="stat-card">
+            <dt>Demo releases due</dt>
+            <dd>{{ stats.demo_releases_due }}</dd>
+        </div>
+
         <div class="stat-card">
             <dt>Quotations received</dt>
             <dd>{{ stats.quotations_received }}</dd>
@@ -59,6 +74,79 @@
             <dd>{{ stats.unread_notifications }}</dd>
         </div>
     </dl>
+
+    <section class="dashboard-band dashboard-spotlight" aria-labelledby="workflow-title">
+        <div class="section-heading">
+            <div>
+                <p class="eyebrow">Order workflow</p>
+                <h2 id="workflow-title">Milestone actions</h2>
+                <p>Demo funding, buyer review, and simulated release steps that need attention.</p>
+            </div>
+        </div>
+
+        <div class="record-grid">
+            {% for milestone in funding_milestones %}
+                <article class="record-card action-card">
+                    <span class="status-pill status-pending">
+                        Demo funding needed
+                    </span>
+                    <h3>{{ milestone.title }}</h3>
+                    <p class="record-meta">
+                        Order #{{ milestone.order.pk }} &middot;
+                        {{ milestone.order.manufacturer.business_name }}
+                    </p>
+                    <dl class="record-facts">
+                        <dt>Listing</dt>
+                        <dd>{{ milestone.order.listing.title }}</dd>
+                        <dt>Demo amount</dt>
+                        <dd>&#8377;{{ milestone.amount|floatformat:2 }}</dd>
+                    </dl>
+                    <a class="button button-primary" href="{% url 'fund_milestone' milestone.pk %}">
+                        Fund milestone (demo)
+                    </a>
+                </article>
+            {% endfor %}
+
+            {% for milestone in review_milestones %}
+                <article class="record-card action-card">
+                    <span class="status-pill status-pending">
+                        Awaiting your review
+                    </span>
+                    <h3>{{ milestone.title }}</h3>
+                    <p class="record-meta">
+                        Order #{{ milestone.order.pk }} &middot;
+                        {{ milestone.order.manufacturer.business_name }}
+                    </p>
+                    <a class="button button-secondary" href="{% url 'order_detail' milestone.order.pk %}#milestone-{{ milestone.pk }}">
+                        Review milestone
+                    </a>
+                </article>
+            {% endfor %}
+
+            {% for milestone in release_milestones %}
+                <article class="record-card action-card">
+                    <span class="status-pill status-approved">
+                        Demo release due
+                    </span>
+                    <h3>{{ milestone.title }}</h3>
+                    <p class="record-meta">
+                        Order #{{ milestone.order.pk }} &middot;
+                        {{ milestone.order.manufacturer.business_name }}
+                    </p>
+                    <a class="button button-secondary" href="{% url 'order_detail' milestone.order.pk %}#milestone-{{ milestone.pk }}">
+                        Release demo payment
+                    </a>
+                </article>
+            {% endfor %}
+
+            {% if not funding_milestones and not review_milestones and not release_milestones %}
+                <div class="empty-panel">
+                    <h2>No milestone actions right now</h2>
+                    <p>Funding, review, and release tasks will appear here when an active order needs your input.</p>
+                </div>
+            {% endif %}
+        </div>
+    </section>
 
     <section class="dashboard-band dashboard-spotlight" aria-labelledby="pending-title">
         <div class="section-heading">
@@ -104,6 +192,7 @@
                         method="post"
                         action="{% url 'respond_to_quotation' quotation.pk %}"
                         class="record-actions"
+                        data-confirm-accept="Accepting this quotation will create a demo order between you and the manufacturer. No real payment will be processed."
                     >
                         {% csrf_token %}
 
@@ -127,8 +216,8 @@
                     </form>
 
                     <p class="record-meta">
-                        Accepting a quotation confirms your interest only.
-                        No order or payment is created in this version.
+                        Accepting creates a demo order between you and the
+                        manufacturer. No real payment is processed.
                     </p>
                 </article>
             {% empty %}

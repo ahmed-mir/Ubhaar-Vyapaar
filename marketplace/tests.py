@@ -15,6 +15,7 @@ from .models import (
     QuoteRequest,
     Review,
 )
+from .views import build_order_financial_summary
 
 
 @override_settings(
@@ -306,6 +307,41 @@ class OrderMessagingTests(TestCase):
             reverse("order_detail", args=[self.order.pk]),
         )
         self.milestone.refresh_from_db()
+        self.assertEqual(self.milestone.status, Milestone.Status.PENDING)
+
+        self.client.force_login(self.buyer)
+        response = self.client.post(
+            reverse("fund_milestone", args=[self.milestone.pk])
+        )
+        self.assertRedirects(
+            response,
+            reverse("order_detail", args=[self.order.pk]),
+        )
+        self.milestone.refresh_from_db()
+        self.assertEqual(
+            self.milestone.funding_status,
+            Milestone.FundingStatus.FUNDED,
+        )
+
+        self.client.force_login(self.manufacturer_user)
+        response = self.client.post(
+            reverse("start_milestone", args=[self.milestone.pk])
+        )
+        self.assertRedirects(
+            response,
+            reverse("order_detail", args=[self.order.pk]),
+        )
+        self.milestone.refresh_from_db()
+        self.assertEqual(self.milestone.status, Milestone.Status.IN_PROGRESS)
+
+        response = self.client.post(
+            reverse("mark_milestone_complete", args=[self.milestone.pk])
+        )
+        self.assertRedirects(
+            response,
+            reverse("order_detail", args=[self.order.pk]),
+        )
+        self.milestone.refresh_from_db()
         self.assertEqual(self.milestone.status, Milestone.Status.COMPLETED)
 
         self.client.force_login(self.other_buyer)
@@ -326,6 +362,189 @@ class OrderMessagingTests(TestCase):
         )
         self.milestone.refresh_from_db()
         self.assertEqual(self.milestone.status, Milestone.Status.APPROVED)
+        self.assertEqual(
+            self.milestone.funding_status,
+            Milestone.FundingStatus.FUNDED,
+        )
+
+    def test_demo_funding_release_and_completion_flow(self):
+        self.client.force_login(self.buyer)
+
+        response = self.client.post(
+            reverse("fund_milestone", args=[self.milestone.pk])
+        )
+
+        self.assertRedirects(
+            response,
+            reverse("order_detail", args=[self.order.pk]),
+        )
+        self.milestone.refresh_from_db()
+        self.order.refresh_from_db()
+        self.assertEqual(
+            self.milestone.funding_status,
+            Milestone.FundingStatus.FUNDED,
+        )
+        self.assertIsNotNone(self.milestone.funded_at)
+        self.assertEqual(self.order.status, Order.Status.FUNDED)
+        self.assertTrue(
+            Notification.objects.filter(
+                recipient=self.manufacturer_user,
+                message__icontains="demo-funded",
+                order=self.order,
+            ).exists()
+        )
+
+        response = self.client.post(
+            reverse("fund_milestone", args=[self.milestone.pk])
+        )
+        self.assertRedirects(
+            response,
+            reverse("order_detail", args=[self.order.pk]),
+        )
+        self.assertEqual(
+            Milestone.objects.get(pk=self.milestone.pk).funding_status,
+            Milestone.FundingStatus.FUNDED,
+        )
+
+        self.client.force_login(self.other_buyer)
+        response = self.client.post(
+            reverse("fund_milestone", args=[self.milestone.pk])
+        )
+        self.assertEqual(response.status_code, 404)
+
+        self.client.force_login(self.manufacturer_user)
+        response = self.client.post(
+            reverse("start_milestone", args=[self.milestone.pk])
+        )
+        self.assertRedirects(
+            response,
+            reverse("order_detail", args=[self.order.pk]),
+        )
+        self.milestone.refresh_from_db()
+        self.order.refresh_from_db()
+        self.assertEqual(self.milestone.status, Milestone.Status.IN_PROGRESS)
+        self.assertEqual(self.order.status, Order.Status.IN_PRODUCTION)
+
+        response = self.client.post(
+            reverse("mark_milestone_complete", args=[self.milestone.pk])
+        )
+        self.assertRedirects(
+            response,
+            reverse("order_detail", args=[self.order.pk]),
+        )
+        self.milestone.refresh_from_db()
+        self.order.refresh_from_db()
+        self.assertEqual(self.milestone.status, Milestone.Status.COMPLETED)
+        self.assertEqual(self.order.status, Order.Status.MILESTONE_PENDING)
+
+        self.client.force_login(self.manufacturer_user)
+        response = self.client.post(
+            reverse("respond_to_milestone", args=[self.milestone.pk]),
+            {"status": Milestone.Status.APPROVED},
+        )
+        self.assertEqual(response.status_code, 403)
+
+        self.client.force_login(self.buyer)
+        response = self.client.post(
+            reverse("respond_to_milestone", args=[self.milestone.pk]),
+            {
+                "status": Milestone.Status.APPROVED,
+                "buyer_feedback": "Looks good.",
+            },
+        )
+        self.assertRedirects(
+            response,
+            reverse("order_detail", args=[self.order.pk]),
+        )
+        self.milestone.refresh_from_db()
+        self.order.refresh_from_db()
+        self.assertEqual(self.milestone.status, Milestone.Status.APPROVED)
+        self.assertEqual(self.order.status, Order.Status.IN_PRODUCTION)
+
+        response = self.client.post(
+            reverse("release_milestone_payment", args=[self.milestone.pk])
+        )
+        self.assertRedirects(
+            response,
+            reverse("order_detail", args=[self.order.pk]),
+        )
+        self.milestone.refresh_from_db()
+        self.order.refresh_from_db()
+        self.assertEqual(
+            self.milestone.funding_status,
+            Milestone.FundingStatus.RELEASED,
+        )
+        self.assertIsNotNone(self.milestone.released_at)
+        self.assertEqual(self.order.status, Order.Status.COMPLETED)
+        self.assertTrue(
+            Notification.objects.filter(
+                recipient=self.manufacturer_user,
+                message__icontains="released demo payment",
+                order=self.order,
+            ).exists()
+        )
+
+        response = self.client.post(
+            reverse("release_milestone_payment", args=[self.milestone.pk])
+        )
+        self.assertRedirects(
+            response,
+            reverse("order_detail", args=[self.order.pk]),
+        )
+        self.assertEqual(
+            Milestone.objects.get(pk=self.milestone.pk).funding_status,
+            Milestone.FundingStatus.RELEASED,
+        )
+
+    def test_completed_order_blocks_funding_and_milestone_updates(self):
+        self.milestone.funding_status = Milestone.FundingStatus.RELEASED
+        self.milestone.status = Milestone.Status.APPROVED
+        self.milestone.save(update_fields=["funding_status", "status"])
+        self.order.status = Order.Status.COMPLETED
+        self.order.save(update_fields=["status"])
+
+        self.client.force_login(self.buyer)
+        response = self.client.post(
+            reverse("fund_milestone", args=[self.milestone.pk])
+        )
+        self.assertRedirects(
+            response,
+            reverse("order_detail", args=[self.order.pk]),
+        )
+
+        self.client.force_login(self.manufacturer_user)
+        response = self.client.post(
+            reverse("start_milestone", args=[self.milestone.pk])
+        )
+        self.assertRedirects(
+            response,
+            reverse("order_detail", args=[self.order.pk]),
+        )
+        self.milestone.refresh_from_db()
+        self.assertEqual(self.milestone.status, Milestone.Status.APPROVED)
+
+    def test_financial_summary_uses_milestone_funding_states(self):
+        second = Milestone.objects.create(
+            order=self.order,
+            title="Final dispatch",
+            percentage=25,
+            amount=Decimal("300.00"),
+            funding_status=Milestone.FundingStatus.RELEASED,
+        )
+        self.milestone.funding_status = Milestone.FundingStatus.FUNDED
+        self.milestone.amount = Decimal("900.00")
+        self.milestone.save(update_fields=["funding_status", "amount"])
+
+        summary = build_order_financial_summary(
+            self.order,
+            [self.milestone, second],
+        )
+
+        self.assertEqual(summary["order_value"], Decimal("1200.00"))
+        self.assertEqual(summary["milestone_total"], Decimal("1200.00"))
+        self.assertEqual(summary["funded"], Decimal("1200.00"))
+        self.assertEqual(summary["released"], Decimal("300.00"))
+        self.assertEqual(summary["remaining"], Decimal("0.00"))
 
     def test_review_requires_completed_owned_order_and_is_unique(self):
         self.client.force_login(self.buyer)
