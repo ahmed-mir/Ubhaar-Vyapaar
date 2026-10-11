@@ -29,6 +29,17 @@
         <form method="post" class="styled-form">
             {% csrf_token %}
             {{ form.as_p }}
+            <p class="auth-consent-note">
+                Review the
+                <a href="{% url 'terms' %}" target="_blank" rel="noopener">
+                    Terms &amp; Conditions
+                </a>
+                and
+                <a href="{% url 'privacy_policy' %}" target="_blank" rel="noopener">
+                    Privacy Policy
+                </a>
+                before creating an account.
+            </p>
 
             <button class="button form-submit" type="submit">
                 Create buyer account

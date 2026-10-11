@@ -111,3 +111,58 @@ class PasswordResetEmailTests(TestCase):
         )
         self.assertIn("/accounts/password/reset/", mail.outbox[0].body)
         self.assertEqual(mail.outbox[0].from_email, "sender@example.test")
+
+
+class RegistrationConsentTests(TestCase):
+    def test_buyer_registration_requires_legal_acknowledgement(self):
+        response = self.client.post(
+            reverse("register"),
+            {
+                "username": "buyer-one",
+                "email": "buyer@example.test",
+                "phone": "",
+                "password1": "StrongPass123!",
+                "password2": "StrongPass123!",
+            },
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(
+            response,
+            "Please agree to the Terms &amp; Conditions",
+        )
+        self.assertFalse(
+            get_user_model().objects.filter(username="buyer-one").exists()
+        )
+
+    def test_buyer_registration_records_policy_versions(self):
+        response = self.client.post(
+            reverse("register"),
+            {
+                "username": "buyer-two",
+                "email": "buyer-two@example.test",
+                "phone": "",
+                "password1": "StrongPass123!",
+                "password2": "StrongPass123!",
+                "legal_acknowledgement": "on",
+            },
+        )
+
+        self.assertRedirects(response, reverse("home"))
+        user = get_user_model().objects.get(username="buyer-two")
+        self.assertIsNotNone(user.terms_accepted_at)
+        self.assertIsNotNone(user.privacy_acknowledged_at)
+        self.assertEqual(user.terms_version, project_settings.TERMS_VERSION)
+        self.assertEqual(
+            user.privacy_policy_version,
+            project_settings.PRIVACY_POLICY_VERSION,
+        )
+
+    def test_registration_page_links_policies_and_has_no_marketing_consent(self):
+        response = self.client.get(reverse("register"))
+
+        self.assertContains(response, reverse("terms"))
+        self.assertContains(response, reverse("privacy_policy"))
+        self.assertContains(response, 'name="legal_acknowledgement"')
+        self.assertNotContains(response, 'name="marketing_consent"')
+        self.assertNotContains(response, 'checked="checked"')

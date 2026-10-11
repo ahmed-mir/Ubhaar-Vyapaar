@@ -1,0 +1,123 @@
+{% extends "marketplace/base.html" %}
+
+{% block title %}Terms & Conditions | Ubhaar-Vyapaar{% endblock %}
+
+{% block content %}
+    <article class="legal-page">
+        <header class="page-heading legal-heading">
+            <div>
+                <p class="eyebrow">Platform terms</p>
+                <h1>Terms &amp; Conditions</h1>
+                <p>
+                    These draft terms describe the current Ubhaar-Vyapaar prototype
+                    marketplace workflows. They are not final legal terms and require
+                    professional legal review before production use.
+                </p>
+            </div>
+        </header>
+
+        <section class="legal-section legal-warning">
+            <h2>Prototype payment limitation</h2>
+            <p>
+                Ubhaar-Vyapaar currently uses demo and simulated milestone funding
+                states only. The platform does not currently process real payments,
+                does not charge payment cards or UPI, does not move money, and does
+                not provide a real escrow account.
+            </p>
+            <p>
+                Demo funding and demo release states are workflow markers only and
+                do not represent real money movement or regulated financial services.
+            </p>
+        </section>
+
+        <section class="legal-section">
+            <h2>Accounts and roles</h2>
+            <p>
+                Users are responsible for keeping account credentials secure and for
+                providing accurate account information. Buyer accounts can browse,
+                save listings, request quotes, accept quotations, manage demo orders,
+                message manufacturers, and leave completed-order reviews.
+            </p>
+            <p>
+                Manufacturer accounts can create capacity listings, maintain business
+                profiles, respond to quote requests, send quotations, manage demo
+                order milestones, and message buyers.
+            </p>
+        </section>
+
+        <section class="legal-section">
+            <h2>Listings, quotations, and orders</h2>
+            <p>
+                Manufacturers are responsible for the accuracy of listings, prices,
+                lead times, capacity statements, images, and quotations. Buyers are
+                responsible for providing practical quote requirements and delivery
+                information.
+            </p>
+            <p>
+                Accepting a quotation currently creates a demo order with locked
+                terms and simulated milestones. It does not create platform-processed
+                payment, escrow, shipping, tax, or regulated financial-service
+                obligations.
+            </p>
+        </section>
+
+        <section class="legal-section">
+            <h2>Communication and reviews</h2>
+            <p>
+                Order messages and reviews should be accurate, lawful, and relevant
+                to the marketplace workflow. Users should not post confidential,
+                abusive, misleading, infringing, or unlawful content.
+            </p>
+        </section>
+
+        <section class="legal-section">
+            <h2>Prohibited conduct</h2>
+            <ul>
+                <li>Submitting false business, listing, quotation, or review information.</li>
+                <li>Requesting or sharing payment card, UPI, bank credential, or government ID information through the prototype.</li>
+                <li>Uploading unlawful, infringing, unsafe, or misleading content.</li>
+                <li>Attempting to access another user's account, order, messages, or notifications.</li>
+                <li>Using the platform to spam, harass, scrape, or disrupt service availability.</li>
+            </ul>
+        </section>
+
+        <section class="legal-section">
+            <h2>User-generated content and intellectual property</h2>
+            <p>
+                Users remain responsible for content they submit, including listing
+                text, images, messages, quote requirements, and reviews. Users should
+                submit only content they have the right to use.
+            </p>
+        </section>
+
+        <section class="legal-section">
+            <h2>Account suspension or termination</h2>
+            <p>
+                Administrative moderation and account handling policies require legal
+                and business review. The current prototype includes role checks and
+                verification status controls, but does not include a complete public
+                suspension or appeals workflow.
+            </p>
+        </section>
+
+        <section class="legal-section">
+            <h2>Availability, liability, and disputes</h2>
+            <p>
+                The service may change, pause, or become unavailable as a prototype.
+                Limitation of liability, indemnity, dispute-resolution, governing-law,
+                and formal notice language must be drafted or approved by a qualified
+                professional before production use.
+            </p>
+        </section>
+
+        <section class="legal-section">
+            <h2>Contact and version</h2>
+            {% if legal_contact_email %}
+                <p>Contact: <a href="mailto:{{ legal_contact_email }}">{{ legal_contact_email }}</a></p>
+            {% else %}
+                <p>Contact details are not configured in this prototype deployment.</p>
+            {% endif %}
+            <p>Terms version: {{ terms_version }}.</p>
+        </section>
+    </article>
+{% endblock %}

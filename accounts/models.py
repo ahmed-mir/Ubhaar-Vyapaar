@@ -14,3 +14,8 @@ class User(AbstractUser):
     )
 
     phone = models.CharField(max_length=20, blank=True)
+
+    terms_accepted_at = models.DateTimeField(null=True, blank=True)
+    privacy_acknowledged_at = models.DateTimeField(null=True, blank=True)
+    terms_version = models.CharField(max_length=40, blank=True)
+    privacy_policy_version = models.CharField(max_length=40, blank=True)

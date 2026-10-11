@@ -4,6 +4,14 @@ from . import views
 
 urlpatterns = [
     path("", views.home, name="home"),
+    path("privacy/", views.privacy_policy, name="privacy_policy"),
+    path("terms/", views.terms, name="terms"),
+    path("cookies/", views.cookie_policy, name="cookie_policy"),
+    path(
+        "refund-policy/",
+        views.refund_policy,
+        name="refund_policy",
+    ),
     path(
         "listings/<int:pk>/",
         views.listing_detail,

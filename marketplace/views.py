@@ -8,6 +8,8 @@ from django.views.decorators.http import require_http_methods
 from django.utils import timezone
 from decimal import Decimal, InvalidOperation
 
+from django.conf import settings
+
 from .forms import (
     CapacityListingEditForm,
     CapacityListingForm,
@@ -30,6 +32,48 @@ from .models import (
 )
 from django.db.models import Q
 from django.views.decorators.http import require_POST
+
+
+def legal_page_context():
+    return {
+        "legal_entity_name": settings.LEGAL_ENTITY_NAME,
+        "legal_contact_email": settings.LEGAL_CONTACT_EMAIL,
+        "legal_contact_label": settings.LEGAL_CONTACT_LABEL,
+        "terms_version": settings.TERMS_VERSION,
+        "privacy_policy_version": settings.PRIVACY_POLICY_VERSION,
+    }
+
+
+def privacy_policy(request):
+    return render(
+        request,
+        "marketplace/privacy_policy.html",
+        legal_page_context(),
+    )
+
+
+def terms(request):
+    return render(
+        request,
+        "marketplace/terms.html",
+        legal_page_context(),
+    )
+
+
+def cookie_policy(request):
+    return render(
+        request,
+        "marketplace/cookie_policy.html",
+        legal_page_context(),
+    )
+
+
+def refund_policy(request):
+    return render(
+        request,
+        "marketplace/refund_policy.html",
+        legal_page_context(),
+    )
 
 
 def create_order_from_quotation(quotation):

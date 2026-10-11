@@ -622,3 +622,28 @@ class OrderMessagingTests(TestCase):
             .status_code,
             403,
         )
+
+
+class PolicyPageTests(TestCase):
+    def test_policy_pages_return_success(self):
+        for name in (
+            "privacy_policy",
+            "terms",
+            "cookie_policy",
+            "refund_policy",
+        ):
+            with self.subTest(name=name):
+                response = self.client.get(reverse(name))
+                self.assertEqual(response.status_code, 200)
+
+    def test_cookie_policy_does_not_claim_optional_tracking(self):
+        response = self.client.get(reverse("cookie_policy"))
+
+        self.assertContains(response, "None found in the current code audit")
+        self.assertNotContains(response, "Accept All")
+
+    def test_terms_disclose_simulated_payments(self):
+        response = self.client.get(reverse("terms"))
+
+        self.assertContains(response, "does not currently process real payments")
+        self.assertContains(response, "real escrow account")

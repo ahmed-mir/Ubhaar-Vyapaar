@@ -1,0 +1,86 @@
+{% extends "marketplace/base.html" %}
+
+{% block title %}Cookie Policy | Ubhaar-Vyapaar{% endblock %}
+
+{% block content %}
+    <article class="legal-page">
+        <header class="page-heading legal-heading">
+            <div>
+                <p class="eyebrow">Cookie notice</p>
+                <h1>Cookie Policy</h1>
+                <p>
+                    This page describes cookies and browser storage found in the
+                    current Ubhaar-Vyapaar codebase.
+                </p>
+            </div>
+        </header>
+
+        <section class="legal-section">
+            <h2>Current cookies and storage</h2>
+            <div class="legal-table-wrap">
+                <table class="legal-table">
+                    <thead>
+                        <tr>
+                            <th>Category</th>
+                            <th>What exists</th>
+                            <th>Purpose</th>
+                            <th>Loads before consent?</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Strictly necessary</td>
+                            <td>Django session cookie</td>
+                            <td>Keeps users logged in and supports account workflows.</td>
+                            <td>Yes, when needed for account functionality.</td>
+                        </tr>
+                        <tr>
+                            <td>Strictly necessary</td>
+                            <td>Django CSRF cookie/token</td>
+                            <td>Protects forms from cross-site request forgery.</td>
+                            <td>Yes, when forms are used.</td>
+                        </tr>
+                        <tr>
+                            <td>Functional</td>
+                            <td>None found in the current code audit.</td>
+                            <td>Not applicable.</td>
+                            <td>No.</td>
+                        </tr>
+                        <tr>
+                            <td>Analytics</td>
+                            <td>None found in the current code audit.</td>
+                            <td>Not applicable.</td>
+                            <td>No.</td>
+                        </tr>
+                        <tr>
+                            <td>Marketing</td>
+                            <td>None found in the current code audit.</td>
+                            <td>Not applicable.</td>
+                            <td>No.</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <p>
+                The current code audit did not identify localStorage,
+                sessionStorage, analytics scripts, advertising pixels, embedded
+                maps, video embeds, chat widgets, or social widgets.
+            </p>
+        </section>
+
+        <section class="legal-section">
+            <h2>Consent approach</h2>
+            <p>
+                Because the current site does not use optional analytics or
+                marketing cookies, it does not display a blanket cookie-acceptance banner.
+                Strictly necessary session and CSRF cookies should not be blocked
+                because they are required for login, forms, and security.
+            </p>
+            <p>
+                If optional analytics, marketing, or third-party embeds are added
+                later, they should be placed behind an explicit consent mechanism and
+                should not run before the relevant consent category is granted.
+            </p>
+        </section>
+    </article>
+{% endblock %}

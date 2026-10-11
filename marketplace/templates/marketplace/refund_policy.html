@@ -1,0 +1,55 @@
+{% extends "marketplace/base.html" %}
+
+{% block title %}Refund & Cancellation Policy | Ubhaar-Vyapaar{% endblock %}
+
+{% block content %}
+    <article class="legal-page">
+        <header class="page-heading legal-heading">
+            <div>
+                <p class="eyebrow">Payments and cancellations</p>
+                <h1>Refund &amp; Cancellation Policy</h1>
+                <p>
+                    This policy reflects the current prototype. It does not describe
+                    a real payment-processing or escrow service.
+                </p>
+            </div>
+        </header>
+
+        <section class="legal-section legal-warning">
+            <h2>No current platform payment processing</h2>
+            <p>
+                Ubhaar-Vyapaar currently uses simulated funding and release states
+                for demo order workflows. No real payment is charged through the
+                platform at present. No actual money is collected, held, moved, or
+                released by Ubhaar-Vyapaar, and no real escrow account is currently
+                provided.
+            </p>
+            <p>
+                Because the platform does not currently process real monetary
+                payments, platform-processed monetary refunds are not currently
+                performed.
+            </p>
+        </section>
+
+        <section class="legal-section">
+            <h2>Current cancellation functionality</h2>
+            <p>
+                The data model contains order statuses such as cancelled or disputed,
+                but the current user-facing code audit did not identify a safe
+                buyer/manufacturer order-cancellation workflow. This page does not
+                advertise self-service cancellation functionality that is not
+                implemented.
+            </p>
+        </section>
+
+        <section class="legal-section">
+            <h2>Future policy review</h2>
+            <p>
+                If real payments, escrow, refunds, cancellations, platform fees, or
+                payment-provider integrations are introduced later, this policy must
+                be replaced with business-approved and legally reviewed terms before
+                launch.
+            </p>
+        </section>
+    </article>
+{% endblock %}

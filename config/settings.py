@@ -424,6 +424,26 @@ ADMINS = [
 ]
 
 
+# Legal/privacy page configuration
+# --------------------------------
+
+LEGAL_ENTITY_NAME = _env_str("LEGAL_ENTITY_NAME", "")
+
+LEGAL_CONTACT_EMAIL = _env_str("LEGAL_CONTACT_EMAIL", "")
+
+LEGAL_CONTACT_LABEL = _env_str(
+    "LEGAL_CONTACT_LABEL",
+    "Ubhaar-Vyapaar prototype operator",
+)
+
+TERMS_VERSION = _env_str("TERMS_VERSION", "2026-10-11")
+
+PRIVACY_POLICY_VERSION = _env_str(
+    "PRIVACY_POLICY_VERSION",
+    "2026-10-11",
+)
+
+
 # Production security
 # -------------------
 
