@@ -132,6 +132,15 @@ def create_order_notification(recipient, message, order):
     )
 
 
+def concise_label(value, limit=72):
+    text = str(value or "").strip()
+
+    if len(text) <= limit:
+        return text
+
+    return f"{text[:limit - 3]}..."
+
+
 def notify_order_status_change(order, previous_status):
     if previous_status == order.status:
         return
@@ -354,7 +363,8 @@ def build_next_action(order, user, milestones):
 
 
 def build_order_timeline(order, milestones):
-    has_funding = any(
+    has_milestones = bool(milestones)
+    all_funded = has_milestones and all(
         milestone.funding_status
         in {
             Milestone.FundingStatus.FUNDED,
@@ -371,7 +381,7 @@ def build_order_timeline(order, milestones):
         }
         for milestone in milestones
     )
-    has_review = any(
+    has_submission = any(
         milestone.status
         in {
             Milestone.Status.COMPLETED,
@@ -379,10 +389,19 @@ def build_order_timeline(order, milestones):
         }
         for milestone in milestones
     )
+    all_approved = has_milestones and all(
+        milestone.status == Milestone.Status.APPROVED
+        for milestone in milestones
+    )
+    all_released = has_milestones and all(
+        milestone.funding_status == Milestone.FundingStatus.RELEASED
+        for milestone in milestones
+    )
+    has_order_review = Review.objects.filter(order=order).exists()
 
     return [
         {
-            "title": "Quotation",
+            "title": "Quotation accepted",
             "body": "Buyer accepted the quotation.",
             "complete": order.quotation.status == Quotation.Status.ACCEPTED,
             "date": order.quotation.responded_at,
@@ -394,9 +413,14 @@ def build_order_timeline(order, milestones):
             "date": order.created_at,
         },
         {
-            "title": "Funding",
-            "body": "Demo milestone funding is tracked without real payment.",
-            "complete": has_funding,
+            "title": "Milestones",
+            "body": "Production checkpoints were created for this order.",
+            "complete": has_milestones,
+        },
+        {
+            "title": "Demo funding",
+            "body": "All milestone funding is simulated; no real money is held.",
+            "complete": all_funded,
         },
         {
             "title": "Production",
@@ -404,15 +428,30 @@ def build_order_timeline(order, milestones):
             "complete": has_production,
         },
         {
-            "title": "Review",
-            "body": "Buyer reviews submitted milestone work.",
-            "complete": has_review,
+            "title": "Submission",
+            "body": "Manufacturer submits milestone work for buyer review.",
+            "complete": has_submission,
+        },
+        {
+            "title": "Approval",
+            "body": "Buyer approves submitted milestones.",
+            "complete": all_approved,
+        },
+        {
+            "title": "Demo release",
+            "body": "Approved milestone amounts are marked released in demo mode.",
+            "complete": all_released,
         },
         {
             "title": "Completion",
             "body": "All milestones approved and demo releases completed.",
             "complete": order.status == Order.Status.COMPLETED,
             "date": order.updated_at if order.status == Order.Status.COMPLETED else None,
+        },
+        {
+            "title": "Review",
+            "body": "Buyer can leave a completed-order review.",
+            "complete": has_order_review,
         },
     ]
 
@@ -565,8 +604,8 @@ def request_quote(request, pk):
                 Notification.objects.create(
                     recipient_id=listing.manufacturer.user_id,
                     message=(
-                        f"New quote request #{quote.pk}: "
-                        f"{quote.quantity} units requested."
+                        f"New quote request #{quote.pk} for {concise_label(listing.title)}: "
+                        f"{quote.quantity} units requested. Review and respond."
                     ),
                     destination=(
                         Notification.Destination.MANUFACTURER_DASHBOARD
@@ -608,6 +647,7 @@ def my_quote_requests(request):
         "listing",
         "listing__manufacturer",
         "quotation",
+        "quotation__order",
     ).order_by("-created_at", "-pk")
 
     buyer_quotations = Quotation.objects.filter(
@@ -658,6 +698,7 @@ def buyer_dashboard(request):
         "quote_request",
         "quote_request__listing",
         "quote_request__listing__manufacturer",
+        "order",
     )
 
     pending_quotations = quotations.filter(
@@ -892,20 +933,22 @@ def fund_milestone(request, pk):
         if updated:
             milestone.refresh_from_db()
             previous_order_status, _ = refresh_order_status(milestone.order)
+            milestone_title = concise_label(milestone.title)
 
             create_order_notification(
                 milestone.order.manufacturer.user,
                 (
-                    f"Buyer demo-funded milestone '{milestone.title}' "
-                    f"on order #{milestone.order_id}."
+                    f"Buyer funded the {milestone_title} milestone for "
+                    f"Order #{milestone.order_id} (demo funding). Start it "
+                    "when production is ready."
                 ),
                 milestone.order,
             )
             create_order_notification(
                 request.user,
                 (
-                    f"Demo funding confirmed for milestone "
-                    f"'{milestone.title}' on order #{milestone.order_id}."
+                    f"Demo funding confirmed for {milestone_title} on "
+                    f"Order #{milestone.order_id}. No real money was processed."
                 ),
                 milestone.order,
             )
@@ -964,11 +1007,12 @@ def start_milestone(request, pk):
         if updated:
             milestone.refresh_from_db()
             previous_order_status, _ = refresh_order_status(milestone.order)
+            milestone_title = concise_label(milestone.title)
             create_order_notification(
                 milestone.order.buyer,
                 (
-                    f"Manufacturer started milestone '{milestone.title}' "
-                    f"on order #{milestone.order_id}."
+                    f"Manufacturer started the {milestone_title} milestone "
+                    f"for Order #{milestone.order_id}."
                 ),
                 milestone.order,
             )
@@ -998,7 +1042,7 @@ def send_order_message(request, pk):
             recipient = get_order_message_recipient(order, request.user)
             create_order_notification(
                 recipient,
-                f"New message on order #{order.pk}.",
+                f"New message on Order #{order.pk}. Open the order to reply.",
                 order,
             )
 
@@ -1038,7 +1082,7 @@ def review_order(request, pk):
 
             create_order_notification(
                 order.manufacturer.user,
-                f"The buyer reviewed order #{order.pk}.",
+                f"The buyer reviewed Order #{order.pk}. View the completed-order feedback.",
                 order,
             )
 
@@ -1076,12 +1120,14 @@ def mark_milestone_complete(request, pk):
         milestone.completed_at = timezone.now()
         milestone.save(update_fields=["status", "completed_at", "updated_at"])
         previous_order_status, _ = refresh_order_status(milestone.order)
+        milestone_title = concise_label(milestone.title)
 
         create_order_notification(
             milestone.order.buyer,
             message=(
-                f"Milestone '{milestone.title}' is ready for review "
-                f"on order #{milestone.order_id}."
+                f"{milestone_title} milestone is ready for your approval "
+                f"on Order #{milestone.order_id}. Review the work and approve "
+                "or request changes."
             ),
             order=milestone.order,
         )
@@ -1155,12 +1201,13 @@ def respond_to_milestone(request, pk):
         if decision == Milestone.Status.APPROVED
         else "requested changes for"
     )
+    milestone_title = concise_label(milestone.title)
 
     create_order_notification(
         milestone.order.manufacturer.user,
         message=(
-            f"The buyer {response_label} milestone "
-            f"'{milestone.title}' on order #{milestone.order_id}."
+            f"The buyer {response_label} the {milestone_title} milestone "
+            f"on Order #{milestone.order_id}."
         ),
         order=milestone.order,
     )
@@ -1210,12 +1257,14 @@ def release_milestone_payment(request, pk):
             milestone.refresh_from_db()
             previous_order_status, _ = refresh_order_status(milestone.order)
             milestone.order.refresh_from_db(fields=["status"])
+            milestone_title = concise_label(milestone.title)
 
             create_order_notification(
                 milestone.order.manufacturer.user,
                 (
                     f"Buyer released demo payment for milestone "
-                    f"'{milestone.title}' on order #{milestone.order_id}."
+                    f"{milestone_title} on Order #{milestone.order_id}. "
+                    "No real money was transferred."
                 ),
                 milestone.order,
             )
@@ -1223,7 +1272,8 @@ def release_milestone_payment(request, pk):
                 request.user,
                 (
                     f"Demo payment released for milestone "
-                    f"'{milestone.title}' on order #{milestone.order_id}."
+                    f"{milestone_title} on Order #{milestone.order_id}. "
+                    "No real money was transferred."
                 ),
                 milestone.order,
             )
@@ -1553,11 +1603,12 @@ def send_quotation(request, pk):
                 )
 
                 if created:
+                    listing_title = concise_label(quote_request.listing.title)
                     Notification.objects.create(
                         recipient_id=quote_request.buyer_id,
                         message=(
-                            f"A manufacturer sent a quotation for "
-                            f"your request #{quote_request.pk}."
+                            f"Quotation received for {listing_title} "
+                            f"request #{quote_request.pk}. Review and respond."
                         ),
                         destination=(
                             Notification.Destination.BUYER_REQUESTS
@@ -1624,12 +1675,6 @@ def respond_to_quotation(request, pk):
         )
 
         if updated:
-            response_label = (
-                "accepted"
-                if new_status == Quotation.Status.ACCEPTED
-                else "declined"
-            )
-
             order = None
             order_created = False
 
@@ -1638,11 +1683,18 @@ def respond_to_quotation(request, pk):
                 quotation.responded_at = timezone.now()
                 order, order_created = create_order_from_quotation(quotation)
 
+            listing_title = concise_label(quotation.quote_request.listing.title)
             manufacturer_user = quotation.quote_request.listing.manufacturer.user
-            response_message = (
-                f"The buyer {response_label} your quotation "
-                f"for request #{quotation.quote_request_id}."
-            )
+
+            if new_status == Quotation.Status.ACCEPTED:
+                response_message = (
+                    f"Your quotation for {listing_title} was accepted. "
+                    "Open the order to review next steps."
+                )
+            else:
+                response_message = (
+                    f"Your quotation for {listing_title} was declined by the buyer."
+                )
 
             if order is not None:
                 create_order_notification(
@@ -1663,8 +1715,9 @@ def respond_to_quotation(request, pk):
                 create_order_notification(
                     request.user,
                     message=(
-                        f"Order #{order.pk} was created from your "
-                        f"accepted quotation."
+                        f"Order #{order.pk} was created from your accepted "
+                        f"quotation for {listing_title}. Confirm demo milestone "
+                        "funding to start production."
                     ),
                     order=order,
                 )

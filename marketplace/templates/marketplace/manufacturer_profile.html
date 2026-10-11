@@ -2,34 +2,6 @@
 
 {% block title %}{{ manufacturer.business_name }} | Ubhaar-Vyapaar{% endblock %}
 
-{% block extra_css %}
-<style>
-    .business-profile {
-        margin: 24px 0 32px;
-    }
-
-    .business-profile h1 {
-        margin: 16px 0 8px;
-        font-size: clamp(28px, 4vw, 40px);
-        line-height: 1.2;
-    }
-
-    .business-description {
-        max-width: 760px;
-        margin-top: 24px;
-    }
-
-    .profile-pagination {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        flex-wrap: wrap;
-        gap: 16px;
-        margin-top: 28px;
-    }
-</style>
-{% endblock %}
-
 {% block content %}
     <a class="back-link" href="{% url 'home' %}">
         &larr; Browse all listings

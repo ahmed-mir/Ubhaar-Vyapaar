@@ -1,4 +1,5 @@
 {% extends "marketplace/base.html" %}
+{% load currency %}
 
 {% block title %}My quote requests | Ubhaar-Vyapaar{% endblock %}
 
@@ -79,13 +80,13 @@
 
                         <p>
                             Price per unit:
-                            &#8377;{{ quote.quotation.price_per_unit }}<br>
+                            {{ quote.quotation.price_per_unit|inr }}<br>
 
                             Quantity:
                             {{ quote.quotation.quantity }} units<br>
 
                             Subtotal:
-                            &#8377;{{ quote.quotation.subtotal|floatformat:2 }}<br>
+                            {{ quote.quotation.subtotal|inr }}<br>
 
                             Production time:
                             {{ quote.quotation.production_days }} days

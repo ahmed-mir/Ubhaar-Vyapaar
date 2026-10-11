@@ -1,4 +1,5 @@
 {% extends "marketplace/base.html" %}
+{% load currency %}
 
 {% block title %}Buyer dashboard | Ubhaar-Vyapaar{% endblock %}
 
@@ -99,7 +100,7 @@
                         <dt>Listing</dt>
                         <dd>{{ milestone.order.listing.title }}</dd>
                         <dt>Demo amount</dt>
-                        <dd>&#8377;{{ milestone.amount|floatformat:2 }}</dd>
+                        <dd>{{ milestone.amount|inr }}</dd>
                     </dl>
                     <a class="button button-primary" href="{% url 'fund_milestone' milestone.pk %}">
                         Fund milestone (demo)
@@ -179,10 +180,10 @@
                         <dd>{{ quotation.quantity }} units</dd>
 
                         <dt>Unit price</dt>
-                        <dd>&#8377;{{ quotation.price_per_unit }}</dd>
+                        <dd>{{ quotation.price_per_unit|inr }}</dd>
 
                         <dt>Subtotal</dt>
-                        <dd>&#8377;{{ quotation.subtotal|floatformat:2 }}</dd>
+                        <dd>{{ quotation.subtotal|inr }}</dd>
 
                         <dt>Production time</dt>
                         <dd>{{ quotation.production_days }} days</dd>
@@ -266,7 +267,7 @@
                         <dd>{{ quotation.quantity }} units</dd>
 
                         <dt>Subtotal</dt>
-                        <dd>&#8377;{{ quotation.subtotal|floatformat:2 }}</dd>
+                        <dd>{{ quotation.subtotal|inr }}</dd>
 
                         <dt>Production time</dt>
                         <dd>{{ quotation.production_days }} days</dd>
@@ -324,7 +325,7 @@
 
                     <dl class="record-facts">
                         <dt>Total amount</dt>
-                        <dd>&#8377;{{ order.total_amount|floatformat:2 }}</dd>
+                        <dd>{{ order.total_amount|inr }}</dd>
 
                         <dt>Production time</dt>
                         <dd>{{ order.agreed_production_days }} days</dd>
@@ -429,7 +430,7 @@
                         <dd>{{ item.listing.minimum_quantity }} units</dd>
 
                         <dt>Unit price</dt>
-                        <dd>&#8377;{{ item.listing.price_per_unit }}</dd>
+                        <dd>{{ item.listing.price_per_unit|inr }}</dd>
                     </dl>
 
                     {% if item.listing.is_active and item.listing.manufacturer.is_verified %}

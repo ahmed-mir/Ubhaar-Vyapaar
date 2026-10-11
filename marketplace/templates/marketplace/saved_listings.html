@@ -1,4 +1,5 @@
 {% extends "marketplace/base.html" %}
+{% load currency %}
 
 {% block title %}Saved listings | Ubhaar-Vyapaar{% endblock %}
 
@@ -6,7 +7,7 @@
     <div class="page-heading">
         <div>
             <h1>Saved listings</h1>
-            <p>Services you want to revisit.</p>
+            <p>Manufacturing partners you saved for comparison.</p>
         </div>
 
         <a class="button" href="{% url 'home' %}">
@@ -41,7 +42,7 @@
 
                     <dl class="record-facts">
                         <dt>Price per unit</dt>
-                        <dd>&#8377;{{ item.listing.price_per_unit }}</dd>
+                    <dd>{{ item.listing.price_per_unit|inr }}</dd>
 
                         <dt>Minimum order</dt>
                         <dd>{{ item.listing.minimum_quantity }} units</dd>

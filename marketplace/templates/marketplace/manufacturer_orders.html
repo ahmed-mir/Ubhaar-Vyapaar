@@ -1,4 +1,5 @@
 {% extends "marketplace/base.html" %}
+{% load currency %}
 
 {% block title %}Manufacturer orders | Ubhaar-Vyapaar{% endblock %}
 
@@ -8,8 +9,8 @@
             <p class="eyebrow">Manufacturer workspace</p>
             <h1>Orders</h1>
             <p>
-                Manage demo orders and mark production milestones complete
-                for buyer review.
+                Manage demo orders, start funded milestones, and submit
+                production work for buyer approval.
             </p>
         </div>
 
@@ -36,7 +37,7 @@
                     <dd>{{ order.quantity }} units</dd>
 
                     <dt>Total amount</dt>
-                    <dd>&#8377;{{ order.total_amount|floatformat:2 }}</dd>
+                    <dd>{{ order.total_amount|inr }}</dd>
 
                     <dt>Production time</dt>
                     <dd>{{ order.agreed_production_days }} days</dd>

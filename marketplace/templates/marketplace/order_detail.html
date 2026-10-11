@@ -1,4 +1,5 @@
 {% extends "marketplace/base.html" %}
+{% load currency %}
 
 {% block title %}Order #{{ order.pk }} | Ubhaar-Vyapaar{% endblock %}
 
@@ -77,20 +78,20 @@
 
         <div class="finance-summary-grid">
             <div class="finance-summary-card">
-                <span>Order value</span>
-                <strong>&#8377;{{ financial_summary.order_value|floatformat:2 }}</strong>
+                <span>Total Order Value</span>
+                <strong>{{ financial_summary.order_value|inr }}</strong>
             </div>
             <div class="finance-summary-card">
-                <span>Demo funded</span>
-                <strong>&#8377;{{ financial_summary.funded|floatformat:2 }}</strong>
+                <span>Funded (demo)</span>
+                <strong>{{ financial_summary.funded|inr }}</strong>
             </div>
             <div class="finance-summary-card">
-                <span>Demo released</span>
-                <strong>&#8377;{{ financial_summary.released|floatformat:2 }}</strong>
+                <span>Released (demo)</span>
+                <strong>{{ financial_summary.released|inr }}</strong>
             </div>
             <div class="finance-summary-card">
-                <span>Remaining to fund</span>
-                <strong>&#8377;{{ financial_summary.remaining|floatformat:2 }}</strong>
+                <span>Remaining / Unfunded</span>
+                <strong>{{ financial_summary.remaining|inr }}</strong>
             </div>
         </div>
 
@@ -138,7 +139,7 @@
 
                         {% if milestone.amount %}
                             <dt>Demo amount</dt>
-                            <dd>&#8377;{{ milestone.amount|floatformat:2 }}</dd>
+                            <dd>{{ milestone.amount|inr }}</dd>
                         {% endif %}
 
                         {% if milestone.due_date %}
@@ -298,10 +299,10 @@
                 <dd>{{ order.quantity }} units</dd>
 
                 <dt>Agreed unit price</dt>
-                <dd>&#8377;{{ order.agreed_unit_price }}</dd>
+                <dd>{{ order.agreed_unit_price|inr }}</dd>
 
                 <dt>Total amount</dt>
-                <dd>&#8377;{{ order.total_amount|floatformat:2 }}</dd>
+                <dd>{{ order.total_amount|inr }}</dd>
 
                 <dt>Production time</dt>
                 <dd>{{ order.agreed_production_days }} days</dd>

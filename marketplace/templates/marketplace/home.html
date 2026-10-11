@@ -1,4 +1,5 @@
 {% extends "marketplace/base.html" %}
+{% load currency %}
 
 {% block title %}Find manufacturing partners | Ubhaar-Vyapaar{% endblock %}
 
@@ -67,7 +68,7 @@
                     {% if selected_category %}<span>Category selected</span>{% endif %}
                     {% if location %}<span>Location: {{ location }}</span>{% endif %}
                     {% if moq %}<span>MOQ up to {{ moq }}</span>{% endif %}
-                    {% if max_price %}<span>Price up to &#8377;{{ max_price }}</span>{% endif %}
+                    {% if max_price %}<span>Price up to {{ max_price|inr }}</span>{% endif %}
                     {% if lead_time %}<span>Lead time up to {{ lead_time }} days</span>{% endif %}
                     {% if verification == "verified" %}<span>Verified only</span>{% endif %}
                     {% if sort != "newest" %}<span>Sorted by {{ sort }}</span>{% endif %}
@@ -368,7 +369,7 @@
                             <div class="listing-price-fact">
                                 <dt>Price</dt>
                                 <dd>
-                                    &#8377;{{ listing.price_per_unit }}
+                                    {{ listing.price_per_unit|inr }}
                                     <span>per unit</span>
                                 </dd>
                             </div>

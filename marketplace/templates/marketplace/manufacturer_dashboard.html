@@ -1,4 +1,5 @@
 {% extends "marketplace/base.html" %}
+{% load currency %}
 
 {% block title %}Manufacturer dashboard | Ubhaar-Vyapaar{% endblock %}
 
@@ -330,9 +331,9 @@
                         <strong>Quotation sent</strong>
 
                         <p>
-                            &#8377;{{ quote.quotation.price_per_unit }} per unit<br>
+                            {{ quote.quotation.price_per_unit|inr }} per unit<br>
                             Quantity: {{ quote.quotation.quantity }} units<br>
-                            Subtotal: &#8377;{{ quote.quotation.subtotal|floatformat:2 }}<br>
+                            Subtotal: {{ quote.quotation.subtotal|inr }}<br>
                             Production: {{ quote.quotation.production_days }} days<br>
                             Buyer response: {{ quote.quotation.get_status_display }}
                         </p>

@@ -15,7 +15,7 @@ from .models import (
     QuoteRequest,
     Review,
 )
-from .views import build_order_financial_summary
+from .views import build_order_financial_summary, build_order_timeline
 
 
 @override_settings(
@@ -389,7 +389,7 @@ class OrderMessagingTests(TestCase):
         self.assertTrue(
             Notification.objects.filter(
                 recipient=self.manufacturer_user,
-                message__icontains="demo-funded",
+                message__icontains="demo funding",
                 order=self.order,
             ).exists()
         )
@@ -545,6 +545,28 @@ class OrderMessagingTests(TestCase):
         self.assertEqual(summary["funded"], Decimal("1200.00"))
         self.assertEqual(summary["released"], Decimal("300.00"))
         self.assertEqual(summary["remaining"], Decimal("0.00"))
+
+    def test_order_timeline_reflects_real_milestone_progress(self):
+        self.milestone.funding_status = Milestone.FundingStatus.RELEASED
+        self.milestone.status = Milestone.Status.APPROVED
+        self.milestone.save(update_fields=["funding_status", "status"])
+        self.order.status = Order.Status.COMPLETED
+        self.order.save(update_fields=["status"])
+
+        steps = build_order_timeline(self.order, [self.milestone])
+        completed_steps = {
+            step["title"]
+            for step in steps
+            if step["complete"]
+        }
+
+        self.assertEqual(len(steps), 10)
+        self.assertIn("Quotation accepted", completed_steps)
+        self.assertIn("Demo funding", completed_steps)
+        self.assertIn("Approval", completed_steps)
+        self.assertIn("Demo release", completed_steps)
+        self.assertIn("Completion", completed_steps)
+        self.assertNotIn("Review", completed_steps)
 
     def test_review_requires_completed_owned_order_and_is_unique(self):
         self.client.force_login(self.buyer)

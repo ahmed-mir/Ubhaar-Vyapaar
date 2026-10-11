@@ -1,4 +1,5 @@
 {% extends "marketplace/base.html" %}
+{% load currency %}
 
 {% block title %}My listings | Ubhaar-Vyapaar{% endblock %}
 
@@ -10,7 +11,7 @@
         </div>
 
         <a class="button" href="{% url 'create_listing' %}">
-            + Create listing
+            Create listing
         </a>
     </div>
 
@@ -33,7 +34,7 @@
 
                 <dl class="record-facts">
                     <dt>Price per unit</dt>
-                    <dd>&#8377;{{ listing.price_per_unit }}</dd>
+                    <dd>{{ listing.price_per_unit|inr }}</dd>
 
                     <dt>Minimum order</dt>
                     <dd>{{ listing.minimum_quantity }} units</dd>

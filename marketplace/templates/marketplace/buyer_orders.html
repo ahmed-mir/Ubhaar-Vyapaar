@@ -1,4 +1,5 @@
 {% extends "marketplace/base.html" %}
+{% load currency %}
 
 {% block title %}My orders | Ubhaar-Vyapaar{% endblock %}
 
@@ -36,7 +37,7 @@
                     <dd>{{ order.quantity }} units</dd>
 
                     <dt>Total amount</dt>
-                    <dd>&#8377;{{ order.total_amount|floatformat:2 }}</dd>
+                    <dd>{{ order.total_amount|inr }}</dd>
 
                     <dt>Terms locked</dt>
                     <dd>{{ order.terms_locked_at|date:"d M Y, H:i" }}</dd>

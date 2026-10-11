@@ -3888,3 +3888,155 @@ a:hover {
         padding-right: 0;
     }
 }
+
+/* -------------------------
+   PHASE 10 FINAL QA POLISH
+-------------------------- */
+
+.business-profile {
+    margin: 24px 0 32px;
+}
+
+.business-profile h1 {
+    margin: 16px 0 8px;
+    font-size: clamp(28px, 4vw, 40px);
+    line-height: 1.2;
+}
+
+.business-description {
+    max-width: 760px;
+    margin-top: 24px;
+}
+
+.profile-pagination {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 16px;
+    margin-top: 28px;
+}
+
+.record-card,
+.summary-card,
+.stat-card,
+.listing-card,
+.notification-card,
+.finance-summary-card,
+.milestone-card,
+.conversation-message,
+.message,
+.empty-panel,
+.detail-content-panel,
+.detail-sidebar,
+.order-side-rail {
+    min-width: 0;
+}
+
+.page-heading h1,
+.page-heading h2,
+.record-card h2,
+.record-card h3,
+.listing-title-row h3,
+.business-profile h1,
+.brand-name,
+.detail-manufacturer-line,
+.record-meta,
+.record-facts dd,
+.detail-facts dd,
+.activity-list p,
+.conversation-message p,
+.message,
+.notification-card p,
+.status-pill,
+.trust-badge,
+.button {
+    overflow-wrap: anywhere;
+}
+
+.button,
+.status-pill,
+.trust-badge {
+    white-space: normal;
+    text-align: center;
+}
+
+.record-actions {
+    align-items: center;
+}
+
+.notification-card .record-actions {
+    margin-top: auto;
+}
+
+.workflow-timeline {
+    grid-template-columns: repeat(auto-fit, minmax(132px, 1fr));
+}
+
+@media (hover: none) {
+    .button:hover,
+    .listing-card:hover,
+    .record-card:hover {
+        transform: none;
+    }
+
+    .listing-card:hover .listing-image {
+        transform: none;
+    }
+}
+
+@media (max-width: 720px) {
+    .motion-ready .stats-grid > .stat-card,
+    .motion-ready .record-grid > .record-card,
+    .motion-ready .record-grid > .empty-panel {
+        opacity: 1;
+        transform: none;
+        transition: none;
+    }
+
+    .record-actions,
+    .action-links {
+        width: 100%;
+    }
+
+    .record-actions .button,
+    .action-links .button,
+    .profile-pagination .button {
+        width: 100%;
+    }
+
+    .workflow-timeline {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 390px) {
+    .container,
+    .page-content {
+        width: min(100% - 18px, 1240px);
+    }
+
+    .page-heading,
+    .dashboard-hero,
+    .hero-marketplace,
+    .category-discovery,
+    .process-card,
+    .trust-cta-section,
+    .next-action-panel,
+    .finance-summary-card,
+    .record-card,
+    .summary-card,
+    .auth-card {
+        padding: 18px;
+    }
+
+    .hero h1 {
+        font-size: clamp(34px, 11vw, 48px);
+    }
+
+    .finance-summary-card strong,
+    .stat-card dd,
+    .detail-price {
+        font-size: 28px;
+    }
+}

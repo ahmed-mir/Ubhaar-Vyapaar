@@ -6,7 +6,7 @@
     <div class="page-heading">
         <div>
             <h1>Notifications</h1>
-            <p>Updates about your requests and quotations.</p>
+            <p>Quote, order, milestone, and message updates that may need attention.</p>
         </div>
     </div>
 
@@ -25,7 +25,7 @@
 
     <div class="record-grid">
         {% for notification in page_obj %}
-            <article class="record-card">
+            <article class="record-card notification-card">
                 {% if notification.is_read %}
                     <span class="status-pill">Read</span>
                 {% else %}
@@ -41,10 +41,11 @@
                 <form
                     method="post"
                     action="{% url 'open_notification' notification.pk %}"
+                    class="record-actions"
                 >
                     {% csrf_token %}
                     <button class="button button-secondary" type="submit">
-                        View details
+                        Open update
                     </button>
                 </form>
             </article>
