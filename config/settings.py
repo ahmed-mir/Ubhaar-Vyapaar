@@ -137,6 +137,7 @@ TEMPLATES = [
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
                 "marketplace.context_processors.notification_count",
+                "marketplace.context_processors.platform_readiness",
             ],
         },
     },
@@ -442,6 +443,12 @@ PRIVACY_POLICY_VERSION = _env_str(
     "PRIVACY_POLICY_VERSION",
     "2026-10-11",
 )
+
+
+# Consent-aware analytics
+# -----------------------
+
+GOOGLE_ANALYTICS_ID = _env_str("GOOGLE_ANALYTICS_ID", "")
 
 
 # Production security

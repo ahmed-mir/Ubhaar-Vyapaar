@@ -1,6 +1,7 @@
 {% extends "marketplace/base.html" %}
 
 {% block title %}Cookie Policy | Ubhaar-Vyapaar{% endblock %}
+{% block meta_description %}Read how Ubhaar-Vyapaar uses necessary cookies and optional consent-based analytics preferences.{% endblock %}
 
 {% block content %}
     <article class="legal-page">
@@ -41,16 +42,16 @@
                             <td>Yes, when forms are used.</td>
                         </tr>
                         <tr>
-                            <td>Functional</td>
-                            <td>None found in the current code audit.</td>
-                            <td>Not applicable.</td>
-                            <td>No.</td>
+                            <td>Strictly necessary</td>
+                            <td>Cookie preference cookie</td>
+                            <td>Remembers whether optional analytics were accepted or rejected.</td>
+                            <td>Yes, after a user makes a cookie choice.</td>
                         </tr>
                         <tr>
                             <td>Analytics</td>
-                            <td>None found in the current code audit.</td>
-                            <td>Not applicable.</td>
-                            <td>No.</td>
+                            <td>Google Analytics, only if configured and accepted</td>
+                            <td>Measures anonymous product usage such as marketplace search and quote-request flow events.</td>
+                            <td>No. It is not loaded before analytics consent.</td>
                         </tr>
                         <tr>
                             <td>Marketing</td>
@@ -62,8 +63,7 @@
                 </table>
             </div>
             <p>
-                The current code audit did not identify localStorage,
-                sessionStorage, analytics scripts, advertising pixels, embedded
+                The current code audit did not identify advertising pixels, embedded
                 maps, video embeds, chat widgets, or social widgets.
             </p>
         </section>
@@ -71,14 +71,14 @@
         <section class="legal-section">
             <h2>Consent approach</h2>
             <p>
-                Because the current site does not use optional analytics or
-                marketing cookies, it does not display a blanket cookie-acceptance banner.
-                Strictly necessary session and CSRF cookies should not be blocked
-                because they are required for login, forms, and security.
+                Necessary cookies are required for login, forms, security, and
+                remembering the cookie choice. Optional analytics are off by
+                default and load only if a Google Analytics measurement ID is
+                configured and the user accepts analytics.
             </p>
             <p>
-                If optional analytics, marketing, or third-party embeds are added
-                later, they should be placed behind an explicit consent mechanism and
+                If marketing or additional third-party embeds are added later,
+                they should be placed behind an explicit consent mechanism and
                 should not run before the relevant consent category is granted.
             </p>
         </section>

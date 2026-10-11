@@ -1,6 +1,7 @@
 {% extends "marketplace/base.html" %}
 
 {% block title %}Privacy Policy | Ubhaar-Vyapaar{% endblock %}
+{% block meta_description %}Review the Ubhaar-Vyapaar privacy policy, including account data, marketplace workflow data, cookies, service providers, and data-rights request information.{% endblock %}
 
 {% block content %}
     <article class="legal-page">
@@ -85,9 +86,11 @@
             <h2>Cookies and local storage</h2>
             <p>
                 The current site uses strictly necessary Django session and CSRF
-                cookies. The current code audit did not identify analytics,
-                marketing cookies, localStorage, or sessionStorage usage. See the
-                <a href="{% url 'cookie_policy' %}">Cookie Policy</a> for details.
+                cookies, plus a cookie preference cookie after a user makes a
+                choice. Optional Google Analytics is loaded only when a measurement
+                ID is configured and the user accepts analytics. Marketing cookies
+                are not used. See the <a href="{% url 'cookie_policy' %}">Cookie Policy</a>
+                for details.
             </p>
         </section>
 

@@ -1,6 +1,8 @@
 {% extends "marketplace/base.html" %}
 
 {% block title %}Request a quote | Ubhaar-Vyapaar{% endblock %}
+{% block meta_description %}Request a quote for {{ listing.title }} from {{ listing.manufacturer.business_name }} on Ubhaar-Vyapaar.{% endblock %}
+{% block body_attributes %}data-analytics-page-event="quote_request_started"{% endblock %}
 
 {% block content %}
     <section class="auth-card" aria-labelledby="quote-title">
@@ -38,7 +40,12 @@
             not place an order.
         </p>
 
-        <form method="post" class="styled-form form-grid" novalidate>
+        <form
+            method="post"
+            class="styled-form form-grid"
+            novalidate
+            data-analytics-event="quote_request_submitted"
+        >
             {% csrf_token %}
             {% include "marketplace/includes/accessible_form.html" %}
 

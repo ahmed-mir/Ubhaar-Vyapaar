@@ -4,6 +4,8 @@ from . import views
 
 urlpatterns = [
     path("", views.home, name="home"),
+    path("sitemap.xml", views.sitemap_xml, name="sitemap_xml"),
+    path("robots.txt", views.robots_txt, name="robots_txt"),
     path("privacy/", views.privacy_policy, name="privacy_policy"),
     path("terms/", views.terms, name="terms"),
     path("cookies/", views.cookie_policy, name="cookie_policy"),

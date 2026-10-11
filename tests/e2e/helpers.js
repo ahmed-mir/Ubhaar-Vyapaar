@@ -34,8 +34,17 @@ async function fillAccountFields(page, user, password) {
   await page.locator('[name="password2"]').fill(password);
 }
 
+async function dismissCookieBanner(page) {
+  const rejectButton = page.getByRole("button", { name: /reject analytics/i });
+
+  if (await rejectButton.isVisible().catch(() => false)) {
+    await rejectButton.click();
+  }
+}
+
 async function registerBuyer(page, user, password) {
   await page.goto("/accounts/register/");
+  await dismissCookieBanner(page);
   await fillAccountFields(page, user, password);
   await page.getByLabel(/terms.*privacy/i).check();
   await page.getByRole("button", { name: /create buyer account/i }).click();
@@ -44,6 +53,7 @@ async function registerBuyer(page, user, password) {
 
 async function registerManufacturer(page, user, password, profile) {
   await page.goto("/accounts/register/manufacturer/");
+  await dismissCookieBanner(page);
   await fillAccountFields(page, user, password);
   await page.locator('[name="business_name"]').fill(profile.businessName);
   await page.locator('[name="description"]').fill(profile.description);
@@ -56,6 +66,7 @@ async function registerManufacturer(page, user, password, profile) {
 
 async function login(page, username, password) {
   await page.goto("/accounts/login/");
+  await dismissCookieBanner(page);
   await page.locator('[name="username"]').fill(username);
   await page.locator('[name="password"]').fill(password);
   await page.getByRole("button", { name: /^log in$/i }).click();
@@ -138,6 +149,7 @@ function crc32(buffer) {
 
 async function createListing(page, listing) {
   await page.goto("/manufacturer/listings/create/");
+  await dismissCookieBanner(page);
   await page.locator('[name="title"]').fill(listing.title);
   await page.locator('[name="category"]').selectOption(listing.category);
   await page.locator('[name="description"]').fill(listing.description);
@@ -183,6 +195,7 @@ async function verifyManufacturerInAdmin(page, businessName) {
 
 async function searchListing(page, listingTitle) {
   await page.goto("/");
+  await dismissCookieBanner(page);
   await page.locator('[name="q"]').fill(listingTitle);
   await page.getByRole("button", { name: /search suppliers/i }).click();
   await expect(page.getByRole("link", { name: listingTitle })).toBeVisible();
@@ -209,6 +222,7 @@ async function requestQuote(page, listingTitle, quote) {
 
 async function sendQuotation(page, quoteRequestId, quotation) {
   await page.goto("/manufacturer/dashboard/");
+  await dismissCookieBanner(page);
   await expect(page.getByText(new RegExp(`Request #${quoteRequestId}\\b`))).toBeVisible();
   await page.getByRole("link", { name: /send quotation/i }).first().click();
   await page.locator('[name="price_per_unit"]').fill(String(quotation.pricePerUnit));
@@ -233,6 +247,7 @@ async function acceptQuotationAndOpenOrder(page) {
 
 async function sendOrderMessage(page, orderId, body) {
   await page.goto(`/orders/${orderId}/`);
+  await dismissCookieBanner(page);
   await page.locator('[name="body"]').fill(body);
   await page.getByRole("button", { name: /send message/i }).click();
   await expect(page.getByText(/message sent/i)).toBeVisible();
@@ -241,6 +256,7 @@ async function sendOrderMessage(page, orderId, body) {
 
 async function fundVisibleMilestone(page, orderId) {
   await page.goto(`/orders/${orderId}/`);
+  await dismissCookieBanner(page);
   await page.getByRole("link", { name: /fund milestone \(demo\)/i }).first().click();
   await expect(page.getByRole("heading", { name: /confirm milestone funding/i })).toBeVisible();
   await page.getByRole("button", { name: /confirm demo funding/i }).click();
@@ -249,18 +265,21 @@ async function fundVisibleMilestone(page, orderId) {
 
 async function startVisibleMilestone(page, orderId) {
   await page.goto(`/orders/${orderId}/`);
+  await dismissCookieBanner(page);
   await page.getByRole("button", { name: /start milestone/i }).first().click();
   await expect(page.getByText(/milestone marked in progress/i)).toBeVisible();
 }
 
 async function completeVisibleMilestone(page, orderId) {
   await page.goto(`/orders/${orderId}/`);
+  await dismissCookieBanner(page);
   await page.getByRole("button", { name: /submit for approval/i }).first().click();
   await expect(page.getByText(/milestone submitted for buyer approval/i)).toBeVisible();
 }
 
 async function approveVisibleMilestone(page, orderId, feedback) {
   await page.goto(`/orders/${orderId}/`);
+  await dismissCookieBanner(page);
   await page.locator('[name="buyer_feedback"]').first().fill(feedback);
   await page.getByRole("button", { name: /approve milestone/i }).first().click();
   await expect(page.getByText(/milestone response saved/i)).toBeVisible();
@@ -268,12 +287,14 @@ async function approveVisibleMilestone(page, orderId, feedback) {
 
 async function releaseVisibleMilestone(page, orderId) {
   await page.goto(`/orders/${orderId}/`);
+  await dismissCookieBanner(page);
   await page.getByRole("button", { name: /release demo payment/i }).first().click();
   await expect(page.getByText(/demo payment released/i)).toBeVisible();
 }
 
 async function submitReview(page, orderId, comment) {
   await page.goto(`/orders/${orderId}/review/`);
+  await dismissCookieBanner(page);
   await page.locator('[name="quality_rating"]').fill("5");
   await page.locator('[name="timeliness_rating"]').fill("5");
   await page.locator('[name="communication_rating"]').fill("5");
@@ -308,5 +329,6 @@ module.exports = {
   submitReview,
   uniqueRunId,
   verifyManufacturerInAdmin,
-  acceptQuotationAndOpenOrder
+  acceptQuotationAndOpenOrder,
+  dismissCookieBanner
 };

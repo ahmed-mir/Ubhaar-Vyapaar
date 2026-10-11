@@ -7,8 +7,11 @@ from django.db import transaction
 from django.views.decorators.http import require_http_methods
 from django.utils import timezone
 from decimal import Decimal, InvalidOperation
+from xml.sax.saxutils import escape
 
 from django.conf import settings
+from django.http import HttpResponse
+from django.urls import reverse
 
 from .forms import (
     CapacityListingEditForm,
@@ -73,6 +76,92 @@ def refund_policy(request):
         request,
         "marketplace/refund_policy.html",
         legal_page_context(),
+    )
+
+
+def absolute_url(request, path):
+    return request.build_absolute_uri(path)
+
+
+def sitemap_xml(request):
+    public_urls = [
+        (absolute_url(request, reverse("home")), "daily", "0.9"),
+        (absolute_url(request, reverse("privacy_policy")), "monthly", "0.3"),
+        (absolute_url(request, reverse("terms")), "monthly", "0.3"),
+        (absolute_url(request, reverse("cookie_policy")), "monthly", "0.3"),
+        (absolute_url(request, reverse("refund_policy")), "monthly", "0.3"),
+    ]
+
+    listings = CapacityListing.objects.filter(
+        is_active=True,
+        manufacturer__is_verified=True,
+    ).order_by("pk")
+
+    for listing in listings:
+        public_urls.append((
+            absolute_url(request, reverse("listing_detail", args=[listing.pk])),
+            "weekly",
+            "0.8",
+        ))
+
+    manufacturers = ManufacturerProfile.objects.filter(
+        is_verified=True,
+    ).order_by("pk")
+
+    for manufacturer in manufacturers:
+        public_urls.append((
+            absolute_url(
+                request,
+                reverse("manufacturer_profile", args=[manufacturer.pk]),
+            ),
+            "weekly",
+            "0.7",
+        ))
+
+    lines = [
+        '<?xml version="1.0" encoding="UTF-8"?>',
+        '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">',
+    ]
+
+    for location, changefreq, priority in public_urls:
+        lines.extend([
+            "  <url>",
+            f"    <loc>{escape(location)}</loc>",
+            f"    <changefreq>{changefreq}</changefreq>",
+            f"    <priority>{priority}</priority>",
+            "  </url>",
+        ])
+
+    lines.append("</urlset>")
+
+    return HttpResponse(
+        "\n".join(lines),
+        content_type="application/xml; charset=utf-8",
+    )
+
+
+def robots_txt(request):
+    sitemap_url = absolute_url(request, reverse("sitemap_xml"))
+    lines = [
+        "User-agent: *",
+        "Disallow: /admin/",
+        "Disallow: /accounts/",
+        "Disallow: /buyer/",
+        "Disallow: /manufacturer/dashboard/",
+        "Disallow: /manufacturer/orders/",
+        "Disallow: /manufacturer/listings/",
+        "Disallow: /my-quote-requests/",
+        "Disallow: /saved-listings/",
+        "Disallow: /orders/",
+        "Disallow: /milestones/",
+        "Disallow: /notifications/",
+        "Allow: /",
+        f"Sitemap: {sitemap_url}",
+    ]
+
+    return HttpResponse(
+        "\n".join(lines) + "\n",
+        content_type="text/plain; charset=utf-8",
     )
 
 

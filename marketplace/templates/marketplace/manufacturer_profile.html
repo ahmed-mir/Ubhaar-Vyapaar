@@ -1,6 +1,7 @@
 {% extends "marketplace/base.html" %}
 
 {% block title %}{{ manufacturer.business_name }} | Ubhaar-Vyapaar{% endblock %}
+{% block meta_description %}View {{ manufacturer.business_name }} on Ubhaar-Vyapaar, including public manufacturing listings, location, trust indicators, and buyer reviews.{% endblock %}
 
 {% block content %}
     <a class="back-link" href="{% url 'home' %}">

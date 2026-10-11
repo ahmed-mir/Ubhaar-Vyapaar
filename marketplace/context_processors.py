@@ -1,4 +1,5 @@
 from .models import Notification
+from django.conf import settings
 
 
 def notification_count(request):
@@ -12,4 +13,10 @@ def notification_count(request):
 
     return {
         "unread_notification_count": unread_count,
+    }
+
+
+def platform_readiness(request):
+    return {
+        "google_analytics_id": settings.GOOGLE_ANALYTICS_ID,
     }

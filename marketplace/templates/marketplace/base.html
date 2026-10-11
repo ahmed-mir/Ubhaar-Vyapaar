@@ -10,9 +10,13 @@
     >
     <meta
         name="description"
-        content="Ubhaar-Vyapaar connects buyers with verified small manufacturers, available production capacity, quotations, and order workflows."
+        content="{% block meta_description %}Ubhaar-Vyapaar connects buyers with verified small manufacturers, available production capacity, quotations, and order workflows.{% endblock %}"
     >
     <meta name="theme-color" content="#102F3C">
+    <link
+        rel="canonical"
+        href="{% block canonical_url %}{{ request.scheme }}://{{ request.get_host }}{{ request.path }}{% endblock %}"
+    >
 
     <title>
         {% block title %}
@@ -31,12 +35,19 @@
     <link rel="apple-touch-icon" href="{% static 'marketplace/images/brand/apple-touch-icon.png' %}">
     <link rel="stylesheet" href="{% static 'marketplace/css/app.css' %}">
 
+    <script
+        id="analytics-config"
+        type="application/json"
+        data-google-analytics-id="{{ google_analytics_id|default:'' }}"
+        data-google-analytics-src="{% if google_analytics_id %}https://www.googletagmanager.com/gtag/js?id={{ google_analytics_id|urlencode }}{% endif %}"
+    ></script>
+
     {% block extra_css %}
     {% endblock %}
 </head>
 
 
-<body>
+<body {% block body_attributes %}{% endblock %}>
     <a class="skip-link" href="#main-content">
         Skip to content
     </a>
@@ -305,6 +316,13 @@
                     <a href="{% url 'terms' %}">Terms &amp; Conditions</a>
                     <a href="{% url 'cookie_policy' %}">Cookie Policy</a>
                     <a href="{% url 'refund_policy' %}">Refund &amp; Cancellation</a>
+                    <button
+                        class="footer-cookie-button"
+                        type="button"
+                        data-cookie-settings
+                    >
+                        Cookie settings
+                    </button>
                 </div>
             </nav>
 
@@ -318,8 +336,261 @@
 
     <div id="form-status" class="visually-hidden" aria-live="polite"></div>
 
+    <section
+        class="cookie-consent"
+        data-cookie-consent
+        aria-labelledby="cookie-consent-title"
+        hidden
+    >
+        <div class="cookie-consent-panel" role="dialog" aria-modal="false">
+            <div>
+                <p class="eyebrow">Privacy preferences</p>
+                <h2 id="cookie-consent-title">Cookie choices</h2>
+                <p>
+                    Necessary cookies keep login, CSRF protection, and your
+                    cookie choice working. Optional analytics help improve
+                    the marketplace and stay off until you allow them.
+                </p>
+            </div>
+
+            <div class="cookie-consent-actions">
+                <button class="button button-primary" type="button" data-cookie-accept>
+                    Accept analytics
+                </button>
+                <button class="button button-secondary" type="button" data-cookie-reject>
+                    Reject analytics
+                </button>
+                <button class="button button-ghost" type="button" data-cookie-manage>
+                    Manage preferences
+                </button>
+            </div>
+
+            <form class="cookie-preferences" data-cookie-preferences hidden>
+                <fieldset>
+                    <legend>Cookie categories</legend>
+
+                    <label class="cookie-option">
+                        <input type="checkbox" checked disabled>
+                        <span>
+                            <strong>Necessary</strong>
+                            Required for Django sessions, CSRF protection,
+                            security, and saving this preference.
+                        </span>
+                    </label>
+
+                    <label class="cookie-option">
+                        <input type="checkbox" name="analytics" data-cookie-analytics>
+                        <span>
+                            <strong>Analytics</strong>
+                            Optional product analytics, loaded only after consent.
+                        </span>
+                    </label>
+                </fieldset>
+
+                <div class="cookie-consent-actions">
+                    <button class="button button-primary" type="submit">
+                        Save preferences
+                    </button>
+                    <button class="button button-secondary" type="button" data-cookie-cancel>
+                        Cancel
+                    </button>
+                </div>
+            </form>
+        </div>
+    </section>
+
     <script>
         (function () {
+            const preferenceCookie = "uv_cookie_preferences";
+            const maxAge = 60 * 60 * 24 * 180;
+
+            const readCookie = function (name) {
+                return document.cookie
+                    .split(";")
+                    .map(function (item) { return item.trim(); })
+                    .find(function (item) { return item.indexOf(name + "=") === 0; });
+            };
+
+            const readPreferences = function () {
+                const cookie = readCookie(preferenceCookie);
+
+                if (!cookie) {
+                    return null;
+                }
+
+                try {
+                    return JSON.parse(decodeURIComponent(cookie.split("=").slice(1).join("=")));
+                } catch (error) {
+                    return null;
+                }
+            };
+
+            const writePreferences = function (preferences) {
+                document.cookie = preferenceCookie + "=" + encodeURIComponent(JSON.stringify(preferences)) +
+                    "; Max-Age=" + maxAge + "; Path=/; SameSite=Lax";
+            };
+
+            const analyticsConfig = document.querySelector("#analytics-config");
+            const googleAnalyticsId = analyticsConfig ? analyticsConfig.dataset.googleAnalyticsId : "";
+            const googleAnalyticsSrc = analyticsConfig ? analyticsConfig.dataset.googleAnalyticsSrc : "";
+            let analyticsLoaded = false;
+
+            const loadAnalytics = function () {
+                if (!googleAnalyticsId || !googleAnalyticsSrc || analyticsLoaded) {
+                    return;
+                }
+
+                analyticsLoaded = true;
+                window.dataLayer = window.dataLayer || [];
+                window.gtag = function () {
+                    window.dataLayer.push(arguments);
+                };
+                window.gtag("js", new Date());
+                window.gtag("config", googleAnalyticsId, {
+                    anonymize_ip: true,
+                    page_path: window.location.pathname,
+                    send_page_view: false
+                });
+                window.gtag("event", "page_view", {
+                    page_path: window.location.pathname,
+                    page_title: document.title
+                });
+
+                const script = document.createElement("script");
+                script.async = true;
+                script.src = googleAnalyticsSrc;
+                document.head.appendChild(script);
+            };
+
+            window.ubhaarTrack = function (eventName) {
+                const preferences = readPreferences();
+
+                if (!preferences || !preferences.analytics || !window.gtag) {
+                    return;
+                }
+
+                window.gtag("event", eventName, {
+                    event_category: "product",
+                    transport_type: "beacon"
+                });
+            };
+
+            const consent = document.querySelector("[data-cookie-consent]");
+            const preferencesForm = document.querySelector("[data-cookie-preferences]");
+            const analyticsCheckbox = document.querySelector("[data-cookie-analytics]");
+            const settingsButtons = document.querySelectorAll("[data-cookie-settings]");
+
+            const applyPreferences = function (preferences) {
+                if (preferences && preferences.analytics) {
+                    loadAnalytics();
+                }
+            };
+
+            const hideConsent = function () {
+                if (consent) {
+                    consent.hidden = true;
+                }
+            };
+
+            const showConsent = function (showPreferences) {
+                if (!consent) {
+                    return;
+                }
+
+                const preferences = readPreferences() || { necessary: true, analytics: false };
+
+                if (analyticsCheckbox) {
+                    analyticsCheckbox.checked = Boolean(preferences.analytics);
+                }
+
+                if (preferencesForm) {
+                    preferencesForm.hidden = !showPreferences;
+                }
+
+                consent.hidden = false;
+
+                const focusTarget = showPreferences
+                    ? preferencesForm.querySelector("button, input")
+                    : consent.querySelector("button");
+
+                if (focusTarget) {
+                    focusTarget.focus();
+                }
+            };
+
+            const savePreferences = function (analyticsAllowed) {
+                const preferences = {
+                    necessary: true,
+                    analytics: Boolean(analyticsAllowed),
+                    updatedAt: new Date().toISOString()
+                };
+
+                writePreferences(preferences);
+                applyPreferences(preferences);
+                hideConsent();
+            };
+
+            if (!readPreferences()) {
+                showConsent(false);
+            } else {
+                applyPreferences(readPreferences());
+            }
+
+            document.querySelectorAll("[data-cookie-accept]").forEach(function (button) {
+                button.addEventListener("click", function () {
+                    savePreferences(true);
+                });
+            });
+
+            document.querySelectorAll("[data-cookie-reject]").forEach(function (button) {
+                button.addEventListener("click", function () {
+                    savePreferences(false);
+                });
+            });
+
+            document.querySelectorAll("[data-cookie-manage]").forEach(function (button) {
+                button.addEventListener("click", function () {
+                    showConsent(true);
+                });
+            });
+
+            document.querySelectorAll("[data-cookie-cancel]").forEach(function (button) {
+                button.addEventListener("click", function () {
+                    hideConsent();
+                });
+            });
+
+            settingsButtons.forEach(function (button) {
+                button.addEventListener("click", function () {
+                    showConsent(true);
+                });
+            });
+
+            if (preferencesForm) {
+                preferencesForm.addEventListener("submit", function (event) {
+                    event.preventDefault();
+                    savePreferences(analyticsCheckbox && analyticsCheckbox.checked);
+                });
+            }
+
+            document.querySelectorAll("[data-analytics-event]").forEach(function (item) {
+                const eventName = item.getAttribute("data-analytics-event");
+
+                if (item.tagName === "FORM") {
+                    item.addEventListener("submit", function () {
+                        window.ubhaarTrack(eventName);
+                    });
+                } else {
+                    item.addEventListener("click", function () {
+                        window.ubhaarTrack(eventName);
+                    });
+                }
+            });
+
+            if (document.body.dataset.analyticsPageEvent) {
+                window.ubhaarTrack(document.body.dataset.analyticsPageEvent);
+            }
+
             const navToggle = document.querySelector(".nav-toggle");
             const nav = document.querySelector("#site-navigation");
             const mobileNavQuery = window.matchMedia("(max-width: 940px)");
@@ -456,7 +727,19 @@
                         window.setTimeout(function () {
                             submitter.disabled = true;
                             submitter.classList.add("button-processing");
+                            submitter.textContent = "Processing... " + originalLabel.trim();
                         }, 0);
+
+                        window.setTimeout(function () {
+                            if (document.body.contains(submitter)) {
+                                submitter.disabled = false;
+                                submitter.classList.remove("button-processing");
+                                submitter.removeAttribute("aria-label");
+                                submitter.textContent = originalLabel;
+                                form.classList.remove("form-submitting");
+                                form.removeAttribute("aria-busy");
+                            }
+                        }, 15000);
                     }
                 });
             });

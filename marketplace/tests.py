@@ -1,6 +1,7 @@
 from decimal import Decimal
 
 from django.contrib.auth import get_user_model
+from django.test import Client
 from django.test import TestCase, override_settings
 from django.urls import reverse
 
@@ -700,3 +701,115 @@ class AccessibilityContrastTests(TestCase):
 
     def test_focus_ring_meets_non_text_contrast(self):
         self.assert_contrast_at_least("#8a560f", "#ffffff", 3)
+
+
+class PlatformReadinessTests(TestCase):
+    def setUp(self):
+        User = get_user_model()
+        self.buyer = User.objects.create_user(
+            username="seo-buyer",
+            email="seo-buyer@example.test",
+            password="StrongPass123!",
+            role="BUYER",
+        )
+        manufacturer_user = User.objects.create_user(
+            username="seo-maker",
+            password="password",
+            role="MANUFACTURER",
+        )
+        self.manufacturer = ManufacturerProfile.objects.create(
+            user=manufacturer_user,
+            business_name="SEO Works",
+            city="Pune",
+            state="Maharashtra",
+            is_verified=True,
+        )
+        self.listing = CapacityListing.objects.create(
+            manufacturer=self.manufacturer,
+            title="Public packaging capacity",
+            description="Public listing for sitemap tests.",
+            minimum_quantity=25,
+            price_per_unit=Decimal("22.00"),
+            production_days=5,
+        )
+
+    def test_sitemap_includes_public_urls_and_excludes_private_urls(self):
+        response = self.client.get(reverse("sitemap_xml"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response["Content-Type"], "application/xml; charset=utf-8")
+        self.assertContains(response, reverse("home"))
+        self.assertContains(
+            response,
+            reverse("listing_detail", args=[self.listing.pk]),
+        )
+        self.assertContains(
+            response,
+            reverse("manufacturer_profile", args=[self.manufacturer.pk]),
+        )
+        self.assertContains(response, reverse("privacy_policy"))
+        self.assertNotContains(response, reverse("buyer_dashboard"))
+        self.assertNotContains(response, "/orders/")
+        self.assertNotContains(response, "/notifications/")
+        self.assertNotContains(response, "/admin/")
+
+    def test_robots_txt_guides_private_area_exclusion(self):
+        response = self.client.get(reverse("robots_txt"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response["Content-Type"], "text/plain; charset=utf-8")
+        self.assertContains(response, "Disallow: /admin/")
+        self.assertContains(response, "Disallow: /accounts/")
+        self.assertContains(response, "Disallow: /orders/")
+        self.assertContains(response, "Allow: /")
+        self.assertContains(response, "Sitemap:")
+
+    def test_analytics_absent_without_configured_id(self):
+        response = self.client.get(reverse("home"))
+
+        self.assertContains(response, 'data-google-analytics-id=""')
+        self.assertContains(response, 'data-google-analytics-src=""')
+        self.assertNotContains(response, "www.googletagmanager.com/gtag/js")
+
+    @override_settings(GOOGLE_ANALYTICS_ID="G-TEST123")
+    def test_analytics_configured_but_not_loaded_before_consent(self):
+        response = self.client.get(reverse("home"))
+
+        self.assertContains(response, 'data-google-analytics-id="G-TEST123"')
+        self.assertContains(response, "www.googletagmanager.com/gtag/js")
+        self.assertNotContains(response, '<script async src="https://www.googletagmanager.com/gtag/js')
+        self.assertContains(response, "loadAnalytics")
+        self.assertContains(response, "preferences.analytics")
+
+    def test_cookie_preferences_can_be_changed_from_footer(self):
+        response = self.client.get(reverse("home"))
+
+        self.assertContains(response, "Cookie settings")
+        self.assertContains(response, "data-cookie-settings")
+        self.assertContains(response, "data-cookie-accept")
+        self.assertContains(response, "data-cookie-reject")
+        self.assertContains(response, "data-cookie-preferences")
+
+    def test_necessary_csrf_cookie_remains_functional(self):
+        client = Client(enforce_csrf_checks=True)
+        response = client.get(reverse("register"))
+        csrf_token = response.cookies["csrftoken"].value
+
+        response = client.post(
+            reverse("register"),
+            {
+                "username": "csrf-buyer",
+                "email": "csrf-buyer@example.test",
+                "phone": "",
+                "password1": "StrongPass123!",
+                "password2": "StrongPass123!",
+                "legal_acknowledgement": "on",
+                "csrfmiddlewaretoken": csrf_token,
+            },
+            HTTP_REFERER="http://testserver/accounts/register/",
+        )
+
+        self.assertRedirects(response, reverse("home"))
+        self.assertTrue(
+            get_user_model().objects.filter(username="csrf-buyer").exists()
+        )
