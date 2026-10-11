@@ -41,22 +41,7 @@
 
         <form method="post" class="styled-form form-grid" novalidate>
             {% csrf_token %}
-            {{ form.non_field_errors }}
-
-            {% for field in form %}
-                <div
-                    class="form-field{% if field.errors %} form-field-error{% endif %}"
-                >
-                    {{ field.label_tag }}
-                    {{ field }}
-
-                    {% if field.help_text %}
-                        <p class="helptext">{{ field.help_text }}</p>
-                    {% endif %}
-
-                    {{ field.errors }}
-                </div>
-            {% endfor %}
+            {% include "marketplace/includes/accessible_form.html" %}
 
             <button class="button form-submit" type="submit">
                 Save business details

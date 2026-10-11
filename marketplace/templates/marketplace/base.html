@@ -90,6 +90,7 @@
                 type="button"
                 aria-expanded="false"
                 aria-controls="site-navigation"
+                aria-label="Open main navigation"
             >
                 <span class="nav-toggle-line"></span>
                 <span class="nav-toggle-line"></span>
@@ -204,18 +205,24 @@
     <main
         id="main-content"
         class="container page-content"
+        tabindex="-1"
     >
 
         {% if messages %}
 
-            <div class="messages">
+            <div class="messages" aria-live="polite" aria-relevant="additions">
 
                 {% for message in messages %}
 
                     <p
                         class="message {{ message.tags }}"
-                        role="status"
+                        {% if message.tags == "error" %}role="alert"{% else %}role="status"{% endif %}
                     >
+                        {% if message.tags %}
+                            <strong class="visually-hidden">
+                                {{ message.tags|title }}:
+                            </strong>
+                        {% endif %}
                         {{ message }}
                     </p>
 
@@ -309,16 +316,70 @@
 
     </footer>
 
+    <div id="form-status" class="visually-hidden" aria-live="polite"></div>
+
     <script>
         (function () {
             const navToggle = document.querySelector(".nav-toggle");
             const nav = document.querySelector("#site-navigation");
+            const mobileNavQuery = window.matchMedia("(max-width: 940px)");
 
             if (navToggle && nav) {
-                navToggle.addEventListener("click", function () {
-                    const isOpen = nav.classList.toggle("site-nav-open");
+                const setNavOpen = function (isOpen) {
+                    nav.classList.toggle("site-nav-open", isOpen);
                     navToggle.setAttribute("aria-expanded", String(isOpen));
+                    navToggle.setAttribute(
+                        "aria-label",
+                        isOpen ? "Close main navigation" : "Open main navigation"
+                    );
+
+                    if (mobileNavQuery.matches) {
+                        nav.inert = !isOpen;
+                    } else {
+                        nav.inert = false;
+                    }
+                };
+
+                const syncNavMode = function () {
+                    if (mobileNavQuery.matches) {
+                        setNavOpen(false);
+                    } else {
+                        nav.classList.remove("site-nav-open");
+                        navToggle.setAttribute("aria-expanded", "false");
+                        navToggle.setAttribute("aria-label", "Open main navigation");
+                        nav.inert = false;
+                    }
+                };
+
+                setNavOpen(false);
+                syncNavMode();
+
+                navToggle.addEventListener("click", function () {
+                    setNavOpen(!nav.classList.contains("site-nav-open"));
                 });
+
+                nav.addEventListener("click", function (event) {
+                    if (event.target.closest("a") && mobileNavQuery.matches) {
+                        setNavOpen(false);
+                    }
+                });
+
+                document.addEventListener("keydown", function (event) {
+                    if (
+                        event.key === "Escape" &&
+                        mobileNavQuery.matches &&
+                        nav.classList.contains("site-nav-open")
+                    ) {
+                        setNavOpen(false);
+                        navToggle.focus();
+                    }
+                });
+
+                if (mobileNavQuery.addEventListener) {
+                    mobileNavQuery.addEventListener("change", syncNavMode);
+                } else {
+                    mobileNavQuery.addListener(syncNavMode);
+                }
             }
 
             const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -331,10 +392,6 @@
                 ".record-grid > .record-card",
                 ".record-grid > .empty-panel",
                 ".summary-card",
-                ".order-timeline-panel",
-                ".order-timeline > .timeline-step",
-                ".conversation-message",
-                ".conversation-form",
                 ".business-profile"
             ].forEach(function (selector) {
                 document.querySelectorAll(selector).forEach(function (item) {
@@ -370,6 +427,7 @@
                 form.addEventListener("submit", function (event) {
                     const submitter = event.submitter;
                     const acceptMessage = form.getAttribute("data-confirm-accept");
+                    const statusRegion = document.querySelector("#form-status");
 
                     if (
                         acceptMessage &&
@@ -384,6 +442,22 @@
 
                     form.classList.add("form-submitting");
                     form.setAttribute("aria-busy", "true");
+
+                    if (statusRegion) {
+                        statusRegion.textContent = "Processing form submission.";
+                    }
+
+                    if (submitter && submitter.matches("button[type='submit'], input[type='submit']")) {
+                        const originalLabel = submitter.innerText || submitter.value || "Submit";
+
+                        submitter.setAttribute("data-original-label", originalLabel);
+                        submitter.setAttribute("aria-label", "Processing: " + originalLabel.trim());
+
+                        window.setTimeout(function () {
+                            submitter.disabled = true;
+                            submitter.classList.add("button-processing");
+                        }, 0);
+                    }
                 });
             });
         })();

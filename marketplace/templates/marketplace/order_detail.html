@@ -56,8 +56,15 @@
         <ol class="order-timeline workflow-timeline">
             {% for step in timeline_steps %}
                 <li class="timeline-step {% if step.complete %}timeline-step-complete{% endif %}">
-                    <span class="timeline-dot"></span>
+                    <span class="timeline-dot" aria-hidden="true"></span>
+                    <span class="visually-hidden">
+                        Step {{ forloop.counter }} of {{ timeline_steps|length }}.
+                        {% if step.complete %}Completed.{% else %}Not completed yet.{% endif %}
+                    </span>
                     <strong>{{ step.title }}</strong>
+                    <span class="timeline-state">
+                        {% if step.complete %}Completed{% else %}Waiting{% endif %}
+                    </span>
                     <span>{{ step.body }}</span>
                     {% if step.date %}
                         <span class="record-meta">{{ step.date|date:"d M Y, H:i" }}</span>
@@ -385,10 +392,13 @@
                     method="post"
                     action="{% url 'send_order_message' order.pk %}"
                     class="styled-form conversation-form"
+                    novalidate
                 >
                     {% csrf_token %}
                     <h3>Send an order update</h3>
-                    {{ message_form.as_p }}
+                    {% with form=message_form %}
+                        {% include "marketplace/includes/accessible_form.html" %}
+                    {% endwith %}
 
                     <button class="button" type="submit">
                         Send message

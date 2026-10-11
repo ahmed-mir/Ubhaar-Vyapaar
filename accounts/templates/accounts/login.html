@@ -25,9 +25,9 @@
         Log in to manage your listings or quote requests.
     </p>
 
-    <form method="post" class="styled-form">
+    <form method="post" class="styled-form" novalidate>
         {% csrf_token %}
-        {{ form.as_p }}
+        {% include "marketplace/includes/accessible_form.html" %}
 
         <input
             type="hidden"

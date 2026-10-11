@@ -647,3 +647,56 @@ class PolicyPageTests(TestCase):
 
         self.assertContains(response, "does not currently process real payments")
         self.assertContains(response, "real escrow account")
+
+
+class AccessibilityContrastTests(TestCase):
+    def contrast_ratio(self, foreground, background):
+        def luminance(hex_color):
+            value = hex_color.lstrip("#")
+            channels = [
+                int(value[index:index + 2], 16) / 255
+                for index in (0, 2, 4)
+            ]
+            linear = [
+                channel / 12.92
+                if channel <= 0.03928
+                else ((channel + 0.055) / 1.055) ** 2.4
+                for channel in channels
+            ]
+            return (
+                0.2126 * linear[0]
+                + 0.7152 * linear[1]
+                + 0.0722 * linear[2]
+            )
+
+        lighter = max(luminance(foreground), luminance(background))
+        darker = min(luminance(foreground), luminance(background))
+        return (lighter + 0.05) / (darker + 0.05)
+
+    def assert_contrast_at_least(self, foreground, background, minimum):
+        self.assertGreaterEqual(
+            self.contrast_ratio(foreground, background),
+            minimum,
+            f"{foreground} on {background} should meet {minimum}:1 contrast",
+        )
+
+    def test_core_palette_meets_wcag_aa_text_contrast(self):
+        pairs = (
+            ("#18212b", "#ffffff"),
+            ("#647280", "#ffffff"),
+            ("#185f5b", "#ffffff"),
+            ("#ffffff", "#185f5b"),
+            ("#1f6844", "#eaf6ef"),
+            ("#814c14", "#fff4df"),
+            ("#9c2c25", "#fff0ee"),
+            ("#245d90", "#eaf3fb"),
+            ("#52636e", "#edf2f4"),
+            ("#aec0cb", "#102f3c"),
+        )
+
+        for foreground, background in pairs:
+            with self.subTest(foreground=foreground, background=background):
+                self.assert_contrast_at_least(foreground, background, 4.5)
+
+    def test_focus_ring_meets_non_text_contrast(self):
+        self.assert_contrast_at_least("#8a560f", "#ffffff", 3)

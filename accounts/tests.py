@@ -131,6 +131,8 @@ class RegistrationConsentTests(TestCase):
             response,
             "Please agree to the Terms &amp; Conditions",
         )
+        self.assertContains(response, 'aria-invalid="true"')
+        self.assertContains(response, 'id_legal_acknowledgement_error')
         self.assertFalse(
             get_user_model().objects.filter(username="buyer-one").exists()
         )
@@ -164,5 +166,6 @@ class RegistrationConsentTests(TestCase):
         self.assertContains(response, reverse("terms"))
         self.assertContains(response, reverse("privacy_policy"))
         self.assertContains(response, 'name="legal_acknowledgement"')
+        self.assertContains(response, 'aria-required="true"')
         self.assertNotContains(response, 'name="marketing_consent"')
         self.assertNotContains(response, 'checked="checked"')

@@ -23,22 +23,7 @@
             novalidate
         >
             {% csrf_token %}
-            {{ form.non_field_errors }}
-
-            {% for field in form %}
-                <div
-                    class="form-field{% if field.errors %} form-field-error{% endif %}"
-                >
-                    {{ field.label_tag }}
-                    {{ field }}
-
-                    {% if field.help_text %}
-                        <p class="helptext">{{ field.help_text }}</p>
-                    {% endif %}
-
-                    {{ field.errors }}
-                </div>
-            {% endfor %}
+            {% include "marketplace/includes/accessible_form.html" %}
 
             <div class="form-actions">
                 <a class="button button-secondary" href="{% url 'my_listings' %}">

@@ -37,6 +37,7 @@ async function fillAccountFields(page, user, password) {
 async function registerBuyer(page, user, password) {
   await page.goto("/accounts/register/");
   await fillAccountFields(page, user, password);
+  await page.getByLabel(/terms.*privacy/i).check();
   await page.getByRole("button", { name: /create buyer account/i }).click();
   await expect(page.getByRole("link", { name: /buyer dashboard/i })).toBeVisible();
 }
@@ -48,6 +49,7 @@ async function registerManufacturer(page, user, password, profile) {
   await page.locator('[name="description"]').fill(profile.description);
   await page.locator('[name="city"]').fill(profile.city);
   await page.locator('[name="state"]').fill(profile.state);
+  await page.getByLabel(/terms.*privacy/i).check();
   await page.getByRole("button", { name: /create manufacturer account/i }).click();
   await expect(page.getByRole("heading", { name: /manufacturer dashboard/i })).toBeVisible();
 }
