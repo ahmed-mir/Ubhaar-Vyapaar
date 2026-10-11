@@ -3,23 +3,22 @@
 {% block title %}Find manufacturing partners | Ubhaar-Vyapaar{% endblock %}
 
 {% block content %}
-    <section class="hero hero-marketplace" aria-labelledby="hero-title">
-        <div class="hero-copy">
+    <section class="hero hero-marketplace reveal-up" aria-labelledby="hero-title" data-reveal>
+        <div class="hero-copy stagger-children">
             <p class="eyebrow">B2B manufacturing marketplace</p>
 
             <h1 id="hero-title">
-                Source verified manufacturing capacity with confidence.
+                Find trusted manufacturing capacity when you need it.
             </h1>
 
             <p class="hero-description">
-                Compare real manufacturer capacity by category, MOQ, price,
-                lead time, location, and availability before you request a
-                quote.
+                Discover manufacturer capacity by category, MOQ, price,
+                lead time, location, and availability before you request a quote.
             </p>
 
             <div class="hero-actions" aria-label="Primary marketplace actions">
                 <a class="button button-primary" href="#marketplace-listings">
-                    Browse marketplace
+                    Explore marketplace
                 </a>
                 <a class="button button-dark-secondary" href="{% url 'register_manufacturer' %}">
                     List manufacturing capacity
@@ -31,9 +30,24 @@
                 <span>Structured quote requests</span>
                 <span>Order tracking workflow</span>
             </div>
+
+            <div class="hero-capacity-snapshot" aria-label="Marketplace workflow snapshot">
+                <div>
+                    <strong>Search</strong>
+                    <span>Category, location, MOQ</span>
+                </div>
+                <div>
+                    <strong>Compare</strong>
+                    <span>Price, lead time, capacity</span>
+                </div>
+                <div>
+                    <strong>Request</strong>
+                    <span>Share requirements directly</span>
+                </div>
+            </div>
         </div>
 
-        <form method="get" action="{% url 'home' %}" class="search-form hero-search-panel">
+        <form method="get" action="{% url 'home' %}" class="search-form hero-search-panel scale-in" data-reveal>
             <div class="search-panel-heading">
                 <div>
                     <p class="eyebrow">Find capacity</p>
@@ -46,6 +60,19 @@
                     </a>
                 {% endif %}
             </div>
+
+            {% if query or selected_category or location or moq or max_price or lead_time or verification or sort != "newest" %}
+                <div class="active-filters" aria-label="Active filters">
+                    {% if query %}<span>Search: {{ query }}</span>{% endif %}
+                    {% if selected_category %}<span>Category selected</span>{% endif %}
+                    {% if location %}<span>Location: {{ location }}</span>{% endif %}
+                    {% if moq %}<span>MOQ up to {{ moq }}</span>{% endif %}
+                    {% if max_price %}<span>Price up to &#8377;{{ max_price }}</span>{% endif %}
+                    {% if lead_time %}<span>Lead time up to {{ lead_time }} days</span>{% endif %}
+                    {% if verification == "verified" %}<span>Verified only</span>{% endif %}
+                    {% if sort != "newest" %}<span>Sorted by {{ sort }}</span>{% endif %}
+                </div>
+            {% endif %}
 
             <div class="search-fields">
                 <div class="search-field search-field-wide">
@@ -160,7 +187,27 @@
         </form>
     </section>
 
-    <section class="category-discovery" aria-labelledby="categories-title">
+    <section class="marketplace-snapshot reveal-up" aria-labelledby="snapshot-title" data-reveal>
+        <div class="snapshot-card">
+            <span class="snapshot-label">Visible listings</span>
+            <strong>{{ page_obj.paginator.count }}</strong>
+            <p>Capacity records matching the current marketplace view.</p>
+        </div>
+
+        <div class="snapshot-card">
+            <span class="snapshot-label">Categories</span>
+            <strong>{{ categories|length }}</strong>
+            <p>Manufacturing groups available in the discovery filters.</p>
+        </div>
+
+        <div class="snapshot-card">
+            <span class="snapshot-label">Workflow</span>
+            <strong>Quote to order</strong>
+            <p>Request, compare, accept, and track production milestones.</p>
+        </div>
+    </section>
+
+    <section class="category-discovery reveal-up" aria-labelledby="categories-title" data-reveal>
         <div class="section-heading">
             <div>
                 <h2 id="categories-title">Browse by category</h2>
@@ -180,7 +227,41 @@
         </div>
     </section>
 
-    <section id="marketplace-listings" aria-labelledby="listings-title">
+    <section class="process-section reveal-up" aria-labelledby="process-title" data-reveal>
+        <div class="section-heading">
+            <div>
+                <p class="eyebrow">How it works</p>
+                <h2 id="process-title">From available capacity to tracked orders</h2>
+                <p>Two practical workflows, built around real buyer and manufacturer actions.</p>
+            </div>
+        </div>
+
+        <div class="process-grid">
+            <article class="process-card reveal-left" data-reveal>
+                <h3>For buyers</h3>
+                <ol class="step-list">
+                    <li><span>01</span>Discover capacity</li>
+                    <li><span>02</span>Request quote</li>
+                    <li><span>03</span>Accept offer</li>
+                    <li><span>04</span>Track milestones</li>
+                    <li><span>05</span>Complete and review</li>
+                </ol>
+            </article>
+
+            <article class="process-card reveal-right" data-reveal>
+                <h3>For manufacturers</h3>
+                <ol class="step-list">
+                    <li><span>01</span>List capacity</li>
+                    <li><span>02</span>Receive requests</li>
+                    <li><span>03</span>Send quotations</li>
+                    <li><span>04</span>Manage production</li>
+                    <li><span>05</span>Build reputation</li>
+                </ol>
+            </article>
+        </div>
+    </section>
+
+    <section id="marketplace-listings" class="reveal-up" aria-labelledby="listings-title" data-reveal>
         <div class="section-heading">
             <div>
                 <p class="eyebrow">Marketplace</p>
@@ -204,9 +285,9 @@
             </div>
         </div>
 
-        <div class="listings">
+        <div class="listings stagger-children">
             {% for listing in listings %}
-                <article class="listing-card">
+                <article class="listing-card reveal-up" data-reveal>
                     <div class="listing-media">
                         {% if listing.image %}
                             <img
@@ -337,10 +418,10 @@
                     </div>
                 </article>
              {% empty %}
-                <div class="empty-state">
+                <div class="empty-state reveal-up" data-reveal>
                     {% if query or selected_category %}
                         <h3>No matching listings</h3>
-                        <p>Try another search term or category.</p>
+                        <p>Try a broader category, location, MOQ, price, or lead-time filter.</p>
                         <a class="button" href="{% url 'home' %}">
                             Clear all filters
                         </a>
@@ -384,5 +465,25 @@
                 {% endif %}
             </nav>
         {% endif %}
+    </section>
+
+    <section class="trust-cta-section reveal-up" aria-labelledby="trust-cta-title" data-reveal>
+        <div>
+            <p class="eyebrow">Built for manufacturing teams</p>
+            <h2 id="trust-cta-title">Compare commercial fit before committing.</h2>
+            <p>
+                Ubhaar-Vyapaar keeps discovery, quotes, accepted terms, messages,
+                milestones, and reviews in one practical workflow.
+            </p>
+        </div>
+
+        <div class="trust-cta-actions">
+            <a class="button button-primary" href="#marketplace-listings">
+                Browse capacity
+            </a>
+            <a class="button button-secondary" href="{% url 'register_manufacturer' %}">
+                Register as manufacturer
+            </a>
+        </div>
     </section>
 {% endblock %}

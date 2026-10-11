@@ -15,6 +15,12 @@
         {% endblock %}
     </title>
 
+    <script>
+        if (!window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+            document.documentElement.classList.add("motion-ready");
+        }
+    </script>
+
     <link rel="stylesheet" href="{% static 'marketplace/css/app.css' %}">
 
     {% block extra_css %}
@@ -68,10 +74,24 @@
             </a>
 
 
-            <nav class="site-nav" aria-label="Main navigation">
+            <button
+                class="nav-toggle"
+                type="button"
+                aria-expanded="false"
+                aria-controls="site-navigation"
+            >
+                <span class="nav-toggle-line"></span>
+                <span class="nav-toggle-line"></span>
+                <span class="nav-toggle-line"></span>
+                <span class="visually-hidden">Toggle navigation</span>
+            </button>
+
+
+            <nav id="site-navigation" class="site-nav" aria-label="Main navigation">
+                {% with current_url=request.resolver_match.url_name %}
 
                 <div class="nav-group nav-group-primary">
-                    <a class="nav-link" href="{% url 'home' %}">
+                    <a class="nav-link{% if current_url == 'home' %} nav-link-active{% endif %}" href="{% url 'home' %}">
                         Marketplace
                     </a>
 
@@ -80,34 +100,34 @@
 
                         {% if user.role == "BUYER" %}
 
-                            <a class="nav-link nav-link-strong" href="{% url 'buyer_dashboard' %}">
+                            <a class="nav-link nav-link-strong{% if current_url == 'buyer_dashboard' %} nav-link-active{% endif %}" href="{% url 'buyer_dashboard' %}">
                                 Buyer dashboard
                             </a>
 
-                            <a class="nav-link" href="{% url 'my_quote_requests' %}">
+                            <a class="nav-link{% if current_url == 'my_quote_requests' %} nav-link-active{% endif %}" href="{% url 'my_quote_requests' %}">
                                 Requests
                             </a>
 
-                            <a class="nav-link" href="{% url 'buyer_orders' %}">
+                            <a class="nav-link{% if current_url == 'buyer_orders' %} nav-link-active{% endif %}" href="{% url 'buyer_orders' %}">
                                 Orders
                             </a>
 
-                            <a class="nav-link" href="{% url 'saved_listings' %}">
+                            <a class="nav-link{% if current_url == 'saved_listings' %} nav-link-active{% endif %}" href="{% url 'saved_listings' %}">
                                 Saved
                             </a>
 
 
                         {% elif user.role == "MANUFACTURER" %}
 
-                            <a class="nav-link nav-link-strong" href="{% url 'manufacturer_dashboard' %}">
+                            <a class="nav-link nav-link-strong{% if current_url == 'manufacturer_dashboard' %} nav-link-active{% endif %}" href="{% url 'manufacturer_dashboard' %}">
                                 Manufacturer dashboard
                             </a>
 
-                            <a class="nav-link" href="{% url 'my_listings' %}">
+                            <a class="nav-link{% if current_url == 'my_listings' %} nav-link-active{% endif %}" href="{% url 'my_listings' %}">
                                 Listings
                             </a>
 
-                            <a class="nav-link" href="{% url 'manufacturer_orders' %}">
+                            <a class="nav-link{% if current_url == 'manufacturer_orders' %} nav-link-active{% endif %}" href="{% url 'manufacturer_orders' %}">
                                 Orders
                             </a>
 
@@ -118,7 +138,7 @@
                 <div class="nav-group nav-group-account">
                     {% if user.is_authenticated %}
 
-                        <a class="nav-link notification-link" href="{% url 'notifications' %}">
+                        <a class="nav-link notification-link{% if current_url == 'notifications' %} nav-link-active{% endif %}" href="{% url 'notifications' %}">
                             Notifications
 
                             {% if unread_notification_count %}
@@ -135,7 +155,7 @@
                             </a>
                         {% endif %}
 
-                        <a class="nav-link account-link" href="{% url 'password_change' %}">
+                        <a class="nav-link account-link{% if current_url == 'password_change' %} nav-link-active{% endif %}" href="{% url 'password_change' %}">
                             {{ user.username }}
                         </a>
 
@@ -148,11 +168,11 @@
 
                     {% else %}
 
-                        <a class="nav-link" href="{% url 'login' %}">
+                        <a class="nav-link{% if current_url == 'login' %} nav-link-active{% endif %}" href="{% url 'login' %}">
                             Log in
                         </a>
 
-                        <a class="nav-link" href="{% url 'register' %}">
+                        <a class="nav-link{% if current_url == 'register' %} nav-link-active{% endif %}" href="{% url 'register' %}">
                             Buyer signup
                         </a>
 
@@ -163,6 +183,7 @@
                     {% endif %}
                 </div>
 
+                {% endwith %}
             </nav>
 
         </div>
@@ -204,17 +225,134 @@
 
         <div class="container footer-inner">
 
-            <p>
-                &copy; {% now "Y" %} Ubhaar-Vyapaar
-            </p>
+            <div class="footer-brand">
+                <a href="{% url 'home' %}" class="brand footer-logo" aria-label="Ubhaar-Vyapaar home">
+                    <span class="brand-mark">UV</span>
+                    <span class="brand-text">
+                        <span class="brand-name">Ubhaar-Vyapaar</span>
+                        <span class="brand-subtitle">Manufacturing made easier</span>
+                    </span>
+                </a>
 
-            <p>
-                Connecting small manufacturers with growing businesses.
+                <p>
+                    Connecting small manufacturers with growing businesses through
+                    structured discovery, quotations, and order workflows.
+                </p>
+            </div>
+
+            <nav class="footer-links" aria-label="Footer navigation">
+                <div>
+                    <h2>Platform</h2>
+                    <a href="{% url 'home' %}">Marketplace</a>
+                    {% if user.is_authenticated %}
+                        <a href="{% url 'notifications' %}">Notifications</a>
+                    {% endif %}
+                </div>
+
+                <div>
+                    <h2>For Buyers</h2>
+                    <a href="{% url 'home' %}#marketplace-listings">Browse capacity</a>
+                    {% if user.is_authenticated and user.role == "BUYER" %}
+                        <a href="{% url 'buyer_dashboard' %}">Buyer dashboard</a>
+                        <a href="{% url 'my_quote_requests' %}">Quote requests</a>
+                    {% else %}
+                        <a href="{% url 'register' %}">Buyer signup</a>
+                    {% endif %}
+                </div>
+
+                <div>
+                    <h2>For Manufacturers</h2>
+                    <a href="{% url 'register_manufacturer' %}">List capacity</a>
+                    {% if user.is_authenticated and user.role == "MANUFACTURER" %}
+                        <a href="{% url 'manufacturer_dashboard' %}">Manufacturer dashboard</a>
+                        <a href="{% url 'my_listings' %}">Manage listings</a>
+                    {% endif %}
+                </div>
+
+                <div>
+                    <h2>Account</h2>
+                    {% if user.is_authenticated %}
+                        <a href="{% url 'password_change' %}">Password settings</a>
+                    {% else %}
+                        <a href="{% url 'login' %}">Log in</a>
+                        <a href="{% url 'password_reset' %}">Reset password</a>
+                    {% endif %}
+                </div>
+            </nav>
+
+            <p class="footer-bottom">
+                &copy; {% now "Y" %} Ubhaar-Vyapaar. Built for practical B2B manufacturing workflows.
             </p>
 
         </div>
 
     </footer>
+
+    <script>
+        (function () {
+            const navToggle = document.querySelector(".nav-toggle");
+            const nav = document.querySelector("#site-navigation");
+
+            if (navToggle && nav) {
+                navToggle.addEventListener("click", function () {
+                    const isOpen = nav.classList.toggle("site-nav-open");
+                    navToggle.setAttribute("aria-expanded", String(isOpen));
+                });
+            }
+
+            const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+            [
+                ".auth-card",
+                ".hero-copy.stagger-children > *",
+                ".page-heading",
+                ".stats-grid > .stat-card",
+                ".record-grid > .record-card",
+                ".record-grid > .empty-panel",
+                ".summary-card",
+                ".order-timeline-panel",
+                ".order-timeline > .timeline-step",
+                ".conversation-message",
+                ".conversation-form",
+                ".business-profile"
+            ].forEach(function (selector) {
+                document.querySelectorAll(selector).forEach(function (item) {
+                    item.classList.add("reveal-up");
+                    item.setAttribute("data-reveal", "");
+                });
+            });
+
+            const revealItems = document.querySelectorAll(
+                "[data-reveal], .reveal-up, .reveal-left, .reveal-right, .fade-in, .scale-in"
+            );
+
+            if (reducedMotion || !("IntersectionObserver" in window)) {
+                revealItems.forEach(function (item) {
+                    item.classList.add("is-visible");
+                });
+            } else {
+                const observer = new IntersectionObserver(function (entries) {
+                    entries.forEach(function (entry) {
+                        if (entry.isIntersecting) {
+                            entry.target.classList.add("is-visible");
+                            observer.unobserve(entry.target);
+                        }
+                    });
+                }, { threshold: 0.14, rootMargin: "0px 0px -8% 0px" });
+
+                revealItems.forEach(function (item) {
+                    observer.observe(item);
+                });
+            }
+
+            document.querySelectorAll("form").forEach(function (form) {
+                form.addEventListener("submit", function () {
+                    form.classList.add("form-submitting");
+                    form.setAttribute("aria-busy", "true");
+                });
+            });
+        })();
+    </script>
 
 </body>
 </html>
