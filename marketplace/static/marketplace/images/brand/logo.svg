@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 340 72" role="img" aria-labelledby="title desc">
+  <title id="title">Ubhaar-Vyapaar logo</title>
+  <desc id="desc">Original Ubhaar-Vyapaar logo with an industrial U and V mark and wordmark.</desc>
+  <rect x="4" y="4" width="64" height="64" rx="15" fill="#102F3C"/>
+  <path d="M21 18v24.5C21 51 27.5 57 36 57s15-6 15-14.5V18h-8v24.1c0 4.7-2.7 7.6-7 7.6s-7-2.9-7-7.6V18h-8Z" fill="#F8FAFC"/>
+  <path d="M25.5 19h8.3l6.6 15 8.3-15H57l-12.5 22.4L25.5 19Z" fill="#D5963D"/>
+  <path d="M24 45h9.8l6.2-7.3 4.2 5H52L40 28 24 45Z" fill="#2B8C84"/>
+  <path d="M45 25h8v8" fill="none" stroke="#F8FAFC" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M31.5 40.7 52.2 20" fill="none" stroke="#F8FAFC" stroke-width="4" stroke-linecap="round"/>
+  <text x="86" y="35" fill="#102F3C" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="25" font-weight="850" letter-spacing="0">Ubhaar-Vyapaar</text>
+  <text x="87" y="54" fill="#647280" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="12.5" font-weight="650" letter-spacing="1.05">MANUFACTURING NETWORK</text>
+</svg>

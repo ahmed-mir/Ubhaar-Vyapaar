@@ -76,9 +76,12 @@
                 >
                     {% csrf_token %}
                     <button
-                        class="button button-secondary"
+                        class="button button-secondary button-favorite button-favorite-saved"
                         type="submit"
+                        title="Remove listing from saved items"
+                        aria-label="Remove {{ item.listing.title }} from saved listings"
                     >
+                        <span class="favorite-icon" aria-hidden="true"></span>
                         Remove from saved
                     </button>
                 </form>

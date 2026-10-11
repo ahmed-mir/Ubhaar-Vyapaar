@@ -145,7 +145,13 @@
                     {% else %}
                         <form method="post" action="{% url 'save_listing' listing.pk %}">
                             {% csrf_token %}
-                            <button class="button button-secondary full-width" type="submit">
+                            <button
+                                class="button button-secondary button-favorite full-width"
+                                type="submit"
+                                title="Save listing for later comparison"
+                                aria-label="Save {{ listing.title }} for later comparison"
+                            >
+                                <span class="favorite-icon" aria-hidden="true"></span>
                                 Save listing
                             </button>
                         </form>

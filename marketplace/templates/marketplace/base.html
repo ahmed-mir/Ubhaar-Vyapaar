@@ -8,6 +8,11 @@
         name="viewport"
         content="width=device-width, initial-scale=1"
     >
+    <meta
+        name="description"
+        content="Ubhaar-Vyapaar connects buyers with verified small manufacturers, available production capacity, quotations, and order workflows."
+    >
+    <meta name="theme-color" content="#102F3C">
 
     <title>
         {% block title %}
@@ -21,6 +26,9 @@
         }
     </script>
 
+    <link rel="icon" type="image/svg+xml" href="{% static 'marketplace/images/brand/favicon.svg' %}">
+    <link rel="icon" sizes="any" href="{% static 'marketplace/images/brand/favicon.ico' %}">
+    <link rel="apple-touch-icon" href="{% static 'marketplace/images/brand/apple-touch-icon.png' %}">
     <link rel="stylesheet" href="{% static 'marketplace/css/app.css' %}">
 
     {% block extra_css %}
@@ -58,18 +66,21 @@
                 class="brand"
                 aria-label="Ubhaar-Vyapaar home"
             >
-                <span class="brand-mark">
-                    UV
-                </span>
-
-                <span class="brand-text">
-                    <span class="brand-name">
-                        Ubhaar-Vyapaar
-                    </span>
-
-                    <span class="brand-subtitle">
-                        Manufacturing made easier
-                    </span>
+                <span class="brand-logo-lockup">
+                    <img
+                        class="brand-logo-image brand-logo-full"
+                        src="{% static 'marketplace/images/brand/logo.svg' %}"
+                        alt=""
+                        width="340"
+                        height="72"
+                    >
+                    <img
+                        class="brand-logo-image brand-logo-compact"
+                        src="{% static 'marketplace/images/brand/logo-mark.svg' %}"
+                        alt=""
+                        width="64"
+                        height="64"
+                    >
                 </span>
             </a>
 
@@ -227,11 +238,13 @@
 
             <div class="footer-brand">
                 <a href="{% url 'home' %}" class="brand footer-logo" aria-label="Ubhaar-Vyapaar home">
-                    <span class="brand-mark">UV</span>
-                    <span class="brand-text">
-                        <span class="brand-name">Ubhaar-Vyapaar</span>
-                        <span class="brand-subtitle">Manufacturing made easier</span>
-                    </span>
+                    <img
+                        class="footer-logo-image"
+                        src="{% static 'marketplace/images/brand/logo-light.svg' %}"
+                        alt=""
+                        width="340"
+                        height="72"
+                    >
                 </a>
 
                 <p>

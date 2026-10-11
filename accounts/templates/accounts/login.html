@@ -1,9 +1,19 @@
 {% extends "marketplace/base.html" %}
+{% load static %}
 
 {% block title %}Log in | Ubhaar-Vyapaar{% endblock %}
 
 {% block content %}
 <section class="auth-card" aria-labelledby="login-title">
+    <div class="auth-brand-lockup">
+        <img
+            src="{% static 'marketplace/images/brand/logo.svg' %}"
+            alt="Ubhaar-Vyapaar"
+            width="340"
+            height="72"
+        >
+        <p>Verified capacity, quote workflows, and order visibility for practical manufacturing teams.</p>
+    </div>
 
     <a class="back-link" href="{% url 'home' %}">
         &larr; Browse listings
