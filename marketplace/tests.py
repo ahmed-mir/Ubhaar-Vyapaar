@@ -816,6 +816,37 @@ class PlatformReadinessTests(TestCase):
             get_user_model().objects.filter(username="csrf-buyer").exists()
         )
 
+    def test_public_listing_without_image_uses_designed_fallback(self):
+        home_response = self.client.get(reverse("home"))
+
+        self.assertContains(home_response, "listing-media-frame")
+        self.assertContains(home_response, "media-no-image")
+        self.assertContains(home_response, "fallback-brand-mark")
+        self.assertContains(home_response, "Manufacturing capacity")
+        self.assertNotContains(home_response, "Product photo coming soon")
+        self.assertNotContains(home_response, "Image for ")
+
+        detail_response = self.client.get(
+            reverse("listing_detail", args=[self.listing.pk])
+        )
+
+        self.assertContains(detail_response, "detail-image-placeholder")
+        self.assertContains(detail_response, "media-no-image")
+        self.assertContains(detail_response, "fallback-geometry")
+        self.assertNotContains(detail_response, "Product photo coming soon")
+        self.assertNotContains(detail_response, "Image for ")
+
+    def test_public_listing_with_missing_image_has_client_side_fallback(self):
+        self.listing.image = "listings/missing-demo-image.webp"
+        self.listing.save(update_fields=["image"])
+
+        response = self.client.get(reverse("listing_detail", args=[self.listing.pk]))
+
+        self.assertContains(response, "listings/missing-demo-image.webp")
+        self.assertContains(response, "media-failed")
+        self.assertContains(response, "detail-image-placeholder")
+        self.assertContains(response, "fallback-brand-mark")
+
 
 class DemoSeedCommandTests(TestCase):
     def setUp(self):
@@ -862,7 +893,14 @@ class DemoSeedCommandTests(TestCase):
                 manufacturer__user__username__startswith="demo_mfr_",
                 image="",
             ).count(),
-            2,
+            0,
+        )
+        self.assertEqual(
+            CapacityListing.objects.filter(
+                manufacturer__user__username__startswith="demo_mfr_",
+                image__startswith="demo/listings/",
+            ).count(),
+            10,
         )
         self.assertEqual(Review.objects.count(), 2)
         self.assertTrue(

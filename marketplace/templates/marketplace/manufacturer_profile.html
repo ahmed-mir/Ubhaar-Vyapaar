@@ -100,18 +100,12 @@
     <div class="record-grid">
         {% for listing in page_obj %}
             <article class="record-card">
-                {% if listing.image %}
-                    <img
-                        class="listing-image"
-                        src="{{ listing.image.url }}"
-                        alt="{{ listing.title }}"
-                        loading="lazy"
-                    >
-                {% else %}
-                    <div class="listing-image-placeholder">
-                        Product photo coming soon
-                    </div>
-                {% endif %}
+                <div
+                    class="listing-media-frame listing-category-{{ listing.category|lower }}{% if not listing.image %} media-no-image{% endif %}"
+                    data-listing-media
+                >
+                    {% include "marketplace/includes/listing_visual.html" with listing=listing image_class="listing-image" placeholder_class="listing-image-placeholder" %}
+                </div>
 
                 <p class="record-meta">
                     {{ listing.get_category_display }}

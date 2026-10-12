@@ -356,20 +356,12 @@
             {% for listing in listings %}
                 <article class="listing-card reveal-up" data-reveal>
                     <div class="listing-media">
-                        {% if listing.image %}
-                            <img
-                                class="listing-image"
-                                src="{{ listing.image.url }}"
-                                alt="Image for {{ listing.title }} by {{ listing.manufacturer.business_name }}"
-                                loading="lazy"
-                                width="800"
-                                height="600"
-                            >
-                        {% else %}
-                            <div class="listing-image-placeholder" aria-hidden="true">
-                                <span>{{ listing.get_category_display }}</span>
-                            </div>
-                        {% endif %}
+                        <div
+                            class="listing-media-frame listing-category-{{ listing.category|lower }}{% if not listing.image %} media-no-image{% endif %}"
+                            data-listing-media
+                        >
+                            {% include "marketplace/includes/listing_visual.html" with listing=listing image_class="listing-image" placeholder_class="listing-image-placeholder" %}
+                        </div>
 
                         <div class="listing-card-header">
                             {% if listing.manufacturer.is_verified %}

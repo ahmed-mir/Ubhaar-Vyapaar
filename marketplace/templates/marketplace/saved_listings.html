@@ -19,14 +19,12 @@
         {% for item in saved_items %}
             <article class="record-card">
                 {% if item.listing.is_active and item.listing.manufacturer.is_verified %}
-                    {% if item.listing.image %}
-                        <img
-                            class="listing-image"
-                            src="{{ item.listing.image.url }}"
-                            alt="Image for {{ item.listing.title }} by {{ item.listing.manufacturer.business_name }}"
-                            loading="lazy"
-                        >
-                    {% endif %}
+                    <div
+                        class="listing-media-frame listing-category-{{ item.listing.category|lower }}{% if not item.listing.image %} media-no-image{% endif %}"
+                        data-listing-media
+                    >
+                        {% include "marketplace/includes/listing_visual.html" with listing=item.listing image_class="listing-image" placeholder_class="listing-image-placeholder" %}
+                    </div>
 
                     <span class="status-pill status-{{ item.listing.availability_status|lower }}">
                         {{ item.listing.get_availability_status_display }}

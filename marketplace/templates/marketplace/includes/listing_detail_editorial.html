@@ -5,16 +5,12 @@
 <a class="back-link phase17-back-link" href="{% url 'home' %}">&larr; Browse listings</a>
 
 <section class="listing-detail-hero listing-category-{{ listing.category|lower }}" aria-labelledby="listing-title">
-    <div class="detail-media-panel" data-reveal="left">
-        {% if listing.image %}
-            <img class="detail-image" src="{{ listing.image.url }}" alt="Image for {{ listing.title }} by {{ listing.manufacturer.business_name }}">
-        {% else %}
-            <div class="detail-image detail-image-placeholder" aria-hidden="true">
-                <span class="placeholder-category">{{ listing.get_category_display }}</span>
-                <strong>{{ listing.title|truncatewords:6 }}</strong>
-                <span class="placeholder-capability">{% if listing.machine_type %}{{ listing.machine_type }}{% elif listing.materials %}{{ listing.materials }}{% else %}Manufacturing capacity{% endif %}</span>
-            </div>
-        {% endif %}
+    <div
+        class="detail-media-panel listing-media-frame{% if not listing.image %} media-no-image{% endif %}"
+        data-reveal="left"
+        data-listing-media
+    >
+        {% include "marketplace/includes/listing_visual.html" with listing=listing image_class="detail-image" placeholder_class="detail-image detail-image-placeholder" %}
     </div>
 
     <div class="detail-title-panel" data-reveal="up">

@@ -24,17 +24,12 @@
     <div class="listing-detail-layout">
         <article class="detail-main-panel">
             <div class="detail-media-panel">
-                {% if listing.image %}
-                    <img
-                        class="detail-image"
-                        src="{{ listing.image.url }}"
-                        alt="Image for {{ listing.title }} by {{ listing.manufacturer.business_name }}"
-                    >
-                {% else %}
-                    <div class="detail-image detail-image-placeholder" aria-hidden="true">
-                        Product photo coming soon
-                    </div>
-                {% endif %}
+                <div
+                    class="listing-media-frame listing-category-{{ listing.category|lower }}{% if not listing.image %} media-no-image{% endif %}"
+                    data-listing-media
+                >
+                    {% include "marketplace/includes/listing_visual.html" with listing=listing image_class="detail-image" placeholder_class="detail-image detail-image-placeholder" %}
+                </div>
             </div>
 
             <div class="detail-content-panel">

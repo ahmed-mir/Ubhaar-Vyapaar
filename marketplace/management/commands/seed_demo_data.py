@@ -309,8 +309,8 @@ LISTINGS = [
         "category": CapacityListing.Category.METAL,
         "description": (
             "Demo/test listing for procurement-backed fastener kits, sorted "
-            "by size and finish for equipment assembly lines. This record "
-            "intentionally has no image so fallback visuals remain tested."
+            "by size and finish for equipment assembly lines. Suitable for "
+            "maintenance kits and low-volume equipment assembly."
         ),
         "machine_type": "Fastener sourcing, sorting, kit packing",
         "materials": "MS, stainless steel, zinc plated hardware",
@@ -326,7 +326,7 @@ LISTINGS = [
         "capacity_period": "per week",
         "cluster": "Chakan supply cluster",
         "availability_status": CapacityListing.AvailabilityStatus.AVAILABLE,
-        "image": "",
+        "image": "industrial-fasteners.webp",
     },
     {
         "manufacturer": "demo_mfr_kaveri_textiles",
@@ -351,7 +351,7 @@ LISTINGS = [
         "capacity_period": "per month",
         "cluster": "Tiruppur dyeing support lane",
         "availability_status": CapacityListing.AvailabilityStatus.PAUSED,
-        "image": "",
+        "image": "textile-dyeing.webp",
     },
 ]
 

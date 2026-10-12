@@ -19,3 +19,13 @@
 - [ ] Verify `/robots.txt`.
 - [ ] Run buyer smoke test: signup, quote request, order, milestone, review.
 - [ ] Run manufacturer smoke test: signup, listing, quotation, order, milestone.
+
+## Local Demo Data Reset
+
+For disposable local development data only, reseed demo listings with:
+
+```bash
+python manage.py seed_demo_data
+```
+
+To clear old local E2E records such as `UV E2E Verified Capacity ...`, use Django admin and delete only those obvious test records, or reset a disposable local database and run migrations before reseeding. Do not run local cleanup steps against production data.

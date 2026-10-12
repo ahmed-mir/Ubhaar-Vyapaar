@@ -150,16 +150,13 @@
     <div class="listings">
         {% for listing in listings %}
             <article class="listing-card listing-category-{{ listing.category|lower }}" data-reveal="up">
-                <a class="listing-media" href="{% url 'listing_detail' listing.pk %}" aria-label="View {{ listing.title }}">
-                    {% if listing.image %}
-                        <img class="listing-image" src="{{ listing.image.url }}" alt="Image for {{ listing.title }} by {{ listing.manufacturer.business_name }}" loading="lazy" width="800" height="600">
-                    {% else %}
-                        <div class="listing-image-placeholder" aria-hidden="true">
-                            <span class="placeholder-category">{{ listing.get_category_display }}</span>
-                            <strong>{{ listing.title|truncatewords:4 }}</strong>
-                            <span class="placeholder-capability">{% if listing.machine_type %}{{ listing.machine_type }}{% elif listing.materials %}{{ listing.materials }}{% else %}Manufacturing capacity{% endif %}</span>
-                        </div>
-                    {% endif %}
+                <a
+                    class="listing-media listing-media-frame{% if not listing.image %} media-no-image{% endif %}"
+                    href="{% url 'listing_detail' listing.pk %}"
+                    aria-label="View {{ listing.title }}"
+                    data-listing-media
+                >
+                    {% include "marketplace/includes/listing_visual.html" with listing=listing image_class="listing-image" placeholder_class="listing-image-placeholder" %}
                 </a>
 
                 <div class="listing-card-body">
