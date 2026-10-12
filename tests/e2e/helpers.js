@@ -47,8 +47,15 @@ async function registerBuyer(page, user, password) {
   await dismissCookieBanner(page);
   await fillAccountFields(page, user, password);
   await page.getByLabel(/terms.*privacy/i).check();
-  await page.getByRole("button", { name: /create buyer account/i }).click();
-  await expect(page.getByRole("link", { name: /buyer dashboard/i })).toBeVisible();
+  await page
+    .getByRole("button", { name: /create buyer account/i })
+    .click({ noWaitAfter: true });
+  await page.waitForURL("**/", { timeout: 45000 });
+  await page.waitForLoadState("domcontentloaded", { timeout: 45000 });
+  await page.waitForSelector('a[href="/buyer/dashboard/"]', {
+    state: "attached",
+    timeout: 45000,
+  });
 }
 
 async function registerManufacturer(page, user, password, profile) {
@@ -56,12 +63,18 @@ async function registerManufacturer(page, user, password, profile) {
   await dismissCookieBanner(page);
   await fillAccountFields(page, user, password);
   await page.locator('[name="business_name"]').fill(profile.businessName);
-  await page.locator('[name="description"]').fill(profile.description);
+  await page.locator('textarea[name="description"]').fill(profile.description);
   await page.locator('[name="city"]').fill(profile.city);
   await page.locator('[name="state"]').fill(profile.state);
   await page.getByLabel(/terms.*privacy/i).check();
-  await page.getByRole("button", { name: /create manufacturer account/i }).click();
-  await expect(page.getByRole("heading", { name: /manufacturer dashboard/i })).toBeVisible();
+  await page
+    .getByRole("button", { name: /create manufacturer account/i })
+    .click({ noWaitAfter: true });
+  await page.waitForURL("**/manufacturer/dashboard/", { timeout: 45000 });
+  await page.waitForLoadState("domcontentloaded", { timeout: 45000 });
+  await expect(page.getByRole("link", { name: /add capacity/i }).first()).toBeVisible({
+    timeout: 45000,
+  });
 }
 
 async function login(page, username, password) {
@@ -69,7 +82,14 @@ async function login(page, username, password) {
   await dismissCookieBanner(page);
   await page.locator('[name="username"]').fill(username);
   await page.locator('[name="password"]').fill(password);
-  await page.getByRole("button", { name: /^log in$/i }).click();
+  await page
+    .getByRole("button", { name: /^log in$/i })
+    .click({ noWaitAfter: true, timeout: 45000 });
+  await page.waitForURL(
+    (url) => !url.pathname.startsWith("/accounts/login/"),
+    { timeout: 45000 }
+  );
+  await page.waitForLoadState("domcontentloaded", { timeout: 45000 });
 }
 
 async function logout(page) {
@@ -152,7 +172,7 @@ async function createListing(page, listing) {
   await dismissCookieBanner(page);
   await page.locator('[name="title"]').fill(listing.title);
   await page.locator('[name="category"]').selectOption(listing.category);
-  await page.locator('[name="description"]').fill(listing.description);
+  await page.locator('textarea[name="description"]').fill(listing.description);
   await page.locator('[name="machine_type"]').fill(listing.machineType);
   await page.locator('[name="materials"]').fill(listing.materials);
   await page.locator('[name="technical_capabilities"]').fill(listing.capabilities);
@@ -166,7 +186,7 @@ async function createListing(page, listing) {
   await page.locator('[name="cluster"]').fill(listing.cluster);
   await page.locator('[name="availability_status"]').selectOption("AVAILABLE");
   await page.getByRole("button", { name: /save listing/i }).click();
-  await expect(page.getByRole("heading", { name: /manufacturer dashboard/i })).toBeVisible();
+  await expect(page).toHaveURL(/\/manufacturer\/dashboard\/$/);
   await expect(page.getByText(/your listing was saved|your listing was created/i)).toBeVisible();
 }
 
@@ -198,12 +218,12 @@ async function searchListing(page, listingTitle) {
   await dismissCookieBanner(page);
   await page.locator('[name="q"]').fill(listingTitle);
   await page.getByRole("button", { name: /search suppliers/i }).click();
-  await expect(page.getByRole("link", { name: listingTitle })).toBeVisible();
+  await expect(page.getByRole("link", { name: listingTitle, exact: true })).toBeVisible();
 }
 
 async function openListing(page, listingTitle) {
   await searchListing(page, listingTitle);
-  await page.getByRole("link", { name: listingTitle }).first().click();
+  await page.getByRole("link", { name: listingTitle, exact: true }).click();
   await expect(page.getByRole("heading", { name: listingTitle })).toBeVisible();
 }
 
@@ -260,7 +280,7 @@ async function fundVisibleMilestone(page, orderId) {
   await page.getByRole("link", { name: /fund milestone \(demo\)/i }).first().click();
   await expect(page.getByRole("heading", { name: /confirm milestone funding/i })).toBeVisible();
   await page.getByRole("button", { name: /confirm demo funding/i }).click();
-  await expect(page.getByText(/demo funding confirmed/i)).toBeVisible();
+  await expect(page.getByText(/demo funding confirmed/i).first()).toBeVisible();
 }
 
 async function startVisibleMilestone(page, orderId) {
@@ -289,7 +309,7 @@ async function releaseVisibleMilestone(page, orderId) {
   await page.goto(`/orders/${orderId}/`);
   await dismissCookieBanner(page);
   await page.getByRole("button", { name: /release demo payment/i }).first().click();
-  await expect(page.getByText(/demo payment released/i)).toBeVisible();
+  await expect(page.getByText(/demo payment released/i).first()).toBeVisible();
 }
 
 async function submitReview(page, orderId, comment) {

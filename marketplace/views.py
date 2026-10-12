@@ -678,7 +678,7 @@ def home(request):
     else:
         listings = listings.order_by("-pk")
 
-    paginator = Paginator(listings, 9)
+    paginator = Paginator(listings, 6)
     page_obj = paginator.get_page(request.GET.get("page"))
 
     return render(

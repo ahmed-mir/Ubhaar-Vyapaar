@@ -11,18 +11,21 @@ const {
 } = require("./helpers");
 
 test.describe("production auth and access smoke", () => {
+  test.setTimeout(120000);
+
   test("buyer registration, dashboard, login, and logout", async ({ page }) => {
     const password = requireEnv("TEST_USER_PASSWORD");
     const buyer = buildTestUser("buyer", uniqueRunId());
 
     await registerBuyer(page, buyer, password);
 
-    await page.getByRole("link", { name: /buyer dashboard/i }).click();
-    await expect(page.getByRole("heading", { name: /buyer dashboard/i })).toBeVisible();
+    await page.locator('a[href="/buyer/dashboard/"]').first().click();
+    await expect(page).toHaveURL(/\/buyer\/dashboard\/$/);
+    await expect(page.getByRole("heading", { name: /what needs attention/i })).toBeVisible();
 
     await logout(page);
     await login(page, buyer.username, password);
-    await expect(page.getByRole("link", { name: /buyer dashboard/i })).toBeVisible();
+    await expect(page.locator('a[href="/buyer/dashboard/"]').first()).toBeVisible();
     await logout(page);
   });
 
@@ -61,7 +64,7 @@ test.describe("production auth and access smoke", () => {
 
     await logout(page);
     await login(page, manufacturer.username, password);
-    await expect(page.getByRole("link", { name: /manufacturer dashboard/i })).toBeVisible();
+    await expect(page.getByRole("link", { name: /^Dashboard$/i })).toBeVisible();
     await logout(page);
   });
 

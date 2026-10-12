@@ -1,6 +1,8 @@
 from decimal import Decimal
+import tempfile
 
 from django.contrib.auth import get_user_model
+from django.core.management import call_command
 from django.test import Client
 from django.test import TestCase, override_settings
 from django.urls import reverse
@@ -813,3 +815,82 @@ class PlatformReadinessTests(TestCase):
         self.assertTrue(
             get_user_model().objects.filter(username="csrf-buyer").exists()
         )
+
+
+class DemoSeedCommandTests(TestCase):
+    def setUp(self):
+        self.media_root = tempfile.TemporaryDirectory()
+        self.override = override_settings(
+            MEDIA_ROOT=self.media_root.name,
+            STORAGES={
+                "default": {
+                    "BACKEND": "django.core.files.storage.FileSystemStorage",
+                },
+                "staticfiles": {
+                    "BACKEND": (
+                        "django.contrib.staticfiles.storage.StaticFilesStorage"
+                    ),
+                },
+            },
+            PASSWORD_HASHERS=[
+                "django.contrib.auth.hashers.MD5PasswordHasher",
+            ],
+        )
+        self.override.enable()
+
+    def tearDown(self):
+        self.override.disable()
+        self.media_root.cleanup()
+
+    def test_seed_demo_data_creates_fictional_demo_marketplace_content(self):
+        call_command("seed_demo_data", verbosity=0)
+
+        self.assertEqual(
+            ManufacturerProfile.objects.filter(
+                user__username__startswith="demo_mfr_",
+            ).count(),
+            5,
+        )
+        self.assertEqual(
+            CapacityListing.objects.filter(
+                manufacturer__user__username__startswith="demo_mfr_",
+            ).count(),
+            10,
+        )
+        self.assertEqual(
+            CapacityListing.objects.filter(
+                manufacturer__user__username__startswith="demo_mfr_",
+                image="",
+            ).count(),
+            2,
+        )
+        self.assertEqual(Review.objects.count(), 2)
+        self.assertTrue(
+            CapacityListing.objects.filter(
+                title="Custom Corrugated Packaging for D2C Shipments",
+                image__startswith="demo/listings/",
+                manufacturer__business_name__startswith="Demo ",
+                manufacturer__user__email__endswith="@example.com",
+            ).exists()
+        )
+
+    def test_seed_demo_data_is_idempotent(self):
+        call_command("seed_demo_data", verbosity=0)
+        call_command("seed_demo_data", verbosity=0)
+
+        self.assertEqual(
+            CapacityListing.objects.filter(
+                manufacturer__user__username__startswith="demo_mfr_",
+            ).count(),
+            10,
+        )
+        self.assertEqual(Review.objects.count(), 2)
+
+    def test_homepage_limits_demo_listing_density(self):
+        call_command("seed_demo_data", verbosity=0)
+
+        response = self.client.get(reverse("home"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(response.context["listings"]), 6)
+        self.assertGreater(response.context["page_obj"].paginator.count, 6)

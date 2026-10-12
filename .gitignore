@@ -20,8 +20,9 @@ staticfiles/
 Thumbs.db
 
 CODEX_TASK.md
-docs/
-
+docs/*
+!docs/DEMO_ASSET_SOURCES.md
+!docs/LAUNCH_CHECKLIST.md
 node_modules/
 playwright-report/
 test-results/
