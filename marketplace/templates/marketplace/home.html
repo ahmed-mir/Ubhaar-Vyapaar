@@ -10,12 +10,12 @@
             <p class="eyebrow">B2B manufacturing marketplace</p>
 
             <h1 id="hero-title">
-                Find trusted manufacturing capacity when you need it.
+                Find trusted manufacturing capacity<br>when you need it.
             </h1>
 
             <p class="hero-description">
-                Discover manufacturer capacity by category, MOQ, price,
-                lead time, location, and availability before you request a quote.
+                Compare verified suppliers, practical production terms, and live
+                capability signals before you request a quote.
             </p>
 
             <div class="hero-actions" aria-label="Primary marketplace actions">
@@ -32,167 +32,178 @@
                 <span>Structured quote requests</span>
                 <span>Order tracking workflow</span>
             </div>
-
-            <div class="hero-capacity-snapshot" aria-label="Marketplace workflow snapshot">
-                <div>
-                    <strong>Search</strong>
-                    <span>Category, location, MOQ</span>
-                </div>
-                <div>
-                    <strong>Compare</strong>
-                    <span>Price, lead time, capacity</span>
-                </div>
-                <div>
-                    <strong>Request</strong>
-                    <span>Share requirements directly</span>
-                </div>
-            </div>
         </div>
 
-        <form
-            method="get"
-            action="{% url 'home' %}"
-            class="search-form hero-search-panel scale-in"
-            data-reveal
-            data-analytics-event="marketplace_search"
-        >
-            <div class="search-panel-heading">
-                <div>
-                    <p class="eyebrow">Find capacity</p>
-                    <h2>Search the supplier network</h2>
+        <div class="hero-experience scale-in" data-reveal>
+            <div class="capacity-visual" aria-hidden="true">
+                <div class="capacity-node capacity-node-primary">
+                    <span>Packaging</span>
+                    <strong>42k units / week</strong>
+                </div>
+                <div class="capacity-node capacity-node-secondary">
+                    <span>Metal fabrication</span>
+                    <strong>14 day lead time</strong>
+                </div>
+                <div class="capacity-node capacity-node-tertiary">
+                    <span>Textiles</span>
+                    <strong>Verified cluster</strong>
+                </div>
+                <div class="visual-metric">
+                    <span>Available capacity</span>
+                    <strong>{{ page_obj.paginator.count }}</strong>
+                    <small>visible listings</small>
+                </div>
+            </div>
+
+            <form
+                method="get"
+                action="{% url 'home' %}"
+                class="search-form hero-search-panel"
+                data-analytics-event="marketplace_search"
+            >
+                <div class="search-panel-heading">
+                    <div>
+                        <p class="eyebrow">Search capacity</p>
+                        <h2>What do you need manufactured?</h2>
+                    </div>
+
+                    {% if query or selected_category or location or moq or max_price or lead_time or verification or sort != "newest" %}
+                        <a class="clear-link" href="{% url 'home' %}">
+                            Clear filters
+                        </a>
+                    {% endif %}
                 </div>
 
                 {% if query or selected_category or location or moq or max_price or lead_time or verification or sort != "newest" %}
-                    <a class="clear-link" href="{% url 'home' %}">
-                        Clear filters
-                    </a>
+                    <div class="active-filters" aria-label="Active filters">
+                        {% if query %}<span>Search: {{ query }}</span>{% endif %}
+                        {% if selected_category %}<span>Category selected</span>{% endif %}
+                        {% if location %}<span>Location: {{ location }}</span>{% endif %}
+                        {% if moq %}<span>MOQ up to {{ moq }}</span>{% endif %}
+                        {% if max_price %}<span>Price up to {{ max_price|inr }}</span>{% endif %}
+                        {% if lead_time %}<span>Lead time up to {{ lead_time }} days</span>{% endif %}
+                        {% if verification == "verified" %}<span>Verified only</span>{% endif %}
+                        {% if sort != "newest" %}<span>Sorted by {{ sort }}</span>{% endif %}
+                    </div>
                 {% endif %}
-            </div>
 
-            {% if query or selected_category or location or moq or max_price or lead_time or verification or sort != "newest" %}
-                <div class="active-filters" aria-label="Active filters">
-                    {% if query %}<span>Search: {{ query }}</span>{% endif %}
-                    {% if selected_category %}<span>Category selected</span>{% endif %}
-                    {% if location %}<span>Location: {{ location }}</span>{% endif %}
-                    {% if moq %}<span>MOQ up to {{ moq }}</span>{% endif %}
-                    {% if max_price %}<span>Price up to {{ max_price|inr }}</span>{% endif %}
-                    {% if lead_time %}<span>Lead time up to {{ lead_time }} days</span>{% endif %}
-                    {% if verification == "verified" %}<span>Verified only</span>{% endif %}
-                    {% if sort != "newest" %}<span>Sorted by {{ sort }}</span>{% endif %}
-                </div>
-            {% endif %}
-
-            <div class="search-fields">
-                <div class="search-field search-field-wide">
-                    <label for="search">What do you need manufactured?</label>
-                    <input
-                        id="search"
-                        type="search"
-                        name="q"
-                        value="{{ query }}"
-                        placeholder="Packaging, textiles, metal fabrication, city"
-                    >
-                </div>
-
-                <div class="category-field">
-                    <label for="category">Category</label>
-                    <select id="category" name="category">
-                        <option value="">All categories</option>
-
-                        {% for value, label in categories %}
-                            <option
-                                value="{{ value }}"
-                                {% if selected_category == value %}selected{% endif %}
-                            >
-                                {{ label }}
-                            </option>
-                        {% endfor %}
-                    </select>
-                </div>
-
-                <div class="category-field">
-                    <label for="location">Location</label>
-                    <input
-                        id="location"
-                        type="search"
-                        name="location"
-                        value="{{ location }}"
-                        placeholder="City or state"
-                    >
-                </div>
-
-                <div class="compact-field">
-                    <label for="moq">Max MOQ</label>
-                    <input
-                        id="moq"
-                        type="number"
-                        min="1"
-                        name="moq"
-                        value="{{ moq }}"
-                        placeholder="1000"
-                    >
-                </div>
-
-                <div class="compact-field">
-                    <label for="max_price">Max price</label>
-                    <input
-                        id="max_price"
-                        type="number"
-                        min="1"
-                        step="0.01"
-                        name="max_price"
-                        value="{{ max_price }}"
-                        placeholder="50"
-                    >
-                </div>
-
-                <div class="compact-field">
-                    <label for="lead_time">Max days</label>
-                    <input
-                        id="lead_time"
-                        type="number"
-                        min="1"
-                        name="lead_time"
-                        value="{{ lead_time }}"
-                        placeholder="14"
-                    >
-                </div>
-
-                <div class="category-field">
-                    <label for="verification">Verification</label>
-                    <select id="verification" name="verification">
-                        <option value="">Verified manufacturers</option>
-                        <option
-                            value="verified"
-                            {% if verification == "verified" %}selected{% endif %}
+                <div class="search-fields">
+                    <div class="search-field search-field-wide">
+                        <label for="search">Capability, material, process, or city</label>
+                        <input
+                            id="search"
+                            type="search"
+                            name="q"
+                            value="{{ query }}"
+                            placeholder="Packaging, CNC, textiles, Pune"
                         >
-                            Verified only
-                        </option>
-                    </select>
-                </div>
+                    </div>
 
-                <div class="category-field">
-                    <label for="sort">Sort by</label>
-                    <select id="sort" name="sort">
-                        <option value="newest" {% if sort == "newest" %}selected{% endif %}>
-                            Newest
-                        </option>
-                        <option value="price" {% if sort == "price" %}selected{% endif %}>
-                            Lowest price
-                        </option>
-                        <option value="lead_time" {% if sort == "lead_time" %}selected{% endif %}>
-                            Shortest lead time
-                        </option>
-                    </select>
-                </div>
+                    <details class="advanced-search" {% if selected_category or location or moq or max_price or lead_time or verification or sort != "newest" %}open{% endif %}>
+                        <summary>Filters</summary>
+                        <div class="advanced-search-grid">
+                            <div class="category-field">
+                                <label for="category">Category</label>
+                                <select id="category" name="category">
+                                    <option value="">All categories</option>
 
-                <div class="search-actions">
-                    <button class="button button-primary" type="submit">
-                        Search suppliers
-                    </button>
+                                    {% for value, label in categories %}
+                                        <option
+                                            value="{{ value }}"
+                                            {% if selected_category == value %}selected{% endif %}
+                                        >
+                                            {{ label }}
+                                        </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+
+                            <div class="category-field">
+                                <label for="location">Location</label>
+                                <input
+                                    id="location"
+                                    type="search"
+                                    name="location"
+                                    value="{{ location }}"
+                                    placeholder="City or state"
+                                >
+                            </div>
+
+                            <div class="compact-field">
+                                <label for="moq">Max MOQ</label>
+                                <input
+                                    id="moq"
+                                    type="number"
+                                    min="1"
+                                    name="moq"
+                                    value="{{ moq }}"
+                                    placeholder="1000"
+                                >
+                            </div>
+
+                            <div class="compact-field">
+                                <label for="max_price">Max budget</label>
+                                <input
+                                    id="max_price"
+                                    type="number"
+                                    min="1"
+                                    step="0.01"
+                                    name="max_price"
+                                    value="{{ max_price }}"
+                                    placeholder="50"
+                                >
+                            </div>
+
+                            <div class="compact-field">
+                                <label for="lead_time">Max days</label>
+                                <input
+                                    id="lead_time"
+                                    type="number"
+                                    min="1"
+                                    name="lead_time"
+                                    value="{{ lead_time }}"
+                                    placeholder="14"
+                                >
+                            </div>
+
+                            <div class="category-field">
+                                <label for="verification">Verification</label>
+                                <select id="verification" name="verification">
+                                    <option value="">All manufacturers</option>
+                                    <option
+                                        value="verified"
+                                        {% if verification == "verified" %}selected{% endif %}
+                                    >
+                                        Verified only
+                                    </option>
+                                </select>
+                            </div>
+
+                            <div class="category-field">
+                                <label for="sort">Sort by</label>
+                                <select id="sort" name="sort">
+                                    <option value="newest" {% if sort == "newest" %}selected{% endif %}>
+                                        Newest
+                                    </option>
+                                    <option value="price" {% if sort == "price" %}selected{% endif %}>
+                                        Lowest price
+                                    </option>
+                                    <option value="lead_time" {% if sort == "lead_time" %}selected{% endif %}>
+                                        Shortest lead time
+                                    </option>
+                                </select>
+                            </div>
+                        </div>
+                    </details>
+
+                    <div class="search-actions">
+                        <button class="button button-primary" type="submit">
+                            Search suppliers
+                        </button>
+                    </div>
                 </div>
-            </div>
-        </form>
+            </form>
+        </div>
     </section>
 
     <section class="marketplace-snapshot reveal-up" aria-labelledby="snapshot-title" data-reveal>
@@ -218,8 +229,9 @@
     <section class="category-discovery reveal-up" aria-labelledby="categories-title" data-reveal>
         <div class="section-heading">
             <div>
-                <h2 id="categories-title">Browse by category</h2>
-                <p>Start with the most common small-batch manufacturing needs.</p>
+                <p class="eyebrow">Trusted manufacturing categories</p>
+                <h2 id="categories-title">Start with the capability you need</h2>
+                <p>Browse common capacity pools and narrow by commercial fit.</p>
             </div>
         </div>
 
@@ -238,46 +250,61 @@
     <section class="process-section reveal-up" aria-labelledby="process-title" data-reveal>
         <div class="section-heading">
             <div>
-                <p class="eyebrow">How it works</p>
-                <h2 id="process-title">From available capacity to tracked orders</h2>
-                <p>Two practical workflows, built around real buyer and manufacturer actions.</p>
+                <p class="eyebrow">How sourcing works</p>
+                <h2 id="process-title">From discovery to tracked production</h2>
+                <p>One structured flow for buyer confidence and manufacturer clarity.</p>
             </div>
         </div>
 
-        <div class="process-grid">
-            <article class="process-card reveal-left" data-reveal>
-                <h3>For buyers</h3>
-                <ol class="step-list">
-                    <li><span>01</span>Discover capacity</li>
-                    <li><span>02</span>Request quote</li>
-                    <li><span>03</span>Accept offer</li>
-                    <li><span>04</span>Track milestones</li>
-                    <li><span>05</span>Complete and review</li>
-                </ol>
-            </article>
+        <ol class="workflow-steps">
+            <li>
+                <span>01</span>
+                <strong>Discover</strong>
+                <p>Search by capability, location, MOQ, budget, and lead time.</p>
+            </li>
+            <li>
+                <span>02</span>
+                <strong>Request quote</strong>
+                <p>Share requirements with the right manufacturer.</p>
+            </li>
+            <li>
+                <span>03</span>
+                <strong>Compare</strong>
+                <p>Review unit price, production days, and commercial terms.</p>
+            </li>
+            <li>
+                <span>04</span>
+                <strong>Track production</strong>
+                <p>Follow simulated funding and milestone checkpoints.</p>
+            </li>
+            <li>
+                <span>05</span>
+                <strong>Complete</strong>
+                <p>Close the order workflow and leave a review.</p>
+            </li>
+        </ol>
 
-            <article class="process-card reveal-right" data-reveal>
+        <div class="role-lanes">
+            <article>
+                <h3>For buyers</h3>
+                <p>Shortlist capable suppliers, compare quotes, and keep order conversations tied to milestones.</p>
+            </article>
+            <article>
                 <h3>For manufacturers</h3>
-                <ol class="step-list">
-                    <li><span>01</span>List capacity</li>
-                    <li><span>02</span>Receive requests</li>
-                    <li><span>03</span>Send quotations</li>
-                    <li><span>04</span>Manage production</li>
-                    <li><span>05</span>Build reputation</li>
-                </ol>
+                <p>Publish capacity, respond to demand, and manage production actions from one workspace.</p>
             </article>
         </div>
     </section>
 
-    <section id="marketplace-listings" class="reveal-up" aria-labelledby="listings-title" data-reveal>
-        <div class="section-heading">
+    <section id="marketplace-listings" class="marketplace-results reveal-up" aria-labelledby="listings-title" data-reveal>
+        <div class="section-heading results-heading">
             <div>
-                <p class="eyebrow">Marketplace</p>
+                <p class="eyebrow">Available capacity</p>
                 <h2 id="listings-title">
                     {% if query or selected_category or location or moq or max_price or lead_time %}
-                        Matching capacity
+                        Matching suppliers
                     {% else %}
-                        Available verified capacity
+                        Marketplace listings
                     {% endif %}
                 </h2>
 
@@ -291,7 +318,29 @@
                     {% endif %}
                 </p>
             </div>
+
+            <div class="results-tools">
+                <span>{{ page_obj.paginator.count }} results</span>
+                {% if query or selected_category or location or moq or max_price or lead_time or verification or sort != "newest" %}
+                    <a class="button button-secondary button-compact" href="{% url 'home' %}">
+                        Clear filters
+                    </a>
+                {% endif %}
+            </div>
         </div>
+
+        {% if query or selected_category or location or moq or max_price or lead_time or verification or sort != "newest" %}
+            <div class="active-filters active-filters-results" aria-label="Active listing filters">
+                {% if query %}<span>Search: {{ query }}</span>{% endif %}
+                {% if selected_category %}<span>Category selected</span>{% endif %}
+                {% if location %}<span>Location: {{ location }}</span>{% endif %}
+                {% if moq %}<span>MOQ up to {{ moq }}</span>{% endif %}
+                {% if max_price %}<span>Budget up to {{ max_price|inr }}</span>{% endif %}
+                {% if lead_time %}<span>Lead time up to {{ lead_time }} days</span>{% endif %}
+                {% if verification == "verified" %}<span>Verified only</span>{% endif %}
+                {% if sort != "newest" %}<span>Sorted by {{ sort }}</span>{% endif %}
+            </div>
+        {% endif %}
 
         <div class="listings stagger-children">
             {% for listing in listings %}
@@ -308,7 +357,7 @@
                             >
                         {% else %}
                             <div class="listing-image-placeholder" aria-hidden="true">
-                                Product photo coming soon
+                                <span>{{ listing.get_category_display }}</span>
                             </div>
                         {% endif %}
 
@@ -328,55 +377,58 @@
                     {% endif %}
 
                     <div class="listing-card-body">
-                        <div class="listing-title-row">
-                            <p class="listing-category">{{ listing.get_category_display }}</p>
-                            <h3>
-                                <a href="{% url 'listing_detail' listing.pk %}">
-                                    {{ listing.title }}
+                        <div class="listing-main">
+                            <div class="listing-title-row">
+                                <p class="listing-category">{{ listing.get_category_display }}</p>
+                                <h3>
+                                    <a href="{% url 'listing_detail' listing.pk %}">
+                                        {{ listing.title }}
+                                    </a>
+                                </h3>
+                            </div>
+
+                            <p class="company">
+                                <a href="{% url 'manufacturer_profile' listing.manufacturer.pk %}">
+                                    {{ listing.manufacturer.business_name }}
                                 </a>
-                            </h3>
+                                <span>
+                                    {{ listing.manufacturer.city }},
+                                    {{ listing.manufacturer.state }}
+                                </span>
+                            </p>
+
+                            {% if listing.machine_type or listing.materials %}
+                                <p class="record-meta">
+                                    {% if listing.machine_type %}
+                                        {{ listing.machine_type }}
+                                    {% endif %}
+                                    {% if listing.machine_type and listing.materials %}
+                                        &middot;
+                                    {% endif %}
+                                    {% if listing.materials %}
+                                        {{ listing.materials }}
+                                    {% endif %}
+                                </p>
+                            {% endif %}
+
+                            {% if listing.manufacturer.review_count %}
+                                <p class="record-meta">
+                                    {{ listing.manufacturer.average_rating|floatformat:1 }}/5
+                                    from completed order reviews
+                                </p>
+                            {% endif %}
+
+                            <p class="description">
+                                {{ listing.description|truncatewords:24 }}
+                            </p>
                         </div>
 
-                        <p class="company">
-                            <a href="{% url 'manufacturer_profile' listing.manufacturer.pk %}">
-                                {{ listing.manufacturer.business_name }}
-                            </a>
-                            <span>
-                                {{ listing.manufacturer.city }},
-                                {{ listing.manufacturer.state }}
-                            </span>
-                        </p>
-
-                        {% if listing.machine_type or listing.materials %}
-                            <p class="record-meta">
-                                {% if listing.machine_type %}
-                                    {{ listing.machine_type }}
-                                {% endif %}
-                                {% if listing.machine_type and listing.materials %}
-                                    &middot;
-                                {% endif %}
-                                {% if listing.materials %}
-                                    {{ listing.materials }}
-                                {% endif %}
-                            </p>
-                        {% endif %}
-
-                        {% if listing.manufacturer.review_count %}
-                            <p class="record-meta">
-                                {{ listing.manufacturer.average_rating|floatformat:1 }}/5
-                                from completed order reviews
-                            </p>
-                        {% endif %}
-
-                        <p class="description">
-                            {{ listing.description|truncatewords:22 }}
-                        </p>
-
-                        <dl class="listing-meta">
-                            <div class="listing-price-fact">
-                                <dt>Price</dt>
-                                <dd>
-                                    {{ listing.price_per_unit|inr }}
+                        <div class="listing-commercial">
+                            <dl class="listing-meta">
+                                <div class="listing-price-fact">
+                                    <dt>Price</dt>
+                                    <dd>
+                                        {{ listing.price_per_unit|inr }}
                                     <span>per unit</span>
                                 </dd>
                             </div>
@@ -423,6 +475,7 @@
                                 </a>
                             {% endif %}
                         </div>
+                    </div>
                     </div>
                 </article>
              {% empty %}

@@ -52,23 +52,6 @@
         Skip to content
     </a>
 
-    <div class="utility-bar">
-        <div class="container utility-inner">
-
-            <p>
-                <span class="utility-badge">
-                    Verified B2B manufacturing network
-                </span>
-            </p>
-
-            <p>
-                Source capacity &middot; Compare quotes &middot; Track orders
-            </p>
-
-        </div>
-    </div>
-
-
     <header class="site-header">
         <div class="container header-inner">
 
@@ -124,7 +107,7 @@
                         {% if user.role == "BUYER" %}
 
                             <a class="nav-link nav-link-strong{% if current_url == 'buyer_dashboard' %} nav-link-active{% endif %}" href="{% url 'buyer_dashboard' %}">
-                                Buyer dashboard
+                                Dashboard
                             </a>
 
                             <a class="nav-link{% if current_url == 'my_quote_requests' %} nav-link-active{% endif %}" href="{% url 'my_quote_requests' %}">
@@ -143,7 +126,7 @@
                         {% elif user.role == "MANUFACTURER" %}
 
                             <a class="nav-link nav-link-strong{% if current_url == 'manufacturer_dashboard' %} nav-link-active{% endif %}" href="{% url 'manufacturer_dashboard' %}">
-                                Manufacturer dashboard
+                                Dashboard
                             </a>
 
                             <a class="nav-link{% if current_url == 'my_listings' %} nav-link-active{% endif %}" href="{% url 'my_listings' %}">
@@ -179,7 +162,7 @@
                         {% endif %}
 
                         <a class="nav-link account-link{% if current_url == 'password_change' %} nav-link-active{% endif %}" href="{% url 'password_change' %}">
-                            {{ user.username }}
+                            Account
                         </a>
 
                         <form method="post" action="{% url 'logout' %}" class="logout-form">
@@ -492,7 +475,7 @@
                 }
             };
 
-            const showConsent = function (showPreferences) {
+            const showConsent = function (showPreferences, shouldFocus) {
                 if (!consent) {
                     return;
                 }
@@ -509,12 +492,14 @@
 
                 consent.hidden = false;
 
-                const focusTarget = showPreferences
-                    ? preferencesForm.querySelector("button, input")
-                    : consent.querySelector("button");
+                if (shouldFocus) {
+                    const focusTarget = showPreferences
+                        ? preferencesForm.querySelector("button, input")
+                        : consent.querySelector("button");
 
-                if (focusTarget) {
-                    focusTarget.focus();
+                    if (focusTarget) {
+                        focusTarget.focus();
+                    }
                 }
             };
 
@@ -531,7 +516,7 @@
             };
 
             if (!readPreferences()) {
-                showConsent(false);
+                showConsent(false, false);
             } else {
                 applyPreferences(readPreferences());
             }
@@ -550,7 +535,7 @@
 
             document.querySelectorAll("[data-cookie-manage]").forEach(function (button) {
                 button.addEventListener("click", function () {
-                    showConsent(true);
+                    showConsent(true, true);
                 });
             });
 
@@ -562,7 +547,7 @@
 
             settingsButtons.forEach(function (button) {
                 button.addEventListener("click", function () {
-                    showConsent(true);
+                    showConsent(true, true);
                 });
             });
 

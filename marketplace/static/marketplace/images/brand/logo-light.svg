@@ -1,12 +1,11 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 340 72" role="img" aria-labelledby="title desc">
   <title id="title">Ubhaar-Vyapaar logo light</title>
   <desc id="desc">Light Ubhaar-Vyapaar logo for dark surfaces.</desc>
-  <rect x="4" y="4" width="64" height="64" rx="15" fill="#F8FAFC"/>
-  <path d="M21 18v24.5C21 51 27.5 57 36 57s15-6 15-14.5V18h-8v24.1c0 4.7-2.7 7.6-7 7.6s-7-2.9-7-7.6V18h-8Z" fill="#102F3C"/>
-  <path d="M25.5 19h8.3l6.6 15 8.3-15H57l-12.5 22.4L25.5 19Z" fill="#D5963D"/>
-  <path d="M24 45h9.8l6.2-7.3 4.2 5H52L40 28 24 45Z" fill="#2B8C84"/>
-  <path d="M45 25h8v8" fill="none" stroke="#102F3C" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
-  <path d="M31.5 40.7 52.2 20" fill="none" stroke="#102F3C" stroke-width="4" stroke-linecap="round"/>
-  <text x="86" y="35" fill="#F8FAFC" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="25" font-weight="850" letter-spacing="0">Ubhaar-Vyapaar</text>
-  <text x="87" y="54" fill="#AEC0CB" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="12.5" font-weight="650" letter-spacing="1.05">MANUFACTURING NETWORK</text>
+  <rect x="4" y="4" width="64" height="64" rx="16" fill="#F6FAFB"/>
+  <path d="M20 17v23.2C20 49.3 26.5 55 35.8 55 45.1 55 52 49.3 52 40.2V17h-8.5v22.8c0 4.8-2.9 7.6-7.7 7.6-4.7 0-7.5-2.8-7.5-7.6V17H20Z" fill="#0D2632"/>
+  <path d="M22.8 18h8.1l6.9 15.4L47.7 18h8.1L43.1 40.8 22.8 18Z" fill="#D99B45"/>
+  <path d="M22 43h10.2l6.8-8.2 4.8 5.7H53L39 24.5 22 43Z" fill="#2DB5A7"/>
+  <path d="M43 25h9v9" fill="none" stroke="#0D2632" stroke-width="3.8" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M30 39.5 52 17.5" fill="none" stroke="#0D2632" stroke-width="3.8" stroke-linecap="round"/>
+  <text x="86" y="45" fill="#F6FAFB" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="27" font-weight="720" letter-spacing="0">Ubhaar-Vyapaar</text>
 </svg>
