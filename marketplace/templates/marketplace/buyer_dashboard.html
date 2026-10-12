@@ -7,11 +7,8 @@
     <div class="page-heading dashboard-hero">
         <div>
             <p class="eyebrow">Buyer workspace</p>
-            <h1>Buyer dashboard</h1>
-            <p>
-                Review quote activity, saved capacity, and the next actions
-                waiting for you.
-            </p>
+            <h1>What needs attention?</h1>
+            <p>Quotes, orders, milestones, and messages in one place.</p>
         </div>
 
         <div class="action-links">
@@ -81,7 +78,7 @@
             <div>
                 <p class="eyebrow">Order workflow</p>
                 <h2 id="workflow-title">Milestone actions</h2>
-                <p>Demo funding, buyer review, and simulated release steps that need attention.</p>
+                <p>Funding, review, and release tasks.</p>
             </div>
         </div>
 
@@ -154,7 +151,7 @@
             <div>
                 <p class="eyebrow">Priority queue</p>
                 <h2 id="pending-title">Needs your response</h2>
-                <p>Quotations are shown only when manufacturers have sent them.</p>
+                <p>Quotes waiting for a decision.</p>
             </div>
 
             <a class="button button-secondary" href="{% url 'my_quote_requests' %}">
@@ -216,18 +213,12 @@
                         </button>
                     </form>
 
-                    <p class="record-meta">
-                        Accepting creates a demo order between you and the
-                        manufacturer. No real payment is processed.
-                    </p>
+                    <p class="record-meta">Accepting creates a demo order. No real payment is processed.</p>
                 </article>
             {% empty %}
                 <div class="empty-panel">
                     <h2>No quotations need review</h2>
-                    <p>
-                        New manufacturer quotations will appear here when
-                        they are ready for your response.
-                    </p>
+                    <p>New quotations will appear here.</p>
                 </div>
             {% endfor %}
         </div>
@@ -238,10 +229,7 @@
             <div>
                 <p class="eyebrow">Commercial progress</p>
                 <h2 id="accepted-title">Accepted quotations</h2>
-                <p>
-                    Accepted quotations now create demo orders with locked
-                    terms. No real payment or escrow is started.
-                </p>
+                <p>Locked terms for accepted quotes.</p>
             </div>
 
             <a class="button button-secondary" href="{% url 'buyer_orders' %}">
@@ -299,10 +287,7 @@
             <div>
                 <p class="eyebrow">Fulfilment</p>
                 <h2 id="orders-title">Active orders</h2>
-                <p>
-                    Demo order tracking for accepted quotations. Funding states
-                    are simulated only.
-                </p>
+                <p>Track accepted quotes through production.</p>
             </div>
 
             <a class="button button-secondary" href="{% url 'buyer_orders' %}">
@@ -352,7 +337,7 @@
             <div>
                 <p class="eyebrow">Open requests</p>
                 <h2 id="active-title">Active quote requests</h2>
-                <p>Requests that are still open or awaiting a priced quotation.</p>
+                <p>Open requests and pending quotes.</p>
             </div>
         </div>
 

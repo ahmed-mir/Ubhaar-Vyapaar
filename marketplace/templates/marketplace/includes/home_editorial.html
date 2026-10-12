@@ -1,13 +1,14 @@
 {% load currency %}
 
-<section class="editorial-hero hero-marketplace" aria-labelledby="hero-title">
-    <div class="hero-kicker" data-reveal="left">
-        <p class="eyebrow">B2B manufacturing capacity marketplace</p>
-        <span>Verified discovery, quotation, and production workflow</span>
-    </div>
-
+<section class="editorial-hero hero-marketplace phase17-hero" aria-labelledby="hero-title">
     <div class="hero-statement" data-reveal="up">
-        <h1 id="hero-title">Find manufacturing capacity without the usual sourcing friction.</h1>
+        <p class="eyebrow">B2B manufacturing marketplace</p>
+        <h1 id="hero-title">Source manufacturing. Faster.</h1>
+        <p class="hero-intro">Find verified capacity, compare terms, and request quotes in one focused workflow.</p>
+        <div class="hero-actions" aria-label="Primary marketplace actions">
+            <a class="button button-primary" href="#marketplace-listings">Explore capacity</a>
+            <a class="button button-secondary" href="{% url 'register_manufacturer' %}">List capacity</a>
+        </div>
     </div>
 
     <div class="hero-market-strip" data-reveal="right">
@@ -26,33 +27,26 @@
     <form method="get" action="{% url 'home' %}" class="capacity-search capacity-discovery-module" data-reveal="scale" data-analytics-event="marketplace_search">
         <div class="search-panel-heading">
             <div>
-                <p class="eyebrow">Marketplace search</p>
-                <h2>Start broad. Refine when it matters.</h2>
+                <p class="eyebrow">Search capacity</p>
+                <h2>What do you need made?</h2>
             </div>
             {% if query or selected_category or location or moq or max_price or lead_time or verification or sort != "newest" %}
-                <a class="clear-link" href="{% url 'home' %}">Clear filters</a>
+                <a class="clear-link" href="{% url 'home' %}">Clear</a>
             {% endif %}
         </div>
 
         <div class="search-primary-grid">
             <div class="search-field search-field-wide">
-                <label for="search">What do you need manufactured?</label>
+                <label for="search">Capability, product, material, or city</label>
                 <div class="search-query-row">
-                    <input id="search" type="search" name="q" value="{{ query }}" placeholder="Packaging boxes, CNC parts, woven labels, sheet metal brackets">
-                    <button class="button button-primary" type="submit">Search suppliers</button>
+                    <input id="search" type="search" name="q" value="{{ query }}" placeholder="Packaging, CNC parts, textiles, Pune">
+                    <button class="button button-primary" type="submit" aria-label="Search suppliers">Search</button>
                 </div>
             </div>
         </div>
 
-        <div class="capacity-module" aria-label="Supplier and capacity discovery cues">
-            <span>Capability</span>
-            <span>Manufacturer</span>
-            <span>Location</span>
-            <span>Quote readiness</span>
-        </div>
-
-        <details class="advanced-search" {% if moq or max_price or lead_time or verification or sort != "newest" %}open{% endif %}>
-            <summary><span>Refine supplier fit</span><span aria-hidden="true">+</span></summary>
+        <details class="advanced-search" {% if selected_category or location or moq or max_price or lead_time or verification or sort != "newest" %}open{% endif %}>
+            <summary><span>Filters</span><span aria-hidden="true">+</span></summary>
             <div class="advanced-search-grid">
                 <div class="category-field">
                     <label for="category">Category</label>
@@ -65,7 +59,7 @@
                 </div>
                 <div class="category-field">
                     <label for="location">Location</label>
-                    <input id="location" type="search" name="location" value="{{ location }}" placeholder="City, state, or cluster">
+                    <input id="location" type="search" name="location" value="{{ location }}" placeholder="City or cluster">
                 </div>
                 <div class="compact-field">
                     <label for="moq">Max MOQ</label>
@@ -76,7 +70,7 @@
                     <input id="max_price" type="number" min="1" step="0.01" name="max_price" value="{{ max_price }}" placeholder="50">
                 </div>
                 <div class="compact-field">
-                    <label for="lead_time">Lead time</label>
+                    <label for="lead_time">Max days</label>
                     <input id="lead_time" type="number" min="1" name="lead_time" value="{{ lead_time }}" placeholder="14">
                 </div>
                 <div class="category-field">
@@ -87,11 +81,11 @@
                     </select>
                 </div>
                 <div class="category-field">
-                    <label for="sort">Sort by</label>
+                    <label for="sort">Sort</label>
                     <select id="sort" name="sort">
                         <option value="newest" {% if sort == "newest" %}selected{% endif %}>Newest</option>
                         <option value="price" {% if sort == "price" %}selected{% endif %}>Lowest price</option>
-                        <option value="lead_time" {% if sort == "lead_time" %}selected{% endif %}>Shortest lead time</option>
+                        <option value="lead_time" {% if sort == "lead_time" %}selected{% endif %}>Fastest</option>
                     </select>
                 </div>
             </div>
@@ -99,31 +93,27 @@
 
         {% if query or selected_category or location or moq or max_price or lead_time or verification or sort != "newest" %}
             <div class="active-filters" aria-label="Active filters">
-                {% if query %}<span>Search: {{ query }}</span>{% endif %}
-                {% if selected_category %}<span>Category selected</span>{% endif %}
-                {% if location %}<span>Location: {{ location }}</span>{% endif %}
+                {% if query %}<span>{{ query }}</span>{% endif %}
+                {% if selected_category %}<span>Category</span>{% endif %}
+                {% if location %}<span>{{ location }}</span>{% endif %}
                 {% if moq %}<span>MOQ up to {{ moq }}</span>{% endif %}
-                {% if max_price %}<span>Price up to {{ max_price|inr }}</span>{% endif %}
-                {% if lead_time %}<span>Lead time up to {{ lead_time }} days</span>{% endif %}
-                {% if verification == "verified" %}<span>Verified only</span>{% endif %}
-                {% if sort != "newest" %}<span>Sorted by {{ sort }}</span>{% endif %}
+                {% if max_price %}<span>Up to {{ max_price|inr }}</span>{% endif %}
+                {% if lead_time %}<span>{{ lead_time }} days</span>{% endif %}
+                {% if verification == "verified" %}<span>Verified</span>{% endif %}
+                {% if sort != "newest" %}<span>{{ sort }}</span>{% endif %}
             </div>
         {% endif %}
     </form>
 
-    <div class="hero-proof-line" aria-label="Marketplace workflow proof" data-reveal="up">
-        <span>Find manufacturing capacity</span>
-        <span>Compare manufacturers</span>
-        <span>Request quotations</span>
-        <span>Track production</span>
-    </div>
 </section>
 
-<section class="category-discovery" aria-labelledby="categories-title">
+<section class="category-discovery phase17-section" aria-labelledby="categories-title">
     <div class="section-heading section-heading-editorial" data-reveal="left">
-        <p class="eyebrow">Manufacturing categories</p>
-        <h2 id="categories-title">Start with the capability lane.</h2>
-        <p>Use existing marketplace categories, then narrow by location and commercial fit.</p>
+        <div>
+            <p class="eyebrow">Categories</p>
+            <h2 id="categories-title">Start with a capability.</h2>
+        </div>
+        <p>Browse active manufacturing lanes, then refine by fit.</p>
     </div>
 
     <div class="category-rows">
@@ -134,7 +124,7 @@
                 {% if category.count %}
                     <span class="category-count">{{ category.count }} listing{{ category.count|pluralize }}</span>
                 {% else %}
-                    <span class="category-count">No public listings yet</span>
+                    <span class="category-count">Coming soon</span>
                 {% endif %}
                 <span class="category-arrow" aria-hidden="true">→</span>
             </a>
@@ -142,31 +132,12 @@
     </div>
 </section>
 
-<section class="sourcing-story" aria-labelledby="process-title">
-    <div class="story-sticky" data-reveal="left">
-        <p class="eyebrow">How sourcing works</p>
-        <h2 id="process-title">A quieter way to move from search to production.</h2>
-        <p>
-            Ubhaar-Vyapaar keeps commercial signals, quote requests, order
-            checkpoints, and reviews tied to the same manufacturing record.
-        </p>
-    </div>
-
-    <ol class="story-steps">
-        <li data-story-step data-reveal="right"><span>01</span><strong>Find capacity</strong><p>Search by process, category, location, supplier, material, or cluster.</p></li>
-        <li data-story-step data-reveal="right"><span>02</span><strong>Send requirements</strong><p>Share quantities, delivery needs, and production context through a quote request.</p></li>
-        <li data-story-step data-reveal="right"><span>03</span><strong>Compare quotations</strong><p>Review offered unit price, production days, and manufacturer terms.</p></li>
-        <li data-story-step data-reveal="right"><span>04</span><strong>Track production</strong><p>Accepted quotations create order milestones and simulated funding checkpoints.</p></li>
-        <li data-story-step data-reveal="right"><span>05</span><strong>Complete and review</strong><p>Close the order workflow and leave feedback after production is complete.</p></li>
-    </ol>
-</section>
-
-<section id="marketplace-listings" class="marketplace-results" aria-labelledby="listings-title">
+<section id="marketplace-listings" class="marketplace-results phase17-section" aria-labelledby="listings-title">
     <div class="section-heading results-heading" data-reveal="up">
         <div>
             <p class="eyebrow">Available capacity</p>
             <h2 id="listings-title">{% if query or selected_category or location or moq or max_price or lead_time %}Matching suppliers{% else %}Marketplace listings{% endif %}</h2>
-            <p>{% if query %}Showing matches for "{{ query }}"{% elif selected_category %}Showing services in your selected category.{% else %}Evaluate manufacturers by capability, commercial fit, and delivery speed.{% endif %}</p>
+            <p>{% if query %}Matches for "{{ query }}"{% elif selected_category %}Filtered by category.{% else %}Compare price, MOQ, lead time, and trust signals.{% endif %}</p>
         </div>
         <div class="results-tools">
             <span>{{ page_obj.paginator.count }} results</span>
@@ -179,17 +150,17 @@
     <div class="listings">
         {% for listing in listings %}
             <article class="listing-card listing-category-{{ listing.category|lower }}" data-reveal="up">
-                <div class="listing-media">
+                <a class="listing-media" href="{% url 'listing_detail' listing.pk %}" aria-label="View {{ listing.title }}">
                     {% if listing.image %}
                         <img class="listing-image" src="{{ listing.image.url }}" alt="Image for {{ listing.title }} by {{ listing.manufacturer.business_name }}" loading="lazy" width="800" height="600">
                     {% else %}
                         <div class="listing-image-placeholder" aria-hidden="true">
                             <span class="placeholder-category">{{ listing.get_category_display }}</span>
-                            <strong>{{ listing.title|truncatewords:5 }}</strong>
+                            <strong>{{ listing.title|truncatewords:4 }}</strong>
                             <span class="placeholder-capability">{% if listing.machine_type %}{{ listing.machine_type }}{% elif listing.materials %}{{ listing.materials }}{% else %}Manufacturing capacity{% endif %}</span>
                         </div>
                     {% endif %}
-                </div>
+                </a>
 
                 <div class="listing-card-body">
                     <div class="listing-main">
@@ -203,24 +174,22 @@
                         {% if listing.machine_type or listing.materials %}
                             <p class="record-meta">{% if listing.machine_type %}{{ listing.machine_type }}{% endif %}{% if listing.machine_type and listing.materials %} · {% endif %}{% if listing.materials %}{{ listing.materials }}{% endif %}</p>
                         {% endif %}
-                        <p class="description">{{ listing.description|truncatewords:26 }}</p>
                     </div>
 
                     <div class="listing-commercial">
                         <dl class="listing-meta">
-                            <div class="listing-price-fact"><dt>Price</dt><dd>{{ listing.price_per_unit|inr }} <span>per unit</span></dd></div>
-                            <div><dt>Lead time</dt><dd>{{ listing.production_days }} days</dd></div>
+                            <div class="listing-price-fact"><dt>Price</dt><dd>{{ listing.price_per_unit|inr }} <span>/ unit</span></dd></div>
                             <div><dt>MOQ</dt><dd>{{ listing.minimum_quantity }} units</dd></div>
-                            {% if listing.available_capacity %}<div><dt>Capacity</dt><dd>{{ listing.available_capacity }} units {% if listing.capacity_period %}{{ listing.capacity_period }}{% endif %}</dd></div>{% endif %}
+                            <div><dt>Lead</dt><dd>{{ listing.production_days }} days</dd></div>
                         </dl>
                         <div class="listing-actions">
-                            <a class="button button-secondary" href="{% url 'listing_detail' listing.pk %}">View details</a>
+                            <a class="button button-secondary" href="{% url 'listing_detail' listing.pk %}">View</a>
                             {% if listing.availability_status == "PAUSED" %}
-                                <span class="button button-disabled" aria-disabled="true">Requests paused</span>
+                                <span class="button button-disabled" aria-disabled="true">Paused</span>
                             {% elif user.is_authenticated and user.role == "MANUFACTURER" %}
-                                <span class="button button-disabled" aria-disabled="true">Buyer quote action</span>
+                                <span class="button button-disabled" aria-disabled="true">Buyer action</span>
                             {% else %}
-                                <a class="button button-primary" href="{% url 'request_quote' listing.pk %}">Request quote</a>
+                                <a class="button button-primary" href="{% url 'request_quote' listing.pk %}" aria-label="Request a quote">Request quote</a>
                             {% endif %}
                         </div>
                     </div>
@@ -230,18 +199,18 @@
             <div class="empty-state" data-reveal="up">
                 {% if query or selected_category %}
                     <h3>No matching listings</h3>
-                    <p>Try a broader category, location, MOQ, price, or lead-time filter.</p>
-                    <a class="button" href="{% url 'home' %}">Clear all filters</a>
+                    <p>Try broader filters.</p>
+                    <a class="button" href="{% url 'home' %}">Clear filters</a>
                 {% else %}
-                    <h3>New manufacturing services are on the way</h3>
-                    <p>No public listings are available yet.</p>
+                    <h3>Listings are coming soon</h3>
+                    <p>No public capacity is available yet.</p>
                 {% endif %}
             </div>
         {% endfor %}
     </div>
 
     {% if page_obj.paginator.count %}
-        <div class="pagination-summary">Showing {{ page_obj.start_index }}-{{ page_obj.end_index }} of {{ page_obj.paginator.count }} listings</div>
+        <div class="pagination-summary">Showing {{ page_obj.start_index }}-{{ page_obj.end_index }} of {{ page_obj.paginator.count }}</div>
     {% endif %}
 
     {% if page_obj.has_other_pages %}
@@ -253,15 +222,36 @@
     {% endif %}
 </section>
 
-<section class="trust-section" aria-labelledby="trust-title">
+<section id="how-it-works" class="sourcing-story phase17-section" aria-labelledby="process-title">
+    <div class="story-sticky" data-reveal="left">
+        <p class="eyebrow">How it works</p>
+        <h2 id="process-title">Search. Quote. Track.</h2>
+    </div>
+
+    <ol class="story-steps">
+        <li data-story-step data-reveal="right"><span>01</span><strong>Discover</strong><p>Search by capability, location, MOQ, and lead time.</p></li>
+        <li data-story-step data-reveal="right"><span>02</span><strong>Request quote</strong><p>Send requirements to the right manufacturer.</p></li>
+        <li data-story-step data-reveal="right"><span>03</span><strong>Track production</strong><p>Accepted quotes become milestone-based orders.</p></li>
+        <li data-story-step data-reveal="right"><span>04</span><strong>Complete</strong><p>Close the order and review the work.</p></li>
+    </ol>
+</section>
+
+<section class="trust-section phase17-section" aria-labelledby="trust-title">
     <div class="trust-title" data-reveal="left">
-        <p class="eyebrow">Trust built into the workflow</p>
-        <h2 id="trust-title">The marketplace record carries more than a price.</h2>
+        <p class="eyebrow">Trust</p>
+        <h2 id="trust-title">Built for B2B decisions.</h2>
     </div>
     <div class="trust-rhythm">
-        <div data-reveal="up"><span>01</span><strong>Verified manufacturers</strong><p>Public marketplace listings are tied to verified manufacturer profiles.</p></div>
-        <div data-reveal="up"><span>02</span><strong>Ratings</strong><p>Completed order reviews support manufacturer trust signals.</p></div>
-        <div data-reveal="up"><span>03</span><strong>Production transparency</strong><p>Accepted quotations become orders with structured production details.</p></div>
-        <div data-reveal="up"><span>04</span><strong>Tracked milestones</strong><p>Milestone status and simulated funding steps keep order progress visible.</p></div>
+        <div data-reveal="up"><span>01</span><strong>Verified manufacturers</strong><p>Public listings connect to business profiles.</p></div>
+        <div data-reveal="up"><span>02</span><strong>Reviews</strong><p>Completed orders build trust signals.</p></div>
+        <div data-reveal="up"><span>03</span><strong>Milestones</strong><p>Production progress stays visible.</p></div>
     </div>
+</section>
+
+<section id="for-manufacturers" class="manufacturer-cta phase17-section" aria-labelledby="manufacturer-cta-title">
+    <div>
+        <p class="eyebrow">For manufacturers</p>
+        <h2 id="manufacturer-cta-title">Show capacity where buyers compare suppliers.</h2>
+    </div>
+    <a class="button button-primary" href="{% url 'register_manufacturer' %}">List capacity</a>
 </section>

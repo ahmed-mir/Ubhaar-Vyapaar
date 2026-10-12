@@ -2,6 +2,8 @@
 
 <a class="back-link" href="{% url 'home' %}">← Browse all listings</a>
 
+<a class="back-link phase17-back-link" href="{% url 'home' %}">&larr; Browse listings</a>
+
 <section class="listing-detail-hero listing-category-{{ listing.category|lower }}" aria-labelledby="listing-title">
     <div class="detail-media-panel" data-reveal="left">
         {% if listing.image %}
@@ -30,7 +32,7 @@
 
     <aside class="detail-commercial-panel" aria-label="Pricing and quote actions" data-reveal="right">
         <p class="eyebrow">Commercial terms</p>
-        <p class="price-label">Listed price</p>
+        <p class="price-label">Price</p>
         <p class="detail-price">{{ listing.price_per_unit|inr }} <span>per unit</span></p>
         <dl class="detail-facts">
             <div><dt>Minimum order</dt><dd>{{ listing.minimum_quantity }} units</dd></div>
@@ -58,8 +60,8 @@
                     {% if listing.availability_status == "PAUSED" %}
                         <p class="message">This capacity is temporarily paused and is not accepting new quote requests.</p>
                     {% else %}
-                        <a class="button button-primary full-width" href="{% url 'request_quote' listing.pk %}">Request a quote</a>
-                        <p class="quote-note">Share requirements with the manufacturer. Sending a request does not place an order.</p>
+                        <a class="button button-primary full-width" href="{% url 'request_quote' listing.pk %}" aria-label="Request a quote">Request quote</a>
+                        <p class="quote-note">Send requirements without placing an order.</p>
                     {% endif %}
                 {% else %}
                     <p class="quote-note">Quote requests are available to buyer accounts.</p>
@@ -79,9 +81,18 @@
 <div class="listing-detail-content">
     <article class="detail-flow">
         <section class="detail-section" aria-labelledby="service-title" data-reveal="up">
-            <p class="eyebrow">Capability overview</p>
-            <h2 id="service-title">What the manufacturer offers</h2>
-            {% if listing.description %}{{ listing.description|linebreaks }}{% else %}<p class="muted">The manufacturer has not added a description yet.</p>{% endif %}
+            <p class="eyebrow">Overview</p>
+            <h2 id="service-title">Service details</h2>
+            {% if listing.description %}
+                <details class="description-disclosure">
+                    <summary>Read service description</summary>
+                    <div class="description-content">
+                        {{ listing.description|linebreaks }}
+                    </div>
+                </details>
+            {% else %}
+                <p class="muted">No description added yet.</p>
+            {% endif %}
         </section>
 
         <section class="detail-section" aria-labelledby="capabilities-title" data-reveal="up">

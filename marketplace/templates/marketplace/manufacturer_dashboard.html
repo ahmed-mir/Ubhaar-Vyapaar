@@ -7,11 +7,8 @@
     <div class="page-heading dashboard-hero manufacturer-hero">
         <div>
             <p class="eyebrow">Manufacturer workspace</p>
-            <h1>Manufacturer dashboard</h1>
-            <p>
-                Manage your business verification, capacity listings, and
-                buyer quote requests from one place.
-            </p>
+            <h1>What needs attention?</h1>
+            <p>Requests, orders, milestones, and listing actions.</p>
         </div>
 
         <div class="action-links">
@@ -42,15 +39,14 @@
             {% if manufacturer.is_verified %}
                 <span class="trust-badge">Verified manufacturer</span>
                 <p>
-                    Your active listings can appear in marketplace search.
+                    Active listings can appear in marketplace search.
                 </p>
             {% else %}
                 <span class="status-pill status-pending">
                     {{ manufacturer.get_kyc_status_display }}
                 </span>
                 <p>
-                    Your listings are saved, but buyers will see them only
-                    after your business profile is verified.
+                    Listings become public after verification.
                 </p>
             {% endif %}
         </div>
@@ -127,7 +123,7 @@
             <div>
                 <p class="eyebrow">Production queue</p>
                 <h2 id="production-title">Milestone actions</h2>
-                <p>Funded work ready to start and in-progress milestones ready for buyer review.</p>
+                <p>Funded work and milestones ready for review.</p>
             </div>
 
             <a class="button button-secondary" href="{% url 'manufacturer_orders' %}">
@@ -192,7 +188,7 @@
             <div>
                 <p class="eyebrow">Operating actions</p>
                 <h2 id="actions-title">Next actions</h2>
-                <p>Keep capacity visible and respond quickly to buyers.</p>
+                <p>Keep capacity current and respond to buyers.</p>
             </div>
         </div>
 
@@ -215,8 +211,7 @@
             <article class="record-card action-card">
                 <h3>Respond to buyers</h3>
                 <p class="record-meta">
-                    Accept workable requests, reject poor fits, or send a
-                    clear quotation.
+                    Accept, reject, or quote buyer requests.
                 </p>
                 <div class="record-actions">
                     <a class="button button-secondary" href="#quote-requests">
@@ -238,7 +233,7 @@
             <div>
                 <p class="eyebrow">Active production</p>
                 <h2 id="active-orders-title">Orders in progress</h2>
-                <p>Open orders with milestone funding, production, or review activity.</p>
+                <p>Orders with production or review activity.</p>
             </div>
         </div>
 
@@ -294,7 +289,7 @@
             <div>
                 <p class="eyebrow">Buyer demand</p>
                 <h2 id="quote-title">Quote requests</h2>
-                <p>Review buyer needs and send quotations for accepted work.</p>
+                <p>Review buyer needs and send quotations.</p>
             </div>
         </div>
 
@@ -389,8 +384,7 @@
             <div class="empty-panel">
                 <h2>No quote requests yet</h2>
                 <p>
-                    Requests from buyers will appear here.
-                    You can manage your services in My listings.
+                    Buyer requests will appear here.
                 </p>
                 <a class="button" href="{% url 'my_listings' %}">
                     View my listings
