@@ -23,11 +23,11 @@
         </div>
     </div>
 
-    <form method="get" action="{% url 'home' %}" class="capacity-search" data-reveal="scale" data-analytics-event="marketplace_search">
+    <form method="get" action="{% url 'home' %}" class="capacity-search capacity-discovery-module" data-reveal="scale" data-analytics-event="marketplace_search">
         <div class="search-panel-heading">
             <div>
-                <p class="eyebrow">Search capacity</p>
-                <h2>What do you need made?</h2>
+                <p class="eyebrow">Marketplace search</p>
+                <h2>Start broad. Refine when it matters.</h2>
             </div>
             {% if query or selected_category or location or moq or max_price or lead_time or verification or sort != "newest" %}
                 <a class="clear-link" href="{% url 'home' %}">Clear filters</a>
@@ -36,30 +36,37 @@
 
         <div class="search-primary-grid">
             <div class="search-field search-field-wide">
-                <label for="search">Capability, material, process, or city</label>
-                <input id="search" type="search" name="q" value="{{ query }}" placeholder="Packaging, CNC, textiles, Pune">
-            </div>
-            <div class="search-field">
-                <label for="category">Category</label>
-                <select id="category" name="category">
-                    <option value="">All categories</option>
-                    {% for value, label in categories %}
-                        <option value="{{ value }}" {% if selected_category == value %}selected{% endif %}>{{ label }}</option>
-                    {% endfor %}
-                </select>
-            </div>
-            <div class="search-field">
-                <label for="location">Location</label>
-                <input id="location" type="search" name="location" value="{{ location }}" placeholder="City or state">
-            </div>
-            <div class="search-actions">
-                <button class="button button-primary" type="submit">Search suppliers</button>
+                <label for="search">What do you need manufactured?</label>
+                <div class="search-query-row">
+                    <input id="search" type="search" name="q" value="{{ query }}" placeholder="Packaging boxes, CNC parts, woven labels, sheet metal brackets">
+                    <button class="button button-primary" type="submit">Search suppliers</button>
+                </div>
             </div>
         </div>
 
+        <div class="capacity-module" aria-label="Supplier and capacity discovery cues">
+            <span>Capability</span>
+            <span>Manufacturer</span>
+            <span>Location</span>
+            <span>Quote readiness</span>
+        </div>
+
         <details class="advanced-search" {% if moq or max_price or lead_time or verification or sort != "newest" %}open{% endif %}>
-            <summary><span>Advanced filters</span><span aria-hidden="true">+</span></summary>
+            <summary><span>Refine supplier fit</span><span aria-hidden="true">+</span></summary>
             <div class="advanced-search-grid">
+                <div class="category-field">
+                    <label for="category">Category</label>
+                    <select id="category" name="category">
+                        <option value="">All categories</option>
+                        {% for value, label in categories %}
+                            <option value="{{ value }}" {% if selected_category == value %}selected{% endif %}>{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="category-field">
+                    <label for="location">Location</label>
+                    <input id="location" type="search" name="location" value="{{ location }}" placeholder="City, state, or cluster">
+                </div>
                 <div class="compact-field">
                     <label for="moq">Max MOQ</label>
                     <input id="moq" type="number" min="1" name="moq" value="{{ moq }}" placeholder="1000">
