@@ -4,27 +4,23 @@
 {% block title %}Buyer registration | Ubhaar-Vyapaar{% endblock %}
 
 {% block content %}
-    <section class="auth-card" aria-labelledby="register-title">
-        <div class="auth-brand-lockup">
-            <img
-                src="{% static 'marketplace/images/brand/logo.svg' %}"
-                alt="Ubhaar-Vyapaar"
-                width="340"
-                height="72"
-            >
-            <p>Compare verified manufacturing capacity before you commit to a supplier.</p>
+    <section class="auth-split" aria-labelledby="register-title">
+        <div class="auth-story-panel" data-reveal="left">
+            <img src="{% static 'marketplace/images/brand/logo.svg' %}" alt="Ubhaar-Vyapaar" width="340" height="72">
+            <p class="eyebrow">Buyer access</p>
+            <h1 id="register-title">Find a manufacturing partner with clearer commercial signals.</h1>
+            <p>Create a buyer account to request quotes and track responses from manufacturers.</p>
+            <div class="auth-industrial-visual" aria-hidden="true"><span></span><span></span><span></span></div>
         </div>
 
+        <div class="auth-form-panel" data-reveal="right">
         <a class="back-link" href="{% url 'home' %}">
-            &larr; Browse listings
+            ← Browse listings
         </a>
 
-        <h1 id="register-title">Find your manufacturing partner</h1>
+        <h2>Create buyer account</h2>
 
-        <p class="auth-intro">
-            Create a buyer account to request quotes and track
-            responses from manufacturers.
-        </p>
+        <p class="auth-intro">Start requesting quotes from verified marketplace listings.</p>
 
         <form method="post" class="styled-form" novalidate>
             {% csrf_token %}
@@ -41,7 +37,7 @@
                 before creating an account.
             </p>
 
-            <button class="button form-submit" type="submit">
+            <button class="button button-primary form-submit" type="submit">
                 Create buyer account
             </button>
         </form>
@@ -58,6 +54,7 @@
                     Register your business
                 </a>
             </p>
+        </div>
         </div>
     </section>
 {% endblock %}

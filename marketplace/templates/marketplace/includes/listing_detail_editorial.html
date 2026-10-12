@@ -1,0 +1,115 @@
+{% load currency %}
+
+<a class="back-link" href="{% url 'home' %}">← Browse all listings</a>
+
+<section class="listing-detail-hero listing-category-{{ listing.category|lower }}" aria-labelledby="listing-title">
+    <div class="detail-media-panel" data-reveal="left">
+        {% if listing.image %}
+            <img class="detail-image" src="{{ listing.image.url }}" alt="Image for {{ listing.title }} by {{ listing.manufacturer.business_name }}">
+        {% else %}
+            <div class="detail-image detail-image-placeholder" aria-hidden="true">
+                <span class="placeholder-category">{{ listing.get_category_display }}</span>
+                <strong>{{ listing.title|truncatewords:6 }}</strong>
+                <span class="placeholder-capability">{% if listing.machine_type %}{{ listing.machine_type }}{% elif listing.materials %}{{ listing.materials }}{% else %}Manufacturing capacity{% endif %}</span>
+            </div>
+        {% endif %}
+    </div>
+
+    <div class="detail-title-panel" data-reveal="up">
+        <div class="detail-badge-row">
+            <span class="listing-category">{{ listing.get_category_display }}</span>
+            {% if listing.manufacturer.is_verified %}<span class="trust-badge">Verified manufacturer</span>{% endif %}
+            <span class="status-pill status-{{ listing.availability_status|lower }}">{{ listing.get_availability_status_display }}</span>
+        </div>
+        <h1 id="listing-title">{{ listing.title }}</h1>
+        <p class="detail-manufacturer-line">
+            <a href="{% url 'manufacturer_profile' listing.manufacturer.pk %}">{{ listing.manufacturer.business_name }}</a>
+            <span>{{ listing.manufacturer.city }}, {{ listing.manufacturer.state }}</span>
+        </p>
+    </div>
+
+    <aside class="detail-commercial-panel" aria-label="Pricing and quote actions" data-reveal="right">
+        <p class="eyebrow">Commercial terms</p>
+        <p class="price-label">Listed price</p>
+        <p class="detail-price">{{ listing.price_per_unit|inr }} <span>per unit</span></p>
+        <dl class="detail-facts">
+            <div><dt>Minimum order</dt><dd>{{ listing.minimum_quantity }} units</dd></div>
+            <div><dt>Lead time</dt><dd>{{ listing.production_days }} days</dd></div>
+            {% if listing.batch_price %}<div><dt>Batch price</dt><dd>{{ listing.batch_price|inr }}</dd></div>{% endif %}
+            {% if listing.available_capacity %}<div><dt>Available capacity</dt><dd>{{ listing.available_capacity }} units {% if listing.capacity_period %}{{ listing.capacity_period }}{% endif %}</dd></div>{% endif %}
+        </dl>
+
+        <div class="detail-actions">
+            {% if user.is_authenticated and user.role == "BUYER" %}
+                {% if is_saved %}
+                    <p class="message compact-message">Saved to your list. <a href="{% url 'saved_listings' %}">View saved listings</a></p>
+                {% else %}
+                    <form method="post" action="{% url 'save_listing' listing.pk %}" data-analytics-event="saved_listing">
+                        {% csrf_token %}
+                        <button class="button button-secondary button-favorite full-width" type="submit" title="Save listing for later comparison" aria-label="Save {{ listing.title }} for later comparison">
+                            <span class="favorite-icon" aria-hidden="true"></span> Save listing
+                        </button>
+                    </form>
+                {% endif %}
+            {% endif %}
+
+            {% if user.is_authenticated %}
+                {% if user.role == "BUYER" %}
+                    {% if listing.availability_status == "PAUSED" %}
+                        <p class="message">This capacity is temporarily paused and is not accepting new quote requests.</p>
+                    {% else %}
+                        <a class="button button-primary full-width" href="{% url 'request_quote' listing.pk %}">Request a quote</a>
+                        <p class="quote-note">Share requirements with the manufacturer. Sending a request does not place an order.</p>
+                    {% endif %}
+                {% else %}
+                    <p class="quote-note">Quote requests are available to buyer accounts.</p>
+                {% endif %}
+            {% else %}
+                {% if listing.availability_status == "PAUSED" %}
+                    <p class="message">This capacity is temporarily paused and is not accepting new quote requests.</p>
+                {% else %}
+                    <a class="button button-primary full-width" href="{% url 'request_quote' listing.pk %}">Log in to request a quote</a>
+                    <p class="quote-note">New here? <a href="{% url 'register' %}">Create a buyer account</a>.</p>
+                {% endif %}
+            {% endif %}
+        </div>
+    </aside>
+</section>
+
+<div class="listing-detail-content">
+    <article class="detail-flow">
+        <section class="detail-section" aria-labelledby="service-title" data-reveal="up">
+            <p class="eyebrow">Capability overview</p>
+            <h2 id="service-title">What the manufacturer offers</h2>
+            {% if listing.description %}{{ listing.description|linebreaks }}{% else %}<p class="muted">The manufacturer has not added a description yet.</p>{% endif %}
+        </section>
+
+        <section class="detail-section" aria-labelledby="capabilities-title" data-reveal="up">
+            <p class="eyebrow">Production details</p>
+            <h2 id="capabilities-title">Technical fit</h2>
+            <dl class="detail-capability-grid">
+                {% if listing.machine_type %}<div><dt>Machine type</dt><dd>{{ listing.machine_type }}</dd></div>{% endif %}
+                {% if listing.materials %}<div><dt>Materials</dt><dd>{{ listing.materials }}</dd></div>{% endif %}
+                {% if listing.technical_capabilities %}<div class="wide-fact"><dt>Technical capabilities</dt><dd>{{ listing.technical_capabilities|linebreaksbr }}</dd></div>{% endif %}
+                {% if listing.cluster %}<div><dt>Cluster</dt><dd>{{ listing.cluster }}</dd></div>{% endif %}
+            </dl>
+        </section>
+    </article>
+
+    <aside class="manufacturer-trust-panel" aria-labelledby="manufacturer-title" data-reveal="right">
+        <p class="eyebrow">Manufacturer profile</p>
+        <h2 id="manufacturer-title"><a href="{% url 'manufacturer_profile' listing.manufacturer.pk %}">{{ listing.manufacturer.business_name }}</a></h2>
+        <p class="record-meta">{{ listing.manufacturer.city }}, {{ listing.manufacturer.state }}</p>
+        <div class="action-links">
+            {% for badge in listing.manufacturer.earned_badges %}
+                <span class="trust-badge">{{ badge }}</span>
+            {% empty %}
+                <span class="status-pill">Profile available</span>
+            {% endfor %}
+        </div>
+        {% if listing.manufacturer.review_count %}
+            <p class="record-meta">Average rating: {{ listing.manufacturer.average_rating|floatformat:1 }}/5 from {{ listing.manufacturer.review_count }} review{{ listing.manufacturer.review_count|pluralize }}</p>
+        {% endif %}
+        {% if listing.manufacturer.description %}{{ listing.manufacturer.description|linebreaks }}{% endif %}
+    </aside>
+</div>

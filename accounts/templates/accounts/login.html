@@ -4,26 +4,23 @@
 {% block title %}Log in | Ubhaar-Vyapaar{% endblock %}
 
 {% block content %}
-<section class="auth-card" aria-labelledby="login-title">
-    <div class="auth-brand-lockup">
-        <img
-            src="{% static 'marketplace/images/brand/logo.svg' %}"
-            alt="Ubhaar-Vyapaar"
-            width="340"
-            height="72"
-        >
-        <p>Verified capacity, quote workflows, and order visibility for practical manufacturing teams.</p>
+<section class="auth-split" aria-labelledby="login-title">
+    <div class="auth-story-panel" data-reveal="left">
+        <img src="{% static 'marketplace/images/brand/logo.svg' %}" alt="Ubhaar-Vyapaar" width="340" height="72">
+        <p class="eyebrow">Manufacturing marketplace access</p>
+        <h1 id="login-title">Return to capacity, quotes, orders, and production work.</h1>
+        <p>Use your buyer or manufacturer account to continue sourcing, listing, quotation, and milestone workflows.</p>
+        <div class="auth-industrial-visual" aria-hidden="true"><span></span><span></span><span></span></div>
     </div>
 
+    <div class="auth-form-panel" data-reveal="right">
     <a class="back-link" href="{% url 'home' %}">
-        &larr; Browse listings
+        ← Browse listings
     </a>
 
-    <h1 id="login-title">Welcome back</h1>
+    <h2>Log in</h2>
 
-    <p class="auth-intro">
-        Log in to manage your listings or quote requests.
-    </p>
+    <p class="auth-intro">Manage your listings or quote requests.</p>
 
     <form method="post" class="styled-form" novalidate>
         {% csrf_token %}
@@ -36,7 +33,7 @@
         >
 
         <button
-            class="button form-submit"
+            class="button button-primary form-submit"
             type="submit"
         >
             Log in
@@ -67,5 +64,6 @@
 
     </div>
 
+    </div>
 </section>
 {% endblock %}

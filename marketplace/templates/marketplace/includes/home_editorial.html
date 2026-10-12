@@ -1,0 +1,260 @@
+{% load currency %}
+
+<section class="editorial-hero hero-marketplace" aria-labelledby="hero-title">
+    <div class="hero-kicker" data-reveal="left">
+        <p class="eyebrow">B2B manufacturing capacity marketplace</p>
+        <span>Verified discovery, quotation, and production workflow</span>
+    </div>
+
+    <div class="hero-statement" data-reveal="up">
+        <h1 id="hero-title">Find manufacturing capacity without the usual sourcing friction.</h1>
+    </div>
+
+    <div class="hero-market-strip" data-reveal="right">
+        <p>
+            Compare manufacturers, request quotations, and track production from
+            one practical marketplace built for buyer and supplier teams.
+        </p>
+        <div class="hero-actions" aria-label="Primary marketplace actions">
+            <a class="button button-primary" href="#marketplace-listings">Explore capacity</a>
+            <a class="text-action" href="{% url 'register_manufacturer' %}">
+                List manufacturing capacity <span aria-hidden="true">→</span>
+            </a>
+        </div>
+    </div>
+
+    <form method="get" action="{% url 'home' %}" class="capacity-search" data-reveal="scale" data-analytics-event="marketplace_search">
+        <div class="search-panel-heading">
+            <div>
+                <p class="eyebrow">Search capacity</p>
+                <h2>What do you need made?</h2>
+            </div>
+            {% if query or selected_category or location or moq or max_price or lead_time or verification or sort != "newest" %}
+                <a class="clear-link" href="{% url 'home' %}">Clear filters</a>
+            {% endif %}
+        </div>
+
+        <div class="search-primary-grid">
+            <div class="search-field search-field-wide">
+                <label for="search">Capability, material, process, or city</label>
+                <input id="search" type="search" name="q" value="{{ query }}" placeholder="Packaging, CNC, textiles, Pune">
+            </div>
+            <div class="search-field">
+                <label for="category">Category</label>
+                <select id="category" name="category">
+                    <option value="">All categories</option>
+                    {% for value, label in categories %}
+                        <option value="{{ value }}" {% if selected_category == value %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="search-field">
+                <label for="location">Location</label>
+                <input id="location" type="search" name="location" value="{{ location }}" placeholder="City or state">
+            </div>
+            <div class="search-actions">
+                <button class="button button-primary" type="submit">Search suppliers</button>
+            </div>
+        </div>
+
+        <details class="advanced-search" {% if moq or max_price or lead_time or verification or sort != "newest" %}open{% endif %}>
+            <summary><span>Advanced filters</span><span aria-hidden="true">+</span></summary>
+            <div class="advanced-search-grid">
+                <div class="compact-field">
+                    <label for="moq">Max MOQ</label>
+                    <input id="moq" type="number" min="1" name="moq" value="{{ moq }}" placeholder="1000">
+                </div>
+                <div class="compact-field">
+                    <label for="max_price">Max price</label>
+                    <input id="max_price" type="number" min="1" step="0.01" name="max_price" value="{{ max_price }}" placeholder="50">
+                </div>
+                <div class="compact-field">
+                    <label for="lead_time">Lead time</label>
+                    <input id="lead_time" type="number" min="1" name="lead_time" value="{{ lead_time }}" placeholder="14">
+                </div>
+                <div class="category-field">
+                    <label for="verification">Verification</label>
+                    <select id="verification" name="verification">
+                        <option value="">All manufacturers</option>
+                        <option value="verified" {% if verification == "verified" %}selected{% endif %}>Verified only</option>
+                    </select>
+                </div>
+                <div class="category-field">
+                    <label for="sort">Sort by</label>
+                    <select id="sort" name="sort">
+                        <option value="newest" {% if sort == "newest" %}selected{% endif %}>Newest</option>
+                        <option value="price" {% if sort == "price" %}selected{% endif %}>Lowest price</option>
+                        <option value="lead_time" {% if sort == "lead_time" %}selected{% endif %}>Shortest lead time</option>
+                    </select>
+                </div>
+            </div>
+        </details>
+
+        {% if query or selected_category or location or moq or max_price or lead_time or verification or sort != "newest" %}
+            <div class="active-filters" aria-label="Active filters">
+                {% if query %}<span>Search: {{ query }}</span>{% endif %}
+                {% if selected_category %}<span>Category selected</span>{% endif %}
+                {% if location %}<span>Location: {{ location }}</span>{% endif %}
+                {% if moq %}<span>MOQ up to {{ moq }}</span>{% endif %}
+                {% if max_price %}<span>Price up to {{ max_price|inr }}</span>{% endif %}
+                {% if lead_time %}<span>Lead time up to {{ lead_time }} days</span>{% endif %}
+                {% if verification == "verified" %}<span>Verified only</span>{% endif %}
+                {% if sort != "newest" %}<span>Sorted by {{ sort }}</span>{% endif %}
+            </div>
+        {% endif %}
+    </form>
+
+    <div class="hero-proof-line" aria-label="Marketplace workflow proof" data-reveal="up">
+        <span>Find manufacturing capacity</span>
+        <span>Compare manufacturers</span>
+        <span>Request quotations</span>
+        <span>Track production</span>
+    </div>
+</section>
+
+<section class="category-discovery" aria-labelledby="categories-title">
+    <div class="section-heading section-heading-editorial" data-reveal="left">
+        <p class="eyebrow">Manufacturing categories</p>
+        <h2 id="categories-title">Start with the capability lane.</h2>
+        <p>Use existing marketplace categories, then narrow by location and commercial fit.</p>
+    </div>
+
+    <div class="category-rows">
+        {% for category in category_summaries %}
+            <a class="category-row category-{{ category.value|lower }}{% if selected_category == category.value %} category-row-active{% endif %}" href="?category={{ category.value|urlencode }}" data-reveal="up">
+                <span class="category-index">{{ forloop.counter|stringformat:"02d" }}</span>
+                <span class="category-name">{{ category.label }}</span>
+                {% if category.count %}
+                    <span class="category-count">{{ category.count }} listing{{ category.count|pluralize }}</span>
+                {% else %}
+                    <span class="category-count">No public listings yet</span>
+                {% endif %}
+                <span class="category-arrow" aria-hidden="true">→</span>
+            </a>
+        {% endfor %}
+    </div>
+</section>
+
+<section class="sourcing-story" aria-labelledby="process-title">
+    <div class="story-sticky" data-reveal="left">
+        <p class="eyebrow">How sourcing works</p>
+        <h2 id="process-title">A quieter way to move from search to production.</h2>
+        <p>
+            Ubhaar-Vyapaar keeps commercial signals, quote requests, order
+            checkpoints, and reviews tied to the same manufacturing record.
+        </p>
+    </div>
+
+    <ol class="story-steps">
+        <li data-story-step data-reveal="right"><span>01</span><strong>Find capacity</strong><p>Search by process, category, location, supplier, material, or cluster.</p></li>
+        <li data-story-step data-reveal="right"><span>02</span><strong>Send requirements</strong><p>Share quantities, delivery needs, and production context through a quote request.</p></li>
+        <li data-story-step data-reveal="right"><span>03</span><strong>Compare quotations</strong><p>Review offered unit price, production days, and manufacturer terms.</p></li>
+        <li data-story-step data-reveal="right"><span>04</span><strong>Track production</strong><p>Accepted quotations create order milestones and simulated funding checkpoints.</p></li>
+        <li data-story-step data-reveal="right"><span>05</span><strong>Complete and review</strong><p>Close the order workflow and leave feedback after production is complete.</p></li>
+    </ol>
+</section>
+
+<section id="marketplace-listings" class="marketplace-results" aria-labelledby="listings-title">
+    <div class="section-heading results-heading" data-reveal="up">
+        <div>
+            <p class="eyebrow">Available capacity</p>
+            <h2 id="listings-title">{% if query or selected_category or location or moq or max_price or lead_time %}Matching suppliers{% else %}Marketplace listings{% endif %}</h2>
+            <p>{% if query %}Showing matches for "{{ query }}"{% elif selected_category %}Showing services in your selected category.{% else %}Evaluate manufacturers by capability, commercial fit, and delivery speed.{% endif %}</p>
+        </div>
+        <div class="results-tools">
+            <span>{{ page_obj.paginator.count }} results</span>
+            {% if query or selected_category or location or moq or max_price or lead_time or verification or sort != "newest" %}
+                <a class="button button-secondary button-compact" href="{% url 'home' %}">Clear filters</a>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="listings">
+        {% for listing in listings %}
+            <article class="listing-card listing-category-{{ listing.category|lower }}" data-reveal="up">
+                <div class="listing-media">
+                    {% if listing.image %}
+                        <img class="listing-image" src="{{ listing.image.url }}" alt="Image for {{ listing.title }} by {{ listing.manufacturer.business_name }}" loading="lazy" width="800" height="600">
+                    {% else %}
+                        <div class="listing-image-placeholder" aria-hidden="true">
+                            <span class="placeholder-category">{{ listing.get_category_display }}</span>
+                            <strong>{{ listing.title|truncatewords:5 }}</strong>
+                            <span class="placeholder-capability">{% if listing.machine_type %}{{ listing.machine_type }}{% elif listing.materials %}{{ listing.materials }}{% else %}Manufacturing capacity{% endif %}</span>
+                        </div>
+                    {% endif %}
+                </div>
+
+                <div class="listing-card-body">
+                    <div class="listing-main">
+                        <div class="listing-badges">
+                            <span class="listing-category">{{ listing.get_category_display }}</span>
+                            {% if listing.manufacturer.is_verified %}<span class="trust-badge">Verified</span><span class="visually-hidden">Verified business</span>{% endif %}
+                            <span class="status-pill status-{{ listing.availability_status|lower }}">{{ listing.get_availability_status_display }}</span>
+                        </div>
+                        <h3><a href="{% url 'listing_detail' listing.pk %}">{{ listing.title }}</a></h3>
+                        <p class="company"><a href="{% url 'manufacturer_profile' listing.manufacturer.pk %}">{{ listing.manufacturer.business_name }}</a><span>{{ listing.manufacturer.city }}, {{ listing.manufacturer.state }}</span></p>
+                        {% if listing.machine_type or listing.materials %}
+                            <p class="record-meta">{% if listing.machine_type %}{{ listing.machine_type }}{% endif %}{% if listing.machine_type and listing.materials %} · {% endif %}{% if listing.materials %}{{ listing.materials }}{% endif %}</p>
+                        {% endif %}
+                        <p class="description">{{ listing.description|truncatewords:26 }}</p>
+                    </div>
+
+                    <div class="listing-commercial">
+                        <dl class="listing-meta">
+                            <div class="listing-price-fact"><dt>Price</dt><dd>{{ listing.price_per_unit|inr }} <span>per unit</span></dd></div>
+                            <div><dt>Lead time</dt><dd>{{ listing.production_days }} days</dd></div>
+                            <div><dt>MOQ</dt><dd>{{ listing.minimum_quantity }} units</dd></div>
+                            {% if listing.available_capacity %}<div><dt>Capacity</dt><dd>{{ listing.available_capacity }} units {% if listing.capacity_period %}{{ listing.capacity_period }}{% endif %}</dd></div>{% endif %}
+                        </dl>
+                        <div class="listing-actions">
+                            <a class="button button-secondary" href="{% url 'listing_detail' listing.pk %}">View details</a>
+                            {% if listing.availability_status == "PAUSED" %}
+                                <span class="button button-disabled" aria-disabled="true">Requests paused</span>
+                            {% elif user.is_authenticated and user.role == "MANUFACTURER" %}
+                                <span class="button button-disabled" aria-disabled="true">Buyer quote action</span>
+                            {% else %}
+                                <a class="button button-primary" href="{% url 'request_quote' listing.pk %}">Request quote</a>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </article>
+        {% empty %}
+            <div class="empty-state" data-reveal="up">
+                {% if query or selected_category %}
+                    <h3>No matching listings</h3>
+                    <p>Try a broader category, location, MOQ, price, or lead-time filter.</p>
+                    <a class="button" href="{% url 'home' %}">Clear all filters</a>
+                {% else %}
+                    <h3>New manufacturing services are on the way</h3>
+                    <p>No public listings are available yet.</p>
+                {% endif %}
+            </div>
+        {% endfor %}
+    </div>
+
+    {% if page_obj.paginator.count %}
+        <div class="pagination-summary">Showing {{ page_obj.start_index }}-{{ page_obj.end_index }} of {{ page_obj.paginator.count }} listings</div>
+    {% endif %}
+
+    {% if page_obj.has_other_pages %}
+        <nav class="pagination" aria-label="Listing pages">
+            {% if page_obj.has_previous %}<a class="button button-secondary" href="?q={{ query|urlencode }}&amp;category={{ selected_category|urlencode }}&amp;location={{ location|urlencode }}&amp;moq={{ moq|urlencode }}&amp;max_price={{ max_price|urlencode }}&amp;lead_time={{ lead_time|urlencode }}&amp;verification={{ verification|urlencode }}&amp;sort={{ sort|urlencode }}&amp;page={{ page_obj.previous_page_number }}">← Previous</a>{% endif %}
+            <span aria-current="page">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+            {% if page_obj.has_next %}<a class="button button-secondary" href="?q={{ query|urlencode }}&amp;category={{ selected_category|urlencode }}&amp;location={{ location|urlencode }}&amp;moq={{ moq|urlencode }}&amp;max_price={{ max_price|urlencode }}&amp;lead_time={{ lead_time|urlencode }}&amp;verification={{ verification|urlencode }}&amp;sort={{ sort|urlencode }}&amp;page={{ page_obj.next_page_number }}">Next →</a>{% endif %}
+        </nav>
+    {% endif %}
+</section>
+
+<section class="trust-section" aria-labelledby="trust-title">
+    <div class="trust-title" data-reveal="left">
+        <p class="eyebrow">Trust built into the workflow</p>
+        <h2 id="trust-title">The marketplace record carries more than a price.</h2>
+    </div>
+    <div class="trust-rhythm">
+        <div data-reveal="up"><span>01</span><strong>Verified manufacturers</strong><p>Public marketplace listings are tied to verified manufacturer profiles.</p></div>
+        <div data-reveal="up"><span>02</span><strong>Ratings</strong><p>Completed order reviews support manufacturer trust signals.</p></div>
+        <div data-reveal="up"><span>03</span><strong>Production transparency</strong><p>Accepted quotations become orders with structured production details.</p></div>
+        <div data-reveal="up"><span>04</span><strong>Tracked milestones</strong><p>Milestone status and simulated funding steps keep order progress visible.</p></div>
+    </div>
+</section>

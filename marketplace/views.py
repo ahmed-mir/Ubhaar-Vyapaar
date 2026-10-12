@@ -33,7 +33,7 @@ from .models import (
     Review,
     SavedListing,
 )
-from django.db.models import Q
+from django.db.models import Count, Q
 from django.views.decorators.http import require_POST
 
 
@@ -610,10 +610,26 @@ def home(request):
     if sort not in valid_sorts:
         sort = "newest"
 
-    listings = CapacityListing.objects.filter(
+    public_listings = CapacityListing.objects.filter(
         is_active=True,
         manufacturer__is_verified=True,
-    ).select_related("manufacturer")
+    )
+
+    category_counts = {
+        item["category"]: item["total"]
+        for item in public_listings.values("category").annotate(total=Count("pk"))
+    }
+
+    category_summaries = [
+        {
+            "value": value,
+            "label": label,
+            "count": category_counts.get(value, 0),
+        }
+        for value, label in CapacityListing.Category.choices
+    ]
+
+    listings = public_listings.select_related("manufacturer")
 
     if query:
         listings = listings.filter(
@@ -673,6 +689,7 @@ def home(request):
             "page_obj": page_obj,
             "query": query,
             "categories": CapacityListing.Category.choices,
+            "category_summaries": category_summaries,
             "selected_category": selected_category,
             "location": location,
             "moq": moq,

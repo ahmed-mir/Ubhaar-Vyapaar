@@ -1,6 +1,16 @@
 {% extends "marketplace/base.html" %}
 {% load currency %}
 
+{% block title %}Find manufacturing capacity | Ubhaar-Vyapaar{% endblock %}
+{% block meta_description %}Search verified manufacturing capacity by category, location, MOQ, price, and lead time on Ubhaar-Vyapaar.{% endblock %}
+
+{% block content %}
+    {% include "marketplace/includes/home_editorial.html" %}
+{% endblock %}
+
+{% comment %}
+{% load currency %}
+
 {% block title %}Find manufacturing partners | Ubhaar-Vyapaar{% endblock %}
 {% block meta_description %}Search verified manufacturing capacity by category, location, MOQ, price, and lead time on Ubhaar-Vyapaar.{% endblock %}
 
@@ -548,3 +558,4 @@
         </div>
     </section>
 {% endblock %}
+{% endcomment %}

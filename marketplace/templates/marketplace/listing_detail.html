@@ -6,6 +6,17 @@
 {% block body_attributes %}data-analytics-page-event="listing_view"{% endblock %}
 
 {% block content %}
+    {% include "marketplace/includes/listing_detail_editorial.html" %}
+{% endblock %}
+
+{% comment %}
+{% load currency %}
+
+{% block title %}{{ listing.title }} | Ubhaar-Vyapaar{% endblock %}
+{% block meta_description %}{{ listing.title }} by {{ listing.manufacturer.business_name }} in {{ listing.manufacturer.city }}, {{ listing.manufacturer.state }}. Review MOQ, lead time, price, capacity, and manufacturer details.{% endblock %}
+{% block body_attributes %}data-analytics-page-event="listing_view"{% endblock %}
+
+{% block content %}
     <a class="back-link" href="{% url 'home' %}">
         &larr; Browse all listings
     </a>
@@ -242,3 +253,4 @@
         </aside>
     </div>
 {% endblock %}
+{% endcomment %}

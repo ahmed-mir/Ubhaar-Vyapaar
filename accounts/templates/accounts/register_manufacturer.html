@@ -4,27 +4,21 @@
 {% block title %}Register your business | Ubhaar-Vyapaar{% endblock %}
 
 {% block content %}
-    <section class="auth-card" aria-labelledby="business-title">
-        <div class="auth-brand-lockup">
-            <img
-                src="{% static 'marketplace/images/brand/logo.svg' %}"
-                alt="Ubhaar-Vyapaar"
-                width="340"
-                height="72"
-            >
-            <p>Present available capacity, respond to buyers, and build trust through structured workflows.</p>
+    <section class="auth-split" aria-labelledby="business-title">
+        <div class="auth-story-panel" data-reveal="left">
+            <img src="{% static 'marketplace/images/brand/logo.svg' %}" alt="Ubhaar-Vyapaar" width="340" height="72">
+            <p class="eyebrow">Manufacturer access</p>
+            <h1 id="business-title">Present capacity where buyers already compare production fit.</h1>
+            <p>Create listings, receive quote requests, and build trust through structured workflows.</p>
+            <div class="auth-industrial-visual" aria-hidden="true"><span></span><span></span><span></span></div>
         </div>
 
+        <div class="auth-form-panel" data-reveal="right">
         <a class="back-link" href="{% url 'home' %}">
-            &larr; Browse listings
+            ← Browse listings
         </a>
 
-        <h1 id="business-title">Bring your business to Ubhaar-Vyapaar</h1>
-
-        <p class="auth-intro">
-            Create listings, receive quote requests, and connect
-            with buyers looking for manufacturing services.
-        </p>
+        <h2>Create manufacturer account</h2>
 
         <p class="message">
             You can create listings after registration.
@@ -47,7 +41,7 @@
                 before creating an account.
             </p>
 
-            <button class="button form-submit" type="submit">
+            <button class="button button-primary form-submit" type="submit">
                 Create manufacturer account
             </button>
         </form>
@@ -64,6 +58,7 @@
                     Create a buyer account
                 </a>
             </p>
+        </div>
         </div>
     </section>
 {% endblock %}

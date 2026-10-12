@@ -249,8 +249,9 @@
                 </a>
 
                 <p>
-                    Connecting small manufacturers with growing businesses through
-                    structured discovery, quotations, and order workflows.
+                    Ubhaar-Vyapaar connects manufacturing capacity with buyer
+                    demand through verified discovery, quotations, orders, and
+                    production milestones.
                 </p>
             </div>
 
@@ -309,9 +310,10 @@
                 </div>
             </nav>
 
-            <p class="footer-bottom">
-                &copy; {% now "Y" %} Ubhaar-Vyapaar. Built for practical B2B manufacturing workflows.
-            </p>
+            <div class="footer-bottom">
+                <p>&copy; {% now "Y" %} Ubhaar-Vyapaar. Built for practical B2B manufacturing workflows.</p>
+                <a href="#main-content">Back to top</a>
+            </div>
 
         </div>
 
@@ -677,6 +679,31 @@
                 revealItems.forEach(function (item) {
                     observer.observe(item);
                 });
+            }
+
+            const storySteps = document.querySelectorAll("[data-story-step]");
+
+            if (storySteps.length) {
+                if (reducedMotion || !("IntersectionObserver" in window)) {
+                    storySteps.forEach(function (item) {
+                        item.classList.add("is-emphasized");
+                    });
+                } else {
+                    const storyObserver = new IntersectionObserver(function (entries) {
+                        entries.forEach(function (entry) {
+                            if (entry.isIntersecting) {
+                                storySteps.forEach(function (item) {
+                                    item.classList.remove("is-emphasized");
+                                });
+                                entry.target.classList.add("is-emphasized");
+                            }
+                        });
+                    }, { threshold: 0.58, rootMargin: "-18% 0px -24% 0px" });
+
+                    storySteps.forEach(function (item) {
+                        storyObserver.observe(item);
+                    });
+                }
             }
 
             document.querySelectorAll("form").forEach(function (form) {
