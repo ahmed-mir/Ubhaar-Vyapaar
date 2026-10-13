@@ -9683,8 +9683,9 @@ body {
 }
 
 .manufacturer-service-grid {
-    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(240px, 360px));
     align-items: start;
+    justify-content: start;
 }
 
 .manufacturer-service-card {
@@ -9696,7 +9697,19 @@ body {
 .manufacturer-service-card .listing-media-frame,
 .manufacturer-service-card .listing-image,
 .manufacturer-service-card .listing-image-placeholder {
-    min-height: 150px;
+    min-height: 0;
+    aspect-ratio: 4 / 3;
+}
+
+.manufacturer-service-card .listing-media-frame {
+    height: auto;
+    overflow: hidden;
+}
+
+.manufacturer-service-card .listing-image,
+.manufacturer-service-card .listing-image-placeholder {
+    height: auto;
+    align-self: start;
 }
 
 .manufacturer-service-card h2 {
@@ -9724,6 +9737,14 @@ body {
 
 .business-review-card .record-facts {
     margin: 0;
+}
+
+.manufacturer-services-heading {
+    margin-bottom: 18px;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    box-shadow: none;
 }
 
 @media (max-width: 1080px) {
