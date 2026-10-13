@@ -8,3 +8,4 @@ python manage.py collectstatic --noinput
 
 python manage.py migrate
 
+python manage.py cleanup_e2e_data --dry-run
