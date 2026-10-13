@@ -907,7 +907,7 @@ class DemoSeedCommandTests(TestCase):
             CapacityListing.objects.filter(
                 title="Custom Corrugated Packaging for D2C Shipments",
                 image__startswith="demo/listings/",
-                manufacturer__business_name__startswith="Demo ",
+                manufacturer__business_name="Nila Packworks",
                 manufacturer__user__email__endswith="@example.com",
             ).exists()
         )

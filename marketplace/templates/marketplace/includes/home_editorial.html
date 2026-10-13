@@ -19,7 +19,7 @@
         <div class="hero-actions" aria-label="Primary marketplace actions">
             <a class="button button-primary" href="#marketplace-listings">Explore capacity</a>
             <a class="text-action" href="{% url 'register_manufacturer' %}">
-                List manufacturing capacity <span aria-hidden="true">→</span>
+                List manufacturing capacity <span aria-hidden="true">&rarr;</span>
             </a>
         </div>
     </div>
@@ -126,7 +126,7 @@
                 {% else %}
                     <span class="category-count">Coming soon</span>
                 {% endif %}
-                <span class="category-arrow" aria-hidden="true">→</span>
+                <span class="category-arrow" aria-hidden="true">&rarr;</span>
             </a>
         {% endfor %}
     </div>
@@ -164,13 +164,9 @@
                         <div class="listing-badges">
                             <span class="listing-category">{{ listing.get_category_display }}</span>
                             {% if listing.manufacturer.is_verified %}<span class="trust-badge">Verified</span><span class="visually-hidden">Verified business</span>{% endif %}
-                            <span class="status-pill status-{{ listing.availability_status|lower }}">{{ listing.get_availability_status_display }}</span>
                         </div>
                         <h3><a href="{% url 'listing_detail' listing.pk %}">{{ listing.title }}</a></h3>
                         <p class="company"><a href="{% url 'manufacturer_profile' listing.manufacturer.pk %}">{{ listing.manufacturer.business_name }}</a><span>{{ listing.manufacturer.city }}, {{ listing.manufacturer.state }}</span></p>
-                        {% if listing.machine_type or listing.materials %}
-                            <p class="record-meta">{% if listing.machine_type %}{{ listing.machine_type }}{% endif %}{% if listing.machine_type and listing.materials %} · {% endif %}{% if listing.materials %}{{ listing.materials }}{% endif %}</p>
-                        {% endif %}
                     </div>
 
                     <div class="listing-commercial">
@@ -212,9 +208,9 @@
 
     {% if page_obj.has_other_pages %}
         <nav class="pagination" aria-label="Listing pages">
-            {% if page_obj.has_previous %}<a class="button button-secondary" href="?q={{ query|urlencode }}&amp;category={{ selected_category|urlencode }}&amp;location={{ location|urlencode }}&amp;moq={{ moq|urlencode }}&amp;max_price={{ max_price|urlencode }}&amp;lead_time={{ lead_time|urlencode }}&amp;verification={{ verification|urlencode }}&amp;sort={{ sort|urlencode }}&amp;page={{ page_obj.previous_page_number }}">← Previous</a>{% endif %}
+            {% if page_obj.has_previous %}<a class="button button-secondary" href="?q={{ query|urlencode }}&amp;category={{ selected_category|urlencode }}&amp;location={{ location|urlencode }}&amp;moq={{ moq|urlencode }}&amp;max_price={{ max_price|urlencode }}&amp;lead_time={{ lead_time|urlencode }}&amp;verification={{ verification|urlencode }}&amp;sort={{ sort|urlencode }}&amp;page={{ page_obj.previous_page_number }}">&larr; Previous</a>{% endif %}
             <span aria-current="page">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
-            {% if page_obj.has_next %}<a class="button button-secondary" href="?q={{ query|urlencode }}&amp;category={{ selected_category|urlencode }}&amp;location={{ location|urlencode }}&amp;moq={{ moq|urlencode }}&amp;max_price={{ max_price|urlencode }}&amp;lead_time={{ lead_time|urlencode }}&amp;verification={{ verification|urlencode }}&amp;sort={{ sort|urlencode }}&amp;page={{ page_obj.next_page_number }}">Next →</a>{% endif %}
+            {% if page_obj.has_next %}<a class="button button-secondary" href="?q={{ query|urlencode }}&amp;category={{ selected_category|urlencode }}&amp;location={{ location|urlencode }}&amp;moq={{ moq|urlencode }}&amp;max_price={{ max_price|urlencode }}&amp;lead_time={{ lead_time|urlencode }}&amp;verification={{ verification|urlencode }}&amp;sort={{ sort|urlencode }}&amp;page={{ page_obj.next_page_number }}">Next &rarr;</a>{% endif %}
         </nav>
     {% endif %}
 </section>

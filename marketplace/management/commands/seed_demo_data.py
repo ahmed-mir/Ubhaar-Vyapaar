@@ -35,11 +35,10 @@ MANUFACTURERS = [
     {
         "username": "demo_mfr_aarav_forge",
         "email": "manufacturer1@example.com",
-        "business_name": "Demo Aarav Forge & Fabrication",
+        "business_name": "Aarav Forge & Fabrication",
         "description": (
-            "Demo/test manufacturer profile. Fictional supplier for "
-            "metal fabrication, machined components, and short-run "
-            "industrial assemblies."
+            "Fictional supplier profile for metal fabrication, machined "
+            "components, and short-run industrial assemblies."
         ),
         "city": "Pune",
         "state": "Maharashtra",
@@ -48,10 +47,10 @@ MANUFACTURERS = [
     {
         "username": "demo_mfr_nila_pack",
         "email": "manufacturer2@example.com",
-        "business_name": "Demo Nila Packworks",
+        "business_name": "Nila Packworks",
         "description": (
-            "Demo/test manufacturer profile. Fictional converter for "
-            "corrugated cartons, mailers, inserts, and printed labels."
+            "Fictional converter profile for corrugated cartons, mailers, "
+            "inserts, and printed labels."
         ),
         "city": "Ahmedabad",
         "state": "Gujarat",
@@ -60,11 +59,10 @@ MANUFACTURERS = [
     {
         "username": "demo_mfr_kaveri_textiles",
         "email": "manufacturer3@example.com",
-        "business_name": "Demo Kaveri Textile Unit",
+        "business_name": "Kaveri Textile Unit",
         "description": (
-            "Demo/test manufacturer profile. Fictional apparel and textile "
-            "production unit with cutting, stitching, finishing, and dyeing "
-            "coordination."
+            "Fictional apparel and textile production unit with cutting, "
+            "stitching, finishing, and dyeing coordination."
         ),
         "city": "Tiruppur",
         "state": "Tamil Nadu",
@@ -73,10 +71,10 @@ MANUFACTURERS = [
     {
         "username": "demo_mfr_circuit_leaf",
         "email": "manufacturer4@example.com",
-        "business_name": "Demo CircuitLeaf Assemblies",
+        "business_name": "CircuitLeaf Assemblies",
         "description": (
-            "Demo/test manufacturer profile. Fictional electronics assembly "
-            "team for prototype and small-batch PCB work."
+            "Fictional electronics assembly team for prototype and "
+            "small-batch PCB work."
         ),
         "city": "Bengaluru",
         "state": "Karnataka",
@@ -85,10 +83,10 @@ MANUFACTURERS = [
     {
         "username": "demo_mfr_veer_plastics",
         "email": "manufacturer5@example.com",
-        "business_name": "Demo Veer Plastics Studio",
+        "business_name": "Veer Plastics Studio",
         "description": (
-            "Demo/test manufacturer profile. Fictional plastics unit for "
-            "injection moulding, tool trials, and polymer component runs."
+            "Fictional plastics unit profile for injection moulding, tool "
+            "trials, and polymer component runs."
         ),
         "city": "Noida",
         "state": "Uttar Pradesh",
@@ -103,8 +101,8 @@ LISTINGS = [
         "title": "CNC Machining Capacity for Aluminium Components",
         "category": CapacityListing.Category.METAL,
         "description": (
-            "Demo/test listing for precision CNC milling and turning of "
-            "small industrial parts, brackets, and housings. Suitable for "
+            "Precision CNC milling and turning capacity for small industrial "
+            "parts, brackets, and housings. Suitable for "
             "pilot batches that need inspection reports, deburring, and "
             "repeatable tolerances before larger production runs."
         ),
@@ -130,8 +128,8 @@ LISTINGS = [
         "title": "Custom Corrugated Packaging for D2C Shipments",
         "category": CapacityListing.Category.PACKAGING,
         "description": (
-            "Demo/test listing for shipper cartons, mailer boxes, and "
-            "protective inserts used by growing consumer brands. The unit can "
+            "Shipper cartons, mailer boxes, and protective inserts for "
+            "growing consumer brands. The unit can "
             "support sample approval, kraft or white board options, and "
             "single-colour print runs."
         ),
@@ -156,8 +154,8 @@ LISTINGS = [
         "title": "Cotton Garment Production and Finishing",
         "category": CapacityListing.Category.TEXTILES,
         "description": (
-            "Demo/test listing for cotton tees, loungewear, and simple woven "
-            "garments. Best suited for brands that need fabric sourcing, "
+            "Cotton tees, loungewear, and simple woven garments. Best suited "
+            "for brands that need fabric sourcing, "
             "cutting, stitching, finishing, packing, and steady repeat lots."
         ),
         "machine_type": "Cutting table, overlock, flatlock, finishing line",
@@ -182,8 +180,8 @@ LISTINGS = [
         "title": "Sheet Metal Fabrication for Enclosures and Brackets",
         "category": CapacityListing.Category.METAL,
         "description": (
-            "Demo/test listing for laser-cut, bent, and welded sheet metal "
-            "parts. Useful for equipment panels, electrical enclosures, "
+            "Laser-cut, bent, and welded sheet metal parts for equipment "
+            "panels, electrical enclosures, "
             "mounting brackets, and low-volume industrial assemblies."
         ),
         "machine_type": "Laser cutting, press brake, MIG welding",
@@ -207,10 +205,8 @@ LISTINGS = [
         "title": "Injection Moulding Trial Slots for Polymer Parts",
         "category": CapacityListing.Category.PLASTICS,
         "description": (
-            "Demo/test listing for plastic component trials and short "
-            "production runs. This record intentionally belongs to an "
-            "unverified fictional manufacturer so private/dashboard QA can "
-            "exercise non-public states."
+            "Plastic component trials and short production runs for teams "
+            "validating tooling, materials, and first-article samples."
         ),
         "machine_type": "120T and 180T injection moulding machines",
         "materials": "PP, ABS, HDPE, nylon",
@@ -233,8 +229,8 @@ LISTINGS = [
         "title": "Custom Printed Labels and Product Stickers",
         "category": CapacityListing.Category.PACKAGING,
         "description": (
-            "Demo/test listing for roll labels, product stickers, dispatch "
-            "labels, and barcode labels. Suitable for packaging teams that "
+            "Roll labels, product stickers, dispatch labels, and barcode "
+            "labels for packaging teams that "
             "need predictable repeat orders and quick artwork changes."
         ),
         "machine_type": "Digital label press and roll slitting",
@@ -258,8 +254,8 @@ LISTINGS = [
         "title": "PCB Assembly for Prototype Electronics",
         "category": CapacityListing.Category.ELECTRONICS,
         "description": (
-            "Demo/test listing for prototype PCB assembly, small batches, "
-            "and repair-friendly builds. Intended for hardware teams that "
+            "Prototype PCB assembly, small batches, and repair-friendly "
+            "builds for hardware teams that "
             "need board bring-up support before production scale-up."
         ),
         "machine_type": "SMT pick-and-place, reflow, bench assembly",
@@ -283,8 +279,8 @@ LISTINGS = [
         "title": "Stainless Steel Components with Polished Finish",
         "category": CapacityListing.Category.METAL,
         "description": (
-            "Demo/test listing for stainless handles, clamps, spacers, and "
-            "custom fixtures. Includes fabrication and finishing coordination "
+            "Stainless handles, clamps, spacers, and custom fixtures with "
+            "fabrication and finishing coordination "
             "for buyers who need durable parts with presentable surfaces."
         ),
         "machine_type": "CNC turning, TIG welding, polishing station",
@@ -308,8 +304,8 @@ LISTINGS = [
         "title": "Industrial Fasteners Sorting and Small-Batch Supply",
         "category": CapacityListing.Category.METAL,
         "description": (
-            "Demo/test listing for procurement-backed fastener kits, sorted "
-            "by size and finish for equipment assembly lines. Suitable for "
+            "Procurement-backed fastener kits sorted by size and finish for "
+            "equipment assembly lines. Suitable for "
             "maintenance kits and low-volume equipment assembly."
         ),
         "machine_type": "Fastener sourcing, sorting, kit packing",
@@ -333,8 +329,8 @@ LISTINGS = [
         "title": "Textile Dyeing Coordination for Small Fabric Lots",
         "category": CapacityListing.Category.TEXTILES,
         "description": (
-            "Demo/test listing for dyeing coordination, shade matching, and "
-            "finish planning for cotton fabric lots. Useful when buyers need "
+            "Dyeing coordination, shade matching, and finish planning for "
+            "cotton fabric lots. Useful when buyers need "
             "a controlled test run before committing to larger fabric orders."
         ),
         "machine_type": "Dyeing partner network and finishing checks",
@@ -363,8 +359,8 @@ REVIEWS = [
         "email": "buyer1@example.com",
         "quantity": 800,
         "comment": (
-            "Demo review: cartons matched the approved sample and delivery "
-            "updates were clear."
+            "Cartons matched the approved sample and delivery updates were "
+            "clear."
         ),
     },
     {
@@ -373,8 +369,8 @@ REVIEWS = [
         "email": "buyer2@example.com",
         "quantity": 40,
         "comment": (
-            "Demo review: prototype assembly was neatly packed and the team "
-            "flagged component substitutions early."
+            "Prototype assembly was neatly packed and the team flagged "
+            "component substitutions early."
         ),
     },
 ]

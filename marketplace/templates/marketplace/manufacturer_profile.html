@@ -8,7 +8,7 @@
         &larr; Browse all listings
     </a>
 
-    <section class="record-card business-profile">
+    <section class="record-card business-profile manufacturer-profile-header">
         <div class="action-links">
             {% for badge in manufacturer.earned_badges %}
                 <span class="trust-badge">{{ badge }}</span>
@@ -47,47 +47,7 @@
         </div>
     </section>
 
-    {% if manufacturer.review_count %}
-        <section class="dashboard-band" aria-labelledby="reviews-title">
-            <div class="section-heading">
-                <div>
-                    <h2 id="reviews-title">Buyer reviews</h2>
-                    <p>Feedback from completed orders only.</p>
-                </div>
-            </div>
-
-            <div class="record-grid">
-                {% for review in manufacturer.reviews.all|slice:":3" %}
-                    <article class="record-card">
-                        <span class="trust-badge">
-                            Overall {{ review.overall_rating }}/5
-                        </span>
-
-                        <dl class="record-facts">
-                            <dt>Quality</dt>
-                            <dd>{{ review.quality_rating }}/5</dd>
-
-                            <dt>Timeliness</dt>
-                            <dd>{{ review.timeliness_rating }}/5</dd>
-
-                            <dt>Communication</dt>
-                            <dd>{{ review.communication_rating }}/5</dd>
-                        </dl>
-
-                        {% if review.comment %}
-                            <p>{{ review.comment|linebreaksbr }}</p>
-                        {% endif %}
-
-                        <p class="record-meta">
-                            {{ review.created_at|date:"d M Y" }}
-                        </p>
-                    </article>
-                {% endfor %}
-            </div>
-        </section>
-    {% endif %}
-
-    <div class="page-heading">
+    <div class="page-heading manufacturer-services-heading">
         <div>
             <h2>Manufacturing services</h2>
             <p>
@@ -97,9 +57,9 @@
         </div>
     </div>
 
-    <div class="record-grid">
+    <div class="record-grid manufacturer-service-grid">
         {% for listing in page_obj %}
-            <article class="record-card">
+            <article class="record-card manufacturer-service-card">
                 <div
                     class="listing-media-frame listing-category-{{ listing.category|lower }}{% if not listing.image %} media-no-image{% endif %}"
                     data-listing-media
@@ -111,13 +71,7 @@
                     {{ listing.get_category_display }}
                 </p>
 
-                <span class="status-pill status-{{ listing.availability_status|lower }}">
-                    {{ listing.get_availability_status_display }}
-                </span>
-
                 <h2>{{ listing.title }}</h2>
-
-                <p>{{ listing.description|truncatewords:24 }}</p>
 
                 <dl class="record-facts">
                     <dt>Price per unit</dt>
@@ -129,15 +83,6 @@
                     <dt>Production time</dt>
                     <dd>{{ listing.production_days }} days</dd>
 
-                    {% if listing.machine_type %}
-                        <dt>Machine type</dt>
-                        <dd>{{ listing.machine_type }}</dd>
-                    {% endif %}
-
-                    {% if listing.materials %}
-                        <dt>Materials</dt>
-                        <dd>{{ listing.materials }}</dd>
-                    {% endif %}
                 </dl>
 
                 <a
@@ -182,5 +127,45 @@
                 </a>
             {% endif %}
         </nav>
+    {% endif %}
+
+    {% if manufacturer.review_count %}
+        <section class="dashboard-band business-reviews" aria-labelledby="reviews-title">
+            <div class="section-heading">
+                <div>
+                    <h2 id="reviews-title">Buyer reviews</h2>
+                    <p>Feedback from completed orders only.</p>
+                </div>
+            </div>
+
+            <div class="record-grid business-review-grid">
+                {% for review in manufacturer.reviews.all|slice:":3" %}
+                    <article class="record-card business-review-card">
+                        <span class="trust-badge">
+                            Overall {{ review.overall_rating }}/5
+                        </span>
+
+                        <dl class="record-facts">
+                            <dt>Quality</dt>
+                            <dd>{{ review.quality_rating }}/5</dd>
+
+                            <dt>Timeliness</dt>
+                            <dd>{{ review.timeliness_rating }}/5</dd>
+
+                            <dt>Communication</dt>
+                            <dd>{{ review.communication_rating }}/5</dd>
+                        </dl>
+
+                        {% if review.comment %}
+                            <p>{{ review.comment|linebreaksbr }}</p>
+                        {% endif %}
+
+                        <p class="record-meta">
+                            {{ review.created_at|date:"d M Y" }}
+                        </p>
+                    </article>
+                {% endfor %}
+            </div>
+        </section>
     {% endif %}
 {% endblock %}
