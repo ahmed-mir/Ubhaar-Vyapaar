@@ -3,12 +3,16 @@ import os
 from unittest import mock
 
 from django.contrib.auth import get_user_model
+from django.contrib.auth.tokens import default_token_generator
 from django.core import mail
 from django.core.exceptions import ImproperlyConfigured
 from django.test import TestCase, override_settings
 from django.urls import reverse
+from django.utils.encoding import force_bytes
+from django.utils.http import urlsafe_base64_encode
 
 import config.settings as project_settings
+from accounts.forms import ReliablePasswordResetForm
 
 
 class EmailSettingsTests(TestCase):
@@ -90,17 +94,44 @@ class EmailSettingsTests(TestCase):
     DEFAULT_FROM_EMAIL="sender@example.test",
 )
 class PasswordResetEmailTests(TestCase):
-    def test_password_reset_view_renders_and_queues_local_email(self):
+    def test_password_reset_post_invokes_custom_sender_for_active_user(self):
         user_model = get_user_model()
         user_model.objects.create_user(
             username="reset-user",
             email="reset-user@example.test",
             password="StrongPass123!",
         )
+        original_send_mail = ReliablePasswordResetForm.send_mail
+
+        def send_mail_spy(form, *args, **kwargs):
+            return original_send_mail(form, *args, **kwargs)
+
+        with mock.patch.object(
+            ReliablePasswordResetForm,
+            "send_mail",
+            autospec=True,
+            side_effect=send_mail_spy,
+        ) as send_mail:
+            response = self.client.post(
+                reverse("password_reset"),
+                {"email": "reset-user@example.test"},
+            )
+
+        self.assertRedirects(response, reverse("password_reset_done"))
+        send_mail.assert_called_once()
+        self.assertEqual(len(mail.outbox), 1)
+
+    def test_password_reset_email_contains_reset_url(self):
+        user_model = get_user_model()
+        user_model.objects.create_user(
+            username="reset-url-user",
+            email="reset-url-user@example.test",
+            password="StrongPass123!",
+        )
 
         response = self.client.post(
             reverse("password_reset"),
-            {"email": "reset-user@example.test"},
+            {"email": "reset-url-user@example.test"},
         )
 
         self.assertRedirects(response, reverse("password_reset_done"))
@@ -111,6 +142,101 @@ class PasswordResetEmailTests(TestCase):
         )
         self.assertIn("/accounts/password/reset/", mail.outbox[0].body)
         self.assertEqual(mail.outbox[0].from_email, "sender@example.test")
+
+    def test_inactive_users_do_not_receive_password_reset_email(self):
+        user_model = get_user_model()
+        user_model.objects.create_user(
+            username="inactive-reset-user",
+            email="inactive-reset-user@example.test",
+            password="StrongPass123!",
+            is_active=False,
+        )
+
+        with mock.patch.object(
+            ReliablePasswordResetForm,
+            "send_mail",
+            autospec=True,
+        ) as send_mail:
+            response = self.client.post(
+                reverse("password_reset"),
+                {"email": "inactive-reset-user@example.test"},
+            )
+
+        self.assertRedirects(response, reverse("password_reset_done"))
+        send_mail.assert_not_called()
+        self.assertEqual(len(mail.outbox), 0)
+
+    def test_unknown_email_redirects_without_revealing_account_existence(self):
+        with mock.patch.object(
+            ReliablePasswordResetForm,
+            "send_mail",
+            autospec=True,
+        ) as send_mail:
+            response = self.client.post(
+                reverse("password_reset"),
+                {"email": "unknown@example.test"},
+            )
+
+        self.assertRedirects(response, reverse("password_reset_done"))
+        send_mail.assert_not_called()
+        self.assertEqual(len(mail.outbox), 0)
+
+    def test_reliable_password_reset_form_does_not_swallow_send_failure(self):
+        form = ReliablePasswordResetForm()
+
+        with mock.patch(
+            "accounts.forms.EmailMultiAlternatives.send",
+            side_effect=RuntimeError("SMTP send failed"),
+        ) as send:
+            with self.assertRaisesMessage(RuntimeError, "SMTP send failed"):
+                form.send_mail(
+                    "accounts/password_reset_subject.txt",
+                    "accounts/password_reset_email.txt",
+                    {
+                        "domain": "example.test",
+                        "protocol": "https",
+                        "uid": "uid",
+                        "token": "token",
+                    },
+                    None,
+                    "reset-user@example.test",
+                )
+
+        send.assert_called_once_with(fail_silently=False)
+
+    def test_password_reset_confirm_and_complete_flow_still_works(self):
+        user_model = get_user_model()
+        user = user_model.objects.create_user(
+            username="confirm-reset-user",
+            email="confirm-reset-user@example.test",
+            password="StrongPass123!",
+        )
+        uid = urlsafe_base64_encode(force_bytes(user.pk))
+        token = default_token_generator.make_token(user)
+
+        response = self.client.get(
+            reverse(
+                "password_reset_confirm",
+                kwargs={"uidb64": uid, "token": token},
+            )
+        )
+        self.assertEqual(response.status_code, 302)
+
+        response = self.client.post(
+            response["Location"],
+            {
+                "new_password1": "NewStrongPass123!",
+                "new_password2": "NewStrongPass123!",
+            },
+        )
+
+        self.assertRedirects(response, reverse("password_reset_complete"))
+        user.refresh_from_db()
+        self.assertTrue(user.check_password("NewStrongPass123!"))
+
+        response = self.client.get(reverse("password_reset_complete"))
+
+        self.assertEqual(response.status_code, 200)
 
 
 class RegistrationConsentTests(TestCase):
