@@ -9523,3 +9523,254 @@ body {
         min-height: 210px;
     }
 }
+
+/* Final launch layout tightening: marketplace, detail, manufacturer, footer flow. */
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+}
+
+body {
+    display: flex;
+    min-height: 100vh;
+    flex-direction: column;
+}
+
+.page-content {
+    flex: 1 0 auto;
+}
+
+.site-footer {
+    position: relative;
+    clear: both;
+    flex-shrink: 0;
+}
+
+.footer-inner {
+    padding: 28px 0 22px;
+}
+
+.footer-links a,
+.footer-cookie-button {
+    margin-top: 6px;
+}
+
+.nav-group-account {
+    gap: 16px;
+}
+
+.site-nav .nav-group-account .nav-link {
+    padding-inline: 8px;
+}
+
+.listing-card {
+    grid-template-columns: minmax(180px, 220px) minmax(0, 1fr);
+}
+
+.listing-card-body {
+    grid-template-columns: minmax(0, 1fr) minmax(164px, 190px);
+    gap: 16px;
+    padding: 16px;
+}
+
+.listing-card h3 {
+    margin: 8px 0 6px;
+    font-size: clamp(20px, 2vw, 25px);
+}
+
+.listing-badges {
+    gap: 6px;
+}
+
+.company {
+    margin-bottom: 0;
+}
+
+.listing-media,
+.listing-media-frame {
+    min-height: 0;
+}
+
+.listing-image,
+.listing-image-placeholder {
+    min-height: 165px;
+}
+
+.listing-image-placeholder {
+    padding: 14px;
+}
+
+.listing-image-placeholder strong {
+    font-size: 20px;
+}
+
+.listing-meta {
+    gap: 8px;
+}
+
+.listing-meta div {
+    padding-bottom: 8px;
+}
+
+.listing-actions {
+    gap: 8px;
+}
+
+.listing-actions .button {
+    min-height: 36px;
+}
+
+.listing-detail-hero {
+    grid-template-columns: minmax(220px, 300px) minmax(0, 1fr) minmax(240px, 300px);
+    align-items: start;
+}
+
+.detail-media-panel {
+    width: min(100%, 420px);
+    min-height: 0;
+    height: auto;
+    aspect-ratio: 4 / 3;
+    align-self: start;
+}
+
+.detail-image,
+.detail-image-placeholder {
+    aspect-ratio: 4 / 3;
+    min-height: 0;
+    max-height: 320px;
+}
+
+.detail-media-panel .detail-image,
+.detail-media-panel .detail-image-placeholder {
+    height: 100%;
+    max-height: none;
+}
+
+.detail-title-panel h1 {
+    font-size: clamp(32px, 4vw, 52px);
+}
+
+.detail-commercial-panel {
+    position: static;
+    top: auto;
+}
+
+.listing-detail-content {
+    grid-template-columns: minmax(0, 1fr) minmax(240px, 320px);
+}
+
+.manufacturer-profile-header {
+    display: grid;
+    gap: 10px;
+    margin: 16px 0 24px;
+    padding: 22px;
+}
+
+.manufacturer-profile-header h1,
+.manufacturer-profile-header .record-meta,
+.manufacturer-profile-header .business-description {
+    margin: 0;
+}
+
+.manufacturer-profile-header .business-description {
+    max-width: 760px;
+}
+
+.manufacturer-profile-header .business-description h2 {
+    margin-bottom: 8px;
+    font-size: 18px;
+}
+
+.manufacturer-service-grid {
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    align-items: start;
+}
+
+.manufacturer-service-card {
+    display: grid;
+    gap: 10px;
+    padding: 16px;
+}
+
+.manufacturer-service-card .listing-media-frame,
+.manufacturer-service-card .listing-image,
+.manufacturer-service-card .listing-image-placeholder {
+    min-height: 150px;
+}
+
+.manufacturer-service-card h2 {
+    margin: 0;
+    font-size: 21px;
+}
+
+.manufacturer-service-card .record-facts {
+    margin: 0;
+}
+
+.business-reviews {
+    margin-top: 28px;
+}
+
+.business-review-grid {
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+}
+
+.business-review-card {
+    display: grid;
+    gap: 10px;
+    padding: 16px;
+}
+
+.business-review-card .record-facts {
+    margin: 0;
+}
+
+@media (max-width: 1080px) {
+    .listing-detail-hero,
+    .listing-detail-content {
+        grid-template-columns: 1fr;
+    }
+
+    .phase17-section,
+    .detail-commercial-panel,
+    .manufacturer-trust-panel {
+        width: 100%;
+        max-width: 100%;
+    }
+
+    .sourcing-story [data-reveal],
+    .listing-detail-content [data-reveal],
+    .story-steps li.is-emphasized {
+        transform: none;
+    }
+
+    .detail-image,
+    .detail-image-placeholder {
+        max-height: 320px;
+    }
+}
+
+@media (max-width: 720px) {
+    .listing-card,
+    .listing-card-body {
+        grid-template-columns: 1fr;
+    }
+
+    .listing-image,
+    .listing-image-placeholder,
+    .manufacturer-service-card .listing-image,
+    .manufacturer-service-card .listing-image-placeholder {
+        min-height: 170px;
+    }
+
+    .listing-card-body,
+    .manufacturer-profile-header,
+    .manufacturer-service-card {
+        padding: 14px;
+    }
+
+    .nav-group-account {
+        gap: 8px;
+    }
+}
