@@ -1,12 +1,16 @@
+import logging
+
 from django import forms
 from django.conf import settings
 from django.contrib.auth.forms import PasswordResetForm
 from django.contrib.auth.forms import UserCreationForm
-from django.core.mail import EmailMultiAlternatives
+from django.core.mail import send_mail
 from django.template.loader import render_to_string
 from django.utils import timezone
 
 from .models import User
+
+logger = logging.getLogger(__name__)
 
 
 class ReliablePasswordResetForm(PasswordResetForm):
@@ -23,18 +27,30 @@ class ReliablePasswordResetForm(PasswordResetForm):
         subject = "".join(subject.splitlines())
         body = render_to_string(email_template_name, context)
 
-        message = EmailMultiAlternatives(
-            subject=subject,
-            body=body,
-            from_email=from_email or settings.DEFAULT_FROM_EMAIL,
-            to=[to_email],
-        )
-
+        html_body = None
         if html_email_template_name:
             html_body = render_to_string(html_email_template_name, context)
-            message.attach_alternative(html_body, "text/html")
 
-        message.send(fail_silently=False)
+        try:
+            result = send_mail(
+                subject=subject,
+                message=body,
+                from_email=from_email or settings.DEFAULT_FROM_EMAIL,
+                recipient_list=[to_email],
+                fail_silently=False,
+                html_message=html_body,
+            )
+
+            logger.info(
+                "Password reset email handed to email backend successfully: "
+                "result=%s",
+                result,
+            )
+            return result
+
+        except Exception:
+            logger.exception("Password reset email delivery failed.")
+            raise
 
 
 class RegistrationConsentMixin(forms.Form):

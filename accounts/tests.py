@@ -94,32 +94,31 @@ class EmailSettingsTests(TestCase):
     DEFAULT_FROM_EMAIL="sender@example.test",
 )
 class PasswordResetEmailTests(TestCase):
-    def test_password_reset_post_invokes_custom_sender_for_active_user(self):
+    def test_password_reset_post_uses_django_send_mail_for_active_user(self):
         user_model = get_user_model()
         user_model.objects.create_user(
             username="reset-user",
             email="reset-user@example.test",
             password="StrongPass123!",
         )
-        original_send_mail = ReliablePasswordResetForm.send_mail
 
-        def send_mail_spy(form, *args, **kwargs):
-            return original_send_mail(form, *args, **kwargs)
-
-        with mock.patch.object(
-            ReliablePasswordResetForm,
-            "send_mail",
-            autospec=True,
-            side_effect=send_mail_spy,
-        ) as send_mail:
+        with mock.patch("accounts.forms.send_mail", return_value=1) as send:
             response = self.client.post(
                 reverse("password_reset"),
                 {"email": "reset-user@example.test"},
             )
 
         self.assertRedirects(response, reverse("password_reset_done"))
-        send_mail.assert_called_once()
-        self.assertEqual(len(mail.outbox), 1)
+        send.assert_called_once()
+        self.assertEqual(
+            send.call_args.kwargs["recipient_list"],
+            ["reset-user@example.test"],
+        )
+        self.assertEqual(
+            send.call_args.kwargs["from_email"],
+            "sender@example.test",
+        )
+        self.assertFalse(send.call_args.kwargs["fail_silently"])
 
     def test_password_reset_email_contains_reset_url(self):
         user_model = get_user_model()
@@ -184,25 +183,30 @@ class PasswordResetEmailTests(TestCase):
     def test_reliable_password_reset_form_does_not_swallow_send_failure(self):
         form = ReliablePasswordResetForm()
 
-        with mock.patch(
-            "accounts.forms.EmailMultiAlternatives.send",
-            side_effect=RuntimeError("SMTP send failed"),
-        ) as send:
-            with self.assertRaisesMessage(RuntimeError, "SMTP send failed"):
-                form.send_mail(
-                    "accounts/password_reset_subject.txt",
-                    "accounts/password_reset_email.txt",
-                    {
-                        "domain": "example.test",
-                        "protocol": "https",
-                        "uid": "uid",
-                        "token": "token",
-                    },
-                    None,
-                    "reset-user@example.test",
-                )
+        with mock.patch("accounts.forms.logger.exception") as logger_exception:
+            with mock.patch(
+                "accounts.forms.send_mail",
+                side_effect=RuntimeError("SMTP send failed"),
+            ) as send_mock:
+                with self.assertRaisesMessage(RuntimeError, "SMTP send failed"):
+                    form.send_mail(
+                        "accounts/password_reset_subject.txt",
+                        "accounts/password_reset_email.txt",
+                        {
+                            "domain": "example.test",
+                            "protocol": "https",
+                            "uid": "uid",
+                            "token": "token",
+                        },
+                        None,
+                        "reset-user@example.test",
+                    )
 
-        send.assert_called_once_with(fail_silently=False)
+        send_mock.assert_called_once()
+        self.assertFalse(send_mock.call_args.kwargs["fail_silently"])
+        logger_exception.assert_called_once_with(
+            "Password reset email delivery failed."
+        )
 
     def test_password_reset_confirm_and_complete_flow_still_works(self):
         user_model = get_user_model()
