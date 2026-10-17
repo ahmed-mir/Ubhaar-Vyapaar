@@ -1,5 +1,11 @@
 /* Global Ubhaar-Vyapaar interface system. */
 :root {
+            --space-1: 4px;
+            --space-2: 8px;
+            --space-3: 12px;
+            --space-4: 16px;
+            --space-6: 24px;
+            --space-8: 32px;
             --brand-50: #eef8f7;
             --brand-100: #d7eeeb;
             --brand-200: #addbd6;
@@ -9825,6 +9831,18 @@ body {
     font-size: 16px;
     font-weight: 400;
     line-height: 1.58;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+.page-content {
+    flex: 1 0 auto;
+    min-width: 0;
+}
+
+.site-footer {
+    flex-shrink: 0;
 }
 
 p,
