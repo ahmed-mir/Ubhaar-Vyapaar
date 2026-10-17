@@ -16,7 +16,7 @@
     {% block robots_meta %}{% endblock %}
     <link
         rel="canonical"
-        href="{% block canonical_url %}{{ request.scheme }}://{{ request.get_host }}{{ request.path }}{% endblock %}"
+        href="{% block canonical_url %}{{ site_origin }}{{ request.path }}{% endblock %}"
     >
 
     <title>

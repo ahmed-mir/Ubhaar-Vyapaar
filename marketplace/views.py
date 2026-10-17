@@ -10,8 +10,9 @@ from decimal import Decimal, InvalidOperation
 from xml.sax.saxutils import escape
 
 from django.conf import settings
-from django.http import HttpResponse
+from django.http import HttpResponse, JsonResponse
 from django.urls import reverse
+from urllib.parse import urljoin
 
 from .forms import (
     CapacityListingEditForm,
@@ -79,6 +80,10 @@ def refund_policy(request):
     )
 
 
+def health(request):
+    return JsonResponse({"status": "ok"})
+
+
 def about(request):
     return render(request, "marketplace/about.html")
 
@@ -116,7 +121,10 @@ def help_page(request):
 
 
 def absolute_url(request, path):
-    return request.build_absolute_uri(path)
+    return urljoin(
+        f"{settings.SITE_ORIGIN}/",
+        path.lstrip("/"),
+    )
 
 
 def sitemap_xml(request):
