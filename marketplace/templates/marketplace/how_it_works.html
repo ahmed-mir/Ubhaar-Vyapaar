@@ -1,0 +1,34 @@
+{% extends "marketplace/base.html" %}
+
+{% block title %}How it works | Ubhaar-Vyapaar{% endblock %}
+{% block meta_description %}See how to discover manufacturing capacity, request a quote, and follow an accepted order on Ubhaar-Vyapaar.{% endblock %}
+
+{% block content %}
+<article class="legal-page information-page">
+    <header class="page-heading legal-heading">
+        <div>
+            <p class="eyebrow">How it works</p>
+            <h1>From search to production updates.</h1>
+            <p>Use the marketplace to compare listing terms and start a conversation with a manufacturer.</p>
+        </div>
+    </header>
+
+    <section class="legal-section">
+        <h2>1. Discover capacity</h2>
+        <p>Search and filter listings. Each listing shows its stated price, minimum order quantity, lead time, availability, and manufacturer profile.</p>
+    </section>
+    <section class="legal-section">
+        <h2>2. Request and review a quote</h2>
+        <p>Buyers send requirements to a manufacturer. The manufacturer can respond with a quotation for the buyer to review.</p>
+    </section>
+    <section class="legal-section">
+        <h2>3. Follow the order</h2>
+        <p>Accepting a quotation creates an order with messages and milestones. Funding and release labels are simulated; no real payment moves through the platform.</p>
+    </section>
+    <section class="legal-section">
+        <h2>4. Complete and review</h2>
+        <p>After completion, buyers can leave a review tied to their order.</p>
+        <a class="button button-primary" href="{% url 'home' %}#marketplace-listings">Explore listings</a>
+    </section>
+</article>
+{% endblock %}

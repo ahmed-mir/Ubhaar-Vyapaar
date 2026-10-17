@@ -1,0 +1,35 @@
+{% extends "marketplace/base.html" %}
+
+{% block title %}Help | Ubhaar-Vyapaar{% endblock %}
+{% block meta_description %}Find guidance on listings, quotation requests, manufacturer verification, and simulated order funding.{% endblock %}
+
+{% block content %}
+<article class="legal-page information-page">
+    <header class="page-heading legal-heading">
+        <div>
+            <p class="eyebrow">Help</p>
+            <h1>Marketplace guidance.</h1>
+            <p>Find answers about the current buyer and manufacturer workflows.</p>
+        </div>
+    </header>
+
+    <section class="legal-section">
+        <h2>How do I request a quote?</h2>
+        <p>Open a listing and select Request quote. Buyer account sign-in is required to send your requirements.</p>
+    </section>
+    <section class="legal-section">
+        <h2>What does Verified mean?</h2>
+        <p>The badge appears only when the manufacturer profile has a verified state. Check each profile individually; listings without a badge should not be assumed verified.</p>
+    </section>
+    <section class="legal-section">
+        <h2>Can I pay through the platform?</h2>
+        <p>No. Funding and release states are simulated workflow markers. Ubhaar-Vyapaar does not currently process payments or hold funds in escrow.</p>
+    </section>
+    {% if legal_contact_email %}
+    <section class="legal-section">
+        <h2>Contact</h2>
+        <p>For platform questions, email <a href="mailto:{{ legal_contact_email }}">{{ legal_contact_email }}</a>.</p>
+    </section>
+    {% endif %}
+</article>
+{% endblock %}

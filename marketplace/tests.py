@@ -630,6 +630,18 @@ class OrderMessagingTests(TestCase):
 
 
 class PolicyPageTests(TestCase):
+    def test_information_pages_are_public_and_disclose_simulated_funding(self):
+        for name in ("about", "how_it_works", "help_page"):
+            with self.subTest(name=name):
+                response = self.client.get(reverse(name))
+                self.assertEqual(response.status_code, 200)
+                self.assertContains(response, "simulated")
+
+    @override_settings(LEGAL_CONTACT_EMAIL="")
+    def test_help_omits_unconfigured_contact(self):
+        response = self.client.get(reverse("help_page"))
+        self.assertNotContains(response, "mailto:")
+
     def test_policy_pages_return_success(self):
         for name in (
             "privacy_policy",

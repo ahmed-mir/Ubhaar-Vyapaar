@@ -10213,7 +10213,7 @@ h4,
 
 .footer-links a,
 .footer-cookie-button {
-    display: inline-flex;
+    display: flex;
     align-items: center;
     min-height: 36px;
 }

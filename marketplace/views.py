@@ -79,6 +79,18 @@ def refund_policy(request):
     )
 
 
+def about(request):
+    return render(request, "marketplace/about.html")
+
+
+def how_it_works(request):
+    return render(request, "marketplace/how_it_works.html")
+
+
+def help_page(request):
+    return render(request, "marketplace/help.html", legal_page_context())
+
+
 def absolute_url(request, path):
     return request.build_absolute_uri(path)
 

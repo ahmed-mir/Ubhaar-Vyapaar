@@ -1,0 +1,33 @@
+{% extends "marketplace/base.html" %}
+
+{% block title %}About | Ubhaar-Vyapaar{% endblock %}
+{% block meta_description %}Learn what buyers and manufacturers can do on the Ubhaar-Vyapaar marketplace.{% endblock %}
+
+{% block content %}
+<article class="legal-page information-page">
+    <header class="page-heading legal-heading">
+        <div>
+            <p class="eyebrow">About the marketplace</p>
+            <h1>Manufacturing capacity, easier to find.</h1>
+            <p>Ubhaar-Vyapaar brings capacity listings and quotation requests into one marketplace workflow.</p>
+        </div>
+    </header>
+
+    <section class="legal-section">
+        <h2>For buyers</h2>
+        <p>Search listings by capability, category, location, minimum order quantity, price, and lead time. Review the manufacturer profile and its verification status before requesting a quote.</p>
+        <a class="button button-primary" href="{% url 'home' %}#marketplace-listings">Browse capacity</a>
+    </section>
+
+    <section class="legal-section">
+        <h2>For manufacturers</h2>
+        <p>Create a business profile, publish production capacity, and respond to buyer requests with quotations.</p>
+        <a class="button button-secondary" href="{% url 'register_manufacturer' %}">List capacity</a>
+    </section>
+
+    <section class="legal-section">
+        <h2>Orders and funding</h2>
+        <p>Accepted quotations can become orders with messages and production milestones. Funding and release states are simulated workflow markers; the platform does not process real payments or provide escrow.</p>
+    </section>
+</article>
+{% endblock %}
