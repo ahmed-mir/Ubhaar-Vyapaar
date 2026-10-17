@@ -42,7 +42,7 @@ MANUFACTURERS = [
         ),
         "city": "Pune",
         "state": "Maharashtra",
-        "is_verified": True,
+        "is_verified": False,
     },
     {
         "username": "demo_mfr_nila_pack",
@@ -54,7 +54,7 @@ MANUFACTURERS = [
         ),
         "city": "Ahmedabad",
         "state": "Gujarat",
-        "is_verified": True,
+        "is_verified": False,
     },
     {
         "username": "demo_mfr_kaveri_textiles",
@@ -66,7 +66,7 @@ MANUFACTURERS = [
         ),
         "city": "Tiruppur",
         "state": "Tamil Nadu",
-        "is_verified": True,
+        "is_verified": False,
     },
     {
         "username": "demo_mfr_circuit_leaf",
@@ -78,7 +78,7 @@ MANUFACTURERS = [
         ),
         "city": "Bengaluru",
         "state": "Karnataka",
-        "is_verified": True,
+        "is_verified": False,
     },
     {
         "username": "demo_mfr_veer_plastics",

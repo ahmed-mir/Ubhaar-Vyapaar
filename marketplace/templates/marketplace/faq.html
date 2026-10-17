@@ -1,0 +1,17 @@
+{% extends "marketplace/base.html" %}
+
+{% block title %}FAQ | Ubhaar-Vyapaar{% endblock %}
+{% block meta_description %}Frequently asked questions about browsing capacity and requesting quotes.{% endblock %}
+
+{% block content %}
+<section class="record-card info-page">
+    <p class="eyebrow">FAQ</p>
+    <h1>Frequently asked questions</h1>
+    <h2>How do I find capacity?</h2>
+    <p>Browse the marketplace or use search and filters to find active listings that match your needs.</p>
+    <h2>What does Verified mean?</h2>
+    <p>It is shown only for manufacturer accounts whose actual verification state supports the badge. Read <a href="{% url 'trust_safety' %}">Trust &amp; Safety</a> for the full explanation.</p>
+    <h2>Can a listing be paused?</h2>
+    <p>Yes. Paused listings remain available to their owner for management but are not prioritised in default discovery.</p>
+</section>
+{% endblock %}

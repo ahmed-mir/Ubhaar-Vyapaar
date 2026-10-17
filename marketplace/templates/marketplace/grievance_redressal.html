@@ -1,0 +1,16 @@
+{% extends "marketplace/base.html" %}
+
+{% block title %}Grievance Redressal | Ubhaar-Vyapaar{% endblock %}
+{% block meta_description %}Find the configured grievance contact for Ubhaar-Vyapaar.{% endblock %}
+
+{% block content %}
+<section class="record-card info-page">
+    <p class="eyebrow">Grievance Redressal</p>
+    <h1>Grievance contact</h1>
+    {% if legal_contact_email %}
+        <p>For a grievance or service concern, contact <a href="mailto:{{ legal_contact_email }}">{{ legal_contact_email }}</a>.</p>
+    {% else %}
+        <p>Grievance contact details are not configured yet.</p>
+    {% endif %}
+</section>
+{% endblock %}

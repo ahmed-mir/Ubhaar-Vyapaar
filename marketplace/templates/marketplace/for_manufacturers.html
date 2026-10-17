@@ -1,0 +1,15 @@
+{% extends "marketplace/base.html" %}
+
+{% block title %}For manufacturers | Ubhaar-Vyapaar{% endblock %}
+{% block meta_description %}Share available manufacturing capacity with buyers on Ubhaar-Vyapaar.{% endblock %}
+
+{% block content %}
+<section class="page-heading">
+    <div>
+        <p class="eyebrow">For manufacturers</p>
+        <h1>Share capacity when you have room to make.</h1>
+        <p>Publish a capacity listing, respond to buyer quote requests, and manage availability from your manufacturer account.</p>
+    </div>
+    <a class="button button-primary" href="{% url 'register_manufacturer' %}">List capacity</a>
+</section>
+{% endblock %}

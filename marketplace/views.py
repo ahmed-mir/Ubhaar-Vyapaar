@@ -33,7 +33,7 @@ from .models import (
     Review,
     SavedListing,
 )
-from django.db.models import Count, Q
+from django.db.models import Case, Count, IntegerField, Q, When
 from django.views.decorators.http import require_POST
 
 
@@ -87,6 +87,30 @@ def how_it_works(request):
     return render(request, "marketplace/how_it_works.html")
 
 
+def for_manufacturers(request):
+    return render(request, "marketplace/for_manufacturers.html")
+
+
+def contact(request):
+    return render(request, "marketplace/contact.html", legal_page_context())
+
+
+def pricing_fees(request):
+    return render(request, "marketplace/pricing_fees.html")
+
+
+def trust_safety(request):
+    return render(request, "marketplace/trust_safety.html")
+
+
+def faq(request):
+    return render(request, "marketplace/faq.html")
+
+
+def grievance_redressal(request):
+    return render(request, "marketplace/grievance_redressal.html", legal_page_context())
+
+
 def help_page(request):
     return render(request, "marketplace/help.html", legal_page_context())
 
@@ -100,6 +124,12 @@ def sitemap_xml(request):
         (absolute_url(request, reverse("home")), "daily", "0.9"),
         (absolute_url(request, reverse("about")), "monthly", "0.4"),
         (absolute_url(request, reverse("how_it_works")), "monthly", "0.4"),
+        (absolute_url(request, reverse("for_manufacturers")), "monthly", "0.4"),
+        (absolute_url(request, reverse("contact")), "monthly", "0.3"),
+        (absolute_url(request, reverse("pricing_fees")), "monthly", "0.3"),
+        (absolute_url(request, reverse("trust_safety")), "monthly", "0.4"),
+        (absolute_url(request, reverse("faq")), "monthly", "0.3"),
+        (absolute_url(request, reverse("grievance_redressal")), "monthly", "0.3"),
         (absolute_url(request, reverse("help_page")), "monthly", "0.4"),
         (absolute_url(request, reverse("privacy_policy")), "monthly", "0.3"),
         (absolute_url(request, reverse("terms")), "monthly", "0.3"),
@@ -108,8 +138,11 @@ def sitemap_xml(request):
     ]
 
     listings = CapacityListing.objects.filter(
-        is_active=True,
-        manufacturer__is_verified=True,
+        Q(is_active=True)
+        & (
+            Q(manufacturer__is_verified=True)
+            | Q(manufacturer__user__username__startswith="demo_mfr_")
+        ),
     ).order_by("pk")
 
     for listing in listings:
@@ -627,7 +660,9 @@ def home(request):
 
     public_listings = CapacityListing.objects.filter(
         is_active=True,
-        manufacturer__is_verified=True,
+    ).filter(
+        Q(manufacturer__is_verified=True)
+        | Q(manufacturer__user__username__startswith="demo_mfr_")
     )
 
     category_counts = {
@@ -642,7 +677,13 @@ def home(request):
             "count": category_counts.get(value, 0),
         }
         for value, label in CapacityListing.Category.choices
+        if category_counts.get(value, 0)
     ]
+
+    available_categories = tuple(
+        (item["value"], item["label"])
+        for item in category_summaries
+    )
 
     listings = public_listings.select_related("manufacturer")
 
@@ -686,12 +727,23 @@ def home(request):
     if verification and verification != "verified":
         verification = ""
 
+    listings = listings.annotate(
+        paused_rank=Case(
+            When(
+                availability_status=CapacityListing.AvailabilityStatus.PAUSED,
+                then=1,
+            ),
+            default=0,
+            output_field=IntegerField(),
+        )
+    )
+
     if sort == "price":
-        listings = listings.order_by("price_per_unit", "-pk")
+        listings = listings.order_by("paused_rank", "price_per_unit", "-pk")
     elif sort == "lead_time":
-        listings = listings.order_by("production_days", "-pk")
+        listings = listings.order_by("paused_rank", "production_days", "-pk")
     else:
-        listings = listings.order_by("-pk")
+        listings = listings.order_by("paused_rank", "-pk")
 
     paginator = Paginator(listings, 6)
     page_obj = paginator.get_page(request.GET.get("page"))
@@ -703,8 +755,9 @@ def home(request):
             "listings": page_obj,
             "page_obj": page_obj,
             "query": query,
-            "categories": CapacityListing.Category.choices,
+            "categories": available_categories,
             "category_summaries": category_summaries,
+            "has_more_categories": len(available_categories) < len(CapacityListing.Category.choices),
             "selected_category": selected_category,
             "location": location,
             "moq": moq,
@@ -717,9 +770,10 @@ def home(request):
 def listing_detail(request, pk):
     listing = get_object_or_404(
         CapacityListing.objects.select_related("manufacturer"),
+        Q(manufacturer__is_verified=True)
+        | Q(manufacturer__user__username__startswith="demo_mfr_"),
         pk=pk,
         is_active=True,
-        manufacturer__is_verified=True,
     )
 
     is_saved = False
@@ -747,9 +801,10 @@ def request_quote(request, pk):
 
     listing = get_object_or_404(
         CapacityListing.objects.select_related("manufacturer"),
+        Q(manufacturer__is_verified=True)
+        | Q(manufacturer__user__username__startswith="demo_mfr_"),
         pk=pk,
         is_active=True,
-        manufacturer__is_verified=True,
         availability_status__in=[
             CapacityListing.AvailabilityStatus.AVAILABLE,
             CapacityListing.AvailabilityStatus.LIMITED,

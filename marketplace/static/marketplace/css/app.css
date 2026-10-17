@@ -6643,6 +6643,108 @@ a {
     color: var(--warning-text);
 }
 
+.listing-card-paused {
+    opacity: 0.72;
+}
+
+.sample-badge {
+    display: inline-flex;
+    align-items: center;
+    min-height: 24px;
+    padding: 4px 8px;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    background: var(--surface-alt);
+    color: var(--text-muted);
+    font-size: 11px;
+    font-weight: 700;
+}
+
+.category-note {
+    margin: 14px 0 0;
+    color: var(--type-muted);
+    font-size: 13px;
+}
+
+.nav-menu {
+    position: relative;
+}
+
+.nav-menu summary {
+    cursor: pointer;
+    list-style: none;
+}
+
+.nav-menu summary::-webkit-details-marker {
+    display: none;
+}
+
+.nav-menu summary::after {
+    content: "▾";
+    margin-left: 6px;
+    font-size: 11px;
+}
+
+.nav-menu-panel {
+    position: absolute;
+    z-index: 20;
+    top: calc(100% + 8px);
+    right: 0;
+    display: grid;
+    min-width: 190px;
+    padding: 8px;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    background: var(--surface);
+    box-shadow: var(--shadow-sm);
+}
+
+.nav-menu-panel a {
+    padding: 9px 10px;
+    border-radius: 6px;
+    color: var(--type);
+    text-decoration: none;
+}
+
+.nav-menu-panel a:hover,
+.nav-menu-panel a:focus-visible {
+    background: var(--surface-alt);
+}
+
+.footer-meta {
+    margin: 0;
+    color: var(--type-muted);
+    font-size: 13px;
+}
+
+.verified-explainer {
+    max-width: 620px;
+    margin-top: 28px;
+    padding-top: 22px;
+    border-top: 1px solid var(--border);
+}
+
+.verified-explainer h3 {
+    margin: 0 0 8px;
+}
+
+.verified-explainer p:not(.eyebrow) {
+    margin: 0 0 12px;
+    color: var(--type-muted);
+}
+
+@media (max-width: 940px) {
+    .nav-menu-panel {
+        position: static;
+        min-width: 0;
+        margin: 4px 0 8px 12px;
+        border: 0;
+        border-left: 2px solid var(--border);
+        border-radius: 0;
+        box-shadow: none;
+    }
+}
+
 .description-content {
     max-width: 72ch;
     overflow-wrap: anywhere;

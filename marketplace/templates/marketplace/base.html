@@ -112,6 +112,17 @@
                         </a>
                     {% endif %}
 
+                    <details class="nav-menu">
+                        <summary class="nav-link">Resources</summary>
+                        <div class="nav-menu-panel">
+                            <a href="{% url 'about' %}">About</a>
+                            <a href="{% url 'contact' %}">Contact</a>
+                            <a href="{% url 'pricing_fees' %}">Pricing &amp; Fees</a>
+                            <a href="{% url 'faq' %}">FAQ</a>
+                            <a href="{% url 'trust_safety' %}">Trust &amp; Safety</a>
+                        </div>
+                    </details>
+
 
                     {% if user.is_authenticated %}
 
@@ -264,30 +275,21 @@
 
             <nav class="footer-links" aria-label="Footer navigation">
                 <div>
-                    <h2>Marketplace</h2>
-                    <a href="{% url 'home' %}">Marketplace</a>
+                    <h2>Company</h2>
                     <a href="{% url 'about' %}">About</a>
                     <a href="{% url 'how_it_works' %}">How it works</a>
-                    <a href="{% url 'help_page' %}">Help</a>
-                    {% if user.is_authenticated %}
-                        <a href="{% url 'notifications' %}">Notifications</a>
-                    {% endif %}
+                    <a href="{% url 'for_manufacturers' %}">For manufacturers</a>
                 </div>
 
                 <div>
-                    <h2>For Buyers</h2>
-                    <a href="{% url 'home' %}#marketplace-listings">Browse capacity</a>
+                    <h2>Marketplace</h2>
+                    <a href="{% url 'home' %}">Browse capacity</a>
+                    <a href="{% url 'faq' %}">FAQ</a>
+                    <a href="{% url 'pricing_fees' %}">Pricing &amp; Fees</a>
                     {% if user.is_authenticated and user.role == "BUYER" %}
                         <a href="{% url 'buyer_dashboard' %}">Buyer dashboard</a>
                         <a href="{% url 'my_quote_requests' %}">Quote requests</a>
-                    {% else %}
-                        <a href="{% url 'register' %}">Sign up</a>
                     {% endif %}
-                </div>
-
-                <div>
-                    <h2>For Manufacturers</h2>
-                    <a href="{% url 'register_manufacturer' %}">List capacity</a>
                     {% if user.is_authenticated and user.role == "MANUFACTURER" %}
                         <a href="{% url 'manufacturer_dashboard' %}">Manufacturer dashboard</a>
                         <a href="{% url 'my_listings' %}">Manage listings</a>
@@ -295,7 +297,20 @@
                 </div>
 
                 <div>
+                    <h2>Support</h2>
+                    <a href="{% url 'contact' %}">Contact</a>
+                    <a href="{% url 'trust_safety' %}">Trust &amp; Safety</a>
+                    <a href="{% url 'grievance_redressal' %}">Grievance Redressal</a>
+                    {% if legal_contact_email %}
+                        <a href="mailto:{{ legal_contact_email }}">{{ legal_contact_label|default:"Contact support" }}</a>
+                    {% endif %}
+                </div>
+
+                <div>
                     <h2>Legal</h2>
+                    {% if legal_entity_name %}
+                        <p class="footer-meta">{{ legal_entity_name }}</p>
+                    {% endif %}
                     <a href="{% url 'privacy_policy' %}">Privacy Policy</a>
                     <a href="{% url 'terms' %}">Terms &amp; Conditions</a>
                     <a href="{% url 'cookie_policy' %}">Cookie Policy</a>

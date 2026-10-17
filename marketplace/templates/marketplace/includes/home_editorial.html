@@ -11,19 +11,6 @@
         </div>
     </div>
 
-    <div class="hero-market-strip" data-reveal="right">
-        <p>
-            Compare manufacturers, request quotations, and track production from
-            one practical marketplace built for buyer and supplier teams.
-        </p>
-        <div class="hero-actions" aria-label="Primary marketplace actions">
-            <a class="button button-primary" href="#marketplace-listings">Explore capacity</a>
-            <a class="text-action" href="{% url 'register_manufacturer' %}">
-                List manufacturing capacity <span aria-hidden="true">&rarr;</span>
-            </a>
-        </div>
-    </div>
-
     <form method="get" action="{% url 'home' %}#marketplace-listings" role="search" aria-label="Search manufacturing capacity" class="capacity-search capacity-discovery-module" data-reveal="scale" data-analytics-event="marketplace_search">
         <div class="search-panel-heading">
             <div>
@@ -121,15 +108,12 @@
             <a class="category-row category-{{ category.value|lower }}{% if selected_category == category.value %} category-row-active{% endif %}" href="?category={{ category.value|urlencode }}" data-reveal="up">
                 <span class="category-index">{{ forloop.counter|stringformat:"02d" }}</span>
                 <span class="category-name">{{ category.label }}</span>
-                {% if category.count %}
-                    <span class="category-count">{{ category.count }} listing{{ category.count|pluralize }}</span>
-                {% else %}
-                    <span class="category-count">No listings yet</span>
-                {% endif %}
+                <span class="category-count">{{ category.count }} listing{{ category.count|pluralize }}</span>
                 <span class="category-arrow" aria-hidden="true">&rarr;</span>
             </a>
         {% endfor %}
     </div>
+    {% if has_more_categories %}<p class="category-note">More categories coming soon.</p>{% endif %}
 </section>
 
 <section id="marketplace-listings" class="marketplace-results phase17-section" aria-labelledby="listings-title">
@@ -162,7 +146,7 @@
 
     <div class="listings">
         {% for listing in listings %}
-            <article class="listing-card listing-category-{{ listing.category|lower }}" data-reveal="up">
+            <article class="listing-card listing-category-{{ listing.category|lower }}{% if listing.availability_status == 'PAUSED' %} listing-card-paused{% endif %}" data-reveal="up">
                 <a
                     class="listing-media listing-media-frame{% if not listing.image %} media-no-image{% endif %}"
                     href="{% url 'listing_detail' listing.pk %}"
@@ -176,7 +160,7 @@
                     <div class="listing-main">
                         <div class="listing-badges">
                             <span class="listing-category">{{ listing.get_category_display }}</span>
-                            {% if listing.manufacturer.is_verified %}<span class="trust-badge">Verified</span><span class="visually-hidden">Verified business</span>{% endif %}
+                            {% if listing.manufacturer.is_demo %}<span class="sample-badge">Sample listing</span>{% elif listing.manufacturer.is_verified %}<span class="trust-badge">Verified</span><span class="visually-hidden">Verified business</span>{% endif %}
                             <span class="listing-availability status-{{ listing.availability_status|lower }}">{{ listing.get_availability_status_display }}</span>
                         </div>
                         <h3><a href="{% url 'listing_detail' listing.pk %}">{{ listing.title }}</a></h3>
@@ -252,6 +236,12 @@
         <div data-reveal="up"><span>01</span><strong>Business profiles</strong><p>Check each manufacturer profile and its verification status before requesting a quote.</p></div>
         <div data-reveal="up"><span>02</span><strong>Reviews</strong><p>Completed orders build trust signals.</p></div>
         <div data-reveal="up"><span>03</span><strong>Milestones</strong><p>Production progress stays visible.</p></div>
+    </div>
+    <div class="verified-explainer" data-reveal="up">
+        <p class="eyebrow">Verification</p>
+        <h3>What does Verified mean?</h3>
+        <p>The badge appears only when the manufacturer account’s verification state supports it. It is not a certification or a guarantee of quality, delivery, payment, or a particular outcome.</p>
+        <a class="text-action" href="{% url 'trust_safety' %}">Read Trust &amp; Safety <span aria-hidden="true">&rarr;</span></a>
     </div>
 </section>
 

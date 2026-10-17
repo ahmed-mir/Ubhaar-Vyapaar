@@ -24,6 +24,108 @@ from .models import (
 from .views import build_order_financial_summary, build_order_timeline
 
 
+class MarketplaceDiscoveryTrustTests(TestCase):
+    def setUp(self):
+        User = get_user_model()
+        self.verified_user = User.objects.create_user(
+            username="verified-maker",
+            password="password",
+            role="MANUFACTURER",
+        )
+        self.verified = ManufacturerProfile.objects.create(
+            user=self.verified_user,
+            business_name="Verified Works",
+            city="Pune",
+            state="Maharashtra",
+            is_verified=True,
+        )
+        self.demo_user = User.objects.create_user(
+            username="demo_mfr_sample",
+            password="password",
+            role="MANUFACTURER",
+        )
+        self.demo = ManufacturerProfile.objects.create(
+            user=self.demo_user,
+            business_name="Demo Works",
+            city="Pune",
+            state="Maharashtra",
+            is_verified=True,
+        )
+
+    def create_listing(self, manufacturer, title, status="AVAILABLE"):
+        return CapacityListing.objects.create(
+            manufacturer=manufacturer,
+            title=title,
+            category=CapacityListing.Category.METAL,
+            description="Manufacturing capacity.",
+            price_per_unit=Decimal("10.00"),
+            minimum_quantity=10,
+            production_days=5,
+            availability_status=status,
+            is_active=True,
+        )
+
+    def test_paused_listings_follow_available_listings_in_default_discovery(self):
+        paused = self.create_listing(
+            self.verified,
+            "Paused capacity",
+            CapacityListing.AvailabilityStatus.PAUSED,
+        )
+        available = self.create_listing(self.verified, "Available capacity")
+
+        response = self.client.get(reverse("home"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(
+            list(response.context["listings"].object_list),
+            [available, paused],
+        )
+        self.assertContains(response, "Paused")
+
+    def test_zero_count_categories_are_hidden_and_note_is_shown(self):
+        self.create_listing(self.verified, "Metal capacity")
+
+        response = self.client.get(reverse("home"))
+
+        self.assertContains(response, "Metal")
+        self.assertNotContains(response, "Plastics")
+        self.assertContains(response, "More categories coming soon.")
+
+    def test_verified_badge_requires_real_state_and_demo_content_is_marked(self):
+        self.create_listing(self.verified, "Verified capacity")
+        self.create_listing(self.demo, "Demo capacity")
+
+        response = self.client.get(reverse("home"))
+        content = response.content.decode()
+
+        self.assertIn("Verified business", content)
+        self.assertIn("Sample listing", content)
+
+    def test_public_information_routes_and_trust_links_render(self):
+        route_names = (
+            "about",
+            "contact",
+            "pricing_fees",
+            "trust_safety",
+            "how_it_works",
+            "for_manufacturers",
+            "faq",
+            "grievance_redressal",
+        )
+
+        for route_name in route_names:
+            with self.subTest(route_name=route_name):
+                response = self.client.get(reverse(route_name))
+                self.assertEqual(response.status_code, 200)
+
+        response = self.client.get(reverse("home"))
+        self.assertContains(response, reverse("trust_safety"))
+        self.assertContains(response, reverse("about"))
+        self.assertContains(response, reverse("contact"))
+        self.assertContains(response, reverse("pricing_fees"))
+        self.assertContains(response, reverse("faq"))
+
+
 @override_settings(
     PASSWORD_HASHERS=[
         "django.contrib.auth.hashers.MD5PasswordHasher",

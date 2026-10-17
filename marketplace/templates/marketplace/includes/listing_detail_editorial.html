@@ -14,7 +14,7 @@
     <div class="detail-title-panel" data-reveal="up">
         <div class="detail-badge-row">
             <span class="listing-category">{{ listing.get_category_display }}</span>
-            {% if listing.manufacturer.is_verified %}<span class="trust-badge">Verified manufacturer</span>{% endif %}
+            {% if listing.manufacturer.is_demo %}<span class="sample-badge">Sample listing</span>{% elif listing.manufacturer.is_verified %}<span class="trust-badge">Verified manufacturer</span>{% endif %}
             <span class="status-pill status-{{ listing.availability_status|lower }}">{{ listing.get_availability_status_display }}</span>
         </div>
         <h1 id="listing-title">{{ listing.title }}</h1>
@@ -106,11 +106,15 @@
         <h2 id="manufacturer-title"><a href="{% url 'manufacturer_profile' listing.manufacturer.pk %}">{{ listing.manufacturer.business_name }}</a></h2>
         {% if listing.manufacturer.city or listing.manufacturer.state %}<p class="record-meta">{{ listing.manufacturer.city }}{% if listing.manufacturer.city and listing.manufacturer.state %}, {% endif %}{{ listing.manufacturer.state }}</p>{% endif %}
         <div class="action-links">
+            {% if listing.manufacturer.is_demo %}
+                <span class="sample-badge">Sample manufacturer</span>
+            {% else %}
             {% for badge in listing.manufacturer.earned_badges %}
                 <span class="trust-badge">{{ badge }}</span>
             {% empty %}
                 <span class="status-pill">Profile available</span>
             {% endfor %}
+            {% endif %}
         </div>
         {% if listing.manufacturer.review_count %}
             <p class="record-meta">Average rating: {{ listing.manufacturer.average_rating|floatformat:1 }}/5 from {{ listing.manufacturer.review_count }} review{{ listing.manufacturer.review_count|pluralize }}</p>

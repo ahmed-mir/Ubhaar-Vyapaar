@@ -10,13 +10,17 @@
 
     <section class="record-card business-profile manufacturer-profile-header">
         <div class="action-links">
-            {% for badge in manufacturer.earned_badges %}
-                <span class="trust-badge">{{ badge }}</span>
-            {% empty %}
-                <span class="status-pill status-pending">
-                    Verification under review
-                </span>
-            {% endfor %}
+            {% if manufacturer.is_demo %}
+                <span class="sample-badge">Sample manufacturer</span>
+            {% else %}
+                {% for badge in manufacturer.earned_badges %}
+                    <span class="trust-badge">{{ badge }}</span>
+                {% empty %}
+                    <span class="status-pill status-pending">
+                        Verification under review
+                    </span>
+                {% endfor %}
+            {% endif %}
         </div>
 
         <h1>{{ manufacturer.business_name }}</h1>

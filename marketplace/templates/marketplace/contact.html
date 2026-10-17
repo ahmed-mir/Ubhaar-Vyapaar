@@ -1,0 +1,16 @@
+{% extends "marketplace/base.html" %}
+
+{% block title %}Contact | Ubhaar-Vyapaar{% endblock %}
+{% block meta_description %}Contact Ubhaar-Vyapaar using the configured support details.{% endblock %}
+
+{% block content %}
+<section class="record-card info-page">
+    <p class="eyebrow">Contact</p>
+    <h1>Contact Ubhaar-Vyapaar</h1>
+    {% if legal_contact_email %}
+        <p>For support and general enquiries, email <a href="mailto:{{ legal_contact_email }}">{{ legal_contact_email }}</a>.</p>
+    {% else %}
+        <p>Contact details are not configured yet. Please check back after the support channel is published.</p>
+    {% endif %}
+</section>
+{% endblock %}

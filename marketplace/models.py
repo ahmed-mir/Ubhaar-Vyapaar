@@ -55,6 +55,10 @@ class ManufacturerProfile(models.Model):
 
         return badges
 
+    @property
+    def is_demo(self):
+        return self.user.username.startswith("demo_mfr_")
+
     def __str__(self):
         return self.business_name
 
