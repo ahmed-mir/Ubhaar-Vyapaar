@@ -601,7 +601,6 @@ if SENTRY_ENABLED:
         environment=SENTRY_ENVIRONMENT,
         release=SENTRY_RELEASE,
         send_default_pii=SENTRY_SEND_DEFAULT_PII,
-        request_bodies="never",
         traces_sampler=_sentry_traces_sampler,
         before_send=_scrub_sentry_event,
         include_local_variables=False,
