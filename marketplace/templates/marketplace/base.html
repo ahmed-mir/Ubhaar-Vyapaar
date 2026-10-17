@@ -10,9 +10,10 @@
     >
     <meta
         name="description"
-        content="{% block meta_description %}Ubhaar-Vyapaar connects buyers with verified small manufacturers, available production capacity, quotations, and order workflows.{% endblock %}"
+        content="{% block meta_description %}Ubhaar-Vyapaar connects buyers with manufacturing capacity, quotations, and order workflows.{% endblock %}"
     >
     <meta name="theme-color" content="#102F3C">
+    {% block robots_meta %}{% endblock %}
     <link
         rel="canonical"
         href="{% block canonical_url %}{{ request.scheme }}://{{ request.get_host }}{{ request.path }}{% endblock %}"

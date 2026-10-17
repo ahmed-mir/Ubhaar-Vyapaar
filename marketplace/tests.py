@@ -5,8 +5,9 @@ import tempfile
 from django.contrib.auth import get_user_model
 from django.core.management import call_command
 from django.test import Client
-from django.test import TestCase, override_settings
+from django.test import RequestFactory, TestCase, override_settings
 from django.urls import reverse
+from django.views.defaults import server_error
 
 from .models import (
     CapacityListing,
@@ -630,6 +631,18 @@ class OrderMessagingTests(TestCase):
 
 
 class PolicyPageTests(TestCase):
+    @override_settings(DEBUG=False)
+    def test_error_pages_offer_marketplace_route(self):
+        missing = self.client.get("/missing-page/")
+        self.assertEqual(missing.status_code, 404)
+        self.assertContains(missing, "Back to marketplace", status_code=404)
+        self.assertContains(missing, 'name="robots" content="noindex"', status_code=404)
+
+        unavailable = server_error(RequestFactory().get("/"))
+        self.assertEqual(unavailable.status_code, 500)
+        self.assertIn(b"Back to marketplace", unavailable.content)
+        self.assertIn(b'name="robots" content="noindex"', unavailable.content)
+
     def test_information_pages_are_public_and_disclose_simulated_funding(self):
         for name in ("about", "how_it_works", "help_page"):
             with self.subTest(name=name):

@@ -98,6 +98,9 @@ def absolute_url(request, path):
 def sitemap_xml(request):
     public_urls = [
         (absolute_url(request, reverse("home")), "daily", "0.9"),
+        (absolute_url(request, reverse("about")), "monthly", "0.4"),
+        (absolute_url(request, reverse("how_it_works")), "monthly", "0.4"),
+        (absolute_url(request, reverse("help_page")), "monthly", "0.4"),
         (absolute_url(request, reverse("privacy_policy")), "monthly", "0.3"),
         (absolute_url(request, reverse("terms")), "monthly", "0.3"),
         (absolute_url(request, reverse("cookie_policy")), "monthly", "0.3"),

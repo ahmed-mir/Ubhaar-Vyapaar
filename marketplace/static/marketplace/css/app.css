@@ -10211,6 +10211,28 @@ h4,
     }
 }
 
+.site-footer .footer-links a,
+.site-footer .footer-cookie-button,
+.site-footer .footer-brand p,
+.site-footer .footer-bottom,
+.site-footer .footer-bottom p {
+    color: #c5d2cb;
+}
+
+.auth-story-panel img {
+    display: block;
+    width: min(220px, 100%);
+    height: auto;
+}
+
+.auth-story-panel h1 {
+    color: #f6f7f1;
+}
+
+.auth-story-panel p:not(.eyebrow) {
+    color: #c5d2cb;
+}
+
 .footer-links a,
 .footer-cookie-button {
     display: flex;
