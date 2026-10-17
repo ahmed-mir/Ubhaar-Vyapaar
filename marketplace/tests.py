@@ -161,6 +161,12 @@ class SeededSampleNameTests(TestCase):
 
 
 class ProductionReadinessTests(TestCase):
+    @override_settings(DEBUG=False)
+    def test_production_response_has_referrer_policy(self):
+        response = self.client.get(reverse("home"))
+
+        self.assertEqual(response["Referrer-Policy"], "same-origin")
+
     def test_health_endpoint_returns_minimal_ok_response(self):
         response = self.client.get(reverse("health"))
 

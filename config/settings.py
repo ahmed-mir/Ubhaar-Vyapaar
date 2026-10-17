@@ -479,6 +479,8 @@ if not DEBUG:
 
     SECURE_CONTENT_TYPE_NOSNIFF = True
 
+    SECURE_REFERRER_POLICY = "same-origin"
+
     X_FRAME_OPTIONS = "DENY"
 
 
