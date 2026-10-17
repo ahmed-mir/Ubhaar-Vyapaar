@@ -158,9 +158,52 @@ class SeededSampleNameTests(TestCase):
         response = self.client.get(reverse("home"))
         self.assertContains(response, "Sample listing")
         self.assertNotContains(response, "Verified business")
+        self.assertNotContains(response, "Demo ")
+
+    def test_non_seed_manufacturer_name_is_untouched_by_seed_cleanup(self):
+        User = get_user_model()
+        user = User.objects.create_user(
+            username="production-maker",
+            password="password",
+            role="MANUFACTURER",
+        )
+        profile = ManufacturerProfile.objects.create(
+            user=user,
+            business_name="Demo Genuine Works",
+            city="Pune",
+            state="Maharashtra",
+            is_verified=True,
+        )
+
+        call_command("seed_demo_data", stdout=StringIO())
+
+        profile.refresh_from_db()
+        self.assertEqual(profile.business_name, "Demo Genuine Works")
 
 
 class ProductionReadinessTests(TestCase):
+    @override_settings(LEGAL_CONTACT_EMAIL="")
+    def test_contact_page_omits_missing_contact_details(self):
+        response = self.client.get(reverse("contact"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertNotContains(response, "not configured yet")
+        self.assertNotContains(response, "mailto:")
+
+    @override_settings(
+        LEGAL_ENTITY_NAME="Configured Marketplace Entity",
+        LEGAL_CONTACT_EMAIL="support@example.com",
+        LEGAL_CONTACT_LABEL="Support email",
+    )
+    def test_configured_contact_values_are_shared_with_footer(self):
+        contact_response = self.client.get(reverse("contact"))
+        home_response = self.client.get(reverse("home"))
+
+        self.assertContains(contact_response, "support@example.com")
+        self.assertContains(home_response, "Configured Marketplace Entity")
+        self.assertContains(home_response, "support@example.com")
+        self.assertContains(home_response, "Support email")
+
     @override_settings(DEBUG=False)
     def test_production_response_has_referrer_policy(self):
         response = self.client.get(reverse("home"))
