@@ -4,7 +4,7 @@
     <div class="hero-statement" data-reveal="up">
         <p class="eyebrow">B2B manufacturing marketplace</p>
         <h1 id="hero-title">Source manufacturing. Faster.</h1>
-        <p class="hero-intro">Find verified capacity, compare terms, and request quotes in one focused workflow.</p>
+        <p class="hero-intro">Find available capacity, compare terms, and request quotes in one focused workflow.</p>
         <div class="hero-actions" aria-label="Primary marketplace actions">
             <a class="button button-primary" href="#marketplace-listings">Explore capacity</a>
             <a class="button button-secondary" href="{% url 'register_manufacturer' %}">List capacity</a>
@@ -24,7 +24,7 @@
         </div>
     </div>
 
-    <form method="get" action="{% url 'home' %}" class="capacity-search capacity-discovery-module" data-reveal="scale" data-analytics-event="marketplace_search">
+    <form method="get" action="{% url 'home' %}#marketplace-listings" role="search" aria-label="Search manufacturing capacity" class="capacity-search capacity-discovery-module" data-reveal="scale" data-analytics-event="marketplace_search">
         <div class="search-panel-heading">
             <div>
                 <p class="eyebrow">Search capacity</p>
@@ -124,7 +124,7 @@
                 {% if category.count %}
                     <span class="category-count">{{ category.count }} listing{{ category.count|pluralize }}</span>
                 {% else %}
-                    <span class="category-count">Coming soon</span>
+                    <span class="category-count">No listings yet</span>
                 {% endif %}
                 <span class="category-arrow" aria-hidden="true">&rarr;</span>
             </a>
@@ -136,11 +136,11 @@
     <div class="section-heading results-heading" data-reveal="up">
         <div>
             <p class="eyebrow">Available capacity</p>
-            <h2 id="listings-title">{% if query or selected_category or location or moq or max_price or lead_time %}Matching suppliers{% else %}Marketplace listings{% endif %}</h2>
+            <h2 id="listings-title">{% if query or selected_category or location or moq or max_price or lead_time or verification %}Matching listings{% else %}Marketplace listings{% endif %}</h2>
             <p>{% if query %}Matches for "{{ query }}"{% elif selected_category %}Filtered by category.{% else %}Compare price, MOQ, lead time, and trust signals.{% endif %}</p>
         </div>
         <div class="results-tools">
-            <span>{{ page_obj.paginator.count }} results</span>
+            <span>{{ page_obj.paginator.count }} result{{ page_obj.paginator.count|pluralize }}</span>
             {% if query or selected_category or location or moq or max_price or lead_time or verification or sort != "newest" %}
                 <a class="button button-secondary button-compact" href="{% url 'home' %}">Clear filters</a>
             {% endif %}
@@ -190,7 +190,7 @@
             </article>
         {% empty %}
             <div class="empty-state" data-reveal="up">
-                {% if query or selected_category %}
+                {% if query or selected_category or location or moq or max_price or lead_time or verification %}
                     <h3>No matching listings</h3>
                     <p>Try broader filters.</p>
                     <a class="button" href="{% url 'home' %}">Clear filters</a>
@@ -235,7 +235,7 @@
         <h2 id="trust-title">Built for B2B decisions.</h2>
     </div>
     <div class="trust-rhythm">
-        <div data-reveal="up"><span>01</span><strong>Verified manufacturers</strong><p>Public listings connect to business profiles.</p></div>
+        <div data-reveal="up"><span>01</span><strong>Business profiles</strong><p>Check each manufacturer profile and its verification status before requesting a quote.</p></div>
         <div data-reveal="up"><span>02</span><strong>Reviews</strong><p>Completed orders build trust signals.</p></div>
         <div data-reveal="up"><span>03</span><strong>Milestones</strong><p>Production progress stays visible.</p></div>
     </div>
