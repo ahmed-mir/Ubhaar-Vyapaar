@@ -126,6 +126,40 @@ class MarketplaceDiscoveryTrustTests(TestCase):
         self.assertContains(response, reverse("faq"))
 
 
+class SeededSampleNameTests(TestCase):
+    def test_seeded_names_stay_sample_classified_and_cleanup_is_idempotent(self):
+        call_command("seed_demo_data", stdout=StringIO())
+
+        profiles = ManufacturerProfile.objects.filter(
+            user__username__startswith="demo_mfr_"
+        ).order_by("user__username")
+        names = list(profiles.values_list("business_name", flat=True))
+
+        self.assertEqual(profiles.count(), 5)
+        self.assertTrue(all(profile.is_demo for profile in profiles))
+        self.assertTrue(all(not name.startswith("Demo ") for name in names))
+        self.assertTrue(all(not profile.is_verified for profile in profiles))
+
+        legacy_profile = profiles.first()
+        legacy_profile.business_name = f"Demo {legacy_profile.business_name}"
+        legacy_profile.save(update_fields=["business_name"])
+
+        call_command("seed_demo_data", stdout=StringIO())
+
+        refreshed = ManufacturerProfile.objects.get(pk=legacy_profile.pk)
+        self.assertFalse(refreshed.business_name.startswith("Demo "))
+        self.assertEqual(
+            ManufacturerProfile.objects.filter(
+                user__username__startswith="demo_mfr_"
+            ).count(),
+            5,
+        )
+
+        response = self.client.get(reverse("home"))
+        self.assertContains(response, "Sample listing")
+        self.assertNotContains(response, "Verified business")
+
+
 @override_settings(
     PASSWORD_HASHERS=[
         "django.contrib.auth.hashers.MD5PasswordHasher",
