@@ -20,7 +20,7 @@
         <h1 id="listing-title">{{ listing.title }}</h1>
         <p class="detail-manufacturer-line">
             <a href="{% url 'manufacturer_profile' listing.manufacturer.pk %}">{{ listing.manufacturer.business_name }}</a>
-            <span>{{ listing.manufacturer.city }}, {{ listing.manufacturer.state }}</span>
+            {% if listing.manufacturer.city or listing.manufacturer.state %}<span>{{ listing.manufacturer.city }}{% if listing.manufacturer.city and listing.manufacturer.state %}, {% endif %}{{ listing.manufacturer.state }}</span>{% endif %}
         </p>
     </div>
 
@@ -78,17 +78,16 @@
             <p class="eyebrow">Overview</p>
             <h2 id="service-title">Service details</h2>
             {% if listing.description %}
-                <details class="description-disclosure">
-                    <summary>Read service description</summary>
-                    <div class="description-content">
-                        {{ listing.description|linebreaks }}
-                    </div>
+                <details class="description-disclosure" open>
+                    <summary>Service description</summary>
+                    <div class="description-content">{{ listing.description|linebreaks }}</div>
                 </details>
             {% else %}
                 <p class="muted">No description added yet.</p>
             {% endif %}
         </section>
 
+        {% if listing.machine_type or listing.materials or listing.technical_capabilities or listing.cluster %}
         <section class="detail-section" aria-labelledby="capabilities-title" data-reveal="up">
             <p class="eyebrow">Production details</p>
             <h2 id="capabilities-title">Technical fit</h2>
@@ -99,12 +98,13 @@
                 {% if listing.cluster %}<div><dt>Cluster</dt><dd>{{ listing.cluster }}</dd></div>{% endif %}
             </dl>
         </section>
+        {% endif %}
     </article>
 
     <aside class="manufacturer-trust-panel" aria-labelledby="manufacturer-title" data-reveal="right">
         <p class="eyebrow">Manufacturer profile</p>
         <h2 id="manufacturer-title"><a href="{% url 'manufacturer_profile' listing.manufacturer.pk %}">{{ listing.manufacturer.business_name }}</a></h2>
-        <p class="record-meta">{{ listing.manufacturer.city }}, {{ listing.manufacturer.state }}</p>
+        {% if listing.manufacturer.city or listing.manufacturer.state %}<p class="record-meta">{{ listing.manufacturer.city }}{% if listing.manufacturer.city and listing.manufacturer.state %}, {% endif %}{{ listing.manufacturer.state }}</p>{% endif %}
         <div class="action-links">
             {% for badge in listing.manufacturer.earned_badges %}
                 <span class="trust-badge">{{ badge }}</span>

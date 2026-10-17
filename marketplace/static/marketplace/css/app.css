@@ -6643,6 +6643,11 @@ a {
     color: var(--warning-text);
 }
 
+.description-content {
+    max-width: 72ch;
+    overflow-wrap: anywhere;
+}
+
 @media (max-width: 620px) {
     .container {
         width: min(100% - 24px, 1180px);
