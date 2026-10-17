@@ -182,6 +182,14 @@ class SeededSampleNameTests(TestCase):
 
 
 class ProductionReadinessTests(TestCase):
+    def test_sentry_is_disabled_without_dsn_and_privacy_defaults_are_safe(self):
+        from django.conf import settings
+
+        self.assertFalse(settings.SENTRY_DSN)
+        self.assertFalse(settings.SENTRY_ENABLED)
+        self.assertFalse(settings.SENTRY_SEND_DEFAULT_PII)
+        self.assertEqual(settings.SENTRY_TRACES_SAMPLE_RATE, 0.0)
+
     @override_settings(LEGAL_CONTACT_EMAIL="")
     def test_contact_page_omits_missing_contact_details(self):
         response = self.client.get(reverse("contact"))

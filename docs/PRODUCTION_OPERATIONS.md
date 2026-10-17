@@ -33,6 +33,14 @@ Do not run seed or destructive data commands as part of the build flow.
 - `GOOGLE_ANALYTICS_ID` is optional and remains inactive when unset or until consent is granted.
 - `LEGAL_ENTITY_NAME`, `LEGAL_CONTACT_EMAIL`, `LEGAL_CONTACT_LABEL`, `TERMS_VERSION`, and `PRIVACY_POLICY_VERSION` are configuration values; do not invent missing business details.
 
+**Optional Sentry monitoring**
+- `SENTRY_DSN=` enables Sentry only when populated; leave it blank to keep Sentry disabled.
+- `SENTRY_ENVIRONMENT=production` identifies the deployment environment.
+- `SENTRY_RELEASE=` optionally identifies the deployed release.
+- `SENTRY_TRACES_SAMPLE_RATE=0` keeps performance tracing disabled by default.
+
+Sentry keeps `send_default_pii` disabled, does not capture request bodies, and removes request headers, cookies, query strings, user data, extras, and breadcrumb data before sending an event. It complements Render console logs and does not replace them. To verify it after deployment, configure the DSN, deploy, and cause a controlled error in a protected local/staging-only workflow or a temporary authenticated diagnostic command; do not add a public debug route or trigger an event from a public endpoint. If Sentry fails, use the Render logs and check the DSN/environment/release settings without printing the DSN.
+
 ## Verify a deploy
 
 - Confirm the Render deploy completes without build, migration, or startup errors.

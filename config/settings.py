@@ -55,6 +55,20 @@ def _env_int(name, default):
         ) from exc
 
 
+def _env_float(name, default):
+    value = os.getenv(name)
+
+    if value is None or value.strip() == "":
+        return default
+
+    try:
+        return float(value)
+    except ValueError as exc:
+        raise ImproperlyConfigured(
+            f"{name} must be a numeric value."
+        ) from exc
+
+
 def _env_str(name, default):
     value = os.getenv(name)
 
@@ -523,3 +537,72 @@ LOGGING = {
         },
     },
 }
+
+
+SENTRY_DSN = _env_str("SENTRY_DSN", "").strip()
+
+SENTRY_ENVIRONMENT = _env_str(
+    "SENTRY_ENVIRONMENT",
+    "production" if not DEBUG else "development",
+)
+
+SENTRY_RELEASE = _env_str("SENTRY_RELEASE", "").strip() or None
+
+SENTRY_TRACES_SAMPLE_RATE = _env_float(
+    "SENTRY_TRACES_SAMPLE_RATE",
+    0.0,
+)
+
+SENTRY_SEND_DEFAULT_PII = False
+SENTRY_ENABLED = bool(SENTRY_DSN)
+
+
+def _scrub_sentry_event(event, hint):
+    event.pop("user", None)
+    event.pop("extra", None)
+
+    request = event.get("request")
+    if request:
+        for key in (
+            "body",
+            "cookies",
+            "data",
+            "env",
+            "headers",
+            "query_string",
+        ):
+            request.pop(key, None)
+
+    breadcrumbs = event.get("breadcrumbs", {}).get("values", [])
+    for breadcrumb in breadcrumbs:
+        breadcrumb.pop("data", None)
+
+    return event
+
+
+def _sentry_traces_sampler(sampling_context):
+    transaction_context = sampling_context.get("transaction_context", {})
+    transaction_name = transaction_context.get("name", "")
+    transaction_path = transaction_name.rsplit(" ", 1)[-1]
+
+    if transaction_path.rstrip("/") == "/health" or transaction_name.rstrip("/") == "health":
+        return 0.0
+
+    return SENTRY_TRACES_SAMPLE_RATE
+
+
+if SENTRY_ENABLED:
+    import sentry_sdk
+    from sentry_sdk.integrations.django import DjangoIntegration
+
+    sentry_sdk.init(
+        dsn=SENTRY_DSN,
+        integrations=[DjangoIntegration()],
+        environment=SENTRY_ENVIRONMENT,
+        release=SENTRY_RELEASE,
+        send_default_pii=SENTRY_SEND_DEFAULT_PII,
+        request_bodies="never",
+        traces_sampler=_sentry_traces_sampler,
+        before_send=_scrub_sentry_event,
+        include_local_variables=False,
+    )
