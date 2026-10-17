@@ -23,6 +23,9 @@ CODEX_TASK.md
 docs/*
 !docs/DEMO_ASSET_SOURCES.md
 !docs/LAUNCH_CHECKLIST.md
+!docs/PRODUCTION_DATABASE_RUNBOOK.md
+!docs/PRODUCTION_OPERATIONS.md
+!docs/PRODUCTION_SMOKE_TEST.md
 node_modules/
 playwright-report/
 test-results/

@@ -160,6 +160,26 @@ class SeededSampleNameTests(TestCase):
         self.assertNotContains(response, "Verified business")
 
 
+class ProductionReadinessTests(TestCase):
+    def test_health_endpoint_returns_minimal_ok_response(self):
+        response = self.client.get(reverse("health"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json(), {"status": "ok"})
+        self.assertEqual(
+            set(response.json()),
+            {"status"},
+        )
+
+    def test_pages_use_configured_canonical_origin(self):
+        response = self.client.get(reverse("home"))
+
+        self.assertContains(
+            response,
+            "https://ubhaar-vyapaar.in/",
+        )
+
+
 @override_settings(
     PASSWORD_HASHERS=[
         "django.contrib.auth.hashers.MD5PasswordHasher",
