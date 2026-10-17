@@ -147,6 +147,19 @@
         </div>
     </div>
 
+    {% if query or selected_category or location or moq or max_price or lead_time or verification or sort != "newest" %}
+        <div class="active-filters active-filters-results" aria-label="Applied listing filters">
+            {% if query %}<span>Search: {{ query }}</span>{% endif %}
+            {% for value, label in categories %}{% if selected_category == value %}<span>Category: {{ label }}</span>{% endif %}{% endfor %}
+            {% if location %}<span>Location: {{ location }}</span>{% endif %}
+            {% if moq %}<span>MOQ up to {{ moq }}</span>{% endif %}
+            {% if max_price %}<span>Price up to {{ max_price|inr }}</span>{% endif %}
+            {% if lead_time %}<span>Lead time up to {{ lead_time }} days</span>{% endif %}
+            {% if verification == "verified" %}<span>Verified only</span>{% endif %}
+            {% if sort != "newest" %}<span>Sort: {{ sort|title }}</span>{% endif %}
+        </div>
+    {% endif %}
+
     <div class="listings">
         {% for listing in listings %}
             <article class="listing-card listing-category-{{ listing.category|lower }}" data-reveal="up">
@@ -164,9 +177,10 @@
                         <div class="listing-badges">
                             <span class="listing-category">{{ listing.get_category_display }}</span>
                             {% if listing.manufacturer.is_verified %}<span class="trust-badge">Verified</span><span class="visually-hidden">Verified business</span>{% endif %}
+                            <span class="listing-availability status-{{ listing.availability_status|lower }}">{{ listing.get_availability_status_display }}</span>
                         </div>
                         <h3><a href="{% url 'listing_detail' listing.pk %}">{{ listing.title }}</a></h3>
-                        <p class="company"><a href="{% url 'manufacturer_profile' listing.manufacturer.pk %}">{{ listing.manufacturer.business_name }}</a><span>{{ listing.manufacturer.city }}, {{ listing.manufacturer.state }}</span></p>
+                        <p class="company"><a href="{% url 'manufacturer_profile' listing.manufacturer.pk %}">{{ listing.manufacturer.business_name }}</a>{% if listing.manufacturer.city or listing.manufacturer.state %}<span>{{ listing.manufacturer.city }}{% if listing.manufacturer.city and listing.manufacturer.state %}, {% endif %}{{ listing.manufacturer.state }}</span>{% endif %}</p>
                     </div>
 
                     <div class="listing-commercial">
@@ -176,13 +190,13 @@
                             <div><dt>Lead</dt><dd>{{ listing.production_days }} days</dd></div>
                         </dl>
                         <div class="listing-actions">
-                            <a class="button button-secondary" href="{% url 'listing_detail' listing.pk %}">View</a>
+                            <a class="button button-secondary" href="{% url 'listing_detail' listing.pk %}">View details</a>
                             {% if listing.availability_status == "PAUSED" %}
                                 <span class="button button-disabled" aria-disabled="true">Paused</span>
                             {% elif user.is_authenticated and user.role == "MANUFACTURER" %}
                                 <span class="button button-disabled" aria-disabled="true">Buyer action</span>
                             {% else %}
-                                <a class="button button-primary" href="{% url 'request_quote' listing.pk %}" aria-label="Request a quote">Request quote</a>
+                                <a class="button button-primary" href="{% url 'request_quote' listing.pk %}">Request quote</a>
                             {% endif %}
                         </div>
                     </div>

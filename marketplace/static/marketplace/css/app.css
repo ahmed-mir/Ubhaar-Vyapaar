@@ -6628,6 +6628,21 @@ a {
     }
 }
 
+.listing-badges {
+    flex-wrap: wrap;
+}
+
+.listing-availability {
+    color: var(--type-muted);
+    font-size: 12px;
+    font-weight: 620;
+}
+
+.listing-availability.status-limited,
+.listing-availability.status-paused {
+    color: var(--warning-text);
+}
+
 @media (max-width: 620px) {
     .container {
         width: min(100% - 24px, 1180px);
