@@ -97,7 +97,7 @@
                 {% with current_url=request.resolver_match.url_name %}
 
                 <div class="nav-group nav-group-primary">
-                    <a class="nav-link{% if current_url == 'home' %} nav-link-active{% endif %}" href="{% url 'home' %}">
+                    <a class="nav-link{% if current_url == 'home' %} nav-link-active{% endif %}" href="{% url 'home' %}" {% if current_url == 'home' %}aria-current="page"{% endif %}>
                         Marketplace
                     </a>
 
@@ -258,7 +258,7 @@
                     >
                 </a>
 
-                <p>Connecting buyers with trusted manufacturing capacity.</p>
+                <p>Connecting buyers with manufacturing capacity.</p>
             </div>
 
             <nav class="footer-links" aria-label="Footer navigation">
