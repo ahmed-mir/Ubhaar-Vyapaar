@@ -127,6 +127,30 @@ class MarketplaceDiscoveryTrustTests(TestCase):
 
 
 class SeededSampleNameTests(TestCase):
+    def setUp(self):
+        self.media_root = tempfile.TemporaryDirectory()
+        self.override = override_settings(
+            MEDIA_ROOT=self.media_root.name,
+            STORAGES={
+                "default": {
+                    "BACKEND": "django.core.files.storage.FileSystemStorage",
+                },
+                "staticfiles": {
+                    "BACKEND": (
+                        "django.contrib.staticfiles.storage.StaticFilesStorage"
+                    ),
+                },
+            },
+            PASSWORD_HASHERS=[
+                "django.contrib.auth.hashers.MD5PasswordHasher",
+            ],
+        )
+        self.override.enable()
+
+    def tearDown(self):
+        self.override.disable()
+        self.media_root.cleanup()
+
     def test_seeded_names_stay_sample_classified_and_cleanup_is_idempotent(self):
         call_command("seed_demo_data", stdout=StringIO())
 
