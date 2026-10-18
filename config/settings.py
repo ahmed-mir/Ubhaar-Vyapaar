@@ -93,6 +93,10 @@ DEBUG = os.getenv(
     "False",
 ).lower() == "true"
 
+ALLOW_INDEXING = _env_bool("ALLOW_INDEXING", not DEBUG)
+
+ALLOW_GPTBOT = _env_bool("ALLOW_GPTBOT", False)
+
 
 ALLOWED_HOSTS = [
     host.strip()

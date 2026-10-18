@@ -20,6 +20,7 @@ def platform_readiness(request):
     return {
         "google_analytics_id": settings.GOOGLE_ANALYTICS_ID,
         "site_origin": settings.SITE_ORIGIN,
+        "allow_indexing": settings.ALLOW_INDEXING,
         "legal_entity_name": settings.LEGAL_ENTITY_NAME,
         "legal_contact_email": settings.LEGAL_CONTACT_EMAIL,
         "legal_contact_label": settings.LEGAL_CONTACT_LABEL,

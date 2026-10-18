@@ -147,6 +147,12 @@ def sitemap_xml(request):
 
     listings = CapacityListing.objects.filter(
         Q(is_active=True)
+        & Q(
+            availability_status__in=[
+                CapacityListing.AvailabilityStatus.AVAILABLE,
+                CapacityListing.AvailabilityStatus.LIMITED,
+            ]
+        )
         & (
             Q(manufacturer__is_verified=True)
             | Q(manufacturer__user__username__startswith="demo_mfr_")
@@ -198,22 +204,54 @@ def sitemap_xml(request):
 
 def robots_txt(request):
     sitemap_url = absolute_url(request, reverse("sitemap_xml"))
-    lines = [
-        "User-agent: *",
-        "Disallow: /admin/",
-        "Disallow: /accounts/",
-        "Disallow: /buyer/",
-        "Disallow: /manufacturer/dashboard/",
-        "Disallow: /manufacturer/orders/",
-        "Disallow: /manufacturer/listings/",
-        "Disallow: /my-quote-requests/",
-        "Disallow: /saved-listings/",
-        "Disallow: /orders/",
-        "Disallow: /milestones/",
-        "Disallow: /notifications/",
-        "Allow: /",
-        f"Sitemap: {sitemap_url}",
+    private_paths = [
+        "/admin/",
+        "/accounts/password/change/",
+        "/accounts/password/change/done/",
+        "/buyer/",
+        "/manufacturer/dashboard/",
+        "/manufacturer/orders/",
+        "/manufacturer/listings/",
+        "/my-quote-requests/",
+        "/saved-listings/",
+        "/orders/",
+        "/milestones/",
+        "/notifications/",
     ]
+
+    if not settings.ALLOW_INDEXING:
+        lines = [
+            "User-agent: *",
+            "Disallow: /",
+            "",
+            "User-agent: OAI-SearchBot",
+            "Disallow: /",
+            "",
+            "User-agent: GPTBot",
+            "Disallow: /",
+        ]
+    else:
+        lines = [
+            "User-agent: OAI-SearchBot",
+            *[f"Disallow: {path}" for path in private_paths],
+            "Allow: /",
+            "",
+            "User-agent: GPTBot",
+            *(
+                ["Disallow: /"]
+                if not settings.ALLOW_GPTBOT
+                else [
+                    *[f"Disallow: {path}" for path in private_paths],
+                    "Allow: /",
+                ]
+            ),
+            "",
+            "User-agent: *",
+            *[f"Disallow: {path}" for path in private_paths],
+            "Allow: /",
+        ]
+
+    lines.extend(["", f"Sitemap: {sitemap_url}"])
 
     return HttpResponse(
         "\n".join(lines) + "\n",

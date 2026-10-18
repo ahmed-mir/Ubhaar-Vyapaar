@@ -3,6 +3,11 @@
 
 {% block title %}Find manufacturing capacity | Ubhaar-Vyapaar{% endblock %}
 {% block meta_description %}Search manufacturing capacity by category, location, MOQ, price, and lead time on Ubhaar-Vyapaar.{% endblock %}
+{% block robots_meta %}
+    {% if allow_indexing and query or allow_indexing and selected_category or allow_indexing and location or allow_indexing and moq or allow_indexing and max_price or allow_indexing and lead_time or allow_indexing and verification or allow_indexing and sort != "newest" %}
+        <meta name="robots" content="noindex, follow">
+    {% endif %}
+{% endblock %}
 
 {% block content %}
     {% include "marketplace/includes/home_editorial.html" %}

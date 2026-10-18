@@ -3,6 +3,11 @@
 
 {% block title %}{{ listing.title }} | Ubhaar-Vyapaar{% endblock %}
 {% block meta_description %}{{ listing.title }} by {{ listing.manufacturer.business_name }}. Review MOQ, lead time, price, capacity, and manufacturer details.{% endblock %}
+{% block robots_meta %}
+    {% if allow_indexing and listing.availability_status == "PAUSED" %}
+        <meta name="robots" content="noindex,follow">
+    {% endif %}
+{% endblock %}
 {% block body_attributes %}data-analytics-page-event="listing_view"{% endblock %}
 
 {% block content %}

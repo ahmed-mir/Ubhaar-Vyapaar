@@ -1018,6 +1018,105 @@ class PlatformReadinessTests(TestCase):
         self.assertNotContains(response, "/orders/")
         self.assertNotContains(response, "/notifications/")
         self.assertNotContains(response, "/admin/")
+        self.assertIn(
+            "https://ubhaar-vyapaar.in/listings/",
+            response.content.decode(),
+        )
+
+    def test_sitemap_excludes_paused_and_inactive_listings(self):
+        paused = CapacityListing.objects.create(
+            manufacturer=self.manufacturer,
+            title="Paused packaging capacity",
+            description="Paused listing.",
+            minimum_quantity=25,
+            price_per_unit=Decimal("22.00"),
+            production_days=5,
+            availability_status=CapacityListing.AvailabilityStatus.PAUSED,
+        )
+        inactive = CapacityListing.objects.create(
+            manufacturer=self.manufacturer,
+            title="Removed packaging capacity",
+            description="Inactive listing.",
+            minimum_quantity=25,
+            price_per_unit=Decimal("22.00"),
+            production_days=5,
+            is_active=False,
+        )
+
+        response = self.client.get(reverse("sitemap_xml"))
+        content = response.content.decode()
+
+        self.assertIn(
+            reverse("listing_detail", args=[self.listing.pk]),
+            content,
+        )
+        self.assertNotIn(
+            reverse("listing_detail", args=[paused.pk]),
+            content,
+        )
+        self.assertNotIn(
+            reverse("listing_detail", args=[inactive.pk]),
+            content,
+        )
+
+    @override_settings(ALLOW_INDEXING=True)
+    def test_paused_detail_is_noindex_but_active_detail_is_indexable(self):
+        paused = CapacityListing.objects.create(
+            manufacturer=self.manufacturer,
+            title="Paused detail capacity",
+            description="Paused listing.",
+            minimum_quantity=25,
+            price_per_unit=Decimal("22.00"),
+            production_days=5,
+            availability_status=CapacityListing.AvailabilityStatus.PAUSED,
+        )
+
+        paused_response = self.client.get(
+            reverse("listing_detail", args=[paused.pk]),
+        )
+        active_response = self.client.get(
+            reverse("listing_detail", args=[self.listing.pk]),
+        )
+
+        self.assertContains(
+            paused_response,
+            '<meta name="robots" content="noindex,follow">',
+            html=True,
+        )
+        self.assertNotContains(active_response, 'name="robots"')
+
+    @override_settings(ALLOW_INDEXING=True)
+    def test_public_pages_are_indexable_when_allowed(self):
+        response = self.client.get(reverse("home"))
+
+        self.assertNotContains(response, 'content="noindex,nofollow"')
+
+    @override_settings(ALLOW_INDEXING=False)
+    def test_public_pages_are_noindex_nofollow_when_indexing_disabled(self):
+        response = self.client.get(reverse("home"))
+
+        self.assertContains(
+            response,
+            '<meta name="robots" content="noindex,nofollow">',
+            html=True,
+        )
+
+    @override_settings(ALLOW_GPTBOT=False)
+    def test_robots_disallows_gptbot_when_disabled_and_allows_oai_searchbot(self):
+        response = self.client.get(reverse("robots_txt"))
+        content = response.content.decode()
+
+        self.assertIn("User-agent: OAI-SearchBot", content)
+        self.assertIn("User-agent: GPTBot\nDisallow: /", content)
+
+    @override_settings(ALLOW_INDEXING=True, ALLOW_GPTBOT=True)
+    def test_robots_allows_gptbot_without_overriding_private_disallows(self):
+        response = self.client.get(reverse("robots_txt"))
+        content = response.content.decode()
+
+        self.assertIn("User-agent: GPTBot", content)
+        self.assertIn("Disallow: /admin/", content)
+        self.assertIn("Allow: /", content)
 
     def test_robots_txt_guides_private_area_exclusion(self):
         response = self.client.get(reverse("robots_txt"))
@@ -1025,8 +1124,10 @@ class PlatformReadinessTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response["Content-Type"], "text/plain; charset=utf-8")
         self.assertContains(response, "Disallow: /admin/")
-        self.assertContains(response, "Disallow: /accounts/")
+        self.assertContains(response, "Disallow: /accounts/password/change/")
+        self.assertNotContains(response, "Disallow: /accounts/\n")
         self.assertContains(response, "Disallow: /orders/")
+        self.assertContains(response, "User-agent: OAI-SearchBot")
         self.assertContains(response, "Allow: /")
         self.assertContains(response, "Sitemap:")
 
