@@ -88,6 +88,9 @@ SITE_ORIGIN = _env_str(
     "https://ubhaar-vyapaar.in",
 ).rstrip("/")
 
+GOOGLE_SITE_VERIFICATION = _env_str("GOOGLE_SITE_VERIFICATION", "").strip()
+BING_SITE_VERIFICATION = _env_str("BING_SITE_VERIFICATION", "").strip()
+
 DEBUG = os.getenv(
     "DJANGO_DEBUG",
     "False",

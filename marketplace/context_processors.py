@@ -19,6 +19,8 @@ def notification_count(request):
 def platform_readiness(request):
     return {
         "google_analytics_id": settings.GOOGLE_ANALYTICS_ID,
+        "google_site_verification": settings.GOOGLE_SITE_VERIFICATION,
+        "bing_site_verification": settings.BING_SITE_VERIFICATION,
         "site_origin": settings.SITE_ORIGIN,
         "allow_indexing": settings.ALLOW_INDEXING,
         "legal_entity_name": settings.LEGAL_ENTITY_NAME,

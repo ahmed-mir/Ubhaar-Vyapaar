@@ -13,6 +13,12 @@
         content="{% block meta_description %}Ubhaar-Vyapaar connects buyers with manufacturing capacity, quotations, and order workflows.{% endblock %}"
     >
     <meta name="theme-color" content="#102F3C">
+    {% if google_site_verification %}
+        <meta name="google-site-verification" content="{{ google_site_verification }}">
+    {% endif %}
+    {% if bing_site_verification %}
+        <meta name="msvalidate.01" content="{{ bing_site_verification }}">
+    {% endif %}
     {% if not allow_indexing %}
         {% if request.resolver_match %}
             <meta name="robots" content="noindex,nofollow">

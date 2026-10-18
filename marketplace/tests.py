@@ -523,6 +523,40 @@ class SeededSampleNameTests(TestCase):
 
 
 class ProductionReadinessTests(TestCase):
+    @override_settings(GOOGLE_SITE_VERIFICATION="", BING_SITE_VERIFICATION="")
+    def test_search_engine_verification_tags_are_omitted_when_unset(self):
+        response = self.client.get(reverse("home"))
+
+        self.assertNotContains(response, 'name="google-site-verification"')
+        self.assertNotContains(response, 'name="msvalidate.01"')
+
+    @override_settings(GOOGLE_SITE_VERIFICATION="google-site-token")
+    def test_google_site_verification_tag_renders_when_configured(self):
+        response = self.client.get(reverse("home"))
+
+        self.assertContains(
+            response,
+            '<meta name="google-site-verification" content="google-site-token">',
+        )
+
+    @override_settings(BING_SITE_VERIFICATION="bing-site-token")
+    def test_bing_site_verification_tag_renders_when_configured(self):
+        response = self.client.get(reverse("home"))
+
+        self.assertContains(
+            response,
+            '<meta name="msvalidate.01" content="bing-site-token">',
+        )
+
+    @override_settings(GOOGLE_SITE_VERIFICATION='g&"<tag>')
+    def test_search_engine_verification_values_are_html_escaped(self):
+        response = self.client.get(reverse("home"))
+
+        self.assertContains(
+            response,
+            '<meta name="google-site-verification" content="g&amp;&quot;&lt;tag&gt;">',
+        )
+
     def test_sentry_is_disabled_without_dsn_and_privacy_defaults_are_safe(self):
         from django.conf import settings
 
