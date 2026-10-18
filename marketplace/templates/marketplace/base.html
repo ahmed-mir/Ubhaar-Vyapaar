@@ -23,8 +23,18 @@
     {% block robots_meta %}{% endblock %}
     <link
         rel="canonical"
-        href="{% block canonical_url %}{{ site_origin }}{{ request.path }}{% endblock %}"
+        href="{{ canonical_url }}"
     >
+
+    <meta property="og:title" content="{% block social_title %}Ubhaar-Vyapaar | Manufacturing Marketplace{% endblock %}">
+    <meta property="og:description" content="{% block social_description %}Connect with manufacturing capacity, compare listings, and request quotations on Ubhaar-Vyapaar.{% endblock %}">
+    <meta property="og:url" content="{{ canonical_url }}">
+    <meta property="og:type" content="website">
+    <meta property="og:image" content="{% block social_image %}{{ site_origin }}{% static 'marketplace/images/brand/apple-touch-icon.png' %}{% endblock %}">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="{% block twitter_title %}Ubhaar-Vyapaar | Manufacturing Marketplace{% endblock %}">
+    <meta name="twitter:description" content="{% block twitter_description %}Connect with manufacturing capacity, compare listings, and request quotations on Ubhaar-Vyapaar.{% endblock %}">
+    <meta name="twitter:image" content="{% block twitter_image %}{{ site_origin }}{% static 'marketplace/images/brand/apple-touch-icon.png' %}{% endblock %}">
 
     <title>
         {% block title %}

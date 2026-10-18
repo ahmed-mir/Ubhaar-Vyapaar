@@ -24,4 +24,5 @@ def platform_readiness(request):
         "legal_entity_name": settings.LEGAL_ENTITY_NAME,
         "legal_contact_email": settings.LEGAL_CONTACT_EMAIL,
         "legal_contact_label": settings.LEGAL_CONTACT_LABEL,
+        "canonical_url": f"{settings.SITE_ORIGIN}{request.path}",
     }

@@ -1,13 +1,18 @@
 {% extends "marketplace/base.html" %}
 {% load currency %}
 
-{% block title %}Find manufacturing capacity | Ubhaar-Vyapaar{% endblock %}
-{% block meta_description %}Search manufacturing capacity by category, location, MOQ, price, and lead time on Ubhaar-Vyapaar.{% endblock %}
+{% block title %}Find manufacturing capacity{% if page_obj.number > 1 %} | Page {{ page_obj.number }}{% endif %} | Ubhaar-Vyapaar{% endblock %}
+{% block meta_description %}Search manufacturing capacity by category, location, MOQ, price, and lead time on Ubhaar-Vyapaar.{% if page_obj.number > 1 %} Page {{ page_obj.number }}.{% endif %}{% endblock %}
+{% block social_title %}Find manufacturing capacity{% if page_obj.number > 1 %} | Page {{ page_obj.number }}{% endif %} | Ubhaar-Vyapaar{% endblock %}
+{% block social_description %}Search manufacturing capacity by category, location, MOQ, price, and lead time on Ubhaar-Vyapaar.{% endblock %}
+{% block twitter_title %}Find manufacturing capacity{% if page_obj.number > 1 %} | Page {{ page_obj.number }}{% endif %} | Ubhaar-Vyapaar{% endblock %}
+{% block twitter_description %}Search manufacturing capacity by category, location, MOQ, price, and lead time on Ubhaar-Vyapaar.{% endblock %}
 {% block robots_meta %}
-    {% if allow_indexing and query or allow_indexing and selected_category or allow_indexing and location or allow_indexing and moq or allow_indexing and max_price or allow_indexing and lead_time or allow_indexing and verification or allow_indexing and sort != "newest" %}
+    {% if allow_indexing and has_marketplace_filters %}
         <meta name="robots" content="noindex, follow">
     {% endif %}
 {% endblock %}
+{% block canonical_url %}{{ canonical_url }}{% endblock %}
 
 {% block content %}
     {% include "marketplace/includes/home_editorial.html" %}

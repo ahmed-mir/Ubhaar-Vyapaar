@@ -206,9 +206,9 @@
 
     {% if page_obj.has_other_pages %}
         <nav class="pagination" aria-label="Listing pages">
-            {% if page_obj.has_previous %}<a class="button button-secondary" href="?q={{ query|urlencode }}&amp;category={{ selected_category|urlencode }}&amp;location={{ location|urlencode }}&amp;moq={{ moq|urlencode }}&amp;max_price={{ max_price|urlencode }}&amp;lead_time={{ lead_time|urlencode }}&amp;verification={{ verification|urlencode }}&amp;sort={{ sort|urlencode }}&amp;page={{ page_obj.previous_page_number }}">&larr; Previous</a>{% endif %}
+            {% if page_obj.has_previous %}<a class="button button-secondary" href="?{% if pagination_query %}{{ pagination_query }}&amp;{% endif %}page={{ page_obj.previous_page_number }}">&larr; Previous</a>{% endif %}
             <span aria-current="page">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
-            {% if page_obj.has_next %}<a class="button button-secondary" href="?q={{ query|urlencode }}&amp;category={{ selected_category|urlencode }}&amp;location={{ location|urlencode }}&amp;moq={{ moq|urlencode }}&amp;max_price={{ max_price|urlencode }}&amp;lead_time={{ lead_time|urlencode }}&amp;verification={{ verification|urlencode }}&amp;sort={{ sort|urlencode }}&amp;page={{ page_obj.next_page_number }}">Next &rarr;</a>{% endif %}
+            {% if page_obj.has_next %}<a class="button button-secondary" href="?{% if pagination_query %}{{ pagination_query }}&amp;{% endif %}page={{ page_obj.next_page_number }}">Next &rarr;</a>{% endif %}
         </nav>
     {% endif %}
 </section>

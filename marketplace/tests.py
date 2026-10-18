@@ -24,6 +24,9 @@ from .models import (
 from .views import build_order_financial_summary, build_order_timeline
 
 
+@override_settings(
+    PASSWORD_HASHERS=["django.contrib.auth.hashers.MD5PasswordHasher"],
+)
 class MarketplaceDiscoveryTrustTests(TestCase):
     def setUp(self):
         User = get_user_model()
@@ -63,6 +66,82 @@ class MarketplaceDiscoveryTrustTests(TestCase):
             production_days=5,
             availability_status=status,
             is_active=True,
+        )
+
+    @override_settings(ALLOW_INDEXING=True)
+    def test_marketplace_page_two_has_page_title_and_self_canonical(self):
+        for index in range(7):
+            self.create_listing(self.verified, f"Capacity {index}")
+
+        response = self.client.get(reverse("home"), {"page": 2})
+        content = response.content.decode()
+
+        self.assertIn("Page 2", content.split("<title>", 1)[1].split("</title>", 1)[0])
+        self.assertIn('href="https://ubhaar-vyapaar.in/?page=2"', content)
+
+    @override_settings(ALLOW_INDEXING=True)
+    def test_search_url_is_noindex_follow_and_canonicalizes_to_marketplace(self):
+        response = self.client.get(reverse("home"), {"q": "steel"})
+        content = response.content.decode()
+
+        self.assertIn('<meta name="robots" content="noindex, follow">', content)
+        self.assertIn('href="https://ubhaar-vyapaar.in/"', content)
+
+    @override_settings(ALLOW_INDEXING=True)
+    def test_clean_marketplace_url_has_no_filtered_page_noindex(self):
+        response = self.client.get(reverse("home"))
+
+        self.assertNotContains(response, 'name="robots" content="noindex, follow"')
+
+    @override_settings(ALLOW_INDEXING=True)
+    def test_pagination_drops_empty_and_default_parameters(self):
+        for index in range(7):
+            self.create_listing(self.verified, f"Steel capacity {index}")
+
+        response = self.client.get(
+            reverse("home"),
+            {"q": "steel", "sort": "newest", "category": "", "page": 1},
+        )
+
+        self.assertContains(response, 'href="?q=steel&amp;page=2"')
+        content = response.content.decode()
+        pagination = content.split('<nav class="pagination"', 1)[1].split("</nav>", 1)[0]
+        self.assertNotRegex(pagination, r'href="\?[^\"]*(?:sort=newest|category=)')
+
+    @override_settings(ALLOW_INDEXING=True)
+    def test_shared_social_tags_render_and_listing_image_is_used(self):
+        listing = self.create_listing(self.verified, "Steel fabrication")
+        listing.image = "listings/steel-fabrication.jpg"
+        listing.save(update_fields=["image"])
+
+        response = self.client.get(reverse("listing_detail", args=[listing.pk]))
+
+        self.assertContains(response, 'property="og:title"')
+        self.assertContains(response, 'property="og:description"')
+        self.assertContains(response, 'property="og:url"')
+        self.assertContains(response, 'property="og:type" content="website"')
+        self.assertContains(response, 'name="twitter:card" content="summary_large_image"')
+        self.assertContains(response, 'name="twitter:title"')
+        self.assertContains(response, 'name="twitter:description"')
+        self.assertContains(response, 'name="twitter:image"')
+        self.assertContains(
+            response,
+            'content="https://ubhaar-vyapaar.in/media/listings/steel-fabrication.jpg"',
+        )
+
+    @override_settings(ALLOW_INDEXING=True)
+    def test_social_image_falls_back_to_brand_icon_without_listing_image(self):
+        listing = self.create_listing(self.verified, "Steel fabrication")
+
+        response = self.client.get(reverse("listing_detail", args=[listing.pk]))
+
+        self.assertContains(
+            response,
+            'property="og:image" content="https://ubhaar-vyapaar.in/static/marketplace/images/brand/apple-touch-icon.png"',
+        )
+        self.assertContains(
+            response,
+            'name="twitter:image" content="https://ubhaar-vyapaar.in/static/marketplace/images/brand/apple-touch-icon.png"',
         )
 
     def test_paused_listings_follow_available_listings_in_default_discovery(self):

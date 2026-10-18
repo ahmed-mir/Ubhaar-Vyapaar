@@ -12,7 +12,7 @@ from xml.sax.saxutils import escape
 from django.conf import settings
 from django.http import HttpResponse, JsonResponse
 from django.urls import reverse
-from urllib.parse import urljoin
+from urllib.parse import urlencode, urljoin
 
 from .forms import (
     CapacityListingEditForm,
@@ -773,6 +773,12 @@ def home(request):
     if verification and verification != "verified":
         verification = ""
 
+    if not moq.isdigit():
+        moq = ""
+
+    if not lead_time.isdigit():
+        lead_time = ""
+
     listings = listings.annotate(
         paused_rank=Case(
             When(
@@ -794,6 +800,29 @@ def home(request):
     paginator = Paginator(listings, 6)
     page_obj = paginator.get_page(request.GET.get("page"))
 
+    has_marketplace_filters = any(
+        (query, selected_category, location, moq, max_price, lead_time, verification)
+    ) or sort != "newest"
+    canonical_url = f"{settings.SITE_ORIGIN}{request.path}"
+    if page_obj.number > 1 and not has_marketplace_filters:
+        canonical_url = f"{canonical_url}?page={page_obj.number}"
+
+    pagination_params = {
+        key: value
+        for key, value in {
+            "q": query,
+            "category": selected_category,
+            "location": location,
+            "moq": moq,
+            "max_price": max_price,
+            "lead_time": lead_time,
+            "verification": verification,
+            "sort": sort if sort != "newest" else "",
+        }.items()
+        if value
+    }
+    pagination_query = urlencode(pagination_params)
+
     return render(
         request,
         "marketplace/home.html",
@@ -811,6 +840,9 @@ def home(request):
             "lead_time": lead_time,
             "verification": verification,
             "sort": sort,
+            "has_marketplace_filters": has_marketplace_filters,
+            "canonical_url": canonical_url,
+            "pagination_query": pagination_query,
         },
     )
 def listing_detail(request, pk):
@@ -830,12 +862,19 @@ def listing_detail(request, pk):
             listing=listing,
         ).exists()
 
+    social_image_url = (
+        urljoin(f"{settings.SITE_ORIGIN}/", listing.image.url)
+        if listing.image
+        else ""
+    )
+
     return render(
         request,
         "marketplace/listing_detail.html",
         {
             "listing": listing,
             "is_saved": is_saved,
+            "social_image_url": social_image_url,
         },
     )
 @login_required
@@ -2086,6 +2125,9 @@ def manufacturer_profile(request, pk):
 
     paginator = Paginator(listings, 9)
     page_obj = paginator.get_page(request.GET.get("page"))
+    canonical_url = f"{settings.SITE_ORIGIN}{request.path}"
+    if page_obj.number > 1:
+        canonical_url = f"{canonical_url}?page={page_obj.number}"
 
     return render(
         request,
@@ -2093,6 +2135,7 @@ def manufacturer_profile(request, pk):
         {
             "manufacturer": manufacturer,
             "page_obj": page_obj,
+            "canonical_url": canonical_url,
         },
     )
 @login_required
