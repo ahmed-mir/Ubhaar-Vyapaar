@@ -1,5 +1,5 @@
 {% extends "marketplace/base.html" %}
-{% load currency %}
+{% load currency structured_data %}
 
 {% block title %}Find manufacturing capacity{% if page_obj.number > 1 %} | Page {{ page_obj.number }}{% endif %} | Ubhaar-Vyapaar{% endblock %}
 {% block meta_description %}Search manufacturing capacity by category, location, MOQ, price, and lead time on Ubhaar-Vyapaar.{% if page_obj.number > 1 %} Page {{ page_obj.number }}.{% endif %}{% endblock %}
@@ -13,6 +13,10 @@
     {% endif %}
 {% endblock %}
 {% block canonical_url %}{{ canonical_url }}{% endblock %}
+{% block structured_data %}
+    {% json_ld organization_schema "organization-jsonld" %}
+    {% json_ld website_schema "website-jsonld" %}
+{% endblock %}
 
 {% block content %}
     {% include "marketplace/includes/home_editorial.html" %}

@@ -1,17 +1,21 @@
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
-from django.core.exceptions import PermissionDenied
-from django.shortcuts import get_object_or_404, redirect, render
+from django.core.exceptions import PermissionDenied, ValidationError
+from django.core.validators import validate_email
 from django.core.paginator import Paginator
+from django.db.models import Case, Count, IntegerField, Q, When
 from django.db import transaction
-from django.views.decorators.http import require_http_methods
 from django.utils import timezone
+from django.shortcuts import get_object_or_404, redirect, render
+from django.views.decorators.http import require_http_methods, require_POST
 from decimal import Decimal, InvalidOperation
+from urllib.parse import urlencode, urljoin
 from xml.sax.saxutils import escape
 
 from django.conf import settings
 from django.http import HttpResponse, JsonResponse
 from django.urls import reverse
+from django.templatetags.static import static
 from urllib.parse import urlencode, urljoin
 
 from .forms import (
@@ -34,10 +38,41 @@ from .models import (
     Review,
     SavedListing,
 )
-from django.db.models import Case, Count, IntegerField, Q, When
-from django.views.decorators.http import require_POST
 
 
+def _absolute_site_url(path="/"):
+    return urljoin(f"{settings.SITE_ORIGIN}/", path)
+
+
+def _is_real_configured_email(value):
+    email = (value or "").strip()
+    if not email:
+        return False
+
+    try:
+        validate_email(email)
+    except ValidationError:
+        return False
+
+    domain = email.rsplit("@", 1)[-1].lower()
+    reserved_domains = {"example.com", "example.org", "example.net", "example"}
+    return domain not in reserved_domains and not (
+        domain.endswith(".example") or domain.endswith(".test")
+    )
+
+
+def _manufacturer_schema(manufacturer):
+    profile_url = _absolute_site_url(
+        reverse("manufacturer_profile", kwargs={"pk": manufacturer.pk})
+    )
+    organization = {
+        "@type": "Organization",
+        "name": manufacturer.business_name,
+        "url": profile_url,
+    }
+    if manufacturer.description:
+        organization["description"] = manufacturer.description
+    return organization
 def legal_page_context():
     return {
         "legal_entity_name": settings.LEGAL_ENTITY_NAME,
@@ -823,6 +858,27 @@ def home(request):
     }
     pagination_query = urlencode(pagination_params)
 
+    site_url = _absolute_site_url()
+    organization_schema = {
+        "@context": "https://schema.org",
+        "@type": "Organization",
+        "name": "Ubhaar-Vyapaar",
+        "url": site_url,
+        "logo": _absolute_site_url(
+            static("marketplace/images/brand/logo.svg")
+        ),
+    }
+    if _is_real_configured_email(settings.LEGAL_CONTACT_EMAIL):
+        organization_schema["email"] = settings.LEGAL_CONTACT_EMAIL.strip()
+
+    website_schema = {
+        "@context": "https://schema.org",
+        "@type": "WebSite",
+        "name": "Ubhaar-Vyapaar",
+        "alternateName": "Ubhaar Vyapaar",
+        "url": site_url,
+    }
+
     return render(
         request,
         "marketplace/home.html",
@@ -843,6 +899,8 @@ def home(request):
             "has_marketplace_filters": has_marketplace_filters,
             "canonical_url": canonical_url,
             "pagination_query": pagination_query,
+            "organization_schema": organization_schema,
+            "website_schema": website_schema,
         },
     )
 def listing_detail(request, pk):
@@ -867,6 +925,66 @@ def listing_detail(request, pk):
         if listing.image
         else ""
     )
+    listing_url = _absolute_site_url(
+        reverse("listing_detail", kwargs={"pk": listing.pk})
+    )
+    marketplace_url = _absolute_site_url(reverse("home"))
+    breadcrumb_schema = {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+            {
+                "@type": "ListItem",
+                "position": 1,
+                "name": "Marketplace",
+                "item": marketplace_url,
+            },
+            {
+                "@type": "ListItem",
+                "position": 2,
+                "name": listing.title,
+                "item": listing_url,
+            },
+        ],
+    }
+    service_schema = {
+        "@context": "https://schema.org",
+        "@type": "Service",
+        "name": listing.title,
+        "url": listing_url,
+        "provider": _manufacturer_schema(listing.manufacturer),
+    }
+    if listing.description:
+        service_schema["description"] = listing.description
+    if social_image_url:
+        service_schema["image"] = social_image_url
+
+    availability = {
+        CapacityListing.AvailabilityStatus.AVAILABLE: "https://schema.org/InStock",
+        CapacityListing.AvailabilityStatus.LIMITED: "https://schema.org/LimitedAvailability",
+    }.get(listing.availability_status)
+    if (
+        listing.is_active
+        and listing.manufacturer.is_verified
+        and not listing.manufacturer.is_demo
+        and availability
+        and listing.price_per_unit is not None
+        and listing.price_per_unit > 0
+    ):
+        price = format(listing.price_per_unit, "f")
+        service_schema["offers"] = {
+            "@type": "Offer",
+            "url": listing_url,
+            "price": price,
+            "priceCurrency": "INR",
+            "availability": availability,
+            "priceSpecification": {
+                "@type": "UnitPriceSpecification",
+                "price": price,
+                "priceCurrency": "INR",
+                "unitText": "unit",
+            },
+        }
 
     return render(
         request,
@@ -875,6 +993,8 @@ def listing_detail(request, pk):
             "listing": listing,
             "is_saved": is_saved,
             "social_image_url": social_image_url,
+            "breadcrumb_schema": breadcrumb_schema,
+            "service_schema": service_schema,
         },
     )
 @login_required
@@ -2129,6 +2249,26 @@ def manufacturer_profile(request, pk):
     if page_obj.number > 1:
         canonical_url = f"{canonical_url}?page={page_obj.number}"
 
+    marketplace_url = _absolute_site_url(reverse("home"))
+    breadcrumb_schema = {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+            {
+                "@type": "ListItem",
+                "position": 1,
+                "name": "Marketplace",
+                "item": marketplace_url,
+            },
+            {
+                "@type": "ListItem",
+                "position": 2,
+                "name": manufacturer.business_name,
+                "item": canonical_url,
+            },
+        ],
+    }
+
     return render(
         request,
         "marketplace/manufacturer_profile.html",
@@ -2136,6 +2276,11 @@ def manufacturer_profile(request, pk):
             "manufacturer": manufacturer,
             "page_obj": page_obj,
             "canonical_url": canonical_url,
+            "manufacturer_schema": {
+                "@context": "https://schema.org",
+                **_manufacturer_schema(manufacturer),
+            },
+            "breadcrumb_schema": breadcrumb_schema,
         },
     )
 @login_required

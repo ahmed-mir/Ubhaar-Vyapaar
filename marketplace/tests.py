@@ -1,5 +1,7 @@
 from decimal import Decimal
+import json
 from io import StringIO
+import re
 import tempfile
 
 from django.contrib.auth import get_user_model
@@ -22,6 +24,19 @@ from .models import (
     SavedListing,
 )
 from .views import build_order_financial_summary, build_order_timeline
+
+
+JSON_LD_PATTERN = re.compile(
+    r'<script\b[^>]*type="application/ld\+json"[^>]*>(.*?)</script>',
+    re.DOTALL,
+)
+
+
+def parse_json_ld(response):
+    return [
+        json.loads(payload)
+        for payload in JSON_LD_PATTERN.findall(response.content.decode())
+    ]
 
 
 @override_settings(
@@ -143,6 +158,139 @@ class MarketplaceDiscoveryTrustTests(TestCase):
             response,
             'name="twitter:image" content="https://ubhaar-vyapaar.in/static/marketplace/images/brand/apple-touch-icon.png"',
         )
+
+    @override_settings(ALLOW_INDEXING=True, LEGAL_CONTACT_EMAIL="")
+    def test_homepage_emits_parseable_organization_and_website_schema(self):
+        response = self.client.get(reverse("home"))
+        schemas = parse_json_ld(response)
+
+        organization = next(item for item in schemas if item["@type"] == "Organization")
+        website = next(item for item in schemas if item["@type"] == "WebSite")
+
+        self.assertEqual(organization["name"], "Ubhaar-Vyapaar")
+        self.assertEqual(organization["url"], "https://ubhaar-vyapaar.in/")
+        self.assertTrue(organization["logo"].startswith("https://ubhaar-vyapaar.in/"))
+        self.assertNotIn("email", organization)
+        self.assertEqual(website["name"], "Ubhaar-Vyapaar")
+        self.assertEqual(website["alternateName"], "Ubhaar Vyapaar")
+        self.assertEqual(website["url"], "https://ubhaar-vyapaar.in/")
+
+    @override_settings(ALLOW_INDEXING=True, LEGAL_CONTACT_EMAIL="schema@ubhaar-vyapaar.in")
+    def test_homepage_includes_configured_real_organization_email(self):
+        schemas = parse_json_ld(self.client.get(reverse("home")))
+        organization = next(item for item in schemas if item["@type"] == "Organization")
+
+        self.assertEqual(organization["email"], "schema@ubhaar-vyapaar.in")
+
+    @override_settings(ALLOW_INDEXING=True, LEGAL_CONTACT_EMAIL="support@example.com")
+    def test_homepage_omits_placeholder_organization_email(self):
+        schemas = parse_json_ld(self.client.get(reverse("home")))
+        organization = next(item for item in schemas if item["@type"] == "Organization")
+
+        self.assertNotIn("email", organization)
+
+    @override_settings(ALLOW_INDEXING=True)
+    def test_listing_schema_uses_real_values_and_safe_json_serialization(self):
+        description = 'Machine makes "parts" </script><script>alert("x")</script> & more.'
+        listing = self.create_listing(self.verified, "Precision parts")
+        listing.description = description
+        listing.image = "listings/precision-parts.jpg"
+        listing.save(update_fields=["description", "image"])
+
+        response = self.client.get(reverse("listing_detail", args=[listing.pk]))
+        schemas = parse_json_ld(response)
+        service = next(item for item in schemas if item["@type"] == "Service")
+        breadcrumb = next(item for item in schemas if item["@type"] == "BreadcrumbList")
+
+        self.assertEqual(service["name"], listing.title)
+        self.assertEqual(service["description"], description)
+        self.assertEqual(service["provider"]["name"], self.verified.business_name)
+        self.assertEqual(service["image"], "https://ubhaar-vyapaar.in/media/listings/precision-parts.jpg")
+        self.assertEqual(service["url"], f"https://ubhaar-vyapaar.in{reverse('listing_detail', args=[listing.pk])}")
+        self.assertEqual([item["position"] for item in breadcrumb["itemListElement"]], [1, 2])
+        self.assertEqual(breadcrumb["itemListElement"][0]["item"], "https://ubhaar-vyapaar.in/")
+        self.assertEqual(breadcrumb["itemListElement"][1]["item"], service["url"])
+        self.assertNotIn("</script><script>alert", response.content.decode())
+        self.assertNotIn("Product", str(schemas))
+        self.assertNotIn("AggregateRating", str(schemas))
+        self.assertNotIn("ratingValue", str(schemas))
+        self.assertNotIn("reviewCount", str(schemas))
+
+    @override_settings(ALLOW_INDEXING=True)
+    def test_listing_with_nonpositive_price_has_no_offer(self):
+        listing = self.create_listing(self.verified, "Price pending")
+        listing.price_per_unit = Decimal("0.00")
+        listing.save(update_fields=["price_per_unit"])
+
+        schemas = parse_json_ld(self.client.get(reverse("listing_detail", args=[listing.pk])))
+        service = next(item for item in schemas if item["@type"] == "Service")
+
+        self.assertNotIn("offers", service)
+
+    @override_settings(ALLOW_INDEXING=True)
+    def test_paused_listing_has_no_offer(self):
+        listing = self.create_listing(
+            self.verified,
+            "Temporarily paused capacity",
+            CapacityListing.AvailabilityStatus.PAUSED,
+        )
+
+        schemas = parse_json_ld(self.client.get(reverse("listing_detail", args=[listing.pk])))
+        service = next(item for item in schemas if item["@type"] == "Service")
+
+        self.assertNotIn("offers", service)
+
+    @override_settings(ALLOW_INDEXING=True)
+    def test_real_active_listing_has_semantically_per_unit_inr_offer(self):
+        listing = self.create_listing(self.verified, "Available fabrication")
+        listing.price_per_unit = Decimal("12.50")
+        listing.availability_status = CapacityListing.AvailabilityStatus.LIMITED
+        listing.save(update_fields=["price_per_unit", "availability_status"])
+
+        schemas = parse_json_ld(self.client.get(reverse("listing_detail", args=[listing.pk])))
+        service = next(item for item in schemas if item["@type"] == "Service")
+        offer = service["offers"]
+
+        self.assertEqual(offer["@type"], "Offer")
+        self.assertEqual(offer["price"], "12.50")
+        self.assertEqual(offer["priceCurrency"], "INR")
+        self.assertEqual(offer["availability"], "https://schema.org/LimitedAvailability")
+        self.assertEqual(offer["priceSpecification"]["@type"], "UnitPriceSpecification")
+        self.assertEqual(offer["priceSpecification"]["unitText"], "unit")
+
+    @override_settings(ALLOW_INDEXING=True)
+    def test_sample_listing_has_no_offer_or_false_verification_claim(self):
+        listing = self.create_listing(self.demo, "Sample capacity")
+
+        schemas = parse_json_ld(self.client.get(reverse("listing_detail", args=[listing.pk])))
+        service = next(item for item in schemas if item["@type"] == "Service")
+
+        self.assertNotIn("offers", service)
+        self.assertNotIn("isVerified", str(schemas))
+        self.assertNotIn("verified", str(schemas).lower())
+
+    @override_settings(ALLOW_INDEXING=True)
+    def test_manufacturer_profile_emits_parseable_organization_and_breadcrumb(self):
+        response = self.client.get(reverse("manufacturer_profile", args=[self.verified.pk]))
+        schemas = parse_json_ld(response)
+        organization = next(item for item in schemas if item["@type"] == "Organization")
+        breadcrumb = next(item for item in schemas if item["@type"] == "BreadcrumbList")
+
+        self.assertEqual(organization["name"], self.verified.business_name)
+        self.assertEqual(organization["url"], f"https://ubhaar-vyapaar.in{reverse('manufacturer_profile', args=[self.verified.pk])}")
+        self.assertEqual([item["position"] for item in breadcrumb["itemListElement"]], [1, 2])
+        self.assertEqual(breadcrumb["itemListElement"][1]["name"], self.verified.business_name)
+        self.assertNotIn("isVerified", str(schemas))
+
+    @override_settings(ALLOW_INDEXING=True)
+    def test_sample_manufacturer_profile_does_not_claim_verification(self):
+        response = self.client.get(reverse("manufacturer_profile", args=[self.demo.pk]))
+        schemas = parse_json_ld(response)
+        organization = next(item for item in schemas if item["@type"] == "Organization")
+
+        self.assertEqual(organization["name"], self.demo.business_name)
+        self.assertNotIn("isVerified", str(schemas))
+        self.assertNotIn("verified", str(schemas).lower())
 
     def test_paused_listings_follow_available_listings_in_default_discovery(self):
         paused = self.create_listing(

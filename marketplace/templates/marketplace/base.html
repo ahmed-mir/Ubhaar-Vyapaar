@@ -1,4 +1,4 @@
-{% load static %}
+{% load static structured_data %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -35,6 +35,7 @@
     <meta name="twitter:title" content="{% block twitter_title %}Ubhaar-Vyapaar | Manufacturing Marketplace{% endblock %}">
     <meta name="twitter:description" content="{% block twitter_description %}Connect with manufacturing capacity, compare listings, and request quotations on Ubhaar-Vyapaar.{% endblock %}">
     <meta name="twitter:image" content="{% block twitter_image %}{{ site_origin }}{% static 'marketplace/images/brand/apple-touch-icon.png' %}{% endblock %}">
+    {% block structured_data %}{% endblock %}
 
     <title>
         {% block title %}

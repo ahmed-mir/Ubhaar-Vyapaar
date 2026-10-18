@@ -1,8 +1,13 @@
 {% extends "marketplace/base.html" %}
+{% load structured_data %}
 
 {% block title %}{{ manufacturer.business_name }}{% if page_obj.number > 1 %} | Page {{ page_obj.number }}{% endif %} | Ubhaar-Vyapaar{% endblock %}
 {% block meta_description %}View {{ manufacturer.business_name }} on Ubhaar-Vyapaar, including public manufacturing listings, location, trust indicators, and buyer reviews.{% if page_obj.number > 1 %} Page {{ page_obj.number }}.{% endif %}{% endblock %}
 {% block canonical_url %}{{ canonical_url }}{% endblock %}
+{% block structured_data %}
+    {% json_ld breadcrumb_schema "manufacturer-breadcrumb-jsonld" %}
+    {% json_ld manufacturer_schema "manufacturer-organization-jsonld" %}
+{% endblock %}
 
 {% block content %}
     <a class="back-link" href="{% url 'home' %}">
