@@ -1,7 +1,7 @@
 {% extends "marketplace/base.html" %}
 
 {% block title %}Refund & Cancellation Policy | Ubhaar-Vyapaar{% endblock %}
-{% block meta_description %}Review the Ubhaar-Vyapaar refund and cancellation policy for the current prototype and simulated funding workflows.{% endblock %}
+{% block meta_description %}Review how cancellations and refunds work for orders on Ubhaar-Vyapaar.{% endblock %}
 
 {% block content %}
     <article class="legal-page">
@@ -10,8 +10,8 @@
                 <p class="eyebrow">Payments and cancellations</p>
                 <h1>Refund &amp; Cancellation Policy</h1>
                 <p>
-                    This policy reflects the current prototype. It does not describe
-                    a real payment-processing or escrow service.
+                    This policy describes the payment and cancellation functionality
+                    currently available on Ubhaar-Vyapaar.
                 </p>
             </div>
         </header>
@@ -33,24 +33,13 @@
         </section>
 
         <section class="legal-section">
-            <h2>Current cancellation functionality</h2>
+            <h2>Order cancellations</h2>
             <p>
-                The data model contains order statuses such as cancelled or disputed,
-                but the current user-facing code audit did not identify a safe
-                buyer/manufacturer order-cancellation workflow. This page does not
-                advertise self-service cancellation functionality that is not
-                implemented.
+                The application does not currently provide a self-service order
+                cancellation workflow. Buyers and manufacturers should resolve
+                cancellation requests directly with one another.
             </p>
         </section>
 
-        <section class="legal-section">
-            <h2>Future policy review</h2>
-            <p>
-                If real payments, escrow, refunds, cancellations, platform fees, or
-                payment-provider integrations are introduced later, this policy must
-                be replaced with business-approved and legally reviewed terms before
-                launch.
-            </p>
-        </section>
     </article>
 {% endblock %}

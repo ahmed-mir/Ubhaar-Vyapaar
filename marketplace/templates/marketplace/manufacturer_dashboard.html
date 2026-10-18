@@ -36,7 +36,9 @@
                 {{ manufacturer.city }}, {{ manufacturer.state }}
             </p>
 
-            {% if manufacturer.is_verified %}
+            {% if manufacturer.is_demo %}
+                <span class="sample-badge">Sample manufacturer</span>
+            {% elif manufacturer.is_publicly_verified %}
                 <span class="trust-badge">Verified manufacturer</span>
                 <p>
                     Active listings can appear in marketplace search.

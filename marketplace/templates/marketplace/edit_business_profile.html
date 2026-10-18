@@ -10,7 +10,9 @@
 
         <h1 id="profile-title">Business profile</h1>
 
-        {% if manufacturer.is_verified %}
+        {% if manufacturer.is_demo %}
+            <span class="sample-badge">Sample manufacturer</span>
+        {% elif manufacturer.is_publicly_verified %}
             <span class="status-pill status-accepted">
                 Verified business
             </span>

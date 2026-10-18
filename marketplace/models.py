@@ -45,7 +45,7 @@ class ManufacturerProfile(models.Model):
     def earned_badges(self):
         badges = []
 
-        if self.is_verified or self.kyc_status == self.KycStatus.VERIFIED:
+        if self.is_publicly_verified:
             badges.append("Verified Manufacturer")
 
         average = self.average_rating
@@ -54,6 +54,11 @@ class ManufacturerProfile(models.Model):
             badges.append("Top Rated")
 
         return badges
+
+    @property
+    def is_publicly_verified(self):
+        """Whether public surfaces may claim this manufacturer is verified."""
+        return self.is_verified and not self.is_demo
 
     @property
     def is_demo(self):

@@ -51,7 +51,7 @@
                 <div class="detail-badge-row">
                     <span class="listing-category">{{ listing.get_category_display }}</span>
 
-                    {% if listing.manufacturer.is_verified %}
+                    {% if listing.manufacturer.is_publicly_verified %}
                         <span class="trust-badge">Verified manufacturer</span>
                     {% endif %}
 

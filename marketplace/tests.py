@@ -3,6 +3,7 @@ import json
 from io import StringIO
 import re
 import tempfile
+from unittest.mock import PropertyMock, patch
 
 from django.contrib.auth import get_user_model
 from django.core.management import call_command
@@ -328,6 +329,95 @@ class MarketplaceDiscoveryTrustTests(TestCase):
         self.assertIn("Verified business", content)
         self.assertIn("Sample listing", content)
 
+    def test_kyc_status_alone_does_not_earn_public_verified_badge(self):
+        profile = ManufacturerProfile.objects.create(
+            user=get_user_model().objects.create_user(
+                username="kyc-only-maker",
+                password="password",
+                role="MANUFACTURER",
+            ),
+            business_name="KYC Only Works",
+            city="Pune",
+            state="Maharashtra",
+            is_verified=False,
+            kyc_status=ManufacturerProfile.KycStatus.VERIFIED,
+        )
+
+        self.assertNotIn("Verified Manufacturer", profile.earned_badges)
+        self.assertFalse(profile.is_publicly_verified)
+
+        listing = self.create_listing(profile, "KYC-only capacity")
+        for route in (
+            reverse("home"),
+            reverse("listing_detail", args=[listing.pk]),
+            reverse("manufacturer_profile", args=[profile.pk]),
+        ):
+            with self.subTest(route=route):
+                response = self.client.get(route)
+                content = response.content.decode()
+                self.assertNotIn('class="trust-badge">Verified', content)
+                self.assertNotIn("Verified Manufacturer", content)
+
+    def test_sample_account_never_gets_public_verified_badge_even_if_flagged(self):
+        self.demo.is_verified = True
+        self.demo.kyc_status = ManufacturerProfile.KycStatus.VERIFIED
+        self.demo.save(update_fields=["is_verified", "kyc_status"])
+        listing = self.create_listing(self.demo, "Sample verified flag capacity")
+
+        self.assertNotIn("Verified Manufacturer", self.demo.earned_badges)
+        self.assertFalse(self.demo.is_publicly_verified)
+        for route in (
+            reverse("home"),
+            reverse("listing_detail", args=[listing.pk]),
+            reverse("manufacturer_profile", args=[self.demo.pk]),
+        ):
+            with self.subTest(route=route):
+                response = self.client.get(route)
+                content = response.content.decode()
+                self.assertNotIn('class="trust-badge">Verified', content)
+                self.assertNotIn("Verified Manufacturer", content)
+
+        self.client.force_login(self.demo_user)
+        for route in (
+            reverse("manufacturer_dashboard"),
+            reverse("edit_business_profile"),
+        ):
+            with self.subTest(route=route):
+                content = self.client.get(route).content.decode()
+                self.assertNotIn('class="trust-badge">Verified', content)
+                self.assertNotIn("Verified business", content)
+
+    def test_non_sample_authoritative_flag_displays_public_verified_badge(self):
+        listing = self.create_listing(self.verified, "Verified flag capacity")
+
+        for route in (
+            reverse("home"),
+            reverse("listing_detail", args=[listing.pk]),
+            reverse("manufacturer_profile", args=[self.verified.pk]),
+        ):
+            with self.subTest(route=route):
+                response = self.client.get(route)
+                self.assertContains(response, 'class="trust-badge">Verified')
+
+    def test_top_rated_badge_logic_is_unchanged(self):
+        with (
+            patch.object(
+                ManufacturerProfile,
+                "average_rating",
+                new_callable=PropertyMock,
+                return_value=Decimal("4.8"),
+            ),
+            patch.object(
+                ManufacturerProfile,
+                "review_count",
+                new_callable=PropertyMock,
+                return_value=10,
+            ),
+        ):
+            badges = self.verified.earned_badges
+
+        self.assertIn("Top Rated", badges)
+
     def test_public_information_routes_and_trust_links_render(self):
         route_names = (
             "about",
@@ -448,6 +538,62 @@ class ProductionReadinessTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertNotContains(response, "not configured yet")
         self.assertNotContains(response, "mailto:")
+
+    @override_settings(
+        LEGAL_CONTACT_EMAIL="",
+        LEGAL_ENTITY_NAME="",
+    )
+    def test_public_legal_pages_omit_missing_details_and_configuration_text(self):
+        routes = (
+            "contact",
+            "grievance_redressal",
+            "privacy_policy",
+            "terms",
+            "pricing_fees",
+            "refund_policy",
+            "trust_safety",
+        )
+
+        for route_name in routes:
+            with self.subTest(route_name=route_name):
+                response = self.client.get(reverse(route_name))
+                content = response.content.decode()
+                self.assertEqual(response.status_code, 200)
+                self.assertNotIn("LEGAL_CONTACT_EMAIL", content)
+                self.assertNotIn("not configured", content.lower())
+                self.assertNotIn("prototype", content.lower())
+
+        self.assertNotContains(self.client.get(reverse("contact")), "mailto:")
+        self.assertNotContains(
+            self.client.get(reverse("grievance_redressal")), "mailto:"
+        )
+
+    @override_settings(
+        LEGAL_ENTITY_NAME="Configured Marketplace Entity",
+        LEGAL_CONTACT_EMAIL="legal@example.org",
+        LEGAL_CONTACT_LABEL="Legal contact",
+    )
+    def test_configured_legal_contact_renders_on_applicable_pages(self):
+        for route_name in (
+            "contact",
+            "grievance_redressal",
+            "privacy_policy",
+            "terms",
+        ):
+            with self.subTest(route_name=route_name):
+                response = self.client.get(reverse(route_name))
+                self.assertContains(response, "legal@example.org")
+                self.assertNotContains(response, "LEGAL_CONTACT_EMAIL")
+
+        privacy = self.client.get(reverse("privacy_policy"))
+        self.assertContains(privacy, "Configured Marketplace Entity")
+
+    @override_settings(LEGAL_CONTACT_EMAIL="support@example.org")
+    def test_default_contact_label_does_not_expose_prototype_wording(self):
+        response = self.client.get(reverse("home"))
+
+        self.assertContains(response, "support@example.org")
+        self.assertNotContains(response, "prototype")
 
     @override_settings(
         LEGAL_ENTITY_NAME="Configured Marketplace Entity",

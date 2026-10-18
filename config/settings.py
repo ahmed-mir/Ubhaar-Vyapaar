@@ -457,7 +457,7 @@ LEGAL_CONTACT_EMAIL = _env_str("LEGAL_CONTACT_EMAIL", "")
 
 LEGAL_CONTACT_LABEL = _env_str(
     "LEGAL_CONTACT_LABEL",
-    "Ubhaar-Vyapaar prototype operator",
+    "Contact support",
 )
 
 TERMS_VERSION = _env_str("TERMS_VERSION", "2026-10-11")

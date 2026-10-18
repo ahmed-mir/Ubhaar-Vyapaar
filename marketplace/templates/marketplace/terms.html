@@ -10,15 +10,14 @@
                 <p class="eyebrow">Platform terms</p>
                 <h1>Terms &amp; Conditions</h1>
                 <p>
-                    These draft terms describe the current Ubhaar-Vyapaar prototype
-                    marketplace workflows. They are not final legal terms and require
-                    professional legal review before production use.
+                    These terms describe the marketplace workflows available on
+                    Ubhaar-Vyapaar.
                 </p>
             </div>
         </header>
 
         <section class="legal-section legal-warning">
-            <h2>Prototype payment limitation</h2>
+            <h2>Payments</h2>
             <p>
                 Ubhaar-Vyapaar currently uses demo and simulated milestone funding
                 states only. The platform does not currently process real payments,
@@ -75,7 +74,7 @@
             <h2>Prohibited conduct</h2>
             <ul>
                 <li>Submitting false business, listing, quotation, or review information.</li>
-                <li>Requesting or sharing payment card, UPI, bank credential, or government ID information through the prototype.</li>
+                <li>Requesting or sharing payment card, UPI, bank credential, or government ID information through the platform.</li>
                 <li>Uploading unlawful, infringing, unsafe, or misleading content.</li>
                 <li>Attempting to access another user's account, order, messages, or notifications.</li>
                 <li>Using the platform to spam, harass, scrape, or disrupt service availability.</li>
@@ -94,20 +93,18 @@
         <section class="legal-section">
             <h2>Account suspension or termination</h2>
             <p>
-                Administrative moderation and account handling policies require legal
-                and business review. The current prototype includes role checks and
-                verification status controls, but does not include a complete public
-                suspension or appeals workflow.
+                The application does not provide a public account suspension or
+                appeals process.
             </p>
         </section>
 
         <section class="legal-section">
             <h2>Availability, liability, and disputes</h2>
             <p>
-                The service may change, pause, or become unavailable as a prototype.
-                Limitation of liability, indemnity, dispute-resolution, governing-law,
-                and formal notice language must be drafted or approved by a qualified
-                professional before production use.
+                The service may change, pause, or become unavailable. Users should
+                resolve commercial terms directly with one another before accepting
+                a quotation. These terms do not specify a governing law or formal
+                dispute-resolution process.
             </p>
         </section>
 
@@ -115,8 +112,6 @@
             <h2>Contact and version</h2>
             {% if legal_contact_email %}
                 <p>Contact: <a href="mailto:{{ legal_contact_email }}">{{ legal_contact_email }}</a></p>
-            {% else %}
-                <p>Contact details are not configured in this prototype deployment.</p>
             {% endif %}
             <p>Terms version: {{ terms_version }}.</p>
         </section>

@@ -378,7 +378,7 @@
                         </div>
 
                         <div class="listing-card-header">
-                            {% if listing.manufacturer.is_verified %}
+                            {% if listing.manufacturer.is_publicly_verified %}
                                 <span class="trust-badge">Verified</span>
                             {% endif %}
 
@@ -388,7 +388,7 @@
                         </div>
                     </div>
 
-                    {% if listing.manufacturer.is_verified %}
+                    {% if listing.manufacturer.is_publicly_verified %}
                         <span class="visually-hidden">Verified business</span>
                     {% endif %}
 
