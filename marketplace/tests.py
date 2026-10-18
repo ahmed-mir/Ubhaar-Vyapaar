@@ -1525,6 +1525,7 @@ class PlatformReadinessTests(TestCase):
         self.assertIn("Disallow: /admin/", content)
         self.assertIn("Allow: /", content)
 
+    @override_settings(ALLOW_INDEXING=True)
     def test_robots_txt_guides_private_area_exclusion(self):
         response = self.client.get(reverse("robots_txt"))
 
