@@ -14,6 +14,7 @@ test.describe("production auth and access smoke", () => {
   test.setTimeout(120000);
 
   test("buyer registration, dashboard, login, and logout", async ({ page }) => {
+    test.skip(!process.env.TEST_USER_PASSWORD, "TEST_USER_PASSWORD is required for QA account flows");
     const password = requireEnv("TEST_USER_PASSWORD");
     const buyer = buildTestUser("buyer", uniqueRunId());
 
@@ -30,6 +31,7 @@ test.describe("production auth and access smoke", () => {
   });
 
   test("manufacturer registration, dashboard, login, logout, and listing creation", async ({ page }) => {
+    test.skip(!process.env.TEST_USER_PASSWORD, "TEST_USER_PASSWORD is required for QA account flows");
     const password = requireEnv("TEST_USER_PASSWORD");
     const runId = uniqueRunId();
     const manufacturer = buildTestUser("manufacturer", runId);
@@ -69,6 +71,7 @@ test.describe("production auth and access smoke", () => {
   });
 
   test("role-based access restrictions", async ({ page }) => {
+    test.skip(!process.env.TEST_USER_PASSWORD, "TEST_USER_PASSWORD is required for QA account flows");
     const password = requireEnv("TEST_USER_PASSWORD");
     const runId = uniqueRunId();
     const buyer = buildTestUser("buyer-access", runId);

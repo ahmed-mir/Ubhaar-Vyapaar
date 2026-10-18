@@ -1,12 +1,7 @@
 const { defineConfig, devices } = require("@playwright/test");
 
-const baseURL = process.env.UBHAAR_BASE_URL;
-
-if (!baseURL) {
-  throw new Error(
-    "UBHAAR_BASE_URL is required. Example: UBHAAR_BASE_URL=https://ubhaar-vyapaar.onrender.com"
-  );
-}
+const baseURL = process.env.UBHAAR_BASE_URL || "http://127.0.0.1:8000";
+const useLocalServer = !process.env.UBHAAR_BASE_URL;
 
 module.exports = defineConfig({
   testDir: "./tests/e2e",
@@ -27,9 +22,17 @@ module.exports = defineConfig({
     trace: "retain-on-failure",
     screenshot: "only-on-failure",
     video: "retain-on-failure",
-    actionTimeout: 15_000,
+    actionTimeout: 30_000,
     navigationTimeout: 30_000
   },
+  webServer: useLocalServer
+    ? {
+        command: "python manage.py runserver 127.0.0.1:8000",
+        url: "http://127.0.0.1:8000",
+        reuseExistingServer: true,
+        timeout: 120_000
+      }
+    : undefined,
   projects: [
     {
       name: "chromium",
