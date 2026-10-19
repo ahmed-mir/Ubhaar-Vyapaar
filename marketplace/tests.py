@@ -302,23 +302,46 @@ class MarketplaceDiscoveryTrustTests(TestCase):
         self.assertContains(response, 'name="twitter:image"')
         self.assertContains(
             response,
-            'content="https://ubhaar-vyapaar.in/media/listings/steel-fabrication.jpg"',
+            'property="og:image" content="https://ubhaar-vyapaar.in/media/listings/steel-fabrication.jpg"',
         )
+        self.assertContains(
+            response,
+            'name="twitter:image" content="https://ubhaar-vyapaar.in/media/listings/steel-fabrication.jpg"',
+        )
+        self.assertNotContains(response, 'property="og:image:width"')
+        self.assertNotContains(response, 'property="og:image:height"')
 
     @override_settings(ALLOW_INDEXING=True)
-    def test_social_image_falls_back_to_brand_icon_without_listing_image(self):
+    def test_social_image_falls_back_to_branded_share_image_without_listing_image(self):
         listing = self.create_listing(self.verified, "Steel fabrication")
 
         response = self.client.get(reverse("listing_detail", args=[listing.pk]))
 
         self.assertContains(
             response,
-            'property="og:image" content="https://ubhaar-vyapaar.in/static/marketplace/images/brand/apple-touch-icon.png"',
+            'property="og:image" content="https://ubhaar-vyapaar.in/static/marketplace/images/brand/social-share.png"',
         )
         self.assertContains(
             response,
-            'name="twitter:image" content="https://ubhaar-vyapaar.in/static/marketplace/images/brand/apple-touch-icon.png"',
+            'name="twitter:image" content="https://ubhaar-vyapaar.in/static/marketplace/images/brand/social-share.png"',
         )
+        self.assertContains(response, 'property="og:image:width" content="1200"')
+        self.assertContains(response, 'property="og:image:height" content="630"')
+
+    @override_settings(ALLOW_INDEXING=True)
+    def test_default_public_page_uses_absolute_branded_share_image(self):
+        response = self.client.get(reverse("home"))
+
+        self.assertContains(
+            response,
+            'property="og:image" content="https://ubhaar-vyapaar.in/static/marketplace/images/brand/social-share.png"',
+        )
+        self.assertContains(
+            response,
+            'name="twitter:image" content="https://ubhaar-vyapaar.in/static/marketplace/images/brand/social-share.png"',
+        )
+        self.assertContains(response, 'property="og:image:width" content="1200"')
+        self.assertContains(response, 'property="og:image:height" content="630"')
 
     @override_settings(ALLOW_INDEXING=True, LEGAL_CONTACT_EMAIL="")
     def test_homepage_emits_parseable_organization_and_website_schema(self):

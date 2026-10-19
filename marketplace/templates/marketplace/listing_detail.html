@@ -9,6 +9,7 @@
 {% block twitter_description %}{{ listing.title }}{% if listing.manufacturer.business_name %} by {{ listing.manufacturer.business_name }}{% endif %}{% if listing.manufacturer.city %} in {{ listing.manufacturer.city }}{% endif %}. Review MOQ, lead time, price, and capacity details.{% endblock %}
 {% block social_image %}{% if social_image_url %}{{ social_image_url }}{% else %}{{ block.super }}{% endif %}{% endblock %}
 {% block twitter_image %}{% if social_image_url %}{{ social_image_url }}{% else %}{{ block.super }}{% endif %}{% endblock %}
+{% block social_image_dimensions %}{% if not social_image_url %}{{ block.super }}{% endif %}{% endblock %}
 {% block structured_data %}
     {% json_ld breadcrumb_schema "listing-breadcrumb-jsonld" %}
     {% json_ld service_schema "listing-service-jsonld" %}
