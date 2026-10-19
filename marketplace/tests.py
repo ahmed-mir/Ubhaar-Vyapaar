@@ -276,7 +276,7 @@ class MarketplaceDiscoveryTrustTests(TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'href="https://ubhaar-vyapaar.in/"')
-        self.assertContains(response, "Browse manufacturing capacity")
+        self.assertContains(response, "Browse capacity")
         self.assertNotContains(response, 'name="robots" content="noindex')
 
     def test_root_marketplace_query_redirects_permanently_and_preserves_raw_query(self):
@@ -2289,3 +2289,83 @@ class CleanupE2EDataCommandTests(TestCase):
                 manufacturer__business_name="Nila Packworks",
             ).exists()
         )
+
+
+class LandingPageTests(TestCase):
+    def make_listing(self, index, *, sample=False, active=True, category=CapacityListing.Category.METAL):
+        User = get_user_model()
+        username = f"{'demo_mfr_' if sample else 'landing_maker_'}{index}"
+        user = User.objects.create_user(username=username, password="password", role="MANUFACTURER")
+        profile = ManufacturerProfile.objects.create(
+            user=user,
+            business_name=f"Capacity Maker {index}",
+            city="Pune",
+            state="Maharashtra",
+            is_verified=not sample,
+        )
+        return CapacityListing.objects.create(
+            manufacturer=profile,
+            title=f"Capacity listing {index}",
+            category=category,
+            description="Production capacity details.",
+            price_per_unit=Decimal("12.50"),
+            minimum_quantity=25,
+            production_days=7,
+            availability_status=CapacityListing.AvailabilityStatus.AVAILABLE,
+            is_active=active,
+        )
+
+    def test_homepage_has_one_h1_search_and_marketplace_ctas(self):
+        response = self.client.get(reverse("home"))
+        self.assertEqual(response.status_code, 200)
+        content = response.content.decode()
+        self.assertEqual(len(re.findall(r"<h1\b", content)), 1)
+        self.assertRegex(content, r'<form[^>]+method="get"[^>]+action="/marketplace/"')
+        self.assertRegex(content, r'<input[^>]+name="q"')
+        self.assertContains(response, 'href="/marketplace/" data-analytics="hero_browse"')
+        self.assertContains(response, 'href="/accounts/register/manufacturer/" data-analytics="hero_list"')
+
+    def test_categories_only_show_real_active_listing_counts_and_routes(self):
+        self.make_listing(1, category=CapacityListing.Category.METAL)
+        self.make_listing(2, category=CapacityListing.Category.METAL, active=False)
+        response = self.client.get(reverse("home"))
+        self.assertContains(response, 'href="/marketplace/?category=METAL"')
+        self.assertContains(response, "1 listing")
+        self.assertNotContains(response, "0 listings")
+        self.assertNotContains(response, "+ manufacturers")
+
+    def test_featured_capacity_is_hidden_below_three_qualifying_listings(self):
+        self.make_listing(1)
+        self.make_listing(2)
+        response = self.client.get(reverse("home"))
+        self.assertNotContains(response, 'id="featured-title"')
+
+    def test_featured_capacity_shows_three_and_sample_has_no_quote_cta(self):
+        self.make_listing(1)
+        self.make_listing(2)
+        sample = self.make_listing(3, sample=True)
+        response = self.client.get(reverse("home"))
+        content = response.content.decode()
+        self.assertContains(response, 'id="featured-title"')
+        sample_start = content.index(f'data-sample-listing="true"')
+        sample_end = content.index("</article>", sample_start)
+        sample_card = content[sample_start:sample_end]
+        self.assertNotIn("Request a quote", sample_card)
+        self.assertNotIn("request-quote", sample_card)
+        self.assertIn(str(sample.title), sample_card)
+
+    def test_no_listings_means_no_empty_optional_sections_or_fake_counts(self):
+        response = self.client.get(reverse("home"))
+        content = response.content.decode()
+        self.assertNotIn('id="featured-title"', content)
+        self.assertNotIn('id="categories-title"', content)
+        self.assertNotIn("0 manufacturers", content)
+        self.assertNotIn("0 listings", content)
+        self.assertNotIn("500+", content)
+        self.assertNotIn("2,000+", content)
+
+    def test_landing_faq_and_schema_are_not_duplicated(self):
+        response = self.client.get(reverse("home"))
+        self.assertEqual(len(parse_json_ld(response)), 2)
+        self.assertContains(response, "Does the platform process payments or escrow?")
+        self.assertContains(response, "Sample listings are shown for illustration.")

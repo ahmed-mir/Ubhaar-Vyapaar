@@ -723,6 +723,33 @@ MARKETPLACE_QUERY_PARAMS = {
     "verification", "sort", "page",
 }
 
+LANDING_FAQ_ITEMS = [
+    {
+        "question": "How do I find capacity?",
+        "answer": "Browse the marketplace or use search and filters to find active listings that match your needs.",
+    },
+    {
+        "question": "What does Verified mean?",
+        "answer": "The Verified badge appears only for non-sample manufacturer accounts whose verification flag is approved. A KYC status by itself does not display the badge.",
+    },
+    {
+        "question": "Can a listing be paused?",
+        "answer": "Yes. Paused listings remain available to their owner for management but are not prioritised in default discovery.",
+    },
+    {
+        "question": "How do I request a quote?",
+        "answer": "Open a listing that accepts requests and submit your quantity, requirements, and delivery location. Sample listings do not accept quote requests.",
+    },
+    {
+        "question": "What happens when a quotation is accepted?",
+        "answer": "Accepting a quotation creates an order with the agreed terms, order messages, and production milestones.",
+    },
+    {
+        "question": "Does the platform process payments or escrow?",
+        "answer": "No. Payments and escrow are not processed by the platform. Any funding or release labels in the order workflow are simulated.",
+    },
+]
+
 
 def home(request):
     if MARKETPLACE_QUERY_PARAMS.intersection(request.GET):
@@ -750,6 +777,37 @@ def home(request):
         "alternateName": "Ubhaar Vyapaar",
         "url": site_url,
     }
+
+    discovery_listings = CapacityListing.objects.filter(
+        is_active=True,
+        availability_status__in=[
+            CapacityListing.AvailabilityStatus.AVAILABLE,
+            CapacityListing.AvailabilityStatus.LIMITED,
+        ],
+    ).filter(
+        Q(manufacturer__is_verified=True)
+        | Q(manufacturer__user__username__startswith="demo_mfr_"),
+    )
+    category_counts = {
+        item["category"]: item["total"]
+        for item in discovery_listings.values("category").annotate(total=Count("pk"))
+    }
+    categories = [
+        {"value": value, "label": label, "count": category_counts.get(value, 0)}
+        for value, label in CapacityListing.Category.choices
+        if category_counts.get(value, 0)
+    ]
+    featured_listings = list(
+        discovery_listings.select_related("manufacturer").order_by("-pk")[:6]
+    )
+
+    if request.user.is_authenticated and request.user.role == "MANUFACTURER":
+        manufacturer_cta_url = reverse("create_listing")
+    elif request.user.is_authenticated:
+        manufacturer_cta_url = reverse("for_manufacturers")
+    else:
+        manufacturer_cta_url = reverse("register_manufacturer")
+
     return render(
         request,
         "marketplace/landing.html",
@@ -757,6 +815,11 @@ def home(request):
             "canonical_url": site_url,
             "organization_schema": organization_schema,
             "website_schema": website_schema,
+            "categories": categories,
+            "featured_listings": featured_listings,
+            "has_featured_capacity": len(featured_listings) >= 3,
+            "manufacturer_cta_url": manufacturer_cta_url,
+            "faq_items": LANDING_FAQ_ITEMS,
         },
     )
 

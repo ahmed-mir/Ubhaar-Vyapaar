@@ -1,17 +1,10 @@
 {% extends "marketplace/base.html" %}
-
 {% block title %}FAQ | Ubhaar-Vyapaar{% endblock %}
-{% block meta_description %}Frequently asked questions about browsing capacity and requesting quotes.{% endblock %}
-
+{% block meta_description %}Answers about browsing capacity, verification, quotations and marketplace workflows.{% endblock %}
 {% block content %}
 <section class="record-card info-page">
     <p class="eyebrow">FAQ</p>
     <h1>Frequently asked questions</h1>
-    <h2>How do I find capacity?</h2>
-    <p>Browse the marketplace or use search and filters to find active listings that match your needs.</p>
-    <h2>What does Verified mean?</h2>
-    <p>The badge appears only for non-sample manufacturer accounts whose verification flag is approved. Read <a href="{% url 'trust_safety' %}">Trust &amp; Safety</a> for the full explanation.</p>
-    <h2>Can a listing be paused?</h2>
-    <p>Yes. Paused listings remain available to their owner for management but are not prioritised in default discovery.</p>
+    <div class="landing-faq-list faq-page-list">{% for item in faq_items %}<details><summary>{{ item.question }}</summary><p>{{ item.answer }}</p>{% if item.question == "What does Verified mean?" %}<p><a href="{% url 'trust_safety' %}">Read the full Trust &amp; Safety explanation</a>.</p>{% endif %}</details>{% endfor %}</div>
 </section>
 {% endblock %}
