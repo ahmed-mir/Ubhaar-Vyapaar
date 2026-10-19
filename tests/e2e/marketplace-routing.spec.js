@@ -6,7 +6,7 @@ test.describe("marketplace route split", () => {
 
     expect(response.status()).toBe(200);
     expect(response.url()).toMatch(/\/$/);
-    expect(await response.text()).toContain("Browse manufacturing capacity");
+    expect(await response.text()).toContain("Find manufacturers with spare capacity for small-batch orders");
   });
 
   test("root marketplace queries permanently redirect with the full query string", async ({ request }) => {
