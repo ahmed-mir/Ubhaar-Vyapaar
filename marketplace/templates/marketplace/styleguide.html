@@ -1,0 +1,93 @@
+{% extends "marketplace/base.html" %}
+{% load static %}
+
+{% block extra_css %}<link rel="stylesheet" href="{% static 'marketplace/css/styleguide.css' %}">{% endblock %}
+{% block title %}Interface style guide | Ubhaar-Vyapaar{% endblock %}
+{% block robots_meta %}{% if allow_indexing %}<meta name="robots" content="noindex,nofollow">{% endif %}{% endblock %}
+
+{% block content %}
+<section class="page-heading styleguide-heading">
+    <div>
+        <p class="eyebrow">Interface reference</p>
+        <h1>Trade ledger / machine spec</h1>
+        <p>Shared visual patterns for marketplace, business records, and manufacturing specifications.</p>
+    </div>
+    <span class="status-pill">Staff view</span>
+</section>
+
+<div class="styleguide-grid">
+    <section class="styleguide-panel" aria-labelledby="styleguide-type">
+        <h2 id="styleguide-type">Typography</h2>
+        <p class="eyebrow">Section label · 12 / 850</p>
+        <h3>Clear records. Capable manufacturing.</h3>
+        <p>Body text uses the existing system sans stack. Compact measurements use the platform monospace token.</p>
+        <p class="specimen-code">TOLERANCE ±0.02 mm&nbsp;&nbsp; / &nbsp;&nbsp;LOT 00481</p>
+    </section>
+
+    <section class="styleguide-panel" aria-labelledby="styleguide-colors">
+        <h2 id="styleguide-colors">Colour tokens</h2>
+        <ul class="styleguide-swatches">
+            <li><span class="swatch swatch-ink" aria-hidden="true"></span><span>Trade ink</span><code>brand-900</code></li>
+            <li><span class="swatch swatch-teal" aria-hidden="true"></span><span>Capacity teal</span><code>brand-700</code></li>
+            <li><span class="swatch swatch-accent" aria-hidden="true"></span><span>Ledger amber</span><code>accent</code></li>
+            <li><span class="swatch swatch-paper" aria-hidden="true"></span><span>Paper</span><code>background</code></li>
+        </ul>
+    </section>
+
+    <section class="styleguide-panel" aria-labelledby="styleguide-actions">
+        <h2 id="styleguide-actions">Buttons and links</h2>
+        <div class="styleguide-example-row">
+            <a class="button button-primary" href="#styleguide-actions">Primary action</a>
+            <a class="button button-secondary" href="#styleguide-actions">Secondary action</a>
+            <a class="text-link" href="#styleguide-actions">Text link <span aria-hidden="true">→</span></a>
+        </div>
+    </section>
+
+    <section class="styleguide-panel" aria-labelledby="styleguide-badges">
+        <h2 id="styleguide-badges">Badges and alerts</h2>
+        <div class="styleguide-example-row">
+            <span class="status-pill status-accepted">Verified</span>
+            <span class="status-pill status-pending">In review</span>
+            <span class="status-pill status-rejected">Unavailable</span>
+        </div>
+        <p class="message success" role="status">Your specification has been saved.</p>
+    </section>
+
+    <section class="styleguide-panel" aria-labelledby="styleguide-forms">
+        <h2 id="styleguide-forms">Form controls</h2>
+        <div class="styled-form styleguide-form">
+            <label for="styleguide-material">Material</label>
+            <select id="styleguide-material"><option>Aluminium 6061</option><option>Stainless steel</option></select>
+            <label class="styleguide-check"><input type="checkbox" checked> Include inspection report</label>
+            <p class="helptext">Choose the closest match to your production requirement.</p>
+            <p class="errorlist" role="alert">Example field error appears here.</p>
+        </div>
+    </section>
+
+    <section class="styleguide-panel" aria-labelledby="styleguide-specs">
+        <h2 id="styleguide-specs">Machine specification</h2>
+        <dl class="record-facts styleguide-specs">
+            <dt>Process</dt><dd>CNC milling</dd>
+            <dt>Working envelope</dt><dd>800 × 500 × 500 mm</dd>
+            <dt>Material range</dt><dd>Aluminium, steel, brass</dd>
+        </dl>
+    </section>
+
+    <section class="styleguide-panel styleguide-wide" aria-labelledby="styleguide-table">
+        <h2 id="styleguide-table">Data table</h2>
+        <div class="table-scroll">
+            <table class="data-table"><thead><tr><th scope="col">Process</th><th scope="col">Capacity</th><th scope="col">Lead time</th></tr></thead>
+                <tbody><tr><th scope="row">CNC machining</th><td>2,400 parts / month</td><td>12 working days</td></tr><tr><th scope="row">Label printing</th><td>80,000 labels / month</td><td>7 working days</td></tr></tbody>
+            </table>
+        </div>
+        <details class="styleguide-details"><summary>Additional production notes</summary><p>Technical notes remain available through native keyboard-operable disclosure controls.</p></details>
+        <nav class="profile-pagination" aria-label="Example pagination"><a class="button button-secondary" href="#styleguide-table">Previous</a><span aria-current="page">Page 1 of 4</span><a class="button button-secondary" href="#styleguide-table">Next</a></nav>
+    </section>
+
+    <section class="styleguide-panel styleguide-wide" aria-labelledby="styleguide-responsive">
+        <h2 id="styleguide-responsive">Responsive layout</h2>
+        <p>Panels reflow at the existing mobile and tablet breakpoints. Narrow content remains scrollable only when its data table requires it.</p>
+        <div class="styleguide-responsive-example"><div>360 px<br><small>single column</small></div><div>768 px<br><small>two columns</small></div><div>1280 px<br><small>wide ledger</small></div></div>
+    </section>
+</div>
+{% endblock %}
