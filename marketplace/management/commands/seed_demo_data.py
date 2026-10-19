@@ -5,7 +5,7 @@ from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.core.files import File
 from django.core.files.storage import default_storage
-from django.core.management.base import BaseCommand
+from django.core.management.base import BaseCommand, CommandError
 from django.db import transaction
 from django.utils import timezone
 
@@ -384,6 +384,12 @@ class Command(BaseCommand):
     )
 
     def handle(self, *args, **options):
+        if not settings.ALLOW_DEMO_SEEDING:
+            raise CommandError(
+                "Demo data seeding is disabled. Set ALLOW_DEMO_SEEDING=True "
+                "only in a controlled environment."
+            )
+
         with transaction.atomic():
             manufacturers = self.seed_manufacturers()
             listings = self.seed_listings(manufacturers)

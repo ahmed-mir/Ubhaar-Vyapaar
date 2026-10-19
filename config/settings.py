@@ -96,6 +96,8 @@ DEBUG = os.getenv(
     "False",
 ).lower() == "true"
 
+ALLOW_DEMO_SEEDING = _env_bool("ALLOW_DEMO_SEEDING", DEBUG)
+
 ALLOW_INDEXING = _env_bool("ALLOW_INDEXING", not DEBUG)
 
 ALLOW_GPTBOT = _env_bool("ALLOW_GPTBOT", False)

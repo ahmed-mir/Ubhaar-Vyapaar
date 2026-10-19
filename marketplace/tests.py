@@ -7,6 +7,8 @@ from unittest.mock import PropertyMock, patch
 
 from django.contrib.auth import get_user_model
 from django.core.management import call_command
+from django.core.management.base import CommandError
+from django.core.management.base import CommandError
 from django.test import Client
 from django.test import RequestFactory, TestCase, override_settings
 from django.urls import reverse
@@ -83,6 +85,164 @@ class MarketplaceDiscoveryTrustTests(TestCase):
             availability_status=status,
             is_active=True,
         )
+
+    def create_review(self, manufacturer, buyer_username, comment):
+        buyer = get_user_model().objects.create_user(
+            username=buyer_username,
+            password="password",
+            role="BUYER",
+        )
+        listing = self.create_listing(
+            manufacturer,
+            f"Completed capacity for {buyer_username}",
+        )
+        quote_request = QuoteRequest.objects.create(
+            buyer=buyer,
+            listing=listing,
+            quantity=10,
+            requirements="Completed order requirements",
+            delivery_location="Mumbai",
+            status=QuoteRequest.Status.ACCEPTED,
+        )
+        quotation = Quotation.objects.create(
+            quote_request=quote_request,
+            price_per_unit=Decimal("10.00"),
+            quantity=10,
+            production_days=5,
+            status=Quotation.Status.ACCEPTED,
+        )
+        order = Order.objects.create(
+            quotation=quotation,
+            buyer=buyer,
+            manufacturer=manufacturer,
+            listing=listing,
+            quantity=10,
+            agreed_unit_price=Decimal("10.00"),
+            total_amount=Decimal("100.00"),
+            agreed_production_days=5,
+            status=Order.Status.COMPLETED,
+        )
+        Review.objects.create(
+            order=order,
+            buyer=buyer,
+            manufacturer=manufacturer,
+            quality_rating=5,
+            timeliness_rating=5,
+            communication_rating=5,
+            overall_rating=5,
+            comment=comment,
+        )
+        return listing
+
+    def test_sample_quote_endpoint_rejects_get_and_post_without_records(self):
+        buyer = get_user_model().objects.create_user(
+            username="sample-quote-buyer",
+            password="password",
+            role="BUYER",
+        )
+        listing = self.create_listing(self.demo, "Sample-only capacity")
+        url = reverse("request_quote", args=[listing.pk])
+        self.client.force_login(buyer)
+
+        response = self.client.get(url, follow=True)
+        self.assertContains(
+            response,
+            "This is a sample listing and is not accepting quote requests.",
+        )
+        self.assertEqual(QuoteRequest.objects.filter(listing=listing).count(), 0)
+        self.assertFalse(
+            Notification.objects.filter(recipient=self.demo_user).exists()
+        )
+
+        response = self.client.post(
+            url,
+            {
+                "quantity": 10,
+                "requirements": "Do not persist this sample request",
+                "delivery_location": "Mumbai",
+            },
+            follow=True,
+        )
+        self.assertContains(
+            response,
+            "This is a sample listing and is not accepting quote requests.",
+        )
+        self.assertEqual(QuoteRequest.objects.filter(listing=listing).count(), 0)
+        self.assertFalse(
+            Notification.objects.filter(recipient=self.demo_user).exists()
+        )
+
+    def test_real_listing_quote_flow_still_creates_request_and_notification(self):
+        buyer = get_user_model().objects.create_user(
+            username="real-quote-buyer",
+            password="password",
+            role="BUYER",
+        )
+        listing = self.create_listing(self.verified, "Real capacity")
+        self.client.force_login(buyer)
+
+        response = self.client.post(
+            reverse("request_quote", args=[listing.pk]),
+            {
+                "quantity": 10,
+                "requirements": "Production order requirements",
+                "delivery_location": "Mumbai",
+            },
+        )
+
+        self.assertRedirects(
+            response,
+            reverse("request_quote", args=[listing.pk]),
+        )
+        quote = QuoteRequest.objects.get(listing=listing, buyer=buyer)
+        self.assertEqual(quote.requirements, "Production order requirements")
+        self.assertTrue(
+            Notification.objects.filter(recipient=self.verified_user).exists()
+        )
+
+    def test_sample_listing_card_and_detail_have_no_active_quote_cta(self):
+        listing = self.create_listing(self.demo, "Sample CTA capacity")
+        quote_url = reverse("request_quote", args=[listing.pk])
+
+        home_response = self.client.get(reverse("home"))
+        self.assertContains(home_response, "Not accepting quote requests")
+        self.assertNotContains(home_response, f'href="{quote_url}">Request quote</a>')
+
+        detail_response = self.client.get(
+            reverse("listing_detail", args=[listing.pk])
+        )
+        self.assertContains(
+            detail_response,
+            "This is a sample listing and is not accepting quote requests.",
+        )
+        self.assertNotContains(detail_response, f'href="{quote_url}"')
+
+    def test_sample_profile_hides_reviews_and_real_profile_reviews_remain_visible(self):
+        self.create_review(
+            self.demo,
+            "sample-review-buyer",
+            "Fictional sample review text must stay private.",
+        )
+        real_comment = "Genuine completed order review remains visible."
+        self.create_review(self.verified, "real-review-buyer", real_comment)
+
+        sample_response = self.client.get(
+            reverse("manufacturer_profile", args=[self.demo.pk])
+        )
+        self.assertNotContains(sample_response, "Buyer reviews")
+        self.assertNotContains(sample_response, "Average rating:")
+        self.assertNotContains(
+            sample_response,
+            "Fictional sample review text must stay private.",
+        )
+        self.assertNotContains(sample_response, "5.0/5")
+
+        real_response = self.client.get(
+            reverse("manufacturer_profile", args=[self.verified.pk])
+        )
+        self.assertContains(real_response, "Buyer reviews")
+        self.assertContains(real_response, "Average rating:")
+        self.assertContains(real_response, real_comment)
 
     @override_settings(ALLOW_INDEXING=True)
     def test_marketplace_page_two_has_page_title_and_self_canonical(self):
@@ -317,7 +477,17 @@ class MarketplaceDiscoveryTrustTests(TestCase):
 
         self.assertContains(response, "Metal")
         self.assertNotContains(response, "Plastics")
-        self.assertContains(response, "More categories coming soon.")
+        self.assertContains(
+            response,
+            "More categories will appear as capacity is added.",
+        )
+        self.assertNotContains(response, "coming soon")
+
+    def test_empty_marketplace_uses_present_state_copy(self):
+        response = self.client.get(reverse("home"))
+
+        self.assertContains(response, "No public capacity is available right now")
+        self.assertNotContains(response, "coming soon")
 
     def test_verified_badge_requires_real_state_and_demo_content_is_marked(self):
         self.create_listing(self.verified, "Verified capacity")
@@ -448,6 +618,7 @@ class SeededSampleNameTests(TestCase):
         self.media_root = tempfile.TemporaryDirectory()
         self.override = override_settings(
             MEDIA_ROOT=self.media_root.name,
+            ALLOW_DEMO_SEEDING=True,
             STORAGES={
                 "default": {
                     "BACKEND": "django.core.files.storage.FileSystemStorage",
@@ -1626,6 +1797,7 @@ class DemoSeedCommandTests(TestCase):
         self.media_root = tempfile.TemporaryDirectory()
         self.override = override_settings(
             MEDIA_ROOT=self.media_root.name,
+            ALLOW_DEMO_SEEDING=True,
             STORAGES={
                 "default": {
                     "BACKEND": "django.core.files.storage.FileSystemStorage",
@@ -1645,6 +1817,28 @@ class DemoSeedCommandTests(TestCase):
     def tearDown(self):
         self.override.disable()
         self.media_root.cleanup()
+
+    def test_demo_seed_is_blocked_when_production_flag_is_disabled(self):
+        with override_settings(DEBUG=False, ALLOW_DEMO_SEEDING=False):
+            with self.assertRaisesMessage(
+                CommandError,
+                "Demo data seeding is disabled.",
+            ):
+                call_command("seed_demo_data", stdout=StringIO())
+
+        self.assertEqual(ManufacturerProfile.objects.count(), 0)
+        self.assertEqual(CapacityListing.objects.count(), 0)
+
+    def test_demo_seed_runs_when_explicitly_allowed(self):
+        with override_settings(ALLOW_DEMO_SEEDING=True):
+            call_command("seed_demo_data", stdout=StringIO())
+
+        self.assertEqual(
+            ManufacturerProfile.objects.filter(
+                user__username__startswith="demo_mfr_",
+            ).count(),
+            5,
+        )
 
     def test_seed_demo_data_creates_fictional_demo_marketplace_content(self):
         call_command("seed_demo_data", verbosity=0)
@@ -1676,6 +1870,32 @@ class DemoSeedCommandTests(TestCase):
             10,
         )
         self.assertEqual(Review.objects.count(), 2)
+
+    def test_public_sample_profile_hides_seeded_reviews_and_ratings(self):
+        call_command("seed_demo_data", verbosity=0)
+        manufacturer = ManufacturerProfile.objects.get(
+            user__username="demo_mfr_nila_pack",
+        )
+        manufacturer.is_verified = True
+        manufacturer.save(update_fields=["is_verified"])
+        listing = CapacityListing.objects.get(
+            title="Custom Corrugated Packaging for D2C Shipments",
+        )
+
+        profile_response = self.client.get(
+            reverse("manufacturer_profile", args=[manufacturer.pk]),
+        )
+        self.assertNotContains(profile_response, "Buyer reviews")
+        self.assertNotContains(profile_response, "Average rating:")
+        self.assertNotContains(profile_response, "Cartons matched the approved sample")
+        self.assertNotContains(profile_response, "5.0/5")
+
+        detail_response = self.client.get(
+            reverse("listing_detail", args=[listing.pk]),
+        )
+        self.assertNotContains(detail_response, "Average rating:")
+        self.assertNotContains(detail_response, "5.0/5")
+        self.assertEqual(Review.objects.filter(manufacturer=manufacturer).count(), 1)
         self.assertTrue(
             CapacityListing.objects.filter(
                 title="Custom Corrugated Packaging for D2C Shipments",
@@ -1712,6 +1932,7 @@ class CleanupE2EDataCommandTests(TestCase):
         self.media_root = tempfile.TemporaryDirectory()
         self.override = override_settings(
             MEDIA_ROOT=self.media_root.name,
+            ALLOW_DEMO_SEEDING=True,
             STORAGES={
                 "default": {
                     "BACKEND": "django.core.files.storage.FileSystemStorage",

@@ -2,7 +2,7 @@
 {% load structured_data %}
 
 {% block title %}{{ manufacturer.business_name }}{% if page_obj.number > 1 %} | Page {{ page_obj.number }}{% endif %} | Ubhaar-Vyapaar{% endblock %}
-{% block meta_description %}View {{ manufacturer.business_name }} on Ubhaar-Vyapaar, including public manufacturing listings, location, trust indicators, and buyer reviews.{% if page_obj.number > 1 %} Page {{ page_obj.number }}.{% endif %}{% endblock %}
+{% block meta_description %}View {{ manufacturer.business_name }} on Ubhaar-Vyapaar, including public manufacturing listings, location, and trust indicators{% if not manufacturer.is_demo %}, and buyer reviews{% endif %}.{% if page_obj.number > 1 %} Page {{ page_obj.number }}.{% endif %}{% endblock %}
 {% block canonical_url %}{{ canonical_url }}{% endblock %}
 {% block structured_data %}
     {% json_ld breadcrumb_schema "manufacturer-breadcrumb-jsonld" %}
@@ -35,7 +35,7 @@
             {{ manufacturer.city }}, {{ manufacturer.state }}
         </p>
 
-        {% if manufacturer.review_count %}
+        {% if not manufacturer.is_demo and manufacturer.review_count %}
             <p class="record-meta">
                 Average rating:
                 {{ manufacturer.average_rating|floatformat:1 }}/5
@@ -139,7 +139,7 @@
         </nav>
     {% endif %}
 
-    {% if manufacturer.review_count %}
+    {% if not manufacturer.is_demo and manufacturer.review_count %}
         <section class="dashboard-band business-reviews" aria-labelledby="reviews-title">
             <div class="section-heading">
                 <div>

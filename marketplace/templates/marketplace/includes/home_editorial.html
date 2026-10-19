@@ -113,7 +113,7 @@
             </a>
         {% endfor %}
     </div>
-    {% if has_more_categories %}<p class="category-note">More categories coming soon.</p>{% endif %}
+    {% if has_more_categories %}<p class="category-note">More categories will appear as capacity is added.</p>{% endif %}
 </section>
 
 <section id="marketplace-listings" class="marketplace-results phase17-section" aria-labelledby="listings-title">
@@ -179,6 +179,8 @@
                                 <span class="button button-disabled" aria-disabled="true">Paused</span>
                             {% elif user.is_authenticated and user.role == "MANUFACTURER" %}
                                 <span class="button button-disabled" aria-disabled="true">Buyer action</span>
+                            {% elif listing.manufacturer.is_demo %}
+                                <span class="button button-disabled" aria-disabled="true">Not accepting quote requests</span>
                             {% else %}
                                 <a class="button button-primary" href="{% url 'request_quote' listing.pk %}">Request quote</a>
                             {% endif %}
@@ -193,8 +195,7 @@
                     <p>Try broader filters.</p>
                     <a class="button" href="{% url 'home' %}">Clear filters</a>
                 {% else %}
-                    <h3>Listings are coming soon</h3>
-                    <p>No public capacity is available yet.</p>
+                    <h3>No public capacity is available right now</h3>
                 {% endif %}
             </div>
         {% endfor %}

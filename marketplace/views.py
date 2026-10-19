@@ -1016,6 +1016,13 @@ def request_quote(request, pk):
         ],
     )
 
+    if listing.manufacturer.is_demo:
+        messages.info(
+            request,
+            "This is a sample listing and is not accepting quote requests.",
+        )
+        return redirect("listing_detail", pk=listing.pk)
+
     if request.method == "POST":
         form = QuoteRequestForm(request.POST, listing=listing)
 

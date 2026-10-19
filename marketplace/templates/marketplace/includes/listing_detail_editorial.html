@@ -53,6 +53,8 @@
                 {% if user.role == "BUYER" %}
                     {% if listing.availability_status == "PAUSED" %}
                         <p class="message">This capacity is temporarily paused and is not accepting new quote requests.</p>
+                    {% elif listing.manufacturer.is_demo %}
+                        <p class="quote-note">This is a sample listing and is not accepting quote requests.</p>
                     {% else %}
                         <a class="button button-primary full-width" href="{% url 'request_quote' listing.pk %}" aria-label="Request a quote">Request quote</a>
                         <p class="quote-note">Send requirements without placing an order.</p>
@@ -63,6 +65,8 @@
             {% else %}
                 {% if listing.availability_status == "PAUSED" %}
                     <p class="message">This capacity is temporarily paused and is not accepting new quote requests.</p>
+                {% elif listing.manufacturer.is_demo %}
+                    <p class="quote-note">This is a sample listing and is not accepting quote requests.</p>
                 {% else %}
                     <a class="button button-primary full-width" href="{% url 'request_quote' listing.pk %}">Log in to request a quote</a>
                     <p class="quote-note">New here? <a href="{% url 'register' %}">Create a buyer account</a>.</p>
@@ -116,7 +120,7 @@
             {% endfor %}
             {% endif %}
         </div>
-        {% if listing.manufacturer.review_count %}
+        {% if not listing.manufacturer.is_demo and listing.manufacturer.review_count %}
             <p class="record-meta">Average rating: {{ listing.manufacturer.average_rating|floatformat:1 }}/5 from {{ listing.manufacturer.review_count }} review{{ listing.manufacturer.review_count|pluralize }}</p>
         {% endif %}
         {% if listing.manufacturer.description %}{{ listing.manufacturer.description|linebreaks }}{% endif %}
