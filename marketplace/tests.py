@@ -762,9 +762,11 @@ class ProductionReadinessTests(TestCase):
     @override_settings(LEGAL_CONTACT_EMAIL="")
     def test_contact_page_omits_missing_contact_details(self):
         response = self.client.get(reverse("contact"))
+        content = response.content.decode().lower()
 
         self.assertEqual(response.status_code, 200)
-        self.assertNotContains(response, "not configured yet")
+        self.assertNotIn("not configured", content)
+        self.assertNotContains(response, "LEGAL_CONTACT_EMAIL")
         self.assertNotContains(response, "mailto:")
 
     @override_settings(
