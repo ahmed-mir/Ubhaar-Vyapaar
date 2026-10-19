@@ -126,16 +126,16 @@
                 {% with current_url=request.resolver_match.url_name %}
 
                 <div class="nav-group nav-group-primary">
-                    <a class="nav-link{% if current_url == 'home' %} nav-link-active{% endif %}" href="{% url 'home' %}" {% if current_url == 'home' %}aria-current="page"{% endif %}>
+                    <a class="nav-link{% if current_url == 'marketplace' %} nav-link-active{% endif %}" href="{% url 'marketplace' %}" {% if current_url == 'marketplace' %}aria-current="page"{% endif %}>
                         Marketplace
                     </a>
 
                     {% if not user.is_authenticated %}
-                        <a class="nav-link" href="{% url 'home' %}#how-it-works">
+                        <a class="nav-link" href="{% url 'marketplace' %}#how-it-works">
                             How it works
                         </a>
 
-                        <a class="nav-link" href="{% url 'home' %}#for-manufacturers">
+                        <a class="nav-link" href="{% url 'marketplace' %}#for-manufacturers">
                             For manufacturers
                         </a>
                     {% endif %}
@@ -311,7 +311,7 @@
 
                 <div>
                     <h2>Marketplace</h2>
-                    <a href="{% url 'home' %}">Browse capacity</a>
+                    <a href="{% url 'marketplace' %}">Browse capacity</a>
                     <a href="{% url 'faq' %}">FAQ</a>
                     <a href="{% url 'pricing_fees' %}">Pricing &amp; Fees</a>
                     {% if user.is_authenticated and user.role == "BUYER" %}

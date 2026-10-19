@@ -13,7 +13,7 @@ from urllib.parse import urlencode, urljoin
 from xml.sax.saxutils import escape
 
 from django.conf import settings
-from django.http import HttpResponse, JsonResponse
+from django.http import HttpResponse, HttpResponsePermanentRedirect, JsonResponse
 from django.urls import reverse
 from django.templatetags.static import static
 from urllib.parse import urlencode, urljoin
@@ -165,6 +165,7 @@ def absolute_url(request, path):
 def sitemap_xml(request):
     public_urls = [
         (absolute_url(request, reverse("home")), "daily", "0.9"),
+        (absolute_url(request, reverse("marketplace")), "daily", "0.9"),
         (absolute_url(request, reverse("about")), "monthly", "0.4"),
         (absolute_url(request, reverse("how_it_works")), "monthly", "0.4"),
         (absolute_url(request, reverse("for_manufacturers")), "monthly", "0.4"),
@@ -717,7 +718,50 @@ def build_order_timeline(order, milestones):
         },
     ]
 
+MARKETPLACE_QUERY_PARAMS = {
+    "q", "category", "location", "moq", "max_price", "lead_time",
+    "verification", "sort", "page",
+}
+
+
 def home(request):
+    if MARKETPLACE_QUERY_PARAMS.intersection(request.GET):
+        query_string = request.META.get("QUERY_STRING", "")
+        destination = "/marketplace/"
+        if query_string:
+            destination = f"{destination}?{query_string}"
+        return HttpResponsePermanentRedirect(destination)
+
+    site_url = _absolute_site_url()
+    organization_schema = {
+        "@context": "https://schema.org",
+        "@type": "Organization",
+        "name": "Ubhaar-Vyapaar",
+        "url": site_url,
+        "logo": _absolute_site_url(static("marketplace/images/brand/logo.svg")),
+    }
+    if _is_real_configured_email(settings.LEGAL_CONTACT_EMAIL):
+        organization_schema["email"] = settings.LEGAL_CONTACT_EMAIL.strip()
+
+    website_schema = {
+        "@context": "https://schema.org",
+        "@type": "WebSite",
+        "name": "Ubhaar-Vyapaar",
+        "alternateName": "Ubhaar Vyapaar",
+        "url": site_url,
+    }
+    return render(
+        request,
+        "marketplace/landing.html",
+        {
+            "canonical_url": site_url,
+            "organization_schema": organization_schema,
+            "website_schema": website_schema,
+        },
+    )
+
+
+def marketplace(request):
     query = request.GET.get("q", "").strip()
     selected_category = request.GET.get("category", "").strip()
     location = request.GET.get("location", "").strip()
@@ -783,6 +827,11 @@ def home(request):
 
     if selected_category:
         listings = listings.filter(category=selected_category)
+
+    if verification == "verified":
+        listings = listings.filter(manufacturer__is_verified=True).exclude(
+            manufacturer__user__username__startswith="demo_mfr_",
+        )
 
     if location:
         listings = listings.filter(
@@ -928,7 +977,7 @@ def listing_detail(request, pk):
     listing_url = _absolute_site_url(
         reverse("listing_detail", kwargs={"pk": listing.pk})
     )
-    marketplace_url = _absolute_site_url(reverse("home"))
+    marketplace_url = _absolute_site_url(reverse("marketplace"))
     breadcrumb_schema = {
         "@context": "https://schema.org",
         "@type": "BreadcrumbList",
@@ -2256,7 +2305,7 @@ def manufacturer_profile(request, pk):
     if page_obj.number > 1:
         canonical_url = f"{canonical_url}?page={page_obj.number}"
 
-    marketplace_url = _absolute_site_url(reverse("home"))
+    marketplace_url = _absolute_site_url(reverse("marketplace"))
     breadcrumb_schema = {
         "@context": "https://schema.org",
         "@type": "BreadcrumbList",

@@ -1,0 +1,20 @@
+{% extends "marketplace/base.html" %}
+{% load structured_data %}
+
+{% block title %}Ubhaar-Vyapaar | Manufacturing Connections{% endblock %}
+{% block meta_description %}Ubhaar-Vyapaar connects buyers with manufacturing capacity, quotations, and order workflows.{% endblock %}
+{% block social_title %}Ubhaar-Vyapaar | Manufacturing Connections{% endblock %}
+{% block twitter_title %}Ubhaar-Vyapaar | Manufacturing Connections{% endblock %}
+{% block structured_data %}
+    {% json_ld organization_schema "organization-jsonld" %}
+    {% json_ld website_schema "website-jsonld" %}
+{% endblock %}
+
+{% block content %}
+    <section class="container" aria-labelledby="landing-title">
+        <p class="eyebrow">B2B manufacturing connections</p>
+        <h1 id="landing-title">Ubhaar-Vyapaar</h1>
+        <p>Connect with manufacturing capacity, compare listings, and request quotations.</p>
+        <a class="button button-primary" href="{% url 'marketplace' %}">Browse manufacturing capacity</a>
+    </section>
+{% endblock %}

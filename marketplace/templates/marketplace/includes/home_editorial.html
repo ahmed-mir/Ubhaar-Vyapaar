@@ -11,14 +11,14 @@
         </div>
     </div>
 
-    <form method="get" action="{% url 'home' %}#marketplace-listings" role="search" aria-label="Search manufacturing capacity" class="capacity-search capacity-discovery-module" data-reveal="scale" data-analytics-event="marketplace_search">
+    <form method="get" action="{% url 'marketplace' %}#marketplace-listings" role="search" aria-label="Search manufacturing capacity" class="capacity-search capacity-discovery-module" data-reveal="scale" data-analytics-event="marketplace_search">
         <div class="search-panel-heading">
             <div>
                 <p class="eyebrow">Search capacity</p>
                 <h2>What do you need made?</h2>
             </div>
             {% if query or selected_category or location or moq or max_price or lead_time or verification or sort != "newest" %}
-                <a class="clear-link" href="{% url 'home' %}">Clear</a>
+                <a class="clear-link" href="{% url 'marketplace' %}">Clear</a>
             {% endif %}
         </div>
 
@@ -126,7 +126,7 @@
         <div class="results-tools">
             <span>{{ page_obj.paginator.count }} result{{ page_obj.paginator.count|pluralize }}</span>
             {% if query or selected_category or location or moq or max_price or lead_time or verification or sort != "newest" %}
-                <a class="button button-secondary button-compact" href="{% url 'home' %}">Clear filters</a>
+                <a class="button button-secondary button-compact" href="{% url 'marketplace' %}">Clear filters</a>
             {% endif %}
         </div>
     </div>
@@ -193,7 +193,7 @@
                 {% if query or selected_category or location or moq or max_price or lead_time or verification %}
                     <h3>No matching listings</h3>
                     <p>Try broader filters.</p>
-                    <a class="button" href="{% url 'home' %}">Clear filters</a>
+                    <a class="button" href="{% url 'marketplace' %}">Clear filters</a>
                 {% else %}
                     <h3>No public capacity is available right now</h3>
                 {% endif %}

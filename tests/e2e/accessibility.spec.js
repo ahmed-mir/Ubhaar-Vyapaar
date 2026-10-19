@@ -45,7 +45,7 @@ test.describe("accessibility and keyboard UX", () => {
 
   test("reduced motion preference disables reveal dependency", async ({ page }) => {
     await page.emulateMedia({ reducedMotion: "reduce" });
-    await page.goto("/");
+    await page.goto("/marketplace/");
 
     const hero = page.locator(".hero-marketplace");
     await expect(hero).toBeVisible();

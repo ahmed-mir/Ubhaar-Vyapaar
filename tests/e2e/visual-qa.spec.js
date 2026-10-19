@@ -4,9 +4,10 @@ const path = require("path");
 
 const widths = [320, 360, 390, 768, 1440];
 const pages = [
-  ["homepage", "/"],
-  ["search-results", "/?q=packaging"],
-  ["empty-results", "/?q=__visual_qa_no_match__"],
+  ["landing", "/"],
+  ["marketplace", "/marketplace/"],
+  ["search-results", "/marketplace/?q=packaging"],
+  ["empty-results", "/marketplace/?q=__visual_qa_no_match__"],
   ["login", "/accounts/login/"],
   ["buyer-registration", "/accounts/register/"],
   ["manufacturer-registration", "/accounts/register/manufacturer/"],
@@ -24,7 +25,7 @@ test.describe("public visual QA", () => {
       const output = path.join("test-results", "visual-qa", String(width));
       fs.mkdirSync(output, { recursive: true });
 
-      await page.goto("/");
+      await page.goto("/marketplace/");
       const reject = page.getByRole("button", { name: /reject analytics/i });
       if (await reject.isVisible()) await reject.click();
 

@@ -204,7 +204,7 @@ class MarketplaceDiscoveryTrustTests(TestCase):
         listing = self.create_listing(self.demo, "Sample CTA capacity")
         quote_url = reverse("request_quote", args=[listing.pk])
 
-        home_response = self.client.get(reverse("home"))
+        home_response = self.client.get(reverse("marketplace"))
         self.assertContains(home_response, "Not accepting quote requests")
         self.assertNotContains(home_response, f'href="{quote_url}">Request quote</a>')
 
@@ -249,25 +249,86 @@ class MarketplaceDiscoveryTrustTests(TestCase):
         for index in range(7):
             self.create_listing(self.verified, f"Capacity {index}")
 
-        response = self.client.get(reverse("home"), {"page": 2})
+        response = self.client.get(reverse("marketplace"), {"page": 2})
         content = response.content.decode()
 
         self.assertIn("Page 2", content.split("<title>", 1)[1].split("</title>", 1)[0])
-        self.assertIn('href="https://ubhaar-vyapaar.in/?page=2"', content)
+        self.assertIn('href="https://ubhaar-vyapaar.in/marketplace/?page=2"', content)
 
     @override_settings(ALLOW_INDEXING=True)
     def test_search_url_is_noindex_follow_and_canonicalizes_to_marketplace(self):
-        response = self.client.get(reverse("home"), {"q": "steel"})
+        response = self.client.get(reverse("marketplace"), {"q": "steel"})
         content = response.content.decode()
 
         self.assertIn('<meta name="robots" content="noindex, follow">', content)
-        self.assertIn('href="https://ubhaar-vyapaar.in/"', content)
+        self.assertIn('href="https://ubhaar-vyapaar.in/marketplace/"', content)
 
     @override_settings(ALLOW_INDEXING=True)
     def test_clean_marketplace_url_has_no_filtered_page_noindex(self):
-        response = self.client.get(reverse("home"))
+        response = self.client.get(reverse("marketplace"))
 
         self.assertNotContains(response, 'name="robots" content="noindex, follow"')
+        self.assertContains(response, 'href="https://ubhaar-vyapaar.in/marketplace/"')
+
+    @override_settings(ALLOW_INDEXING=True)
+    def test_plain_root_is_an_indexable_distinct_landing_page(self):
+        response = self.client.get(reverse("home"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'href="https://ubhaar-vyapaar.in/"')
+        self.assertContains(response, "Browse manufacturing capacity")
+        self.assertNotContains(response, 'name="robots" content="noindex')
+
+    def test_root_marketplace_query_redirects_permanently_and_preserves_raw_query(self):
+        category_response = self.client.get("/?category=METAL")
+        self.assertEqual(category_response.status_code, 301)
+        self.assertEqual(category_response["Location"], "/marketplace/?category=METAL")
+
+        query_string = "q=packaging&location=Mumbai&page=2&empty=&source=a%20b"
+        response = self.client.get(f"/?{query_string}")
+
+        self.assertEqual(response.status_code, 301)
+        self.assertEqual(response["Location"], f"/marketplace/?{query_string}")
+
+    def test_root_redirects_for_empty_marketplace_parameters_without_redirect_loop(self):
+        response = self.client.get("/?q=&category=")
+
+        self.assertEqual(response.status_code, 301)
+        self.assertEqual(response["Location"], "/marketplace/?q=&category=")
+        marketplace_response = self.client.get(response["Location"])
+        self.assertEqual(marketplace_response.status_code, 200)
+
+    def test_marketplace_filters_remain_functional_on_new_route(self):
+        matching = self.create_listing(self.verified, "Packaging filter match")
+        demo_match = self.create_listing(self.demo, "Packaging demo match")
+
+        response = self.client.get(
+            reverse("marketplace"),
+            {
+                "q": "Packaging",
+                "category": "METAL",
+                "location": "Pune",
+                "moq": "10",
+                "max_price": "10.00",
+                "lead_time": "5",
+                "verification": "verified",
+                "sort": "price",
+            },
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(list(response.context["listings"].object_list), [matching])
+        self.assertNotIn(demo_match, response.context["listings"].object_list)
+
+    def test_marketplace_page_two_remains_available_and_self_canonical(self):
+        for index in range(7):
+            self.create_listing(self.verified, f"Paged capacity {index}")
+
+        response = self.client.get(reverse("marketplace"), {"page": 2})
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.context["page_obj"].number, 2)
+        self.assertContains(response, 'href="https://ubhaar-vyapaar.in/marketplace/?page=2"')
 
     @override_settings(ALLOW_INDEXING=True)
     def test_pagination_drops_empty_and_default_parameters(self):
@@ -275,7 +336,7 @@ class MarketplaceDiscoveryTrustTests(TestCase):
             self.create_listing(self.verified, f"Steel capacity {index}")
 
         response = self.client.get(
-            reverse("home"),
+            reverse("marketplace"),
             {"q": "steel", "sort": "newest", "category": "", "page": 1},
         )
 
@@ -392,7 +453,7 @@ class MarketplaceDiscoveryTrustTests(TestCase):
         self.assertEqual(service["image"], "https://ubhaar-vyapaar.in/media/listings/precision-parts.jpg")
         self.assertEqual(service["url"], f"https://ubhaar-vyapaar.in{reverse('listing_detail', args=[listing.pk])}")
         self.assertEqual([item["position"] for item in breadcrumb["itemListElement"]], [1, 2])
-        self.assertEqual(breadcrumb["itemListElement"][0]["item"], "https://ubhaar-vyapaar.in/")
+        self.assertEqual(breadcrumb["itemListElement"][0]["item"], "https://ubhaar-vyapaar.in/marketplace/")
         self.assertEqual(breadcrumb["itemListElement"][1]["item"], service["url"])
         self.assertNotIn("</script><script>alert", response.content.decode())
         self.assertNotIn("Product", str(schemas))
@@ -484,7 +545,7 @@ class MarketplaceDiscoveryTrustTests(TestCase):
         )
         available = self.create_listing(self.verified, "Available capacity")
 
-        response = self.client.get(reverse("home"))
+        response = self.client.get(reverse("marketplace"))
 
         self.assertEqual(response.status_code, 200)
         self.assertEqual(
@@ -496,7 +557,7 @@ class MarketplaceDiscoveryTrustTests(TestCase):
     def test_zero_count_categories_are_hidden_and_note_is_shown(self):
         self.create_listing(self.verified, "Metal capacity")
 
-        response = self.client.get(reverse("home"))
+        response = self.client.get(reverse("marketplace"))
 
         self.assertContains(response, "Metal")
         self.assertNotContains(response, "Plastics")
@@ -507,7 +568,7 @@ class MarketplaceDiscoveryTrustTests(TestCase):
         self.assertNotContains(response, "coming soon")
 
     def test_empty_marketplace_uses_present_state_copy(self):
-        response = self.client.get(reverse("home"))
+        response = self.client.get(reverse("marketplace"))
 
         self.assertContains(response, "No public capacity is available right now")
         self.assertNotContains(response, "coming soon")
@@ -516,7 +577,7 @@ class MarketplaceDiscoveryTrustTests(TestCase):
         self.create_listing(self.verified, "Verified capacity")
         self.create_listing(self.demo, "Demo capacity")
 
-        response = self.client.get(reverse("home"))
+        response = self.client.get(reverse("marketplace"))
         content = response.content.decode()
 
         self.assertIn("Verified business", content)
@@ -541,7 +602,7 @@ class MarketplaceDiscoveryTrustTests(TestCase):
 
         listing = self.create_listing(profile, "KYC-only capacity")
         for route in (
-            reverse("home"),
+            reverse("marketplace"),
             reverse("listing_detail", args=[listing.pk]),
             reverse("manufacturer_profile", args=[profile.pk]),
         ):
@@ -560,7 +621,7 @@ class MarketplaceDiscoveryTrustTests(TestCase):
         self.assertNotIn("Verified Manufacturer", self.demo.earned_badges)
         self.assertFalse(self.demo.is_publicly_verified)
         for route in (
-            reverse("home"),
+            reverse("marketplace"),
             reverse("listing_detail", args=[listing.pk]),
             reverse("manufacturer_profile", args=[self.demo.pk]),
         ):
@@ -584,7 +645,7 @@ class MarketplaceDiscoveryTrustTests(TestCase):
         listing = self.create_listing(self.verified, "Verified flag capacity")
 
         for route in (
-            reverse("home"),
+            reverse("marketplace"),
             reverse("listing_detail", args=[listing.pk]),
             reverse("manufacturer_profile", args=[self.verified.pk]),
         ):
@@ -628,7 +689,7 @@ class MarketplaceDiscoveryTrustTests(TestCase):
                 response = self.client.get(reverse(route_name))
                 self.assertEqual(response.status_code, 200)
 
-        response = self.client.get(reverse("home"))
+        response = self.client.get(reverse("marketplace"))
         self.assertContains(response, reverse("trust_safety"))
         self.assertContains(response, reverse("about"))
         self.assertContains(response, reverse("contact"))
@@ -690,7 +751,7 @@ class SeededSampleNameTests(TestCase):
             5,
         )
 
-        response = self.client.get(reverse("home"))
+        response = self.client.get(reverse("marketplace"))
         self.assertContains(response, "Sample listing")
         self.assertNotContains(response, "Verified business")
         self.assertNotContains(response, "Demo ")
@@ -1607,7 +1668,8 @@ class PlatformReadinessTests(TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response["Content-Type"], "application/xml; charset=utf-8")
-        self.assertContains(response, reverse("home"))
+        self.assertContains(response, "https://ubhaar-vyapaar.in/")
+        self.assertContains(response, "https://ubhaar-vyapaar.in/marketplace/")
         self.assertContains(
             response,
             reverse("listing_detail", args=[self.listing.pk]),
@@ -1786,7 +1848,7 @@ class PlatformReadinessTests(TestCase):
         )
 
     def test_public_listing_without_image_uses_designed_fallback(self):
-        home_response = self.client.get(reverse("home"))
+        home_response = self.client.get(reverse("marketplace"))
 
         self.assertContains(home_response, "listing-media-frame")
         self.assertContains(home_response, "media-no-image")
@@ -1945,7 +2007,7 @@ class DemoSeedCommandTests(TestCase):
     def test_homepage_limits_demo_listing_density(self):
         call_command("seed_demo_data", verbosity=0)
 
-        response = self.client.get(reverse("home"))
+        response = self.client.get(reverse("marketplace"))
 
         self.assertEqual(response.status_code, 200)
         self.assertEqual(len(response.context["listings"]), 6)

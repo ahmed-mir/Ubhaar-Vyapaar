@@ -81,7 +81,7 @@
 
             <form
                 method="get"
-                action="{% url 'home' %}"
+                action="{% url 'marketplace' %}"
                 class="search-form hero-search-panel"
                 data-analytics-event="marketplace_search"
             >
@@ -92,7 +92,7 @@
                     </div>
 
                     {% if query or selected_category or location or moq or max_price or lead_time or verification or sort != "newest" %}
-                        <a class="clear-link" href="{% url 'home' %}">
+                        <a class="clear-link" href="{% url 'marketplace' %}">
                             Clear filters
                         </a>
                     {% endif %}
@@ -346,7 +346,7 @@
             <div class="results-tools">
                 <span>{{ page_obj.paginator.count }} results</span>
                 {% if query or selected_category or location or moq or max_price or lead_time or verification or sort != "newest" %}
-                    <a class="button button-secondary button-compact" href="{% url 'home' %}">
+                    <a class="button button-secondary button-compact" href="{% url 'marketplace' %}">
                         Clear filters
                     </a>
                 {% endif %}
@@ -499,7 +499,7 @@
                     {% if query or selected_category %}
                         <h3>No matching listings</h3>
                         <p>Try a broader category, location, MOQ, price, or lead-time filter.</p>
-                        <a class="button" href="{% url 'home' %}">
+                        <a class="button" href="{% url 'marketplace' %}">
                             Clear all filters
                         </a>
                     {% else %}
