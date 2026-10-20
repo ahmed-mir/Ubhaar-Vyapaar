@@ -1,15 +1,54 @@
-{% extends "marketplace/base.html" %}
+{% extends "marketplace/public_content_page.html" %}
 
 {% block title %}For manufacturers | Ubhaar-Vyapaar{% endblock %}
-{% block meta_description %}Share available manufacturing capacity with buyers on Ubhaar-Vyapaar.{% endblock %}
+{% block meta_description %}Learn how manufacturers publish available capacity, respond to quote requests, and manage accepted orders on Ubhaar-Vyapaar.{% endblock %}
+{% block social_title %}For manufacturers | Ubhaar-Vyapaar{% endblock %}
+{% block social_description %}Learn how manufacturers publish available capacity, respond to quote requests, and manage accepted orders on Ubhaar-Vyapaar.{% endblock %}
+{% block twitter_title %}For manufacturers | Ubhaar-Vyapaar{% endblock %}
+{% block twitter_description %}Learn how manufacturers publish available capacity, respond to quote requests, and manage accepted orders on Ubhaar-Vyapaar.{% endblock %}
 
-{% block content %}
-<section class="page-heading">
-    <div>
-        <p class="eyebrow">For manufacturers</p>
-        <h1>Share capacity when you have room to make.</h1>
-        <p>Publish a capacity listing, respond to buyer quote requests, and manage availability from your manufacturer account.</p>
+{% block page_eyebrow %}For manufacturers{% endblock %}
+{% block page_h1 %}Publish capacity and respond to buyer requests{% endblock %}
+{% block page_lead %}Use a manufacturer account to describe available production capacity, send quotations, and manage accepted orders through messages and milestones.{% endblock %}
+
+{% block page_body %}
+<div class="public-page-layout">
+    {% include "marketplace/includes/public_page_toc.html" %}
+    <div class="public-content-sections">
+        <section class="public-content-section" id="who-its-for">
+            <h2>Who the marketplace is for</h2>
+            <p>Ubhaar-Vyapaar is a manufacturing capacity marketplace for businesses looking to publish production capability and for buyers searching for a supplier.</p>
+            {% if manufacturer_required_documents or manufacturer_review_time %}
+            <div class="public-onboarding-details">
+                {% if manufacturer_required_documents %}
+                <h3>Required documents</h3>
+                <ul>{% for document in manufacturer_required_documents %}<li>{{ document }}</li>{% endfor %}</ul>
+                {% endif %}
+                {% if manufacturer_review_time %}<p>Expected review time: {{ manufacturer_review_time }}</p>{% endif %}
+            </div>
+            {% endif %}
+        </section>
+        <section class="public-content-section" id="listing-capacity">
+            <h2>What a capacity listing describes</h2>
+            <p>Manufacturers can share the details available in the listing form, such as category, machine or process, materials, location, price, minimum order quantity, lead time, capacity, availability, and an image.</p>
+            <p>Keep listing details current and accurate. Buyers use them to decide whether to ask for a quotation; the final commercial terms are set in the quotation.</p>
+        </section>
+        <section class="public-content-section" id="quotes-and-orders">
+            <h2>Quote requests and accepted orders</h2>
+            <p>Buyers send a quantity, requirements, and delivery location through a quote request. Manufacturers can respond with a quotation. When a buyer accepts it, the application creates an order with the accepted terms, messages, and production milestones.</p>
+            <p>Manufacturers can update milestone progress and communicate with the buyer through the order.</p>
+        </section>
+        <section class="public-content-section" id="verification-status">
+            <h2>Verification status</h2>
+            <p>The Verified badge appears only when a non-sample manufacturer profile has the authoritative verification flag. A KYC status alone does not display the badge. Verification is not a certification or a guarantee of quality, delivery, payment, or a particular outcome.</p>
+            <p>Some marketplace listings are marked Sample for illustration and do not accept quote requests.</p>
+            <a href="{% url 'trust_safety' %}">Read Trust &amp; Safety</a>
+        </section>
+        <section class="public-content-section">
+            <h2>Start a manufacturer account</h2>
+            <p>Continue to the existing manufacturer registration flow to create an account.</p>
+            <a class="button button-primary" href="{% url 'register_manufacturer' %}">Register as a manufacturer</a>
+        </section>
     </div>
-    <a class="button button-primary" href="{% url 'register_manufacturer' %}">List capacity</a>
-</section>
+</div>
 {% endblock %}

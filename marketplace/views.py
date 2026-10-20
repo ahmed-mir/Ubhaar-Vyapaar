@@ -74,20 +74,91 @@ def _manufacturer_schema(manufacturer):
         organization["description"] = manufacturer.description
     return organization
 def legal_page_context():
+    legal_email = settings.LEGAL_CONTACT_EMAIL
     return {
-        "legal_entity_name": settings.LEGAL_ENTITY_NAME,
-        "legal_contact_email": settings.LEGAL_CONTACT_EMAIL,
-        "legal_contact_label": settings.LEGAL_CONTACT_LABEL,
+        "legal_entity_name": (settings.LEGAL_ENTITY_NAME or "").strip(),
+        "legal_contact_email": legal_email.strip() if _is_real_configured_email(legal_email) else "",
+        "legal_contact_label": (
+            settings.LEGAL_CONTACT_LABEL.strip()
+            if _is_real_configured_email(legal_email) and settings.LEGAL_CONTACT_LABEL
+            else ""
+        ),
+        "grievance_officer_name": (settings.GRIEVANCE_OFFICER_NAME or "").strip(),
+        "grievance_contact_email": (
+            settings.GRIEVANCE_CONTACT_EMAIL.strip()
+            if _is_real_configured_email(settings.GRIEVANCE_CONTACT_EMAIL)
+            else ""
+        ),
+        "manufacturer_required_documents": settings.MANUFACTURER_REQUIRED_DOCUMENTS,
+        "manufacturer_review_time": (settings.MANUFACTURER_REVIEW_TIME or "").strip(),
         "terms_version": settings.TERMS_VERSION,
         "privacy_policy_version": settings.PRIVACY_POLICY_VERSION,
     }
+
+
+PUBLIC_PAGE_CONTENTS = {
+    "how_it_works": [
+        ("buyers", "For buyers"),
+        ("manufacturers", "For manufacturers"),
+        ("orders-and-payments", "Orders and payment status"),
+    ],
+    "for_manufacturers": [
+        ("who-its-for", "Who the marketplace is for"),
+        ("listing-capacity", "Listing capacity"),
+        ("quotes-and-orders", "Quotes and orders"),
+        ("verification-status", "Verification status"),
+    ],
+    "trust_safety": [
+        ("verified-means", "What Verified means"),
+        ("verified-does-not-mean", "What Verified does not mean"),
+        ("sample-data", "Sample data"),
+        ("communication-and-reporting", "Communication and reporting"),
+    ],
+    "faq": [
+        ("faq-marketplace", "Marketplace"),
+        ("faq-buyers", "Buyers"),
+        ("faq-manufacturers", "Manufacturers"),
+        ("faq-quotations", "Quotations"),
+        ("faq-orders", "Orders and milestones"),
+        ("faq-verification", "Verification"),
+        ("faq-payments", "Payments"),
+        ("faq-accounts", "Accounts"),
+    ],
+    "privacy_policy": [
+        ("information-we-collect", "Information collected"),
+        ("how-information-is-used", "How information is used"),
+        ("registration-consent", "Registration and consent"),
+        ("cookies-and-storage", "Cookies and browser storage"),
+        ("service-providers", "Service providers"),
+        ("data-retention", "Data retention"),
+        ("security", "Security"),
+        ("user-rights", "User requests"),
+        ("childrens-data", "Children's data"),
+        ("policy-changes", "Policy version"),
+    ],
+    "terms": [
+        ("terms-payments", "Payments"),
+        ("accounts-and-roles", "Accounts and roles"),
+        ("listings-quotes-orders", "Listings, quotations, and orders"),
+        ("communication-reviews", "Communication and reviews"),
+        ("prohibited-conduct", "Prohibited conduct"),
+        ("user-content", "User content"),
+        ("suspension-termination", "Suspension or termination"),
+        ("availability-liability-disputes", "Availability and disputes"),
+        ("terms-contact-version", "Contact and version"),
+    ],
+}
+
+
+def public_page_context(page_name):
+    return {"contents_items": PUBLIC_PAGE_CONTENTS.get(page_name, [])}
 
 
 def privacy_policy(request):
     return render(
         request,
         "marketplace/privacy_policy.html",
-        legal_page_context(),
+        {**legal_page_context(), **public_page_context("privacy_policy")},
     )
 
 
@@ -95,7 +166,7 @@ def terms(request):
     return render(
         request,
         "marketplace/terms.html",
-        legal_page_context(),
+        {**legal_page_context(), **public_page_context("terms")},
     )
 
 
@@ -124,11 +195,13 @@ def about(request):
 
 
 def how_it_works(request):
-    return render(request, "marketplace/how_it_works.html")
+    return render(request, "marketplace/how_it_works.html", public_page_context("how_it_works"))
 
 
 def for_manufacturers(request):
-    return render(request, "marketplace/for_manufacturers.html")
+    context = public_page_context("for_manufacturers")
+    context.update(legal_page_context())
+    return render(request, "marketplace/for_manufacturers.html", context)
 
 
 def contact(request):
@@ -140,11 +213,80 @@ def pricing_fees(request):
 
 
 def trust_safety(request):
-    return render(request, "marketplace/trust_safety.html")
+    context = public_page_context("trust_safety")
+    if not legal_page_context()["legal_contact_email"]:
+        context["contents_items"] = [
+            item for item in context["contents_items"]
+            if item[0] != "communication-and-reporting"
+        ]
+    context.update(legal_page_context())
+    return render(request, "marketplace/trust_safety.html", context)
 
 
 def faq(request):
-    return render(request, "marketplace/faq.html")
+    faq_groups = [
+        {
+            "id": "faq-marketplace",
+            "title": "Marketplace",
+            "items": [
+                {"question": "How do I find manufacturing capacity?", "answer": "Browse active listings or search and filter by the fields available in the marketplace."},
+                {"question": "Can a manufacturer pause a listing?", "answer": "Yes. Paused listings may remain visible after available listings, but are not prioritized in default discovery and are labeled as paused."},
+            ],
+        },
+        {
+            "id": "faq-buyers",
+            "title": "Buyers",
+            "items": [
+                {"question": "How do I request a quote?", "answer": "Open a listing that accepts requests and provide the requested quantity, requirements, and delivery location. Sample listings are illustrative and do not accept quote requests."},
+            ],
+        },
+        {
+            "id": "faq-manufacturers",
+            "title": "Manufacturers",
+            "items": [
+                {"question": "What can a manufacturer manage?", "answer": "A manufacturer account can create and edit capacity listings, respond to quote requests with quotations, and manage accepted orders and milestones."},
+            ],
+        },
+        {
+            "id": "faq-quotations",
+            "title": "Quotations",
+            "items": [
+                {"question": "What happens when a buyer accepts or declines a quotation?", "answer": "A buyer can accept or decline the quotation. Acceptance creates an order with the accepted terms, messages, and production milestones."},
+            ],
+        },
+        {
+            "id": "faq-orders",
+            "title": "Orders and milestones",
+            "items": [
+                {"question": "How do order messages, milestones, and reviews work?", "answer": "Order participants can exchange messages and update production milestones. A buyer can leave a review after the order is completed, subject to the existing review rules."},
+            ],
+        },
+        {
+            "id": "faq-verification",
+            "title": "Verification",
+            "items": [
+                {"question": "What does Verified mean?", "answer": "The Verified badge appears only for non-sample manufacturer accounts whose verification flag is approved. A KYC status by itself does not display the badge."},
+            ],
+        },
+        {
+            "id": "faq-payments",
+            "title": "Payments",
+            "items": [
+                {"question": "Does Ubhaar-Vyapaar process payments or escrow?", "answer": "No. The platform does not process payments or provide escrow. Any funding or release labels in the order workflow are simulated."},
+                {"question": "Does the platform collect a fee?", "answer": "The current application does not calculate or collect platform fees."},
+            ],
+        },
+        {
+            "id": "faq-accounts",
+            "title": "Accounts",
+            "items": [
+                {"question": "Can I change my password?", "answer": "Yes. Signed-in users can change their password from account settings."},
+            ],
+        },
+    ]
+    context = public_page_context("faq")
+    context["faq_groups"] = faq_groups
+    return render(request, "marketplace/faq.html", context)
 
 
 def grievance_redressal(request):

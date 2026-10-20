@@ -1,14 +1,23 @@
-{% extends "marketplace/base.html" %}
+{% extends "marketplace/public_content_page.html" %}
 
 {% block title %}Contact | Ubhaar-Vyapaar{% endblock %}
-{% block meta_description %}Contact details for Ubhaar-Vyapaar.{% endblock %}
+{% block meta_description %}Find contact information and practical guidance for questions about Ubhaar-Vyapaar.{% endblock %}
+{% block social_title %}Contact | Ubhaar-Vyapaar{% endblock %}
+{% block social_description %}Find contact information and practical guidance for questions about Ubhaar-Vyapaar.{% endblock %}
+{% block twitter_title %}Contact | Ubhaar-Vyapaar{% endblock %}
+{% block twitter_description %}Find contact information and practical guidance for questions about Ubhaar-Vyapaar.{% endblock %}
 
-{% block content %}
-<section class="record-card info-page">
-    <p class="eyebrow">Contact</p>
-    <h1>Contact Ubhaar-Vyapaar</h1>
+{% block page_eyebrow %}Contact{% endblock %}
+{% block page_h1 %}Contact Ubhaar-Vyapaar{% endblock %}
+{% block page_lead %}Use the information below for general questions and order-related communication.{% endblock %}
+
+{% block page_body %}
+<section class="public-content-section">
+    {% if legal_entity_name %}<p>Platform operator: {{ legal_entity_name }}</p>{% endif %}
     {% if legal_contact_email %}
-        <p>For support and general enquiries, email <a href="mailto:{{ legal_contact_email }}">{{ legal_contact_email }}</a>.</p>
+        <p>{{ legal_contact_label|default:"Contact" }}: <a href="mailto:{{ legal_contact_email }}">{{ legal_contact_email }}</a></p>
+    {% else %}
+        <p>For questions about using the marketplace, see <a href="{% url 'faq' %}">Frequently asked questions</a> or <a href="{% url 'how_it_works' %}">How it works</a>. For a specific accepted order, use its messages to communicate with the other participant.</p>
     {% endif %}
 </section>
 {% endblock %}

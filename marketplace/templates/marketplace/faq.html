@@ -1,10 +1,36 @@
-{% extends "marketplace/base.html" %}
+{% extends "marketplace/public_content_page.html" %}
+
 {% block title %}FAQ | Ubhaar-Vyapaar{% endblock %}
-{% block meta_description %}Answers about browsing capacity, verification, quotations and marketplace workflows.{% endblock %}
-{% block content %}
-<section class="record-card info-page">
-    <p class="eyebrow">FAQ</p>
-    <h1>Frequently asked questions</h1>
-    <div class="landing-faq-list faq-page-list">{% for item in faq_items %}<details><summary>{{ item.question }}</summary><p>{{ item.answer }}</p>{% if item.question == "What does Verified mean?" %}<p><a href="{% url 'trust_safety' %}">Read the full Trust &amp; Safety explanation</a>.</p>{% endif %}</details>{% endfor %}</div>
-</section>
+{% block meta_description %}Answers about marketplace listings, buyer quote requests, manufacturer accounts, quotations, orders, verification, and payments.{% endblock %}
+{% block social_title %}FAQ | Ubhaar-Vyapaar{% endblock %}
+{% block social_description %}Answers about marketplace listings, buyer quote requests, manufacturer accounts, quotations, orders, verification, and payments.{% endblock %}
+{% block twitter_title %}FAQ | Ubhaar-Vyapaar{% endblock %}
+{% block twitter_description %}Answers about marketplace listings, buyer quote requests, manufacturer accounts, quotations, orders, verification, and payments.{% endblock %}
+
+{% block page_eyebrow %}FAQ{% endblock %}
+{% block page_h1 %}Questions about using the marketplace{% endblock %}
+{% block page_lead %}Answers below describe the current application and its buyer and manufacturer workflows.{% endblock %}
+
+{% block page_body %}
+<div class="public-page-layout">
+    {% include "marketplace/includes/public_page_toc.html" %}
+    <div class="public-content-sections">
+        {% for group in faq_groups %}
+        <section class="public-faq-group" id="{{ group.id }}">
+            <h2>{{ group.title }}</h2>
+            <div class="public-faq-list">
+                {% for item in group.items %}
+                <details>
+                    <summary>{{ item.question }}</summary>
+                    <p>{{ item.answer }}</p>
+                    {% if item.question == "What does Verified mean?" %}
+                    <p><a href="{% url 'trust_safety' %}">Read the Trust &amp; Safety explanation</a>.</p>
+                    {% endif %}
+                </details>
+                {% endfor %}
+            </div>
+        </section>
+        {% endfor %}
+    </div>
+</div>
 {% endblock %}

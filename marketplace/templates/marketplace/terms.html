@@ -1,76 +1,44 @@
-{% extends "marketplace/base.html" %}
+{% extends "marketplace/public_content_page.html" %}
 
-{% block title %}Terms & Conditions | Ubhaar-Vyapaar{% endblock %}
-{% block meta_description %}Read the Ubhaar-Vyapaar Terms and Conditions for accounts, buyer and manufacturer roles, listings, quotations, orders, reviews, and simulated payments.{% endblock %}
+{% block title %}Terms &amp; Conditions | Ubhaar-Vyapaar{% endblock %}
+{% block meta_description %}Read the Ubhaar-Vyapaar terms for accounts, listings, quotations, orders, reviews, and the current simulated payment workflow.{% endblock %}
+{% block social_title %}Terms &amp; Conditions | Ubhaar-Vyapaar{% endblock %}
+{% block social_description %}Read the Ubhaar-Vyapaar terms for accounts, listings, quotations, orders, reviews, and the current simulated payment workflow.{% endblock %}
+{% block twitter_title %}Terms &amp; Conditions | Ubhaar-Vyapaar{% endblock %}
+{% block twitter_description %}Read the Ubhaar-Vyapaar terms for accounts, listings, quotations, orders, reviews, and the current simulated payment workflow.{% endblock %}
 
-{% block content %}
-    <article class="legal-page">
-        <header class="page-heading legal-heading">
-            <div>
-                <p class="eyebrow">Platform terms</p>
-                <h1>Terms &amp; Conditions</h1>
-                <p>
-                    These terms describe the marketplace workflows available on
-                    Ubhaar-Vyapaar.
-                </p>
-            </div>
-        </header>
+{% block page_eyebrow %}Platform terms{% endblock %}
+{% block page_h1 %}Terms &amp; Conditions{% endblock %}
+{% block page_lead %}These terms describe the marketplace workflows currently available on Ubhaar-Vyapaar.{% endblock %}
 
-        <section class="legal-section legal-warning">
+{% block page_body %}
+<div class="public-page-layout">
+    {% include "marketplace/includes/public_page_toc.html" %}
+    <div class="public-content-sections">
+        <section class="public-content-section public-callout" id="terms-payments">
             <h2>Payments</h2>
-            <p>
-                Ubhaar-Vyapaar currently uses demo and simulated milestone funding
-                states only. The platform does not currently process real payments,
-                does not charge payment cards or UPI, does not move money, and does
-                not provide a real escrow account.
-            </p>
-            <p>
-                Demo funding and demo release states are workflow markers only and
-                do not represent real money movement or regulated financial services.
-            </p>
+            <p>Ubhaar-Vyapaar currently uses demo and simulated milestone funding states only. The platform does not process real payments, charge payment cards or UPI, move money, or provide a real escrow account.</p>
+            <p>Demo funding and release states are workflow markers only and do not represent real money movement or regulated financial services.</p>
         </section>
 
-        <section class="legal-section">
+        <section class="public-content-section" id="accounts-and-roles">
             <h2>Accounts and roles</h2>
-            <p>
-                Users are responsible for keeping account credentials secure and for
-                providing accurate account information. Buyer accounts can browse,
-                save listings, request quotes, accept quotations, manage demo orders,
-                message manufacturers, and leave completed-order reviews.
-            </p>
-            <p>
-                Manufacturer accounts can create capacity listings, maintain business
-                profiles, respond to quote requests, send quotations, manage demo
-                order milestones, and message buyers.
-            </p>
+            <p>Users are responsible for keeping account credentials secure and for providing accurate account information. Buyer accounts can browse, save listings, request quotes, accept quotations, manage demo orders, message manufacturers, and leave completed-order reviews.</p>
+            <p>Manufacturer accounts can create capacity listings, maintain business profiles, respond to quote requests, send quotations, manage demo order milestones, and message buyers.</p>
         </section>
 
-        <section class="legal-section">
+        <section class="public-content-section" id="listings-quotes-orders">
             <h2>Listings, quotations, and orders</h2>
-            <p>
-                Manufacturers are responsible for the accuracy of listings, prices,
-                lead times, capacity statements, images, and quotations. Buyers are
-                responsible for providing practical quote requirements and delivery
-                information.
-            </p>
-            <p>
-                Accepting a quotation currently creates a demo order with locked
-                terms and simulated milestones. It does not create platform-processed
-                payment, escrow, shipping, tax, or regulated financial-service
-                obligations.
-            </p>
+            <p>Manufacturers are responsible for the accuracy of listings, prices, lead times, capacity statements, images, and quotations. Buyers are responsible for providing practical quote requirements and delivery information.</p>
+            <p>Accepting a quotation currently creates a demo order with locked terms and simulated milestones. It does not create platform-processed payment, escrow, shipping, tax, or regulated financial-service obligations.</p>
         </section>
 
-        <section class="legal-section">
+        <section class="public-content-section" id="communication-reviews">
             <h2>Communication and reviews</h2>
-            <p>
-                Order messages and reviews should be accurate, lawful, and relevant
-                to the marketplace workflow. Users should not post confidential,
-                abusive, misleading, infringing, or unlawful content.
-            </p>
+            <p>Order messages and reviews should be accurate, lawful, and relevant to the marketplace workflow. Users should not post confidential, abusive, misleading, infringing, or unlawful content.</p>
         </section>
 
-        <section class="legal-section">
+        <section class="public-content-section" id="prohibited-conduct">
             <h2>Prohibited conduct</h2>
             <ul>
                 <li>Submitting false business, listing, quotation, or review information.</li>
@@ -81,39 +49,26 @@
             </ul>
         </section>
 
-        <section class="legal-section">
+        <section class="public-content-section" id="user-content">
             <h2>User-generated content and intellectual property</h2>
-            <p>
-                Users remain responsible for content they submit, including listing
-                text, images, messages, quote requirements, and reviews. Users should
-                submit only content they have the right to use.
-            </p>
+            <p>Users remain responsible for content they submit, including listing text, images, messages, quote requirements, and reviews. Users should submit only content they have the right to use.</p>
         </section>
 
-        <section class="legal-section">
+        <section class="public-content-section" id="suspension-termination">
             <h2>Account suspension or termination</h2>
-            <p>
-                The application does not provide a public account suspension or
-                appeals process.
-            </p>
+            <p>The application does not provide a public account suspension or appeals process.</p>
         </section>
 
-        <section class="legal-section">
+        <section class="public-content-section" id="availability-liability-disputes">
             <h2>Availability, liability, and disputes</h2>
-            <p>
-                The service may change, pause, or become unavailable. Users should
-                resolve commercial terms directly with one another before accepting
-                a quotation. These terms do not specify a governing law or formal
-                dispute-resolution process.
-            </p>
+            <p>The service may change, pause, or become unavailable. Users should resolve commercial terms directly with one another before accepting a quotation. These terms do not specify a governing law or formal dispute-resolution process.</p>
         </section>
 
-        <section class="legal-section">
+        <section class="public-content-section" id="terms-contact-version">
             <h2>Contact and version</h2>
-            {% if legal_contact_email %}
-                <p>Contact: <a href="mailto:{{ legal_contact_email }}">{{ legal_contact_email }}</a></p>
-            {% endif %}
-            <p>Terms version: {{ terms_version }}.</p>
+            {% if legal_contact_email %}<p>Contact: <a href="mailto:{{ legal_contact_email }}">{{ legal_contact_email }}</a></p>{% endif %}
+            {% if terms_version %}<p>Terms version: {{ terms_version }}.</p>{% endif %}
         </section>
-    </article>
+    </div>
+</div>
 {% endblock %}

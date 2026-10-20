@@ -13,6 +13,10 @@ const pages = [
   ["manufacturer-registration", "/accounts/register/manufacturer/"],
   ["about", "/about/"],
   ["how-it-works", "/how-it-works/"],
+  ["for-manufacturers", "/for-manufacturers/"],
+  ["trust-safety", "/trust-safety/"],
+  ["faq", "/faq/"],
+  ["privacy-policy", "/privacy/"],
   ["help", "/help/"],
 ];
 

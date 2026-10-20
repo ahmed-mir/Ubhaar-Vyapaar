@@ -43,6 +43,25 @@ test.describe("accessibility and keyboard UX", () => {
     await expect(page.locator("#main-content")).toBeFocused();
   });
 
+  test("FAQ contents links and disclosures work with keyboard on mobile", async ({ page }) => {
+    await page.setViewportSize({ width: 360, height: 800 });
+    await page.goto("/faq/");
+
+    const toc = page.getByRole("navigation", { name: /on this page/i });
+    await expect(toc).toBeVisible();
+    await toc.getByRole("link", { name: "Payments" }).click();
+    await expect(page).toHaveURL(/#faq-payments$/);
+    await expect(page.locator("#faq-payments")).toBeInViewport();
+
+    const firstSummary = page.locator(".public-faq-list summary").first();
+    await firstSummary.focus();
+    await page.keyboard.press("Enter");
+    await expect(firstSummary.locator("xpath=.." )).toHaveAttribute("open", "");
+    await page.keyboard.press("Space");
+    await expect(firstSummary.locator("xpath=.." )).not.toHaveAttribute("open", "");
+    expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(360);
+  });
+
   test("reduced motion preference disables reveal dependency", async ({ page }) => {
     await page.emulateMedia({ reducedMotion: "reduce" });
     await page.goto("/marketplace/");

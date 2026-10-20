@@ -1,14 +1,38 @@
-{% extends "marketplace/base.html" %}
+{% extends "marketplace/public_content_page.html" %}
 
 {% block title %}Trust &amp; Safety | Ubhaar-Vyapaar{% endblock %}
-{% block meta_description %}Understand verification and trust signals on Ubhaar-Vyapaar.{% endblock %}
+{% block meta_description %}Learn what the Verified badge means, what it does not promise, and how sample listings are labeled on Ubhaar-Vyapaar.{% endblock %}
+{% block social_title %}Trust &amp; Safety | Ubhaar-Vyapaar{% endblock %}
+{% block social_description %}Learn what the Verified badge means, what it does not promise, and how sample listings are labeled on Ubhaar-Vyapaar.{% endblock %}
+{% block twitter_title %}Trust &amp; Safety | Ubhaar-Vyapaar{% endblock %}
+{% block twitter_description %}Learn what the Verified badge means, what it does not promise, and how sample listings are labeled on Ubhaar-Vyapaar.{% endblock %}
 
-{% block content %}
-<section class="record-card info-page">
-    <p class="eyebrow">Trust &amp; Safety</p>
-    <h1>Understand marketplace trust signals.</h1>
-    <h2>What does Verified mean?</h2>
-    <p>The Verified badge appears only for non-sample manufacturer accounts whose verification flag is approved. A KYC status by itself does not display the badge.</p>
-    <p>A missing badge means that no verified state is being displayed. Verification is not a certification or a guarantee of quality, delivery, payment, or a particular outcome.</p>
-</section>
+{% block page_eyebrow %}Trust &amp; Safety{% endblock %}
+{% block page_h1 %}Read marketplace trust signals carefully{% endblock %}
+{% block page_lead %}The marketplace displays a specific verification status. It does not certify products or guarantee a commercial outcome.{% endblock %}
+
+{% block page_body %}
+<div class="public-page-layout">
+    {% include "marketplace/includes/public_page_toc.html" %}
+    <div class="public-content-sections">
+        <section class="public-content-section" id="verified-means">
+            <h2>What Verified means</h2>
+            <p>The Verified badge appears only for non-sample manufacturer accounts whose verification flag is approved. A KYC status by itself does not display the badge.</p>
+        </section>
+        <section class="public-content-section" id="verified-does-not-mean">
+            <h2>What Verified does not mean</h2>
+            <p>Verification is not a certification, product inspection, quality guarantee, delivery guarantee, payment guarantee, endorsement, or insurance. It does not guarantee a particular transaction outcome.</p>
+        </section>
+        <section class="public-content-section" id="sample-data">
+            <h2>Sample data</h2>
+            <p>Listings marked Sample are illustrative. They do not accept quote requests. Sample manufacturers are not shown with the Verified badge, and sample ratings and reviews are hidden.</p>
+        </section>
+        {% if legal_contact_email %}
+        <section class="public-content-section" id="communication-and-reporting">
+            <h2>Contact</h2>
+            <p>For a safety or account concern, contact {{ legal_contact_label|default:"support" }} at <a href="mailto:{{ legal_contact_email }}">{{ legal_contact_email }}</a>.</p>
+        </section>
+        {% endif %}
+    </div>
+</div>
 {% endblock %}

@@ -1,86 +1,35 @@
-{% extends "marketplace/base.html" %}
+{% extends "marketplace/public_content_page.html" %}
 
 {% block title %}Cookie Policy | Ubhaar-Vyapaar{% endblock %}
-{% block meta_description %}Read how Ubhaar-Vyapaar uses necessary cookies and optional consent-based analytics preferences.{% endblock %}
+{% block meta_description %}See how necessary cookies and optional consent-based Google Analytics work on Ubhaar-Vyapaar.{% endblock %}
+{% block social_title %}Cookie Policy | Ubhaar-Vyapaar{% endblock %}
+{% block social_description %}See how necessary cookies and optional consent-based Google Analytics work on Ubhaar-Vyapaar.{% endblock %}
+{% block twitter_title %}Cookie Policy | Ubhaar-Vyapaar{% endblock %}
+{% block twitter_description %}See how necessary cookies and optional consent-based Google Analytics work on Ubhaar-Vyapaar.{% endblock %}
 
-{% block content %}
-    <article class="legal-page">
-        <header class="page-heading legal-heading">
-            <div>
-                <p class="eyebrow">Cookie notice</p>
-                <h1>Cookie Policy</h1>
-                <p>
-                    This page describes cookies and browser storage found in the
-                    current Ubhaar-Vyapaar codebase.
-                </p>
-            </div>
-        </header>
+{% block page_eyebrow %}Cookie notice{% endblock %}
+{% block page_h1 %}Cookie Policy{% endblock %}
+{% block page_lead %}This page describes cookies and optional analytics in the current application.{% endblock %}
 
-        <section class="legal-section">
-            <h2>Current cookies and storage</h2>
-            <div class="legal-table-wrap">
-                <table class="legal-table">
-                    <thead>
-                        <tr>
-                            <th>Category</th>
-                            <th>What exists</th>
-                            <th>Purpose</th>
-                            <th>Loads before consent?</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td>Strictly necessary</td>
-                            <td>Django session cookie</td>
-                            <td>Keeps users logged in and supports account workflows.</td>
-                            <td>Yes, when needed for account functionality.</td>
-                        </tr>
-                        <tr>
-                            <td>Strictly necessary</td>
-                            <td>Django CSRF cookie/token</td>
-                            <td>Protects forms from cross-site request forgery.</td>
-                            <td>Yes, when forms are used.</td>
-                        </tr>
-                        <tr>
-                            <td>Strictly necessary</td>
-                            <td>Cookie preference cookie</td>
-                            <td>Remembers whether optional analytics were accepted or rejected.</td>
-                            <td>Yes, after a user makes a cookie choice.</td>
-                        </tr>
-                        <tr>
-                            <td>Analytics</td>
-                            <td>Google Analytics, only if configured and accepted</td>
-                            <td>Measures anonymous product usage such as marketplace search and quote-request flow events.</td>
-                            <td>No. It is not loaded before analytics consent.</td>
-                        </tr>
-                        <tr>
-                            <td>Marketing</td>
-                            <td>None found in the current code audit.</td>
-                            <td>Not applicable.</td>
-                            <td>No.</td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-            <p>
-                The current code audit did not identify advertising pixels, embedded
-                maps, video embeds, chat widgets, or social widgets.
-            </p>
-        </section>
-
-        <section class="legal-section">
-            <h2>Consent approach</h2>
-            <p>
-                Necessary cookies are required for login, forms, security, and
-                remembering the cookie choice. Optional analytics are off by
-                default and load only if a Google Analytics measurement ID is
-                configured and the user accepts analytics.
-            </p>
-            <p>
-                If marketing or additional third-party embeds are added later,
-                they should be placed behind an explicit consent mechanism and
-                should not run before the relevant consent category is granted.
-            </p>
-        </section>
-    </article>
+{% block page_body %}
+<section class="public-content-section">
+    <h2>Current cookies and storage</h2>
+    <div class="public-facts-table-wrap">
+        <table class="public-facts-table">
+            <thead><tr><th scope="col">Category</th><th scope="col">What exists</th><th scope="col">Purpose and timing</th></tr></thead>
+            <tbody>
+                <tr><th scope="row">Strictly necessary</th><td>Django session cookie</td><td>Keeps users logged in and supports account workflows.</td></tr>
+                <tr><th scope="row">Strictly necessary</th><td>Django CSRF cookie/token</td><td>Protects forms from cross-site request forgery.</td></tr>
+                <tr><th scope="row">Strictly necessary</th><td>Cookie preference cookie</td><td>Remembers whether optional analytics were accepted or rejected after a choice is made.</td></tr>
+                <tr><th scope="row">Analytics</th><td>Google Analytics, only if configured and accepted</td><td>Measures product usage. It is not loaded before analytics consent.</td></tr>
+                <tr><th scope="row">Marketing</th><td>None used by the current application</td><td>No marketing cookies are used.</td></tr>
+            </tbody>
+        </table>
+    </div>
+    <p>The current application does not use advertising pixels, embedded maps, video embeds, chat widgets, or social widgets.</p>
+</section>
+<section class="public-content-section">
+    <h2>Consent approach</h2>
+    <p>Necessary cookies support login, forms, security, and remembering the cookie choice. Optional analytics are off by default and load only if a Google Analytics measurement ID is configured and the user accepts analytics.</p>
+</section>
 {% endblock %}

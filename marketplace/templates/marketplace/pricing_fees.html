@@ -1,13 +1,27 @@
-{% extends "marketplace/base.html" %}
+{% extends "marketplace/public_content_page.html" %}
 
 {% block title %}Pricing &amp; Fees | Ubhaar-Vyapaar{% endblock %}
-{% block meta_description %}Learn how pricing and fees are presented on Ubhaar-Vyapaar.{% endblock %}
+{% block meta_description %}See how listing prices, quotations, platform fees, and payment processing work in the current Ubhaar-Vyapaar application.{% endblock %}
+{% block social_title %}Pricing &amp; Fees | Ubhaar-Vyapaar{% endblock %}
+{% block social_description %}See how listing prices, quotations, platform fees, and payment processing work in the current Ubhaar-Vyapaar application.{% endblock %}
+{% block twitter_title %}Pricing &amp; Fees | Ubhaar-Vyapaar{% endblock %}
+{% block twitter_description %}See how listing prices, quotations, platform fees, and payment processing work in the current Ubhaar-Vyapaar application.{% endblock %}
 
-{% block content %}
-<section class="record-card info-page">
-    <p class="eyebrow">Pricing &amp; Fees</p>
-    <h1>Pricing is shown with each listing.</h1>
-    <p>Manufacturers publish their unit prices, available capacity, minimum quantities, and production timelines. Buyers can review a manufacturer's quotation before deciding whether to accept it.</p>
-    <p>The application does not calculate or collect platform fees, and it does not process payments. Confirm the quoted terms directly before accepting an order.</p>
+{% block page_eyebrow %}Pricing &amp; Fees{% endblock %}
+{% block page_h1 %}Current pricing and payment behavior{% endblock %}
+{% block page_lead %}The application displays manufacturer-provided listing prices and quotations. Platform fees and payment processing are not active in the current product.{% endblock %}
+
+{% block page_body %}
+<section class="public-content-section">
+    <div class="public-facts-table-wrap">
+        <table class="public-facts-table">
+            <tbody>
+                <tr><th scope="row">Listing prices</th><td>Manufacturers provide the listing price and quotation terms. Buyers should review the quotation before accepting it.</td></tr>
+                <tr><th scope="row">Platform fees</th><td>The current application does not calculate or collect platform fees.</td></tr>
+                <tr><th scope="row">Payments and escrow</th><td>Payment and escrow processing are not live. Funding and release labels shown in the order workflow are simulated states; the platform does not collect, hold, move, or release funds.</td></tr>
+            </tbody>
+        </table>
+    </div>
+    <p>Confirm commercial terms with the manufacturer before accepting a quotation.</p>
 </section>
 {% endblock %}

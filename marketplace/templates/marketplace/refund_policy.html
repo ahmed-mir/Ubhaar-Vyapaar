@@ -1,45 +1,24 @@
-{% extends "marketplace/base.html" %}
+{% extends "marketplace/public_content_page.html" %}
 
-{% block title %}Refund & Cancellation Policy | Ubhaar-Vyapaar{% endblock %}
-{% block meta_description %}Review how cancellations and refunds work for orders on Ubhaar-Vyapaar.{% endblock %}
+{% block title %}Refund &amp; Cancellation Policy | Ubhaar-Vyapaar{% endblock %}
+{% block meta_description %}Understand the current limits of payment processing, platform refunds, and order cancellation workflows on Ubhaar-Vyapaar.{% endblock %}
+{% block social_title %}Refund &amp; Cancellation Policy | Ubhaar-Vyapaar{% endblock %}
+{% block social_description %}Understand the current limits of payment processing, platform refunds, and order cancellation workflows on Ubhaar-Vyapaar.{% endblock %}
+{% block twitter_title %}Refund &amp; Cancellation Policy | Ubhaar-Vyapaar{% endblock %}
+{% block twitter_description %}Understand the current limits of payment processing, platform refunds, and order cancellation workflows on Ubhaar-Vyapaar.{% endblock %}
 
-{% block content %}
-    <article class="legal-page">
-        <header class="page-heading legal-heading">
-            <div>
-                <p class="eyebrow">Payments and cancellations</p>
-                <h1>Refund &amp; Cancellation Policy</h1>
-                <p>
-                    This policy describes the payment and cancellation functionality
-                    currently available on Ubhaar-Vyapaar.
-                </p>
-            </div>
-        </header>
+{% block page_eyebrow %}Refunds and cancellations{% endblock %}
+{% block page_h1 %}Refund &amp; Cancellation Policy{% endblock %}
+{% block page_lead %}This page describes the payment and cancellation functionality currently available in the application.{% endblock %}
 
-        <section class="legal-section legal-warning">
-            <h2>No current platform payment processing</h2>
-            <p>
-                Ubhaar-Vyapaar currently uses simulated funding and release states
-                for demo order workflows. No real payment is charged through the
-                platform at present. No actual money is collected, held, moved, or
-                released by Ubhaar-Vyapaar, and no real escrow account is currently
-                provided.
-            </p>
-            <p>
-                Because the platform does not currently process real monetary
-                payments, platform-processed monetary refunds are not currently
-                performed.
-            </p>
-        </section>
-
-        <section class="legal-section">
-            <h2>Order cancellations</h2>
-            <p>
-                The application does not currently provide a self-service order
-                cancellation workflow. Buyers and manufacturers should resolve
-                cancellation requests directly with one another.
-            </p>
-        </section>
-
-    </article>
+{% block page_body %}
+<section class="public-content-section">
+    <h2>No platform payment processing</h2>
+    <p>Ubhaar-Vyapaar uses simulated funding and release states in demo order workflows. The platform does not charge, collect, hold, move, or release real payments and does not provide real escrow.</p>
+    <p>Because the platform does not process real payments, it does not process monetary refunds. This page does not set refund terms for commercial arrangements made directly between buyers and manufacturers.</p>
+</section>
+<section class="public-content-section">
+    <h2>Order cancellations</h2>
+    <p>The application does not provide a self-service order cancellation workflow or define cancellation windows or penalties. Buyers and manufacturers should communicate about cancellation requests through their order messages.</p>
+</section>
 {% endblock %}

@@ -864,43 +864,42 @@ class ProductionReadinessTests(TestCase):
 
     @override_settings(
         LEGAL_ENTITY_NAME="Configured Marketplace Entity",
-        LEGAL_CONTACT_EMAIL="legal@example.org",
+        LEGAL_CONTACT_EMAIL="legal@ubhaar-vyapaar.in",
         LEGAL_CONTACT_LABEL="Legal contact",
     )
     def test_configured_legal_contact_renders_on_applicable_pages(self):
         for route_name in (
             "contact",
-            "grievance_redressal",
             "privacy_policy",
             "terms",
         ):
             with self.subTest(route_name=route_name):
                 response = self.client.get(reverse(route_name))
-                self.assertContains(response, "legal@example.org")
+                self.assertContains(response, "legal@ubhaar-vyapaar.in")
                 self.assertNotContains(response, "LEGAL_CONTACT_EMAIL")
 
         privacy = self.client.get(reverse("privacy_policy"))
         self.assertContains(privacy, "Configured Marketplace Entity")
 
-    @override_settings(LEGAL_CONTACT_EMAIL="support@example.org")
+    @override_settings(LEGAL_CONTACT_EMAIL="support@ubhaar-vyapaar.in")
     def test_default_contact_label_does_not_expose_prototype_wording(self):
         response = self.client.get(reverse("home"))
 
-        self.assertContains(response, "support@example.org")
+        self.assertContains(response, "support@ubhaar-vyapaar.in")
         self.assertNotContains(response, "prototype")
 
     @override_settings(
         LEGAL_ENTITY_NAME="Configured Marketplace Entity",
-        LEGAL_CONTACT_EMAIL="support@example.com",
+        LEGAL_CONTACT_EMAIL="support@ubhaar-vyapaar.in",
         LEGAL_CONTACT_LABEL="Support email",
     )
     def test_configured_contact_values_are_shared_with_footer(self):
         contact_response = self.client.get(reverse("contact"))
         home_response = self.client.get(reverse("home"))
 
-        self.assertContains(contact_response, "support@example.com")
+        self.assertContains(contact_response, "support@ubhaar-vyapaar.in")
         self.assertContains(home_response, "Configured Marketplace Entity")
-        self.assertContains(home_response, "support@example.com")
+        self.assertContains(home_response, "support@ubhaar-vyapaar.in")
         self.assertContains(home_response, "Support email")
 
     @override_settings(DEBUG=False)
@@ -1573,13 +1572,13 @@ class PolicyPageTests(TestCase):
     def test_cookie_policy_does_not_claim_optional_tracking(self):
         response = self.client.get(reverse("cookie_policy"))
 
-        self.assertContains(response, "None found in the current code audit")
+        self.assertContains(response, "None used by the current application")
         self.assertNotContains(response, "Accept All")
 
     def test_terms_disclose_simulated_payments(self):
         response = self.client.get(reverse("terms"))
 
-        self.assertContains(response, "does not currently process real payments")
+        self.assertContains(response, "does not process real payments")
         self.assertContains(response, "real escrow account")
 
 

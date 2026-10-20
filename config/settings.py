@@ -465,6 +465,16 @@ LEGAL_CONTACT_LABEL = _env_str(
     "Contact support",
 )
 
+# Optional public information. Empty values keep these sections hidden.
+MANUFACTURER_REQUIRED_DOCUMENTS = [
+    value.strip()
+    for value in _env_str("MANUFACTURER_REQUIRED_DOCUMENTS", "").split("|")
+    if value.strip()
+]
+MANUFACTURER_REVIEW_TIME = _env_str("MANUFACTURER_REVIEW_TIME", "")
+GRIEVANCE_OFFICER_NAME = _env_str("GRIEVANCE_OFFICER_NAME", "")
+GRIEVANCE_CONTACT_EMAIL = _env_str("GRIEVANCE_CONTACT_EMAIL", "")
+
 TERMS_VERSION = _env_str("TERMS_VERSION", "2026-10-11")
 
 PRIVACY_POLICY_VERSION = _env_str(

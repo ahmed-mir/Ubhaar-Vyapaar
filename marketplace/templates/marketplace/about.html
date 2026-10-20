@@ -1,33 +1,30 @@
-{% extends "marketplace/base.html" %}
+{% extends "marketplace/public_content_page.html" %}
 
 {% block title %}About | Ubhaar-Vyapaar{% endblock %}
-{% block meta_description %}Learn what buyers and manufacturers can do on the Ubhaar-Vyapaar marketplace.{% endblock %}
+{% block meta_description %}Learn what Ubhaar-Vyapaar currently provides for buyers and manufacturers looking to find and share production capacity.{% endblock %}
+{% block social_title %}About | Ubhaar-Vyapaar{% endblock %}
+{% block social_description %}Learn what Ubhaar-Vyapaar currently provides for buyers and manufacturers looking to find and share production capacity.{% endblock %}
+{% block twitter_title %}About | Ubhaar-Vyapaar{% endblock %}
+{% block twitter_description %}Learn what Ubhaar-Vyapaar currently provides for buyers and manufacturers looking to find and share production capacity.{% endblock %}
 
-{% block content %}
-<article class="legal-page information-page">
-    <header class="page-heading legal-heading">
-        <div>
-            <p class="eyebrow">About the marketplace</p>
-            <h1>Manufacturing capacity, easier to find.</h1>
-            <p>Ubhaar-Vyapaar brings capacity listings and quotation requests into one marketplace workflow.</p>
-        </div>
-    </header>
+{% block page_eyebrow %}About{% endblock %}
+{% block page_h1 %}A marketplace for manufacturing capacity{% endblock %}
+{% block page_lead %}Ubhaar-Vyapaar helps buyers find manufacturing listings and lets manufacturers describe available capacity and respond to quotation requests.{% endblock %}
 
-    <section class="legal-section">
-        <h2>For buyers</h2>
-        <p>Search listings by capability, category, location, minimum order quantity, price, and lead time. Review the manufacturer profile and its verification status before requesting a quote.</p>
-<a class="button button-primary" href="{% url 'marketplace' %}#marketplace-listings">Browse capacity</a>
-    </section>
-
-    <section class="legal-section">
-        <h2>For manufacturers</h2>
-        <p>Create a business profile, publish production capacity, and respond to buyer requests with quotations.</p>
-        <a class="button button-secondary" href="{% url 'register_manufacturer' %}">List capacity</a>
-    </section>
-
-    <section class="legal-section">
-        <h2>Orders and funding</h2>
-        <p>Accepted quotations can become orders with messages and production milestones. Funding and release states are simulated workflow markers; the platform does not process real payments or provide escrow.</p>
-    </section>
-</article>
+{% block page_body %}
+<section class="public-content-section">
+    <h2>What the marketplace does</h2>
+    <p>Buyers can search listings, compare the information manufacturers provide, and request quotations. Manufacturers can publish capacity, send quotations, and manage accepted orders through messages and production milestones.</p>
+    <p>Listings show details such as category or process, location, MOQ, price, and lead time when those values are available.</p>
+</section>
+<section class="public-content-section">
+    <h2>Who it serves</h2>
+    <p>The marketplace is for businesses looking for manufacturing capacity and manufacturers with capacity to publish.</p>
+    <a class="button button-secondary" href="{% url 'marketplace' %}">Browse capacity</a>
+</section>
+<section class="public-content-section">
+    <h2>Early access and sample listings</h2>
+    <p>Ubhaar-Vyapaar is in early access. Some listings are marked Sample and are shown for illustration; sample listings do not accept quote requests.</p>
+    <p>Order funding and release labels are simulated. The platform does not process payments or escrow.</p>
+</section>
 {% endblock %}

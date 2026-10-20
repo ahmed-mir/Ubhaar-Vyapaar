@@ -1,0 +1,10 @@
+{% if contents_items %}
+<nav class="public-page-toc" aria-label="On this page">
+    <p class="public-page-toc-title">On this page</p>
+    <ul>
+        {% for item in contents_items %}
+            <li><a href="#{{ item.0 }}">{{ item.1 }}</a></li>
+        {% endfor %}
+    </ul>
+</nav>
+{% endif %}

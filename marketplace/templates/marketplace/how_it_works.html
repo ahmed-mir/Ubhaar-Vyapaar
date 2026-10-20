@@ -1,34 +1,46 @@
-{% extends "marketplace/base.html" %}
+{% extends "marketplace/public_content_page.html" %}
 
 {% block title %}How it works | Ubhaar-Vyapaar{% endblock %}
-{% block meta_description %}See how to discover manufacturing capacity, request a quote, and follow an accepted order on Ubhaar-Vyapaar.{% endblock %}
+{% block meta_description %}See how buyers and manufacturers use capacity listings, quotations, orders, messages, and milestones on Ubhaar-Vyapaar.{% endblock %}
+{% block social_title %}How it works | Ubhaar-Vyapaar{% endblock %}
+{% block social_description %}See how buyers and manufacturers use capacity listings, quotations, orders, messages, and milestones on Ubhaar-Vyapaar.{% endblock %}
+{% block twitter_title %}How it works | Ubhaar-Vyapaar{% endblock %}
+{% block twitter_description %}See how buyers and manufacturers use capacity listings, quotations, orders, messages, and milestones on Ubhaar-Vyapaar.{% endblock %}
 
-{% block content %}
-<article class="legal-page information-page">
-    <header class="page-heading legal-heading">
-        <div>
-            <p class="eyebrow">How it works</p>
-            <h1>From search to production updates.</h1>
-            <p>Use the marketplace to compare listing terms and start a conversation with a manufacturer.</p>
-        </div>
-    </header>
+{% block page_eyebrow %}How it works{% endblock %}
+{% block page_h1 %}From capacity search to order updates{% endblock %}
+{% block page_lead %}Buyers and manufacturers use listings and quotations to agree terms. Accepted quotations create an order for messages and production milestones.{% endblock %}
 
-    <section class="legal-section">
-        <h2>1. Discover capacity</h2>
-        <p>Search and filter listings. Each listing shows its stated price, minimum order quantity, lead time, availability, and manufacturer profile.</p>
-    </section>
-    <section class="legal-section">
-        <h2>2. Request and review a quote</h2>
-        <p>Buyers send requirements to a manufacturer. The manufacturer can respond with a quotation for the buyer to review.</p>
-    </section>
-    <section class="legal-section">
-        <h2>3. Follow the order</h2>
-        <p>Accepting a quotation creates an order with messages and milestones. Funding and release labels are simulated; no real payment moves through the platform.</p>
-    </section>
-    <section class="legal-section">
-        <h2>4. Complete and review</h2>
-        <p>After completion, buyers can leave a review tied to their order.</p>
-<a class="button button-primary" href="{% url 'marketplace' %}#marketplace-listings">Explore listings</a>
-    </section>
-</article>
+{% block page_body %}
+<div class="public-page-layout">
+    {% include "marketplace/includes/public_page_toc.html" %}
+    <div class="public-content-sections">
+        <section class="public-content-section" id="buyers">
+            <h2>For buyers</h2>
+            <ol class="public-steps">
+                <li>Discover active manufacturing capacity in the marketplace.</li>
+                <li>Review the listing's MOQ, price, lead time, capacity, availability, and manufacturer profile.</li>
+                <li>Submit a quote request with quantity, requirements, and delivery location.</li>
+                <li>Receive a quotation and review its terms.</li>
+                <li>Accept or decline the quotation. Acceptance creates an order with the agreed terms.</li>
+                <li>Use order messages and milestones to follow production progress.</li>
+                <li>After the order is completed, submit a review under the existing review rules.</li>
+            </ol>
+        </section>
+        <section class="public-content-section" id="manufacturers">
+            <h2>For manufacturers</h2>
+            <ol class="public-steps">
+                <li>Publish manufacturing capacity in a listing.</li>
+                <li>Review incoming quote requests and send quotations.</li>
+                <li>Manage orders created when buyers accept quotations.</li>
+                <li>Update production milestones and communicate through order messages.</li>
+            </ol>
+        </section>
+        <section class="public-content-section" id="orders-and-payments">
+            <h2>Orders and payment status</h2>
+            <p>Order messages and milestones track activity in the application. Funding and release labels are simulated workflow states. Ubhaar-Vyapaar does not process platform payments or escrow.</p>
+            <a class="button button-primary" href="{% url 'marketplace' %}">Browse marketplace</a>
+        </section>
+    </div>
+</div>
 {% endblock %}

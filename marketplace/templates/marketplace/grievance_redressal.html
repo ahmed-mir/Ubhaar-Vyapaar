@@ -1,14 +1,24 @@
-{% extends "marketplace/base.html" %}
+{% extends "marketplace/public_content_page.html" %}
 
 {% block title %}Grievance Redressal | Ubhaar-Vyapaar{% endblock %}
-{% block meta_description %}Information about raising a grievance or service concern with Ubhaar-Vyapaar.{% endblock %}
+{% block meta_description %}Review information for grievances and service concerns, including current order communication options on Ubhaar-Vyapaar.{% endblock %}
+{% block social_title %}Grievance Redressal | Ubhaar-Vyapaar{% endblock %}
+{% block social_description %}Review information for grievances and service concerns, including current order communication options on Ubhaar-Vyapaar.{% endblock %}
+{% block twitter_title %}Grievance Redressal | Ubhaar-Vyapaar{% endblock %}
+{% block twitter_description %}Review information for grievances and service concerns, including current order communication options on Ubhaar-Vyapaar.{% endblock %}
 
-{% block content %}
-<section class="record-card info-page">
-    <p class="eyebrow">Grievance Redressal</p>
-    <h1>Grievance redressal</h1>
-    {% if legal_contact_email %}
-        <p>For a grievance or service concern, contact <a href="mailto:{{ legal_contact_email }}">{{ legal_contact_email }}</a>.</p>
+{% block page_eyebrow %}Grievance Redressal{% endblock %}
+{% block page_h1 %}Grievance contact{% endblock %}
+{% block page_lead %}Information about contacting the platform and communicating about an order.{% endblock %}
+
+{% block page_body %}
+<section class="public-content-section">
+    {% if legal_entity_name %}<p>Platform operator: {{ legal_entity_name }}</p>{% endif %}
+    {% if grievance_officer_name or grievance_contact_email %}
+        {% if grievance_officer_name %}<p>Grievance officer: {{ grievance_officer_name }}</p>{% endif %}
+        {% if grievance_contact_email %}<p>Grievance contact: <a href="mailto:{{ grievance_contact_email }}">{{ grievance_contact_email }}</a></p>{% endif %}
+    {% else %}
+        <p>For a concern about an accepted order, participants can communicate through its order messages. The application does not provide a separate grievance form or formal dispute-resolution workflow.</p>
     {% endif %}
 </section>
 {% endblock %}
