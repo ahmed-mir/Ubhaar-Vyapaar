@@ -8,6 +8,7 @@ from .models import (
     Quotation,
     QuoteRequest,
     Review,
+    WaitlistEntry,
 )
 
 
@@ -49,6 +50,55 @@ class ContactSubmissionForm(forms.ModelForm):
             if self.is_bound and self[name].errors:
                 field.widget.attrs["aria-invalid"] = "true"
                 field.widget.attrs["aria-describedby"] = f"id_{name}_error"
+
+
+class WaitlistEntryForm(forms.ModelForm):
+    website = forms.CharField(
+        required=False,
+        label="Website",
+        widget=forms.TextInput(
+            attrs={
+                "autocomplete": "off",
+                "tabindex": "-1",
+                "aria-hidden": "true",
+            }
+        ),
+    )
+
+    class Meta:
+        model = WaitlistEntry
+        fields = ("email", "role", "note")
+        widgets = {
+            "email": forms.EmailInput(attrs={"autocomplete": "email"}),
+            "note": forms.Textarea(attrs={"rows": 3, "maxlength": 1000}),
+        }
+        labels = {"role": "I am a...", "note": "Optional note"}
+        help_texts = {"note": "Optional. Up to 1,000 characters."}
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.order_fields(("email", "role", "note", "website"))
+        for name in ("email", "role", "note"):
+            field = self.fields[name]
+            described_by = []
+            if field.help_text:
+                described_by.append(f"id_{name}_helptext")
+            if name != "note":
+                field.required = True
+                field.widget.attrs["aria-required"] = "true"
+            if self.is_bound and self[name].errors:
+                field.widget.attrs["aria-invalid"] = "true"
+                described_by.append(f"id_{name}_error")
+            if described_by:
+                field.widget.attrs["aria-describedby"] = " ".join(described_by)
+
+    def clean_email(self):
+        return self.cleaned_data["email"].strip().lower()
+
+    def validate_constraints(self):
+        # Duplicate membership is resolved by the POST handler with a neutral
+        # PRG response; the database constraint remains the race-safe backstop.
+        return
 
 
 class QuoteRequestForm(forms.ModelForm):

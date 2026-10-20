@@ -12,6 +12,7 @@ from .models import (
     Review,
     SavedListing,
     Notification,
+    WaitlistEntry,
 )
 
 
@@ -23,6 +24,18 @@ class ContactSubmissionAdmin(admin.ModelAdmin):
     list_filter = ("role", "is_handled", "created_at")
     search_fields = ("name", "email", "message")
     readonly_fields = ("name", "email", "role", "message", "created_at")
+    date_hierarchy = "created_at"
+    ordering = ("-created_at", "-pk")
+
+
+@admin.register(WaitlistEntry)
+class WaitlistEntryAdmin(admin.ModelAdmin):
+    list_display = ("created_at", "email", "role", "is_contacted")
+    list_display_links = ("created_at", "email")
+    list_editable = ("is_contacted",)
+    list_filter = ("role", "is_contacted", "created_at")
+    search_fields = ("email",)
+    readonly_fields = ("email", "role", "note", "created_at")
     date_hierarchy = "created_at"
     ordering = ("-created_at", "-pk")
 

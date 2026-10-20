@@ -2,6 +2,7 @@ from django.conf import settings
 from django.db import models
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.utils import timezone
+from django.db.models.functions import Lower
 from decimal import Decimal
 
 
@@ -86,6 +87,33 @@ class ContactSubmission(models.Model):
 
     def __str__(self):
         return f"Contact enquiry from {self.name} ({self.created_at:%Y-%m-%d})"
+
+
+class WaitlistEntry(models.Model):
+    class Role(models.TextChoices):
+        BUYER = "BUYER", "Buyer"
+        MANUFACTURER = "MANUFACTURER", "Manufacturer"
+
+    email = models.EmailField(max_length=254)
+    role = models.CharField(max_length=20, choices=Role.choices)
+    note = models.CharField(max_length=1000, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    is_contacted = models.BooleanField(default=False)
+
+    class Meta:
+        ordering = ("-created_at", "-pk")
+        constraints = [
+            models.UniqueConstraint(
+                Lower("email"), "role", name="uniq_waitlist_email_role_ci"
+            ),
+        ]
+
+    def save(self, *args, **kwargs):
+        self.email = self.email.strip().lower()
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return f"Early-access interest from {self.email} ({self.get_role_display()})"
 
 
 class CapacityListing(models.Model):

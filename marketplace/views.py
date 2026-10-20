@@ -7,7 +7,7 @@ from django.core.mail import EmailMessage
 from django.core.validators import validate_email
 from django.core.paginator import Paginator
 from django.db.models import Case, Count, IntegerField, Q, When
-from django.db import transaction
+from django.db import IntegrityError, transaction
 from django.utils import timezone
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.http import require_http_methods, require_POST
@@ -25,6 +25,7 @@ from .forms import (
     CapacityListingEditForm,
     CapacityListingForm,
     ContactSubmissionForm,
+    WaitlistEntryForm,
     OrderMessageForm,
     QuoteRequestForm,
     QuotationForm,
@@ -42,6 +43,7 @@ from .models import (
     Quotation,
     Review,
     SavedListing,
+    WaitlistEntry,
 )
 
 logger = logging.getLogger(__name__)
@@ -49,6 +51,9 @@ logger = logging.getLogger(__name__)
 CONTACT_SUBMISSION_WINDOW_SECONDS = 60 * 60
 CONTACT_SUBMISSION_LIMIT = 5
 CONTACT_SUBMISSION_SESSION_KEY = "contact_submission_times"
+WAITLIST_SUBMISSION_WINDOW_SECONDS = 60 * 60
+WAITLIST_SUBMISSION_LIMIT = 5
+WAITLIST_SUBMISSION_SESSION_KEY = "waitlist_submission_times"
 
 
 def _absolute_site_url(path="/"):
@@ -278,6 +283,31 @@ def _record_contact_submission(request):
     ]
     recent.append(now)
     request.session[CONTACT_SUBMISSION_SESSION_KEY] = recent
+
+
+def _waitlist_submission_rate_limited(request):
+    now = int(timezone.now().timestamp())
+    recent = [
+        timestamp
+        for timestamp in request.session.get(WAITLIST_SUBMISSION_SESSION_KEY, [])
+        if isinstance(timestamp, int)
+        and 0 <= now - timestamp < WAITLIST_SUBMISSION_WINDOW_SECONDS
+    ]
+    request.session[WAITLIST_SUBMISSION_SESSION_KEY] = recent
+    return len(recent) >= WAITLIST_SUBMISSION_LIMIT
+
+
+def _record_waitlist_submission(request):
+    now = int(timezone.now().timestamp())
+    timestamps = request.session.get(WAITLIST_SUBMISSION_SESSION_KEY, [])
+    recent = [
+        timestamp
+        for timestamp in timestamps
+        if isinstance(timestamp, int)
+        and 0 <= now - timestamp < WAITLIST_SUBMISSION_WINDOW_SECONDS
+    ]
+    recent.append(now)
+    request.session[WAITLIST_SUBMISSION_SESSION_KEY] = recent
 
 
 def _send_contact_notification(submission, recipient):
@@ -1024,6 +1054,48 @@ def home(request):
             destination = f"{destination}?{query_string}"
         return HttpResponsePermanentRedirect(destination)
 
+    waitlist_form = WaitlistEntryForm()
+    home_status = 200
+    if request.method == "POST":
+        waitlist_form = WaitlistEntryForm(request.POST)
+        success_url = f"{reverse('home')}#early-access"
+
+        if (request.POST.get("website") or "").strip():
+            messages.success(
+                request,
+                "Thanks — your interest has been recorded. We’ll use your email only in relation to early access.",
+            )
+            return redirect(success_url)
+
+        if waitlist_form.is_valid():
+            if _waitlist_submission_rate_limited(request):
+                waitlist_form.add_error(
+                    None,
+                    "Please try again later before submitting another request.",
+                )
+                home_status = 429
+            else:
+                email = waitlist_form.cleaned_data["email"]
+                role = waitlist_form.cleaned_data["role"]
+                if not WaitlistEntry.objects.filter(
+                    email__iexact=email, role=role
+                ).exists():
+                    try:
+                        with transaction.atomic():
+                            waitlist_form.save()
+                    except IntegrityError:
+                        # A case-insensitive unique constraint also covers races.
+                        if not WaitlistEntry.objects.filter(
+                            email__iexact=email, role=role
+                        ).exists():
+                            raise
+                _record_waitlist_submission(request)
+                messages.success(
+                    request,
+                    "Thanks — your interest has been recorded. We’ll use your email only in relation to early access.",
+                )
+                return redirect(success_url)
+
     site_url = _absolute_site_url()
     organization_schema = {
         "@context": "https://schema.org",
@@ -1085,7 +1157,9 @@ def home(request):
             "has_featured_capacity": len(featured_listings) >= 3,
             "manufacturer_cta_url": manufacturer_cta_url,
             "faq_items": LANDING_FAQ_ITEMS,
+            "waitlist_form": waitlist_form,
         },
+        status=home_status,
     )
 
 
