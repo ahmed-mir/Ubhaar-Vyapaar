@@ -3,6 +3,7 @@ from django.urls import path
 from django.urls import reverse_lazy
 
 from . import views
+from .auth_forms import EmailOrUsernameAuthenticationForm
 from .forms import ReliablePasswordResetForm
 
 urlpatterns = [
@@ -12,6 +13,7 @@ urlpatterns = [
         "login/",
         auth_views.LoginView.as_view(
             template_name="accounts/login.html",
+            authentication_form=EmailOrUsernameAuthenticationForm,
         ),
         name="login",
     ),

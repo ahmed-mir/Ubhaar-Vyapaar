@@ -380,3 +380,153 @@ class RegistrationConsentTests(TestCase):
         self.assertContains(response, 'aria-required="true"')
         self.assertNotContains(response, 'name="marketing_consent"')
         self.assertNotContains(response, 'checked="checked"')
+
+
+class EmailOrUsernameAuthenticationTests(TestCase):
+    def setUp(self):
+        self.user_model = get_user_model()
+
+    def create_user(self, username, email, **kwargs):
+        return self.user_model.objects.create_user(
+            username=username,
+            email=email,
+            password="StrongPass123!",
+            **kwargs,
+        )
+
+    def test_buyer_and_manufacturer_username_login_are_preserved(self):
+        buyer = self.create_user(
+            "buyer-username-login",
+            "buyer-username-login@example.test",
+            role=self.user_model.Role.BUYER,
+        )
+        manufacturer = self.create_user(
+            "manufacturer-username-login",
+            "manufacturer-username-login@example.test",
+            role=self.user_model.Role.MANUFACTURER,
+        )
+
+        self.assertTrue(
+            self.client.login(
+                username=buyer.username,
+                password="StrongPass123!",
+            )
+        )
+        self.assertEqual(str(self.client.session["_auth_user_id"]), str(buyer.pk))
+        self.client.logout()
+
+        self.assertTrue(
+            self.client.login(
+                username=manufacturer.username,
+                password="StrongPass123!",
+            )
+        )
+        self.assertEqual(
+            str(self.client.session["_auth_user_id"]),
+            str(manufacturer.pk),
+        )
+
+    def test_email_login_is_case_insensitive_and_requires_correct_password(self):
+        user = self.create_user("email-login-user", "Case@Test.Example")
+
+        self.assertTrue(
+            self.client.login(
+                username="  CASE@test.example  ",
+                password="StrongPass123!",
+            )
+        )
+        self.assertEqual(str(self.client.session["_auth_user_id"]), str(user.pk))
+        self.client.logout()
+
+        self.assertFalse(
+            self.client.login(
+                username="case@test.example",
+                password="WrongPassword123!",
+            )
+        )
+
+    def test_inactive_user_and_blank_identifier_fail_safely(self):
+        self.create_user(
+            "inactive-email-user",
+            "inactive@example.test",
+            is_active=False,
+        )
+
+        for identifier in ("inactive-email-user", "inactive@example.test", ""):
+            self.assertFalse(
+                self.client.login(
+                    username=identifier,
+                    password="StrongPass123!",
+                )
+            )
+
+    def test_duplicate_email_fails_generically_but_each_username_still_works(self):
+        first = self.create_user("duplicate-email-one", "shared@example.test")
+        second = self.create_user("duplicate-email-two", "SHARED@example.test")
+
+        duplicate_response = self.client.post(
+            reverse("login"),
+            {"username": "shared@example.test", "password": "StrongPass123!"},
+        )
+        self.assertEqual(duplicate_response.status_code, 200)
+        self.assertContains(
+            duplicate_response,
+            "Please enter a correct email or username and password.",
+        )
+        self.assertNotIn("_auth_user_id", self.client.session)
+
+        wrong_response = self.client.post(
+            reverse("login"),
+            {"username": "unknown@example.test", "password": "WrongPassword123!"},
+        )
+        self.assertContains(
+            wrong_response,
+            "Please enter a correct email or username and password.",
+        )
+
+        for user in (first, second):
+            self.assertTrue(
+                self.client.login(
+                    username=user.username,
+                    password="StrongPass123!",
+                )
+            )
+            self.assertEqual(
+                str(self.client.session["_auth_user_id"]),
+                str(user.pk),
+            )
+            self.client.logout()
+
+    def test_staff_and_superuser_can_authenticate_with_username_in_admin(self):
+        staff = self.create_user(
+            "staff-username-login",
+            "staff@example.test",
+            is_staff=True,
+        )
+        superuser = self.user_model.objects.create_superuser(
+            username="superuser-username-login",
+            email="superuser@example.test",
+            password="StrongPass123!",
+        )
+
+        for user in (staff, superuser):
+            self.assertTrue(
+                self.client.login(
+                    username=user.username,
+                    password="StrongPass123!",
+                )
+            )
+            response = self.client.get("/admin/")
+            self.assertEqual(response.status_code, 200)
+            self.assertEqual(
+                str(self.client.session["_auth_user_id"]),
+                str(user.pk),
+            )
+            self.client.logout()
+
+    def test_login_form_keeps_post_name_and_has_neutral_email_or_username_label(self):
+        response = self.client.get(reverse("login"))
+
+        self.assertContains(response, 'name="username"')
+        self.assertContains(response, "Email or username")
+        self.assertNotContains(response, 'name="email"')

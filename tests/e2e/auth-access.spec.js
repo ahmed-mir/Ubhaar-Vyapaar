@@ -13,6 +13,50 @@ const {
 test.describe("production auth and access smoke", () => {
   test.setTimeout(120000);
 
+  test("local login accepts username or email and rejects wrong credentials", async ({ page }) => {
+    test.setTimeout(240000);
+    test.skip(
+      Boolean(process.env.UBHAAR_BASE_URL),
+      "This login flow creates a disposable account and runs only on the local Playwright server."
+    );
+    const password = "StrongPass123!";
+    const buyer = buildTestUser("email-login", uniqueRunId());
+    await registerBuyer(page, buyer, password);
+    await logout(page);
+
+    await page.setViewportSize({ width: 360, height: 850 });
+    await login(page, buyer.username, password);
+    await page.goto("/buyer/dashboard/");
+    await expect(page.getByRole("heading", { name: /what needs attention/i })).toBeVisible();
+    expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(360);
+
+    await page.setViewportSize({ width: 1280, height: 900 });
+    await logout(page);
+    await login(page, buyer.email.toUpperCase(), password);
+    await page.goto("/buyer/dashboard/");
+    await expect(page.getByRole("heading", { name: /what needs attention/i })).toBeVisible();
+    expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(1280);
+    await logout(page);
+
+    await page.setViewportSize({ width: 360, height: 850 });
+    await page.goto("/accounts/login/");
+    await page.locator('[name="username"]').fill(`uv-e2e-unknown-${uniqueRunId()}`);
+    await page.locator('[name="password"]').fill("WrongPassword123!");
+    const invalidLoginResponse = page.waitForResponse(
+      (response) =>
+        response.url().endsWith("/accounts/login/") &&
+        response.request().method() === "POST",
+      { timeout: 90000 }
+    );
+    await page.getByRole("button", { name: /^log in$/i }).click({ noWaitAfter: true });
+    const response = await invalidLoginResponse;
+    expect(response.status()).toBe(200);
+    await expect(
+      page.getByText("Please enter a correct email or username and password.")
+    ).toBeVisible({ timeout: 60000 });
+    expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(360);
+  });
+
   test("role chooser and password controls work at mobile and desktop widths", async ({ page }) => {
     for (const width of [360, 1280]) {
       await page.setViewportSize({ width, height: 900 });
@@ -65,8 +109,7 @@ test.describe("production auth and access smoke", () => {
       expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(width);
 
       await page.goto("/accounts/login/");
-      await expect(page.getByLabel("Username")).toBeVisible();
-      await expect(page.getByLabel("Email or username")).toHaveCount(0);
+      await expect(page.getByLabel("Email or username")).toBeVisible();
       const loginPassword = page.locator('[name="password"]');
       await loginPassword.fill("ExistingPassword123!");
       await page.getByRole("button", { name: "Show password" }).focus();
