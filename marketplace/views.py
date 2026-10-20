@@ -1,6 +1,9 @@
+import logging
+
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied, ValidationError
+from django.core.mail import EmailMessage
 from django.core.validators import validate_email
 from django.core.paginator import Paginator
 from django.db.models import Case, Count, IntegerField, Q, When
@@ -21,6 +24,7 @@ from urllib.parse import urlencode, urljoin
 from .forms import (
     CapacityListingEditForm,
     CapacityListingForm,
+    ContactSubmissionForm,
     OrderMessageForm,
     QuoteRequestForm,
     QuotationForm,
@@ -29,6 +33,7 @@ from .forms import (
 )
 from .models import (
     CapacityListing,
+    ContactSubmission,
     ManufacturerProfile,
     Milestone,
     Notification,
@@ -38,6 +43,12 @@ from .models import (
     Review,
     SavedListing,
 )
+
+logger = logging.getLogger(__name__)
+
+CONTACT_SUBMISSION_WINDOW_SECONDS = 60 * 60
+CONTACT_SUBMISSION_LIMIT = 5
+CONTACT_SUBMISSION_SESSION_KEY = "contact_submission_times"
 
 
 def _absolute_site_url(path="/"):
@@ -204,8 +215,118 @@ def for_manufacturers(request):
     return render(request, "marketplace/for_manufacturers.html", context)
 
 
+@require_http_methods(["GET", "POST"])
 def contact(request):
-    return render(request, "marketplace/contact.html", legal_page_context())
+    if request.method == "POST":
+        form = ContactSubmissionForm(request.POST)
+
+        if (request.POST.get("company_website") or "").strip():
+            messages.success(request, "Your message has been received.")
+            return redirect("contact")
+
+        if form.is_valid():
+            if _contact_submission_rate_limited(request):
+                form.add_error(
+                    None,
+                    "Please try again later before sending another message.",
+                )
+                return render(
+                    request,
+                    "marketplace/contact.html",
+                    {**legal_page_context(), "form": form},
+                    status=429,
+                )
+
+            submission = form.save()
+            _record_contact_submission(request)
+            recipient = legal_page_context()["legal_contact_email"]
+            if recipient:
+                _send_contact_notification(submission, recipient)
+
+            messages.success(request, "Your message has been received.")
+            return redirect("contact")
+    else:
+        form = ContactSubmissionForm()
+
+    return render(
+        request,
+        "marketplace/contact.html",
+        {**legal_page_context(), "form": form},
+    )
+
+
+def _contact_submission_rate_limited(request):
+    now = int(timezone.now().timestamp())
+    recent = [
+        timestamp
+        for timestamp in request.session.get(CONTACT_SUBMISSION_SESSION_KEY, [])
+        if isinstance(timestamp, int)
+        and 0 <= now - timestamp < CONTACT_SUBMISSION_WINDOW_SECONDS
+    ]
+    request.session[CONTACT_SUBMISSION_SESSION_KEY] = recent
+    return len(recent) >= CONTACT_SUBMISSION_LIMIT
+
+
+def _record_contact_submission(request):
+    now = int(timezone.now().timestamp())
+    timestamps = request.session.get(CONTACT_SUBMISSION_SESSION_KEY, [])
+    recent = [
+        timestamp
+        for timestamp in timestamps
+        if isinstance(timestamp, int)
+        and 0 <= now - timestamp < CONTACT_SUBMISSION_WINDOW_SECONDS
+    ]
+    recent.append(now)
+    request.session[CONTACT_SUBMISSION_SESSION_KEY] = recent
+
+
+def _send_contact_notification(submission, recipient):
+    try:
+        admin_path = reverse(
+            "admin:marketplace_contactsubmission_change",
+            args=(submission.pk,),
+        )
+        admin_url = _absolute_site_url(admin_path)
+        submitted_at = timezone.localtime(submission.created_at).isoformat(
+            timespec="seconds"
+        )
+        body = (
+            f"Name: {submission.name}\n"
+            f"Email: {submission.email}\n"
+            f"Role: {submission.get_role_display()}\n"
+            f"Submitted: {submitted_at}\n\n"
+            f"Message:\n{submission.message}\n\n"
+            f"Admin record: {admin_url}\n"
+        )
+        email = EmailMessage(
+            subject=f"Website contact enquiry #{submission.pk}",
+            body=body,
+            from_email=settings.DEFAULT_FROM_EMAIL,
+            to=[recipient],
+            reply_to=[submission.email],
+        )
+        if email.send(fail_silently=False) != 1:
+            logger.error(
+                "Contact notification was not accepted by the email backend "
+                "for submission id=%s.",
+                submission.pk,
+            )
+    except Exception:
+        logger.exception(
+            "Contact notification delivery failed for submission id=%s.",
+            submission.pk,
+        )
+        if settings.SENTRY_ENABLED:
+            try:
+                import sentry_sdk
+
+                sentry_sdk.capture_exception()
+            except Exception:
+                logger.exception(
+                    "Could not report contact notification failure to Sentry "
+                    "for submission id=%s.",
+                    submission.pk,
+                )
 
 
 def pricing_fees(request):

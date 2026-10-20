@@ -3,6 +3,7 @@ from django.contrib import admin
 from .models import (
     ManufacturerProfile,
     CapacityListing,
+    ContactSubmission,
     Order,
     Milestone,
     OrderMessage,
@@ -12,6 +13,18 @@ from .models import (
     SavedListing,
     Notification,
 )
+
+
+@admin.register(ContactSubmission)
+class ContactSubmissionAdmin(admin.ModelAdmin):
+    list_display = ("created_at", "name", "email", "role", "is_handled")
+    list_display_links = ("created_at", "name")
+    list_editable = ("is_handled",)
+    list_filter = ("role", "is_handled", "created_at")
+    search_fields = ("name", "email", "message")
+    readonly_fields = ("name", "email", "role", "message", "created_at")
+    date_hierarchy = "created_at"
+    ordering = ("-created_at", "-pk")
 
 
 @admin.register(ManufacturerProfile)

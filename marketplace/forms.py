@@ -2,12 +2,53 @@ from django import forms
 
 from .models import (
     CapacityListing,
+    ContactSubmission,
     ManufacturerProfile,
     OrderMessage,
     Quotation,
     QuoteRequest,
     Review,
 )
+
+
+class ContactSubmissionForm(forms.ModelForm):
+    company_website = forms.CharField(
+        required=False,
+        label="Website",
+        widget=forms.TextInput(
+            attrs={
+                "autocomplete": "off",
+                "tabindex": "-1",
+                "aria-hidden": "true",
+            }
+        ),
+    )
+
+    class Meta:
+        model = ContactSubmission
+        fields = ("name", "email", "role", "message")
+        widgets = {
+            "name": forms.TextInput(attrs={"autocomplete": "name"}),
+            "email": forms.EmailInput(attrs={"autocomplete": "email"}),
+            "message": forms.Textarea(attrs={"rows": 6, "maxlength": 5000}),
+        }
+        labels = {
+            "role": "I am a...",
+            "message": "How can we help?",
+        }
+        help_texts = {
+            "message": "Please do not include passwords or payment details.",
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.order_fields(("name", "email", "role", "message", "company_website"))
+        for name in ("name", "email", "role", "message"):
+            field = self.fields[name]
+            field.widget.attrs["aria-required"] = "true"
+            if self.is_bound and self[name].errors:
+                field.widget.attrs["aria-invalid"] = "true"
+                field.widget.attrs["aria-describedby"] = f"id_{name}_error"
 
 
 class QuoteRequestForm(forms.ModelForm):

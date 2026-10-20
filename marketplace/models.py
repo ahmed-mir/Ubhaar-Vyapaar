@@ -68,6 +68,26 @@ class ManufacturerProfile(models.Model):
         return self.business_name
 
 
+class ContactSubmission(models.Model):
+    class Role(models.TextChoices):
+        BUYER = "BUYER", "Buyer"
+        MANUFACTURER = "MANUFACTURER", "Manufacturer"
+        OTHER = "OTHER", "Other"
+
+    name = models.CharField(max_length=120)
+    email = models.EmailField(max_length=254)
+    role = models.CharField(max_length=20, choices=Role.choices)
+    message = models.TextField(max_length=5000)
+    created_at = models.DateTimeField(auto_now_add=True)
+    is_handled = models.BooleanField(default=False)
+
+    class Meta:
+        ordering = ("-created_at", "-pk")
+
+    def __str__(self):
+        return f"Contact enquiry from {self.name} ({self.created_at:%Y-%m-%d})"
+
+
 class CapacityListing(models.Model):
     class Category(models.TextChoices):
         PACKAGING = "PACKAGING", "Packaging"
