@@ -11,6 +11,12 @@ from django.db import transaction
 from marketplace.models import ManufacturerProfile
 
 
+def get_started(request):
+    if request.user.is_authenticated:
+        return redirect("home")
+    return render(request, "accounts/get_started.html")
+
+
 def register(request):
     if request.user.is_authenticated:
         return redirect("home")
@@ -21,6 +27,11 @@ def register(request):
         if form.is_valid():
             user = form.save()
             login(request, user)
+            messages.success(
+                request,
+                "Your buyer account is ready. You can now browse capacity "
+                "and request quotations from eligible listings.",
+            )
             return redirect("home")
     else:
         form = BuyerRegistrationForm()
@@ -56,8 +67,9 @@ def register_manufacturer(request):
             messages.success(
                 request,
                 "Your manufacturer account is ready. "
-                "You can create listings now, but they will become "
-                "public only after your business is verified.",
+                "Complete your business profile and manage your listings "
+                "from the dashboard. Listings become public only after "
+                "your business is verified.",
             )
 
             return redirect("manufacturer_dashboard")

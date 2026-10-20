@@ -10389,5 +10389,31 @@ h4,
 @media(max-width:640px){.landing-page .container{width:min(100% - 36px,1200px)}.landing-hero{padding:43px 0 40px}.landing-hero-grid{grid-template-columns:1fr;gap:30px}.landing-hero h1{font-size:clamp(2.2rem,10.5vw,3.25rem)}.landing-lede{font-size:1.06rem}.landing-search-row{flex-direction:column}.landing-search-row .button{width:100%;min-height:48px}.landing-actions{display:grid;grid-template-columns:1fr}.landing-actions .button{width:100%;min-height:48px}.landing-demo{transform:none;padding:14px}.landing-demo-art{height:125px}.landing-trust-grid{grid-template-columns:1fr;gap:12px;padding-block:17px}.landing-trust-grid p{justify-content:flex-start}.landing-section{padding:55px 0}.landing-section-heading{margin-bottom:25px}.landing-audience-grid,.landing-steps,.landing-listing-grid,.landing-category-grid{grid-template-columns:1fr}.landing-audience-card{padding:24px}.landing-steps{gap:26px}.landing-steps li{display:grid;grid-template-columns:53px 1fr;column-gap:14px;align-items:center}.landing-step-icon{grid-row:1 / span 3;margin:0}.landing-step-number{align-self:end}.landing-steps h3{margin:2px 0;align-self:center}.landing-steps p{grid-column:2}.landing-listing-card:last-child:nth-child(odd){display:block}.landing-listing-media{height:190px}.landing-heading-row{align-items:flex-start;flex-direction:column;gap:2px}.landing-why-grid,.landing-state-inner,.landing-faq-inner{grid-template-columns:1fr;gap:25px}.landing-benefits{grid-template-columns:1fr;gap:20px}.landing-trust-panel{padding:34px 0}.landing-trust-panel-inner{align-items:flex-start;flex-direction:column;gap:18px}.landing-state ul{grid-template-columns:1fr}.landing-faq-inner>div:first-child .text-link{margin-top:12px}.landing-final-cta{padding:43px 0}.landing-final-inner{align-items:stretch;flex-direction:column}.landing-final-cta .landing-actions{width:100%}.landing-demo-facts{gap:4px}.landing-demo-facts span{font-size:.66rem}.landing-demo-facts strong{font-size:.72rem}}
 @media(prefers-reduced-motion:reduce){.landing-page a,.landing-page button{transition:none}}
 @media(min-width:769px){.landing-page .landing-hero h1{font-size:clamp(2.35rem,4vw,3.5rem)}}
+.account-form-group{min-width:0;margin:0 0 18px;padding:16px;border:1px solid #d7e0e3;border-radius:10px}
+.account-form-group legend{padding:0 7px;color:#102f3c;font-size:15px;font-weight:750}
+.account-form-group .helptext{margin:0 0 11px;color:#50636b;font-size:14px;line-height:1.5}
+.account-form-group .form-field{margin:0 0 13px}
+.account-form-group .form-field:last-child{margin-bottom:0}
+.account-form-group .form-field input:not([type="checkbox"]),.account-form-group .form-field textarea{box-sizing:border-box;width:100%;min-width:0;min-height:48px;font-size:16px}
+.account-form-group .form-field input[type="checkbox"]{width:22px;height:22px;margin:0 10px 0 0}
+.account-form-group .form-field-checkbox{display:flex;align-items:flex-start;gap:10px}
+.account-form-group .form-field-checkbox>div{min-width:0}
+.account-form-group .form-field-checkbox label{line-height:1.5}
+.password-requirements{margin-top:8px;color:#50636b;font-size:14px;line-height:1.5}
+.password-requirements summary{display:inline-flex;align-items:center;min-height:44px;cursor:pointer;color:#145269;font-weight:700;text-decoration:underline;text-underline-offset:3px}
+.password-requirements .helptext{margin:4px 0 0}
+.auth-form input[type="password"],.auth-form input[type="text"]{font-size:16px}
+.password-visibility-toggle{display:inline-flex;align-items:center;justify-content:center;min-width:112px;min-height:44px;margin-top:6px;padding:8px 12px;border:1px solid #9aadb4;border-radius:7px;background:#fff;color:#102f3c;font:inherit;font-size:14px;font-weight:700;cursor:pointer}
+.password-visibility-toggle:hover{background:#f2f6f7}
+.password-visibility-toggle:focus-visible,.password-requirements summary:focus-visible,.role-choice-card a:focus-visible{outline:3px solid #b47727;outline-offset:3px}
+.get-started-card{max-width:900px}
+.role-choice-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px;margin-top:24px}
+.role-choice-card{display:flex;flex-direction:column;align-items:flex-start;min-width:0;padding:22px;border:1px solid #d7e0e3;border-radius:12px;background:#fff}
+.role-choice-card .eyebrow{margin:0 0 8px;color:#8b5b16;font-size:12px;font-weight:750;letter-spacing:.08em;text-transform:uppercase}
+.role-choice-card h2{margin:0 0 8px;color:#102f3c;font-size:21px;line-height:1.25}
+.role-choice-card p:not(.eyebrow){flex:1;margin:0 0 18px;color:#50636b;line-height:1.55}
+.role-choice-card .button{display:inline-flex;align-items:center;justify-content:center;min-height:48px;padding:10px 16px}
+.get-started-card>.auth-links{margin-top:24px}
+@media(max-width:640px){.account-form-group{padding:13px}.role-choice-grid{grid-template-columns:1fr}.role-choice-card{padding:18px}.password-visibility-toggle{min-height:44px}}
 .landing-state-details{min-width:0}.landing-waitlist{min-width:0;margin-top:20px;padding:24px;border:1px solid #dce5e8;border-radius:14px;background:#f8fafb}.landing-waitlist>.eyebrow{margin:0 0 8px;color:#8b5b16}.landing-waitlist h3{margin:0;font-size:clamp(1.3rem,2.3vw,1.65rem);line-height:1.25;color:#102f3c}.landing-waitlist>p:not(.eyebrow){margin:8px 0 17px;color:#4c626b;line-height:1.55}.waitlist-form{display:grid;gap:13px}.waitlist-form .form-field{min-width:0;margin:0}.waitlist-form .form-field label{display:block;margin-bottom:6px}.waitlist-form .form-field input,.waitlist-form .form-field select,.waitlist-form .form-field textarea{box-sizing:border-box;width:100%;min-width:0;min-height:48px;padding:11px 12px;font-size:16px}.waitlist-form .form-field textarea{min-height:96px;resize:vertical}.waitlist-form .form-submit{width:100%;min-height:48px}.waitlist-privacy{margin:0;color:#4c626b;font-size:.9rem;line-height:1.5}.waitlist-privacy a{color:#145269;text-decoration:underline;text-underline-offset:3px}.waitlist-form .form-error-summary{margin:0}.waitlist-form .contact-honeypot{position:absolute!important;left:-10000px!important;width:1px!important;height:1px!important;overflow:hidden!important}
 @media(max-width:640px){.landing-state-inner{gap:25px}.landing-waitlist{padding:19px}.waitlist-form .form-field input,.waitlist-form .form-field select,.waitlist-form .form-field textarea{font-size:16px}}

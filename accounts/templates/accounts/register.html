@@ -22,20 +22,29 @@
 
         <p class="auth-intro">Start requesting quotes from marketplace listings.</p>
 
-        <form method="post" class="styled-form" novalidate>
+        <form method="post" class="styled-form auth-form" novalidate>
             {% csrf_token %}
-            {% include "marketplace/includes/accessible_form.html" %}
-            <p class="auth-consent-note">
-                Review the
-                <a href="{% url 'terms' %}" target="_blank" rel="noopener">
-                    Terms &amp; Conditions
-                </a>
-                and
-                <a href="{% url 'privacy_policy' %}" target="_blank" rel="noopener">
-                    Privacy Policy
-                </a>
-                before creating an account.
-            </p>
+            {% if form.non_field_errors %}<div class="form-error-summary" role="alert" tabindex="-1">{{ form.non_field_errors }}</div>{% endif %}
+
+            <fieldset class="account-form-group">
+                <legend>Account details</legend>
+                <p class="helptext">Your username is used to sign in to your account.</p>
+                {% include "accounts/includes/account_field.html" with field=form.username %}
+                {% include "accounts/includes/account_field.html" with field=form.email %}
+                {% include "accounts/includes/account_field.html" with field=form.phone %}
+            </fieldset>
+
+            <fieldset class="account-form-group">
+                <legend>Password</legend>
+                {% include "accounts/includes/account_field.html" with field=form.password1 %}
+                {% include "accounts/includes/account_field.html" with field=form.password2 %}
+            </fieldset>
+
+            <fieldset class="account-form-group">
+                <legend>Legal acknowledgements</legend>
+                {% include "accounts/includes/account_field.html" with field=form.legal_acknowledgement %}
+                <p class="auth-consent-note">Review the <a href="{% url 'terms' %}" target="_blank" rel="noopener">Terms &amp; Conditions</a> and <a href="{% url 'privacy_policy' %}" target="_blank" rel="noopener">Privacy Policy</a> before creating an account.</p>
+            </fieldset>
 
             <button class="button button-primary form-submit" type="submit">
                 Create buyer account

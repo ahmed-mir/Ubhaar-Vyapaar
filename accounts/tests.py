@@ -244,6 +244,87 @@ class PasswordResetEmailTests(TestCase):
 
 
 class RegistrationConsentTests(TestCase):
+    @override_settings(ALLOW_INDEXING=True)
+    def test_get_started_chooser_links_to_existing_registration_routes(self):
+        response = self.client.get(reverse("get_started"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, reverse("register"))
+        self.assertContains(response, reverse("register_manufacturer"))
+        self.assertContains(response, 'name="robots" content="noindex,follow"')
+        self.assertEqual(response.content.count(b"<h1"), 1)
+
+    def test_buyer_registration_fields_and_username_sign_in_remain_unchanged(self):
+        response = self.client.get(reverse("register"))
+        for field_name in (
+            "username", "email", "phone", "password1", "password2",
+            "legal_acknowledgement",
+        ):
+            self.assertContains(response, f'name="{field_name}"')
+        self.assertContains(response, "Your username is used to sign in")
+
+        response = self.client.post(
+            reverse("register"),
+            {
+                "username": "buyer-login-check",
+                "email": "buyer-login-check@example.test",
+                "phone": "",
+                "password1": "StrongPass123!",
+                "password2": "StrongPass123!",
+                "legal_acknowledgement": "on",
+            },
+            follow=True,
+        )
+
+        self.assertEqual(response.redirect_chain[-1][0], reverse("home"))
+        user = get_user_model().objects.get(username="buyer-login-check")
+        self.assertEqual(user.role, get_user_model().Role.BUYER)
+        self.assertTrue(user.check_password("StrongPass123!"))
+        self.assertEqual(str(self.client.session.get("_auth_user_id")), str(user.pk))
+        self.assertContains(response, "Your buyer account is ready")
+        self.client.logout()
+        login_response = self.client.post(
+            reverse("login"),
+            {"username": "buyer-login-check", "password": "StrongPass123!"},
+        )
+        self.assertRedirects(login_response, reverse("home"))
+
+    def test_manufacturer_registration_keeps_profile_state_and_redirect(self):
+        response = self.client.get(reverse("register_manufacturer"))
+        self.assertEqual(response.status_code, 200)
+        for field_name in (
+            "username", "email", "phone", "business_name", "description",
+            "city", "state", "password1", "password2", "legal_acknowledgement",
+        ):
+            self.assertContains(response, f'name="{field_name}"')
+
+        response = self.client.post(
+            reverse("register_manufacturer"),
+            {
+                "username": "manufacturer-onboarding-check",
+                "email": "manufacturer-check@example.test",
+                "phone": "",
+                "business_name": "Check Works",
+                "description": "Capacity for small batches.",
+                "city": "Pune",
+                "state": "Maharashtra",
+                "password1": "StrongPass123!",
+                "password2": "StrongPass123!",
+                "legal_acknowledgement": "on",
+            },
+            follow=True,
+        )
+
+        self.assertEqual(
+            response.redirect_chain[-1][0], reverse("manufacturer_dashboard")
+        )
+        user = get_user_model().objects.get(username="manufacturer-onboarding-check")
+        profile = user.manufacturer_profile
+        self.assertEqual(user.role, get_user_model().Role.MANUFACTURER)
+        self.assertFalse(profile.is_verified)
+        self.assertEqual(profile.kyc_status, "UNDER_REVIEW")
+        self.assertContains(response, "Your manufacturer account is ready")
+
     def test_buyer_registration_requires_legal_acknowledgement(self):
         response = self.client.post(
             reverse("register"),

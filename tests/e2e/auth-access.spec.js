@@ -13,6 +13,74 @@ const {
 test.describe("production auth and access smoke", () => {
   test.setTimeout(120000);
 
+  test("role chooser and password controls work at mobile and desktop widths", async ({ page }) => {
+    for (const width of [360, 1280]) {
+      await page.setViewportSize({ width, height: 900 });
+      await page.goto("/accounts/get-started/");
+
+      await expect(page.getByRole("heading", { name: /how will you use/i })).toBeVisible();
+      await expect(page.getByRole("link", { name: /continue as buyer/i })).toHaveAttribute(
+        "href",
+        "/accounts/register/"
+      );
+      await expect(page.getByRole("link", { name: /continue as manufacturer/i })).toHaveAttribute(
+        "href",
+        "/accounts/register/manufacturer/"
+      );
+      expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(width);
+
+      const buyerLink = page.getByRole("link", { name: /continue as buyer/i });
+      await buyerLink.focus();
+      await page.keyboard.press("Enter");
+      await expect(page).toHaveURL(/\/accounts\/register\/$/);
+
+      await expect(page.getByLabel("Username")).toBeVisible();
+      await expect(page.getByLabel(/terms.*privacy/i)).toBeVisible();
+      const consent = page.getByLabel(/terms.*privacy/i);
+      await consent.check();
+      await expect(consent).toBeChecked();
+
+      const password = page.locator('[name="password1"]');
+      await password.fill("StrongPass123!");
+      const show = page.getByRole("button", { name: "Show password" }).first();
+      await show.focus();
+      await page.keyboard.press("Enter");
+      await expect(password).toHaveAttribute("type", "text");
+      await expect(page.getByRole("button", { name: "Hide password" }).first()).toHaveAttribute(
+        "aria-pressed",
+        "true"
+      );
+      await expect(password).toHaveValue("StrongPass123!");
+      await page.keyboard.press("Enter");
+      await expect(password).toHaveAttribute("type", "password");
+      await expect(password).toHaveValue("StrongPass123!");
+      expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(width);
+
+      await page.goto("/accounts/register/manufacturer/");
+      await expect(page.getByLabel("Username")).toBeVisible();
+      await expect(page.getByLabel("Business name")).toBeVisible();
+      await expect(page.locator('[name="city"]')).toBeVisible();
+      await expect(page.locator('[name="state"]')).toBeVisible();
+      await expect(page.getByLabel(/terms.*privacy/i)).toBeVisible();
+      expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(width);
+
+      await page.goto("/accounts/login/");
+      await expect(page.getByLabel("Username")).toBeVisible();
+      await expect(page.getByLabel("Email or username")).toHaveCount(0);
+      const loginPassword = page.locator('[name="password"]');
+      await loginPassword.fill("ExistingPassword123!");
+      await page.getByRole("button", { name: "Show password" }).focus();
+      await page.keyboard.press("Enter");
+      await expect(loginPassword).toHaveAttribute("type", "text");
+      await expect(loginPassword).toHaveValue("ExistingPassword123!");
+      await expect(page.getByRole("button", { name: "Hide password" })).toHaveAttribute(
+        "aria-pressed",
+        "true"
+      );
+      expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(width);
+    }
+  });
+
   test("buyer registration, dashboard, login, and logout", async ({ page }) => {
     test.skip(!process.env.TEST_USER_PASSWORD, "TEST_USER_PASSWORD is required for QA account flows");
     const password = requireEnv("TEST_USER_PASSWORD");

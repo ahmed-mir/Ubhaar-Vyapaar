@@ -6,6 +6,7 @@ from . import views
 from .forms import ReliablePasswordResetForm
 
 urlpatterns = [
+    path("get-started/", views.get_started, name="get_started"),
     path("register/", views.register, name="register"),
     path(
         "login/",

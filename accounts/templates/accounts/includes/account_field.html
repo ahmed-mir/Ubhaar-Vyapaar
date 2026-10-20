@@ -1,0 +1,27 @@
+{% load accessibility %}
+<div class="form-field{% if field.errors %} form-field-error{% endif %}{% if field.field.widget.input_type == 'checkbox' %} form-field-checkbox{% endif %}">
+    {% if field.field.widget.input_type == 'checkbox' %}
+        {{ field|render_accessible_field }}
+        <div>{{ field.label_tag }}</div>
+    {% else %}
+        {{ field.label_tag }}
+        {{ field|render_accessible_field }}
+    {% endif %}
+
+    {% if field.help_text %}
+        {% if field.name == 'password1' or field.name == 'new_password1' %}
+            <details class="password-requirements">
+                <summary>Password requirements</summary>
+                <div id="{{ field.auto_id }}_helptext" class="helptext">{{ field.help_text }}</div>
+            </details>
+        {% else %}
+            <p id="{{ field.auto_id }}_helptext" class="helptext">{{ field.help_text }}</p>
+        {% endif %}
+    {% endif %}
+
+    {% if field.errors %}
+        <div id="{{ field.auto_id }}_error" class="field-errors" role="alert">
+            <ul class="errorlist">{% for error in field.errors %}<li>{{ error }}</li>{% endfor %}</ul>
+        </div>
+    {% endif %}
+</div>

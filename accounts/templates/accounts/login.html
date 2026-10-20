@@ -22,7 +22,7 @@
 
     <p class="auth-intro">Manage listings, quote requests, and orders.</p>
 
-    <form method="post" class="styled-form" novalidate>
+    <form method="post" class="styled-form auth-form" novalidate>
         {% csrf_token %}
         {% include "marketplace/includes/accessible_form.html" %}
 
@@ -50,8 +50,8 @@
 
         <p>
             Looking for manufacturing services?
-            <a href="{% url 'register' %}">
-                Create a buyer account
+            <a href="{% url 'get_started' %}">
+                Get started
             </a>
         </p>
 

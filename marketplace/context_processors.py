@@ -7,6 +7,7 @@ PRIVATE_INDEXING_URL_NAMES = {
     "logout",
     "register",
     "register_manufacturer",
+    "get_started",
     "password_change",
     "password_change_done",
     "password_reset",

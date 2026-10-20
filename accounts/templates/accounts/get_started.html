@@ -1,0 +1,28 @@
+{% extends "marketplace/base.html" %}
+
+{% block title %}Choose an account | Ubhaar-Vyapaar{% endblock %}
+
+{% block content %}
+<section class="auth-card get-started-card" aria-labelledby="get-started-title">
+    <p class="eyebrow">Get started</p>
+    <h1 id="get-started-title">How will you use Ubhaar-Vyapaar?</h1>
+    <p class="auth-intro">Choose the account that matches what you want to do.</p>
+
+    <div class="role-choice-grid">
+        <article class="role-choice-card">
+            <p class="eyebrow">Buyer</p>
+            <h2>Find manufacturing capacity</h2>
+            <p>Find manufacturing capacity, request quotations and track orders.</p>
+            <a class="button button-primary" href="{% url 'register' %}">Continue as buyer</a>
+        </article>
+        <article class="role-choice-card">
+            <p class="eyebrow">Manufacturer</p>
+            <h2>Offer your capacity</h2>
+            <p>List available capacity, respond to quote requests and manage production milestones.</p>
+            <a class="button button-primary" href="{% url 'register_manufacturer' %}">Continue as manufacturer</a>
+        </article>
+    </div>
+
+    <p class="auth-links">Already have an account? <a href="{% url 'login' %}">Log in</a></p>
+</section>
+{% endblock %}

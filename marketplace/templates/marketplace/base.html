@@ -224,7 +224,7 @@
                             Log in
                         </a>
 
-                        <a class="button button-primary nav-cta{% if current_url == 'register' %} nav-link-active{% endif %}" href="{% url 'register' %}">
+                        <a class="button button-primary nav-cta{% if current_url == 'get_started' %} nav-link-active{% endif %}" href="{% url 'get_started' %}">
                             Get started
                         </a>
 
@@ -792,6 +792,7 @@
             });
         })();
     </script>
+    <script src="{% static 'marketplace/js/account-password-toggle.js' %}" defer></script>
 
 </body>
 </html>
