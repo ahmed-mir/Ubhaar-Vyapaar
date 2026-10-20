@@ -194,4 +194,4 @@ class InformationalPageTests(TestCase):
         response = self.client.get(reverse("for_manufacturers"))
         self.assertContains(response, "Business registration record")
         self.assertContains(response, "GST registration")
-        self.assertContains(response, "Expected review time: Three business days")\n
+        self.assertContains(response, "Expected review time: Three business days")

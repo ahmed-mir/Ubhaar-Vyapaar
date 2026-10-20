@@ -1758,6 +1758,29 @@ class PlatformReadinessTests(TestCase):
 
         self.assertNotContains(response, 'content="noindex,nofollow"')
 
+    @override_settings(ALLOW_INDEXING=True)
+    def test_account_and_private_pages_are_noindex_when_public_indexing_is_enabled(self):
+        for url_name in (
+            "login",
+            "register",
+            "password_reset",
+        ):
+            with self.subTest(url_name=url_name):
+                response = self.client.get(reverse(url_name))
+                self.assertContains(
+                    response,
+                    '<meta name="robots" content="noindex,follow">',
+                    html=True,
+                )
+
+        self.client.force_login(self.buyer)
+        dashboard = self.client.get(reverse("buyer_dashboard"))
+        self.assertContains(
+            dashboard,
+            '<meta name="robots" content="noindex,follow">',
+            html=True,
+        )
+
     @override_settings(ALLOW_INDEXING=False)
     def test_public_pages_are_noindex_nofollow_when_indexing_disabled(self):
         response = self.client.get(reverse("home"))

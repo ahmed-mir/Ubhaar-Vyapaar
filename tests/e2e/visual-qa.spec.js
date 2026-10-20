@@ -2,7 +2,7 @@ const { test, expect } = require("@playwright/test");
 const fs = require("fs");
 const path = require("path");
 
-const widths = [320, 360, 390, 768, 1280, 1440];
+const widths = [320, 360, 390, 768, 1024, 1280, 1440];
 const pages = [
   ["landing", "/"],
   ["marketplace", "/marketplace/"],

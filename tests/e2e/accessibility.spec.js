@@ -62,6 +62,45 @@ test.describe("accessibility and keyboard UX", () => {
     expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(360);
   });
 
+  test("marketplace filters, pagination, listing, and manufacturer navigation work by keyboard", async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 900 });
+    await page.goto("/marketplace/");
+
+    const filters = page.locator(".marketplace-filter-disclosure");
+    const summary = filters.locator("summary");
+    await summary.focus();
+    await page.keyboard.press("Enter");
+    await expect(filters).toHaveAttribute("open", "");
+
+    const location = page.getByLabel("Location");
+    await location.focus();
+    await page.keyboard.type("Pune");
+    await filters.getByRole("button", { name: /apply filters/i }).focus();
+    await page.keyboard.press("Enter");
+    await expect(page).toHaveURL(/location=Pune/);
+
+    const removeLocation = page.getByRole("link", { name: /remove location: pune filter/i });
+    await removeLocation.focus();
+    await page.keyboard.press("Enter");
+    await expect(page).not.toHaveURL(/location=/);
+
+    await page.goto("/marketplace/");
+    const next = page.getByRole("link", { name: /next/i });
+    await next.focus();
+    await page.keyboard.press("Enter");
+    await expect(page).toHaveURL(/page=2/);
+
+    const listing = page.locator(".listing-spec-main h3 a").first();
+    await listing.focus();
+    await page.keyboard.press("Enter");
+    await expect(page.locator("h1")).toBeVisible();
+
+    const manufacturer = page.locator('a[href*="/manufacturers/"]').first();
+    await manufacturer.focus();
+    await page.keyboard.press("Enter");
+    await expect(page).toHaveURL(/\/manufacturers\/\d+\//);
+  });
+
   test("reduced motion preference disables reveal dependency", async ({ page }) => {
     await page.emulateMedia({ reducedMotion: "reduce" });
     await page.goto("/marketplace/");

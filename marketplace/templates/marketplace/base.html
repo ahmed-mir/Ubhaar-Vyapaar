@@ -26,6 +26,9 @@
             <meta name="robots" content="noindex">
         {% endif %}
     {% endif %}
+    {% if allow_indexing and request.resolver_match.url_name in private_indexing_url_names %}
+        <meta name="robots" content="noindex,follow">
+    {% endif %}
     {% block robots_meta %}{% endblock %}
     <link
         rel="canonical"

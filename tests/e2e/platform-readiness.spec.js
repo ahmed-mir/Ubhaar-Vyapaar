@@ -7,16 +7,24 @@ test.describe("platform readiness", () => {
     const banner = page.locator("[data-cookie-consent]");
     await expect(banner).toBeVisible();
 
-    await page.getByRole("button", { name: /reject analytics/i }).click();
+    const rejectButton = page.getByRole("button", { name: /reject analytics/i });
+    await rejectButton.focus();
+    await page.keyboard.press("Enter");
     await expect(banner).toBeHidden();
 
     await page.reload();
     await expect(banner).toBeHidden();
 
-    await page.getByRole("button", { name: /cookie settings/i }).click();
+    const settingsButton = page.getByRole("button", { name: /cookie settings/i });
+    await settingsButton.focus();
+    await page.keyboard.press("Enter");
     await expect(banner).toBeVisible();
-    await page.getByLabel(/analytics/i).check();
-    await page.getByRole("button", { name: /save preferences/i }).click();
+    const analyticsCheckbox = page.getByLabel(/optional product analytics/i);
+    await analyticsCheckbox.focus();
+    await page.keyboard.press("Space");
+    const saveButton = page.getByRole("button", { name: /save preferences/i });
+    await saveButton.focus();
+    await page.keyboard.press("Enter");
 
     const cookie = (await page.context().cookies()).find(
       (item) => item.name === "uv_cookie_preferences"
