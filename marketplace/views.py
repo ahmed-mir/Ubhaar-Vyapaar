@@ -13,7 +13,7 @@ from urllib.parse import urlencode, urljoin
 from xml.sax.saxutils import escape
 
 from django.conf import settings
-from django.http import HttpResponse, HttpResponsePermanentRedirect, JsonResponse
+from django.http import Http404, HttpResponse, HttpResponsePermanentRedirect, JsonResponse
 from django.urls import reverse
 from django.templatetags.static import static
 from urllib.parse import urlencode, urljoin
@@ -204,6 +204,8 @@ def sitemap_xml(request):
 
     manufacturers = ManufacturerProfile.objects.filter(
         is_verified=True,
+    ).exclude(
+        user__username__startswith="demo_mfr_",
     ).order_by("pk")
 
     for manufacturer in manufacturers:
@@ -873,7 +875,7 @@ def marketplace(request):
         for item in category_summaries
     )
 
-    listings = public_listings.select_related("manufacturer")
+    listings = public_listings.select_related("manufacturer", "manufacturer__user")
 
     if query:
         listings = listings.filter(
@@ -970,6 +972,35 @@ def marketplace(request):
     }
     pagination_query = urlencode(pagination_params)
 
+    category_labels = dict(available_categories)
+    active_filter_specs = [
+        ("q", query, f'Search: {query}'),
+        ("category", selected_category, f'Category: {category_labels.get(selected_category, selected_category)}'),
+        ("location", location, f"Location: {location}"),
+        ("moq", moq, f"MOQ up to {moq}"),
+        ("max_price", max_price, f"Price up to ₹{max_price}"),
+        ("lead_time", lead_time, f"Lead time up to {lead_time} days"),
+        ("verification", verification, "Verified only" if verification else ""),
+        ("sort", sort if sort != "newest" else "", f"Sort: {sort.replace('_', ' ').title()}"),
+    ]
+    active_filters = []
+    for filter_name, filter_value, label in active_filter_specs:
+        if not filter_value:
+            continue
+        remaining_params = {
+            key: value
+            for key, value in pagination_params.items()
+            if key != filter_name
+        }
+        remove_url = reverse("marketplace")
+        if remaining_params:
+            remove_url = f"{remove_url}?{urlencode(remaining_params)}"
+        active_filters.append({"label": label, "remove_url": remove_url})
+
+    has_sample_listings = any(
+        listing.manufacturer.is_demo for listing in page_obj.object_list
+    )
+
     site_url = _absolute_site_url()
     organization_schema = {
         "@context": "https://schema.org",
@@ -1011,13 +1042,17 @@ def marketplace(request):
             "has_marketplace_filters": has_marketplace_filters,
             "canonical_url": canonical_url,
             "pagination_query": pagination_query,
+            "active_filters": active_filters,
+            "has_sample_listings": has_sample_listings,
             "organization_schema": organization_schema,
             "website_schema": website_schema,
         },
     )
 def listing_detail(request, pk):
     listing = get_object_or_404(
-        CapacityListing.objects.select_related("manufacturer"),
+        CapacityListing.objects.select_related(
+            "manufacturer", "manufacturer__user",
+        ).prefetch_related("manufacturer__reviews"),
         Q(manufacturer__is_verified=True)
         | Q(manufacturer__user__username__startswith="demo_mfr_"),
         pk=pk,
@@ -1098,6 +1133,21 @@ def listing_detail(request, pk):
             },
         }
 
+    similar_listings = list(
+        CapacityListing.objects.filter(
+            is_active=True,
+            category=listing.category,
+        ).filter(
+            Q(manufacturer__is_verified=True)
+            | Q(manufacturer__user__username__startswith="demo_mfr_"),
+        ).exclude(pk=listing.pk).select_related(
+            "manufacturer", "manufacturer__user",
+        ).order_by("-pk")[:3]
+    )
+
+    if listing.manufacturer.is_demo:
+        service_schema = None
+
     return render(
         request,
         "marketplace/listing_detail.html",
@@ -1107,6 +1157,7 @@ def listing_detail(request, pk):
             "social_image_url": social_image_url,
             "breadcrumb_schema": breadcrumb_schema,
             "service_schema": service_schema,
+            "similar_listings": similar_listings,
         },
     )
 @login_required
@@ -2352,15 +2403,18 @@ def remove_saved_listing(request, pk):
     return redirect("saved_listings")
 def manufacturer_profile(request, pk):
     manufacturer = get_object_or_404(
-        ManufacturerProfile,
+        ManufacturerProfile.objects.select_related("user").prefetch_related(
+            "reviews", "reviews__buyer", "reviews__order",
+        ),
         pk=pk,
-        is_verified=True,
     )
+    if not manufacturer.is_verified and not manufacturer.is_demo:
+        raise Http404
 
     listings = CapacityListing.objects.filter(
         manufacturer=manufacturer,
         is_active=True,
-    ).order_by("-pk")
+    ).select_related("manufacturer", "manufacturer__user").order_by("-pk")
 
     paginator = Paginator(listings, 9)
     page_obj = paginator.get_page(request.GET.get("page"))
@@ -2388,6 +2442,11 @@ def manufacturer_profile(request, pk):
         ],
     }
 
+    manufacturer_schema = None if manufacturer.is_demo else {
+        "@context": "https://schema.org",
+        **_manufacturer_schema(manufacturer),
+    }
+
     return render(
         request,
         "marketplace/manufacturer_profile.html",
@@ -2395,10 +2454,7 @@ def manufacturer_profile(request, pk):
             "manufacturer": manufacturer,
             "page_obj": page_obj,
             "canonical_url": canonical_url,
-            "manufacturer_schema": {
-                "@context": "https://schema.org",
-                **_manufacturer_schema(manufacturer),
-            },
+            "manufacturer_schema": manufacturer_schema,
             "breadcrumb_schema": breadcrumb_schema,
         },
     )

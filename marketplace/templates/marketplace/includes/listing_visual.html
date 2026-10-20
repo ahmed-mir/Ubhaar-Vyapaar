@@ -2,7 +2,7 @@
     <img
         class="{{ image_class|default:'listing-image' }}"
         src="{{ listing.image.url }}"
-        alt="{{ listing.title }} by {{ listing.manufacturer.business_name }}"
+        alt="{% if listing.machine_type %}{{ listing.machine_type }}{% elif listing.materials %}{{ listing.materials }}{% else %}{{ listing.get_category_display }}{% endif %} manufacturing capacity image"
         loading="{{ image_loading|default:'lazy' }}"
         decoding="async"
         width="800"

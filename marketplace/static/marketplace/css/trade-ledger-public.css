@@ -1,0 +1,762 @@
+/* Public marketplace, listing, and manufacturer trade-record surfaces. */
+.marketplace-heading,
+.marketplace-discovery,
+.trade-breadcrumbs,
+.listing-sheet-heading,
+.listing-sheet-overview,
+.listing-detail-content,
+.quote-process,
+.similar-listings,
+.manufacturer-sheet-heading,
+.manufacturer-about,
+.manufacturer-reviews,
+.manufacturer-listings {
+    width: min(var(--content-wide), calc(100% - 32px));
+    margin-inline: auto;
+}
+
+.marketplace-heading {
+    padding-block: 24px 16px;
+}
+
+.marketplace-heading .eyebrow,
+.listing-sheet-heading .eyebrow,
+.manufacturer-sheet-heading .eyebrow {
+    margin: 0 0 5px;
+    color: var(--text-muted);
+    font: 600 12px/1.4 var(--font-mono);
+    letter-spacing: .04em;
+    text-transform: uppercase;
+}
+
+.marketplace-heading h1,
+.listing-sheet-heading h1,
+.manufacturer-sheet-heading h1 {
+    margin: 0;
+    color: var(--brand-900);
+    font-size: clamp(26px, 3vw, 36px);
+    line-height: 1.18;
+    letter-spacing: -.025em;
+}
+
+.marketplace-heading > p:last-child {
+    margin: 7px 0 0;
+    color: var(--text-muted);
+}
+
+.marketplace-discovery {
+    margin-bottom: 48px;
+}
+
+.marketplace-search-line {
+    display: grid;
+    gap: 6px;
+    max-width: 760px;
+    margin-bottom: 18px;
+}
+
+.marketplace-search-line label,
+.marketplace-filter-field label {
+    color: var(--text);
+    font-size: 13px;
+    font-weight: 650;
+}
+
+.marketplace-search-control {
+    display: flex;
+    gap: 8px;
+}
+
+.marketplace-search-control input,
+.marketplace-filter-field input,
+.marketplace-filter-field select {
+    width: 100%;
+    min-width: 0;
+    min-height: 44px;
+    padding: 9px 11px;
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius-xs);
+    background: var(--surface);
+    color: var(--text);
+}
+
+.marketplace-search-control .button {
+    min-width: 92px;
+    min-height: 44px;
+}
+
+.marketplace-results-layout {
+    display: grid;
+    grid-template-columns: minmax(230px, 270px) minmax(0, 1fr);
+    align-items: start;
+    gap: 22px;
+}
+
+.marketplace-filter-disclosure {
+    border: 1px solid var(--border);
+    border-radius: var(--radius-xs);
+    background: var(--surface);
+    box-shadow: var(--shadow-flat);
+}
+
+.marketplace-filter-disclosure > summary {
+    display: none;
+}
+
+.marketplace-filter-rail {
+    display: grid;
+    gap: 12px;
+    padding: 16px;
+}
+
+.marketplace-filter-rail > .eyebrow {
+    margin: 0;
+    font: 600 12px/1.4 var(--font-mono);
+    text-transform: uppercase;
+    color: var(--text-muted);
+}
+
+.marketplace-filter-field {
+    display: grid;
+    gap: 5px;
+}
+
+.marketplace-filter-field input,
+.marketplace-filter-field select {
+    min-height: 42px;
+    font-size: 14px;
+}
+
+.marketplace-filter-actions {
+    display: grid;
+    gap: 8px;
+    margin-top: 3px;
+}
+
+.marketplace-filter-actions .button,
+.marketplace-filter-actions .text-action {
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.marketplace-filter-actions .text-action {
+    font-size: 13px;
+}
+
+.marketplace-result-column {
+    min-width: 0;
+}
+
+.marketplace-results-heading,
+.manufacturer-section-heading {
+    display: flex;
+    align-items: end;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 0 0 12px;
+    border-bottom: 1px solid var(--border-strong);
+}
+
+.marketplace-results-heading .eyebrow,
+.manufacturer-section-heading .eyebrow {
+    margin: 0 0 3px;
+    color: var(--text-muted);
+    font: 600 11px/1.4 var(--font-mono);
+    text-transform: uppercase;
+}
+
+.marketplace-results-heading h2,
+.manufacturer-section-heading h2 {
+    margin: 0;
+    color: var(--brand-900);
+    font-size: 20px;
+    line-height: 1.25;
+}
+
+.marketplace-result-range,
+.manufacturer-section-heading > p {
+    margin: 0;
+    color: var(--text-muted);
+    font: 12px/1.5 var(--font-mono);
+    text-align: right;
+}
+
+.marketplace-filter-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 7px;
+    margin: 12px 0;
+    padding: 0;
+    list-style: none;
+}
+
+.marketplace-filter-chips li {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    min-height: 36px;
+    padding: 3px 5px 3px 10px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-xs);
+    background: var(--surface);
+    color: var(--text);
+    font-size: 12px;
+}
+
+.marketplace-filter-chips a {
+    display: grid;
+    width: 28px;
+    height: 28px;
+    place-items: center;
+    border-radius: 2px;
+    color: var(--brand-900);
+    font-size: 20px;
+    line-height: 1;
+}
+
+.sample-listings-notice {
+    margin: 12px 0;
+    padding: 9px 11px;
+    border-left: 3px solid var(--accent);
+    background: var(--accent-soft);
+    color: #49351c;
+    font-size: 13px;
+}
+
+.marketplace-listing-rows {
+    border-top: 1px solid var(--border);
+}
+
+.listing-spec-row {
+    display: grid;
+    grid-template-columns: 132px minmax(180px, 1fr) minmax(190px, 260px);
+    gap: 16px;
+    align-items: center;
+    padding: 15px 0;
+    border-bottom: 1px solid var(--border);
+}
+
+.listing-spec-media {
+    position: relative;
+    overflow: hidden;
+    min-width: 0;
+    aspect-ratio: 4 / 3;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-xs);
+    background: var(--surface-alt);
+}
+
+.listing-spec-media img,
+.listing-spec-media .listing-image-placeholder {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.listing-spec-media .listing-image-placeholder {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    align-content: center;
+    justify-items: center;
+    gap: 3px;
+    padding: 8px;
+}
+
+.listing-spec-media .listing-image-placeholder strong {
+    display: none;
+}
+
+.listing-spec-media .listing-image-placeholder .fallback-geometry {
+    width: 44%;
+    max-height: 48%;
+    opacity: .75;
+}
+
+.listing-spec-media .listing-image-placeholder .fallback-brand-mark,
+.listing-spec-media .listing-image-placeholder .placeholder-category,
+.listing-spec-media .listing-image-placeholder .placeholder-capability {
+    display: none;
+}
+
+.listing-spec-flags {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px;
+}
+
+.listing-spec-flags > * {
+    font-size: 11px;
+}
+
+.listing-spec-main h3 {
+    margin: 5px 0 3px;
+    font-size: 17px;
+    line-height: 1.3;
+}
+
+.listing-spec-main h3 a {
+    color: var(--brand-900);
+}
+
+.listing-spec-maker,
+.listing-process {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 3px 10px;
+    margin: 0;
+    color: var(--text-muted);
+    font-size: 13px;
+}
+
+.listing-spec-maker a {
+    font-weight: 650;
+}
+
+.listing-process {
+    margin-top: 3px;
+    font-size: 12px;
+}
+
+.listing-spec-values,
+.detail-facts,
+.detail-capability-grid,
+.review-specs {
+    margin: 0;
+}
+
+.listing-spec-values > div,
+.detail-facts > div,
+.detail-capability-grid > div,
+.review-specs > div {
+    display: grid;
+    grid-template-columns: minmax(66px, .7fr) minmax(0, 1fr);
+    gap: 8px;
+    padding: 5px 0;
+    border-bottom: 1px solid var(--border-subtle);
+}
+
+.listing-spec-values dt,
+.detail-facts dt,
+.detail-capability-grid dt,
+.review-specs dt {
+    color: var(--text-muted);
+    font-size: 12px;
+}
+
+.listing-spec-values dd,
+.detail-facts dd,
+.detail-capability-grid dd,
+.review-specs dd {
+    min-width: 0;
+    margin: 0;
+    color: var(--text);
+    font: 600 13px/1.45 var(--font-mono);
+    overflow-wrap: anywhere;
+    font-variant-numeric: tabular-nums;
+}
+
+.listing-spec-values dd span {
+    color: var(--text-muted);
+    font: 12px/1.4 var(--font-sans);
+}
+
+.marketplace-empty-state {
+    padding: 24px 12px;
+    border-bottom: 1px solid var(--border);
+}
+
+.marketplace-empty-state h3 {
+    margin: 0 0 4px;
+    font-size: 17px;
+}
+
+.marketplace-empty-state p {
+    margin: 0 0 14px;
+    color: var(--text-muted);
+}
+
+.marketplace-empty-state .button {
+    min-height: 44px;
+}
+
+.marketplace-pagination {
+    justify-content: space-between;
+    margin-top: 16px;
+}
+
+.marketplace-pagination .button {
+    min-height: 44px;
+}
+
+.trade-breadcrumbs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 22px;
+    margin-bottom: 14px;
+    color: var(--text-muted);
+    font-size: 13px;
+}
+
+.trade-breadcrumbs [aria-current="page"] {
+    color: var(--text);
+}
+
+.listing-sheet-heading {
+    margin-bottom: 18px;
+}
+
+.listing-sheet-heading h1 {
+    margin-top: 8px;
+}
+
+.listing-sheet-heading .detail-manufacturer-line {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px 12px;
+    margin: 7px 0 0;
+    color: var(--text-muted);
+}
+
+.listing-sheet-overview {
+    display: grid;
+    grid-template-columns: minmax(0, 1.2fr) minmax(300px, .8fr);
+    align-items: start;
+    gap: 22px;
+}
+
+.listing-sheet-media {
+    overflow: hidden;
+    aspect-ratio: 4 / 3;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-xs);
+    background: var(--surface-alt);
+}
+
+.listing-sheet-media > img,
+.listing-sheet-media > .detail-image-placeholder {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.detail-commercial-panel,
+.manufacturer-trust-panel,
+.quote-process,
+.similar-listings,
+.manufacturer-about,
+.manufacturer-reviews,
+.manufacturer-listings {
+    padding: 16px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-xs);
+    background: var(--surface);
+    box-shadow: var(--shadow-flat);
+}
+
+.detail-commercial-panel h2 {
+    margin: 0 0 8px;
+    color: var(--brand-900);
+    font-size: 20px;
+}
+
+.detail-commercial-panel .detail-facts > div {
+    grid-template-columns: minmax(92px, .65fr) minmax(0, 1fr);
+    padding: 7px 0;
+}
+
+.detail-commercial-panel .detail-facts dd {
+    text-align: right;
+}
+
+.detail-commercial-panel .button,
+.detail-commercial-panel form {
+    margin-top: 10px;
+}
+
+.sample-quote-explanation,
+.quote-note,
+.verification-status {
+    color: var(--text-muted);
+    font-size: 13px;
+}
+
+.sample-quote-explanation {
+    margin: 14px 0 0;
+    padding-top: 12px;
+    border-top: 1px solid var(--border);
+}
+
+.listing-detail-content {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(250px, 330px);
+    align-items: start;
+    gap: 22px;
+    margin-top: 22px;
+}
+
+.detail-flow {
+    min-width: 0;
+}
+
+.detail-flow > section {
+    margin-bottom: 18px;
+    padding: 16px 0;
+    border-bottom: 1px solid var(--border);
+}
+
+.detail-flow .eyebrow,
+.quote-process .eyebrow,
+.similar-listings > .eyebrow,
+.manufacturer-about .eyebrow,
+.manufacturer-reviews .eyebrow,
+.manufacturer-listings .eyebrow {
+    margin: 0 0 4px;
+    color: var(--text-muted);
+    font: 600 11px/1.4 var(--font-mono);
+    text-transform: uppercase;
+}
+
+.detail-flow h2,
+.quote-process h2,
+.similar-listings h2,
+.manufacturer-about h2 {
+    margin: 0 0 10px;
+    color: var(--brand-900);
+    font-size: 20px;
+}
+
+.detail-flow .description-content p:last-child {
+    margin-bottom: 0;
+}
+
+.manufacturer-trust-panel h2 {
+    margin: 0;
+    font-size: 19px;
+}
+
+.manufacturer-trust-panel .text-action {
+    display: inline-flex;
+    min-height: 44px;
+    align-items: center;
+}
+
+.quote-process,
+.similar-listings,
+.manufacturer-about,
+.manufacturer-reviews,
+.manufacturer-listings {
+    margin-top: 22px;
+    margin-bottom: 22px;
+}
+
+.quote-process ol {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 0;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    counter-reset: quote-step;
+}
+
+.quote-process li {
+    counter-increment: quote-step;
+    padding: 9px 10px 9px 0;
+    border-top: 1px solid var(--border);
+    color: var(--text);
+    font-size: 13px;
+}
+
+.quote-process li::before {
+    content: "0" counter(quote-step);
+    display: block;
+    margin-bottom: 4px;
+    color: var(--text-muted);
+    font: 12px/1.3 var(--font-mono);
+}
+
+.similar-listings h2 {
+    margin-bottom: 12px;
+}
+
+.manufacturer-sheet-heading {
+    padding: 20px 0 16px;
+    border-bottom: 1px solid var(--border-strong);
+}
+
+.manufacturer-sheet-heading h1 {
+    margin-top: 7px;
+}
+
+.manufacturer-sheet-heading .verification-status {
+    margin: 7px 0 0;
+}
+
+.manufacturer-section-heading {
+    margin-bottom: 12px;
+}
+
+.manufacturer-review-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr));
+    gap: 12px;
+}
+
+.manufacturer-review-list > article {
+    min-width: 0;
+    padding: 12px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-xs);
+}
+
+.manufacturer-review-list h3 {
+    margin: 0 0 6px;
+    font-size: 15px;
+}
+
+.review-specs > div {
+    grid-template-columns: minmax(90px, .7fr) minmax(0, 1fr);
+}
+
+@media (max-width: 900px) {
+    .marketplace-results-layout {
+        grid-template-columns: minmax(0, 1fr);
+        gap: 12px;
+    }
+
+    .marketplace-filter-disclosure > summary {
+        display: flex;
+        min-height: 48px;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 10px 13px;
+        color: var(--brand-900);
+        cursor: pointer;
+        font-weight: 700;
+        list-style: none;
+    }
+
+    .marketplace-filter-disclosure > summary::-webkit-details-marker {
+        display: none;
+    }
+
+    .marketplace-filter-disclosure > summary::after {
+        content: "+";
+        font: 20px/1 var(--font-mono);
+    }
+
+    .marketplace-filter-disclosure[open] > summary::after {
+        content: "−";
+    }
+
+    .marketplace-filter-rail {
+        border-top: 1px solid var(--border);
+    }
+
+    .listing-spec-row {
+        grid-template-columns: 96px minmax(0, 1fr);
+        gap: 10px 12px;
+    }
+
+    .listing-spec-media {
+        grid-column: 1;
+        grid-row: 1;
+        align-self: start;
+    }
+
+    .listing-spec-values {
+        grid-column: 2;
+    }
+
+    .listing-spec-values > div {
+        grid-template-columns: minmax(62px, .7fr) minmax(0, 1fr);
+    }
+
+    .listing-sheet-overview,
+    .listing-detail-content {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .listing-sheet-media {
+        max-height: 400px;
+    }
+
+    .quote-process ol {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 420px) {
+    .marketplace-heading,
+    .marketplace-discovery,
+    .trade-breadcrumbs,
+    .listing-sheet-heading,
+    .listing-sheet-overview,
+    .listing-detail-content,
+    .quote-process,
+    .similar-listings,
+    .manufacturer-sheet-heading,
+    .manufacturer-about,
+    .manufacturer-reviews,
+    .manufacturer-listings {
+        width: min(100% - 20px, var(--content-wide));
+    }
+
+    .marketplace-search-control {
+        gap: 6px;
+    }
+
+    .marketplace-search-control .button {
+        min-width: 76px;
+        padding-inline: 10px;
+    }
+
+    .marketplace-results-heading {
+        align-items: start;
+    }
+
+    .marketplace-results-heading h2 {
+        font-size: 18px;
+    }
+
+    .listing-spec-row {
+        grid-template-columns: 76px minmax(0, 1fr);
+        gap: 8px 10px;
+    }
+
+    .listing-spec-main h3 {
+        font-size: 15px;
+        overflow-wrap: anywhere;
+    }
+
+    .listing-spec-maker {
+        font-size: 12px;
+    }
+
+    .listing-spec-values dt {
+        font-size: 11px;
+    }
+
+    .listing-spec-values dd {
+        font-size: 12px;
+    }
+
+    .marketplace-pagination {
+        gap: 8px;
+        flex-wrap: wrap;
+    }
+
+    .marketplace-pagination .button {
+        padding-inline: 10px;
+    }
+
+    .quote-process ol {
+        grid-template-columns: minmax(0, 1fr);
+    }
+}

@@ -47,7 +47,7 @@ test.describe("accessibility and keyboard UX", () => {
     await page.emulateMedia({ reducedMotion: "reduce" });
     await page.goto("/marketplace/");
 
-    const hero = page.locator(".hero-marketplace");
+    const hero = page.locator(".marketplace-heading");
     await expect(hero).toBeVisible();
     await expect(hero).toHaveCSS("transform", "none");
   });

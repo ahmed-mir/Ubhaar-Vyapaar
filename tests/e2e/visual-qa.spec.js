@@ -2,7 +2,7 @@ const { test, expect } = require("@playwright/test");
 const fs = require("fs");
 const path = require("path");
 
-const widths = [320, 360, 390, 768, 1440];
+const widths = [320, 360, 390, 768, 1280, 1440];
 const pages = [
   ["landing", "/"],
   ["marketplace", "/marketplace/"],
@@ -29,10 +29,10 @@ test.describe("public visual QA", () => {
       const reject = page.getByRole("button", { name: /reject analytics/i });
       if (await reject.isVisible()) await reject.click();
 
-      const listingHref = await page.locator(".listing-card h3 a").count()
-        ? await page.locator(".listing-card h3 a").first().getAttribute("href") : null;
-      const profileHref = await page.locator(".listing-card .company a").count()
-        ? await page.locator(".listing-card .company a").first().getAttribute("href") : null;
+      const listingHref = await page.locator(".listing-spec-main h3 a").count()
+        ? await page.locator(".listing-spec-main h3 a").first().getAttribute("href") : null;
+      const profileHref = await page.locator(".listing-spec-maker a").count()
+        ? await page.locator(".listing-spec-maker a").first().getAttribute("href") : null;
       const cases = [...pages];
       if (listingHref) cases.push(["listing-detail", listingHref]);
       if (profileHref) cases.push(["manufacturer-profile", profileHref]);

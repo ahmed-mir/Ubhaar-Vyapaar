@@ -1,8 +1,10 @@
 {% extends "marketplace/base.html" %}
-{% load currency structured_data %}
+{% load currency structured_data static %}
 
-{% block title %}{{ listing.title }}{% if listing.manufacturer.business_name %} by {{ listing.manufacturer.business_name }}{% endif %}{% if listing.manufacturer.city %}, {{ listing.manufacturer.city }}{% endif %} | Ubhaar-Vyapaar{% endblock %}
-{% block meta_description %}{{ listing.title }}{% if listing.manufacturer.business_name %} by {{ listing.manufacturer.business_name }}{% endif %}{% if listing.manufacturer.city %} in {{ listing.manufacturer.city }}{% endif %}. Review MOQ, lead time, price, and capacity details.{% endblock %}
+{% block extra_css %}<link rel="stylesheet" href="{% static 'marketplace/css/trade-ledger-public.css' %}">{% endblock %}
+
+{% block title %}{% if listing.manufacturer.is_demo %}Sample listing: {% endif %}{{ listing.title }}{% if listing.manufacturer.business_name %} by {{ listing.manufacturer.business_name }}{% endif %}{% if listing.manufacturer.city %}, {{ listing.manufacturer.city }}{% endif %} | Ubhaar-Vyapaar{% endblock %}
+{% block meta_description %}{% if listing.manufacturer.is_demo %}Illustrative sample listing for {% else %}{% endif %}{{ listing.title }}{% if listing.manufacturer.business_name %} by {{ listing.manufacturer.business_name }}{% endif %}{% if listing.manufacturer.city %} in {{ listing.manufacturer.city }}{% endif %}. Review MOQ, lead time, price, and capacity details.{% endblock %}
 {% block social_title %}{{ listing.title }}{% if listing.manufacturer.business_name %} by {{ listing.manufacturer.business_name }}{% endif %}{% if listing.manufacturer.city %}, {{ listing.manufacturer.city }}{% endif %} | Ubhaar-Vyapaar{% endblock %}
 {% block social_description %}{{ listing.title }}{% if listing.manufacturer.business_name %} by {{ listing.manufacturer.business_name }}{% endif %}{% if listing.manufacturer.city %} in {{ listing.manufacturer.city }}{% endif %}. Review MOQ, lead time, price, and capacity details.{% endblock %}
 {% block twitter_title %}{{ listing.title }}{% if listing.manufacturer.business_name %} by {{ listing.manufacturer.business_name }}{% endif %}{% if listing.manufacturer.city %}, {{ listing.manufacturer.city }}{% endif %} | Ubhaar-Vyapaar{% endblock %}
@@ -12,7 +14,7 @@
 {% block social_image_dimensions %}{% if not social_image_url %}{{ block.super }}{% endif %}{% endblock %}
 {% block structured_data %}
     {% json_ld breadcrumb_schema "listing-breadcrumb-jsonld" %}
-    {% json_ld service_schema "listing-service-jsonld" %}
+    {% if service_schema %}{% json_ld service_schema "listing-service-jsonld" %}{% endif %}
 {% endblock %}
 {% block robots_meta %}
     {% if allow_indexing and listing.availability_status == "PAUSED" %}
@@ -22,7 +24,7 @@
 {% block body_attributes %}data-analytics-page-event="listing_view"{% endblock %}
 
 {% block content %}
-    {% include "marketplace/includes/listing_detail_editorial.html" %}
+    {% include "marketplace/includes/listing_detail_trade_sheet.html" %}
 {% endblock %}
 
 {% comment %}

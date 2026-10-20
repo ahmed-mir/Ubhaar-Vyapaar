@@ -1,0 +1,131 @@
+{% load currency %}
+
+<header class="marketplace-heading" aria-labelledby="marketplace-title">
+    <p class="eyebrow">Marketplace / Capacity register</p>
+    <h1 id="marketplace-title">Manufacturing capacity</h1>
+    <p>Search active listings and compare production terms.</p>
+</header>
+
+<form method="get" action="{% url 'marketplace' %}" class="marketplace-discovery" role="search" aria-label="Search manufacturing capacity">
+    <div class="marketplace-search-line">
+        <label for="search">Search capacity</label>
+        <div class="marketplace-search-control">
+            <input id="search" type="search" name="q" value="{{ query }}" placeholder="Product, process, material, or city">
+            <button class="button button-primary" type="submit">Search</button>
+        </div>
+    </div>
+
+    <div class="marketplace-results-layout">
+        <details class="marketplace-filter-disclosure" open data-active-filters="{% if has_marketplace_filters %}true{% else %}false{% endif %}">
+            <summary><span>Filters and sort</span><span aria-hidden="true">{% if active_filters %}{{ active_filters|length }} active{% else %}Open{% endif %}</span></summary>
+            <div class="marketplace-filter-rail">
+                <p class="eyebrow">Refine listings</p>
+                <div class="marketplace-filter-field">
+                    <label for="category">Category</label>
+                    <select id="category" name="category">
+                        <option value="">All categories</option>
+                        {% for value, label in categories %}<option value="{{ value }}" {% if selected_category == value %}selected{% endif %}>{{ label }}</option>{% endfor %}
+                    </select>
+                </div>
+                <div class="marketplace-filter-field">
+                    <label for="location">Location</label>
+                    <input id="location" type="search" name="location" value="{{ location }}" placeholder="City or state">
+                </div>
+                <div class="marketplace-filter-field">
+                    <label for="moq">Maximum MOQ</label>
+                    <input id="moq" type="number" min="1" name="moq" value="{{ moq }}" inputmode="numeric">
+                </div>
+                <div class="marketplace-filter-field">
+                    <label for="max_price">Maximum unit price</label>
+                    <input id="max_price" type="number" min="1" step="0.01" name="max_price" value="{{ max_price }}" inputmode="decimal">
+                </div>
+                <div class="marketplace-filter-field">
+                    <label for="lead_time">Maximum lead time (days)</label>
+                    <input id="lead_time" type="number" min="1" name="lead_time" value="{{ lead_time }}" inputmode="numeric">
+                </div>
+                <div class="marketplace-filter-field">
+                    <label for="verification">Verification status</label>
+                    <select id="verification" name="verification">
+                        <option value="">All manufacturers</option>
+                        <option value="verified" {% if verification == "verified" %}selected{% endif %}>Verified only</option>
+                    </select>
+                </div>
+                <div class="marketplace-filter-field">
+                    <label for="sort">Sort listings</label>
+                    <select id="sort" name="sort">
+                        <option value="newest" {% if sort == "newest" %}selected{% endif %}>Newest</option>
+                        <option value="price" {% if sort == "price" %}selected{% endif %}>Lowest price</option>
+                        <option value="lead_time" {% if sort == "lead_time" %}selected{% endif %}>Shortest lead time</option>
+                    </select>
+                </div>
+                <div class="marketplace-filter-actions">
+                    <button class="button button-primary" type="submit">Apply filters</button>
+                    <a href="{% url 'marketplace' %}" class="text-action">Clear all</a>
+                </div>
+            </div>
+        </details>
+
+        <section id="marketplace-listings" class="marketplace-result-column" aria-labelledby="listings-title" aria-live="polite">
+            <div class="marketplace-results-heading">
+                <div>
+                    <p class="eyebrow">Filtered results</p>
+                    <h2 id="listings-title">{{ page_obj.paginator.count }} listing{{ page_obj.paginator.count|pluralize }}</h2>
+                </div>
+                <p class="marketplace-result-range">{% if page_obj.paginator.count %}{{ page_obj.start_index }}–{{ page_obj.end_index }} of {{ page_obj.paginator.count }}{% else %}No results{% endif %}</p>
+            </div>
+
+            {% if active_filters %}
+                <ul class="marketplace-filter-chips" aria-label="Active filters">
+                    {% for item in active_filters %}<li><span>{{ item.label }}</span><a href="{{ item.remove_url }}" aria-label="Remove {{ item.label }} filter">×</a></li>{% endfor %}
+                </ul>
+            {% endif %}
+
+            {% if has_sample_listings %}<p class="sample-listings-notice" role="note">Sample listings are shown for illustration and do not accept quote requests.</p>{% endif %}
+
+            <div class="marketplace-listing-rows">
+                {% for listing in listings %}{% include "marketplace/includes/listing_spec_row.html" with listing=listing %}
+                {% empty %}
+                    <div class="marketplace-empty-state">
+                        {% if has_marketplace_filters %}
+                            <h3>No matching listings</h3>
+                            <p>Remove a filter or browse all available capacity.</p>
+                            <a class="button button-secondary" href="{% url 'marketplace' %}">Browse all listings</a>
+                        {% else %}
+                            <h3>No active listings are available right now</h3>
+                            <p>Browse again as active capacity is added.</p>
+                        {% endif %}
+                    </div>
+                {% endfor %}
+            </div>
+
+            {% if page_obj.has_other_pages %}
+                <nav class="pagination marketplace-pagination" aria-label="Listing pages">
+                    {% if page_obj.has_previous %}<a class="button button-secondary" href="?{% if pagination_query %}{{ pagination_query }}&amp;{% endif %}page={{ page_obj.previous_page_number }}">← Previous</a>{% endif %}
+                    <span aria-current="page">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+                    {% if page_obj.has_next %}<a class="button button-secondary" href="?{% if pagination_query %}{{ pagination_query }}&amp;{% endif %}page={{ page_obj.next_page_number }}">Next →</a>{% endif %}
+                </nav>
+            {% endif %}
+        </section>
+    </div>
+</form>
+
+<script>
+    document.querySelectorAll(".marketplace-filter-disclosure").forEach((disclosure) => {
+        const mobileFilters = window.matchMedia("(max-width: 900px)");
+        const syncDisclosure = () => {
+            if (mobileFilters.matches) {
+                if (disclosure.dataset.activeFilters !== "true") disclosure.open = false;
+            } else {
+                disclosure.open = true;
+            }
+        };
+        syncDisclosure();
+        mobileFilters.addEventListener("change", syncDisclosure);
+        disclosure.addEventListener("keydown", (event) => {
+            if (event.key === "Escape" && disclosure.open) {
+                disclosure.open = false;
+                disclosure.querySelector("summary").focus();
+            }
+        });
+    });
+</script>

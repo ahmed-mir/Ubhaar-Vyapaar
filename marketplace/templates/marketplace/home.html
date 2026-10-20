@@ -1,5 +1,7 @@
 {% extends "marketplace/base.html" %}
-{% load currency structured_data %}
+{% load currency structured_data static %}
+
+{% block extra_css %}<link rel="stylesheet" href="{% static 'marketplace/css/trade-ledger-public.css' %}">{% endblock %}
 
 {% block title %}Find manufacturing capacity{% if page_obj.number > 1 %} | Page {{ page_obj.number }}{% endif %} | Ubhaar-Vyapaar{% endblock %}
 {% block meta_description %}Search manufacturing capacity by category, location, MOQ, price, and lead time on Ubhaar-Vyapaar.{% if page_obj.number > 1 %} Page {{ page_obj.number }}.{% endif %}{% endblock %}
@@ -19,7 +21,7 @@
 {% endblock %}
 
 {% block content %}
-    {% include "marketplace/includes/home_editorial.html" %}
+    {% include "marketplace/includes/marketplace_trade_ledger.html" %}
 {% endblock %}
 
 {% comment %}

@@ -205,15 +205,19 @@ class MarketplaceDiscoveryTrustTests(TestCase):
         quote_url = reverse("request_quote", args=[listing.pk])
 
         home_response = self.client.get(reverse("marketplace"))
-        self.assertContains(home_response, "Not accepting quote requests")
+        self.assertContains(
+            home_response,
+            "Sample listings are shown for illustration and do not accept quote requests.",
+        )
         self.assertNotContains(home_response, f'href="{quote_url}">Request quote</a>')
+        self.assertNotContains(home_response, "Not accepting quote requests")
 
         detail_response = self.client.get(
             reverse("listing_detail", args=[listing.pk])
         )
         self.assertContains(
             detail_response,
-            "This is a sample listing and is not accepting quote requests.",
+            "Quote requests are disabled for sample data.",
         )
         self.assertNotContains(detail_response, f'href="{quote_url}"')
 
@@ -342,7 +346,9 @@ class MarketplaceDiscoveryTrustTests(TestCase):
 
         self.assertContains(response, 'href="?q=steel&amp;page=2"')
         content = response.content.decode()
-        pagination = content.split('<nav class="pagination"', 1)[1].split("</nav>", 1)[0]
+        pagination = content.split(
+            '<nav class="pagination marketplace-pagination"', 1
+        )[1].split("</nav>", 1)[0]
         self.assertNotRegex(pagination, r'href="\?[^\"]*(?:sort=newest|category=)')
 
     @override_settings(ALLOW_INDEXING=True)
@@ -508,9 +514,9 @@ class MarketplaceDiscoveryTrustTests(TestCase):
         listing = self.create_listing(self.demo, "Sample capacity")
 
         schemas = parse_json_ld(self.client.get(reverse("listing_detail", args=[listing.pk])))
-        service = next(item for item in schemas if item["@type"] == "Service")
-
-        self.assertNotIn("offers", service)
+        self.assertFalse(any(item["@type"] == "Service" for item in schemas))
+        self.assertFalse(any(item["@type"] == "Product" for item in schemas))
+        self.assertFalse(any(item["@type"] == "Offer" for item in schemas))
         self.assertNotIn("isVerified", str(schemas))
         self.assertNotIn("verified", str(schemas).lower())
 
@@ -531,9 +537,9 @@ class MarketplaceDiscoveryTrustTests(TestCase):
     def test_sample_manufacturer_profile_does_not_claim_verification(self):
         response = self.client.get(reverse("manufacturer_profile", args=[self.demo.pk]))
         schemas = parse_json_ld(response)
-        organization = next(item for item in schemas if item["@type"] == "Organization")
-
-        self.assertEqual(organization["name"], self.demo.business_name)
+        self.assertFalse(any(item["@type"] == "Organization" for item in schemas))
+        self.assertTrue(any(item["@type"] == "BreadcrumbList" for item in schemas))
+        self.assertContains(response, "Sample manufacturer")
         self.assertNotIn("isVerified", str(schemas))
         self.assertNotIn("verified", str(schemas).lower())
 
@@ -561,16 +567,13 @@ class MarketplaceDiscoveryTrustTests(TestCase):
 
         self.assertContains(response, "Metal")
         self.assertNotContains(response, "Plastics")
-        self.assertContains(
-            response,
-            "More categories will appear as capacity is added.",
-        )
+        self.assertNotContains(response, "More categories will appear")
         self.assertNotContains(response, "coming soon")
 
     def test_empty_marketplace_uses_present_state_copy(self):
         response = self.client.get(reverse("marketplace"))
 
-        self.assertContains(response, "No public capacity is available right now")
+        self.assertContains(response, "No active listings are available right now")
         self.assertNotContains(response, "coming soon")
 
     def test_verified_badge_requires_real_state_and_demo_content_is_marked(self):
@@ -580,8 +583,8 @@ class MarketplaceDiscoveryTrustTests(TestCase):
         response = self.client.get(reverse("marketplace"))
         content = response.content.decode()
 
-        self.assertIn("Verified business", content)
-        self.assertIn("Sample listing", content)
+        self.assertIn('class="trust-badge">Verified</span>', content)
+        self.assertIn('class="sample-badge">Sample</span>', content)
 
     def test_kyc_status_alone_does_not_earn_public_verified_badge(self):
         profile = ManufacturerProfile.objects.create(
@@ -2292,6 +2295,21 @@ class CleanupE2EDataCommandTests(TestCase):
 
 
 class LandingPageTests(TestCase):
+    def test_root_renders_landing_while_marketplace_keeps_search_ui(self):
+        root_response = self.client.get(reverse("home"))
+        self.assertEqual(root_response.status_code, 200)
+        self.assertContains(
+            root_response,
+            "Find manufacturers with spare capacity for small-batch orders",
+        )
+        self.assertNotContains(root_response, "Source manufacturing. Faster.")
+
+        marketplace_response = self.client.get(reverse("marketplace"))
+        self.assertEqual(marketplace_response.status_code, 200)
+        self.assertContains(marketplace_response, "Manufacturing capacity")
+        self.assertContains(marketplace_response, 'class="marketplace-discovery"')
+        self.assertNotContains(marketplace_response, "Source manufacturing. Faster.")
+
     def make_listing(self, index, *, sample=False, active=True, category=CapacityListing.Category.METAL):
         User = get_user_model()
         username = f"{'demo_mfr_' if sample else 'landing_maker_'}{index}"

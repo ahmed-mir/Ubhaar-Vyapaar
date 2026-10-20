@@ -1,0 +1,22 @@
+{% load currency %}
+<article class="listing-spec-row" data-sample-listing="{% if listing.manufacturer.is_demo %}true{% else %}false{% endif %}">
+    <div class="listing-spec-media listing-media-frame{% if not listing.image %} media-no-image{% endif %}" data-listing-media>
+        {% include "marketplace/includes/listing_visual.html" with listing=listing image_class="listing-image" placeholder_class="listing-image-placeholder" %}
+    </div>
+    <div class="listing-spec-main">
+        <div class="listing-spec-flags">
+            <span class="listing-category">{{ listing.get_category_display }}</span>
+            {% if listing.manufacturer.is_demo %}<span class="sample-badge">Sample</span>{% elif listing.manufacturer.is_publicly_verified %}<span class="trust-badge">Verified</span>{% endif %}
+            {% if listing.availability_status %}<span class="listing-availability status-{{ listing.availability_status|lower }}">{{ listing.get_availability_status_display }}</span>{% endif %}
+        </div>
+        <h3><a href="{% url 'listing_detail' listing.pk %}">{{ listing.title }}</a></h3>
+        <p class="listing-spec-maker"><a href="{% url 'manufacturer_profile' listing.manufacturer.pk %}">{{ listing.manufacturer.business_name }}</a>{% if listing.manufacturer.city or listing.manufacturer.state %}<span>{{ listing.manufacturer.city }}{% if listing.manufacturer.city and listing.manufacturer.state %}, {% endif %}{{ listing.manufacturer.state }}</span>{% endif %}</p>
+        {% if listing.machine_type %}<p class="listing-process">{{ listing.machine_type }}</p>{% elif listing.materials %}<p class="listing-process">{{ listing.materials }}</p>{% endif %}
+    </div>
+    <dl class="listing-spec-values">
+        {% if listing.price_per_unit is not None %}<div><dt>Price</dt><dd>{{ listing.price_per_unit|inr }} <span>/ unit</span></dd></div>{% endif %}
+        {% if listing.minimum_quantity %}<div><dt>MOQ</dt><dd>{{ listing.minimum_quantity|indian_number }} units</dd></div>{% endif %}
+        {% if listing.production_days %}<div><dt>Lead time</dt><dd>{{ listing.production_days|indian_number }} days</dd></div>{% endif %}
+        {% if listing.available_capacity %}<div><dt>Capacity</dt><dd>{{ listing.available_capacity|indian_number }} units{% if listing.capacity_period %}/{{ listing.capacity_period|cut:"per " }}{% endif %}</dd></div>{% endif %}
+    </dl>
+</article>
