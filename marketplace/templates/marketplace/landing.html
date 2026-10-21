@@ -25,7 +25,7 @@
                     <div class="landing-search-row"><input id="landing-query" type="search" name="q" placeholder="Try packaging or textiles"><button class="button button-primary" type="submit">Search capacity</button></div>
                 </form>
                 <div class="landing-actions">
-                    <a class="button button-primary" href="{% url 'marketplace' %}" data-analytics="hero_browse">Browse capacity</a>
+                    <a class="text-link landing-browse-link" href="{% url 'marketplace' %}" data-analytics="hero_browse">Browse capacity</a>
                     <a class="button button-secondary" href="{{ manufacturer_cta_url }}" data-analytics="hero_list">List your capacity</a>
                 </div>
                 {% if categories %}<div class="landing-chips" aria-label="Browse categories"><span>Explore categories</span>{% for category in categories %}<a href="{% url 'marketplace' %}?category={{ category.value|urlencode }}">{{ category.label }}</a>{% endfor %}</div>{% endif %}
@@ -33,7 +33,7 @@
             <div class="landing-demo" aria-label="Illustrative product preview">
                 <div class="landing-demo-top"><span>Marketplace preview</span><span class="landing-sample-label">Sample listing</span></div>
                 <article class="landing-demo-card">
-                    <div class="landing-demo-art" aria-hidden="true"><span>UV</span><i></i><b></b></div>
+                    <div class="landing-demo-art" aria-hidden="true"><img src="{% static 'marketplace/images/brand/logo-mark.svg' %}" alt="" width="52" height="52"></div>
                     <div class="landing-demo-body"><p class="eyebrow">Packaging</p><h2>Illustrative packaging capacity</h2><p>Sample listing. Illustrative layout only; supplier details are not shown.</p><div class="landing-demo-facts"><span>Price <strong>Not shown</strong></span><span>MOQ <strong>Not shown</strong></span><span>Lead time <strong>Not shown</strong></span></div></div>
                 </article>
                 <div class="landing-tracker"><div class="landing-tracker-heading"><span>Example order milestones</span><span>Workflow preview</span></div><ol><li class="is-done"><span>1</span>Quote agreed</li><li class="is-current"><span>2</span>Production</li><li><span>3</span>Dispatch</li></ol></div>

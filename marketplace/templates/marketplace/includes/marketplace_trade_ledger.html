@@ -1,16 +1,16 @@
 {% load currency %}
 
 <header class="marketplace-heading" aria-labelledby="marketplace-title">
-    <p class="eyebrow">Marketplace / Capacity register</p>
+    <p class="eyebrow">Marketplace</p>
     <h1 id="marketplace-title">Manufacturing capacity</h1>
-    <p>Search active listings and compare production terms.</p>
+    <p>Search active listings and compare terms. MOQ is minimum order quantity. Lead time is production days; capacity is the volume offered per period.</p>
 </header>
 
 <form method="get" action="{% url 'marketplace' %}" class="marketplace-discovery" role="search" aria-label="Search manufacturing capacity">
     <div class="marketplace-search-line">
         <label for="search">Search capacity</label>
         <div class="marketplace-search-control">
-            <input id="search" type="search" name="q" value="{{ query }}" placeholder="Product, process, material, or city">
+            <input id="search" type="search" name="q" value="{{ query }}" placeholder="Product, process, or city">
             <button class="button button-primary" type="submit">Search</button>
         </div>
     </div>
@@ -32,7 +32,7 @@
                     <input id="location" type="search" name="location" value="{{ location }}" placeholder="City or state">
                 </div>
                 <div class="marketplace-filter-field">
-                    <label for="moq">Maximum MOQ</label>
+                    <label for="moq">Maximum order quantity (MOQ)</label>
                     <input id="moq" type="number" min="1" name="moq" value="{{ moq }}" inputmode="numeric">
                 </div>
                 <div class="marketplace-filter-field">
