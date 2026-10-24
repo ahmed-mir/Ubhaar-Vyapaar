@@ -50,7 +50,10 @@ async function registerBuyer(page, user, password) {
   await page
     .getByRole("button", { name: /create buyer account/i })
     .click({ noWaitAfter: true });
-  await page.waitForURL("**/", { timeout: 45000 });
+  await page.waitForURL((url) => url.pathname === "/", {
+    timeout: 45000,
+    waitUntil: "domcontentloaded",
+  });
   await page.waitForLoadState("domcontentloaded", { timeout: 45000 });
   await page.waitForSelector('a[href="/buyer/dashboard/"]', {
     state: "attached",
@@ -87,7 +90,7 @@ async function login(page, username, password) {
     .click({ noWaitAfter: true, timeout: 45000 });
   await page.waitForURL(
     (url) => !url.pathname.startsWith("/accounts/login/"),
-    { timeout: 45000 }
+    { timeout: 45000, waitUntil: "domcontentloaded" }
   );
   await page.waitForLoadState("domcontentloaded", { timeout: 45000 });
 }

@@ -34,7 +34,7 @@ class WaitlistFormTests(TestCase):
         self.assertNotContains(response, 'name="newsletter"')
         self.assertContains(response, 'data-analytics-event="waitlist_submit"')
         self.assertContains(response, "Interested in using Ubhaar-Vyapaar?")
-        self.assertContains(response, "Join the early-access list")
+        self.assertContains(response, "Join early access")
         self.assertLess(html.index("Current platform state"), html.index('id="early-access"'))
         for misleading_claim in ("limited spots", "invite only", "join thousands", "launching soon", "guaranteed access"):
             self.assertNotIn(misleading_claim, html.lower())
