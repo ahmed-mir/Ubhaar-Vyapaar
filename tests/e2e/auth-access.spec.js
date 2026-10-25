@@ -62,7 +62,7 @@ test.describe("production auth and access smoke", () => {
       await page.setViewportSize({ width, height: 900 });
       await page.goto("/accounts/get-started/");
 
-      await expect(page.getByRole("heading", { name: /how will you use/i })).toBeVisible();
+      await expect(page.getByRole("heading", { name: /choose your account type/i })).toBeVisible();
       await expect(page.getByRole("link", { name: /continue as buyer/i })).toHaveAttribute(
         "href",
         "/accounts/register/"

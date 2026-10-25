@@ -3,26 +3,41 @@
 {% block title %}Choose an account | Ubhaar-Vyapaar{% endblock %}
 
 {% block content %}
-<section class="auth-card get-started-card" aria-labelledby="get-started-title">
-    <p class="eyebrow">Get started</p>
-    <h1 id="get-started-title">How will you use Ubhaar-Vyapaar?</h1>
-    <p class="auth-intro">Choose the account that matches what you want to do.</p>
+<section class="auth-page-shell get-started-layout" aria-labelledby="get-started-title">
+    <div class="auth-page-main get-started-main">
+        <p class="eyebrow">Get started</p>
+        <h1 id="get-started-title">Choose your account type</h1>
+        <p class="auth-intro">Select the role that fits your work.</p>
 
-    <div class="role-choice-grid">
-        <article class="role-choice-card">
-            <p class="eyebrow">Buyer</p>
-            <h2>Find manufacturing capacity</h2>
-            <p>Find manufacturing capacity, request quotations and track orders.</p>
-            <a class="button button-primary" href="{% url 'register' %}">Continue as buyer</a>
-        </article>
-        <article class="role-choice-card">
-            <p class="eyebrow">Manufacturer</p>
-            <h2>Offer your capacity</h2>
-            <p>List available capacity, respond to quote requests and manage production milestones.</p>
-            <a class="button button-primary" href="{% url 'register_manufacturer' %}">Continue as manufacturer</a>
-        </article>
+        <div class="role-choice-grid">
+            <article class="role-choice-card">
+                <span class="role-choice-icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" focusable="false">
+                        <circle cx="10.8" cy="10.8" r="6.3"></circle>
+                        <path d="m15.4 15.4 5 5M8.2 10.8h5.2M10.8 8.2v5.2"></path>
+                    </svg>
+                </span>
+                <h2>Buyer</h2>
+                <p>Find manufacturing capacity, request quotes and track orders.</p>
+                <a class="button button-primary" href="{% url 'register' %}">Continue as buyer</a>
+            </article>
+
+            <article class="role-choice-card">
+                <span class="role-choice-icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" focusable="false">
+                        <path d="M3 20V10l6 3.5V10l6 3.5V5h6v15H3Z"></path>
+                        <path d="M17 8h1M17 11h1M7 17h2m3 0h2"></path>
+                    </svg>
+                </span>
+                <h2>Manufacturer</h2>
+                <p>List spare capacity, respond to enquiries and manage orders.</p>
+                <a class="button button-primary" href="{% url 'register_manufacturer' %}">Continue as manufacturer</a>
+            </article>
+        </div>
+
+        <p class="auth-links get-started-login">Already have an account? <a href="{% url 'login' %}">Log in</a></p>
     </div>
 
-    <p class="auth-links">Already have an account? <a href="{% url 'login' %}">Log in</a></p>
+    {% include "accounts/includes/auth_support_panel.html" %}
 </section>
 {% endblock %}
