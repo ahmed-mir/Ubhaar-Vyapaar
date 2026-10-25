@@ -1,6 +1,8 @@
 const { defineConfig, devices } = require("@playwright/test");
 
-const baseURL = process.env.UBHAAR_BASE_URL || "http://127.0.0.1:8000";
+const localPort = process.env.UBHAAR_E2E_PORT || "8010";
+const localBaseURL = `http://127.0.0.1:${localPort}`;
+const baseURL = process.env.UBHAAR_BASE_URL || localBaseURL;
 const useLocalServer = !process.env.UBHAAR_BASE_URL;
 
 module.exports = defineConfig({
@@ -27,9 +29,9 @@ module.exports = defineConfig({
   },
   webServer: useLocalServer
     ? {
-        command: "python manage.py runserver 127.0.0.1:8000",
-        url: "http://127.0.0.1:8000",
-        reuseExistingServer: true,
+        command: `python manage.py runserver 127.0.0.1:${localPort} --settings=config.settings_e2e --noreload`,
+        url: `${localBaseURL}/health/`,
+        reuseExistingServer: false,
         timeout: 120_000
       }
     : undefined,

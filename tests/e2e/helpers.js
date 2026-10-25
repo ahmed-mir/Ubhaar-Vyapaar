@@ -85,14 +85,26 @@ async function login(page, username, password) {
   await dismissCookieBanner(page);
   await page.locator('[name="username"]').fill(username);
   await page.locator('[name="password"]').fill(password);
-  await page
-    .getByRole("button", { name: /^log in$/i })
-    .click({ noWaitAfter: true, timeout: 45000 });
-  await page.waitForURL(
-    (url) => !url.pathname.startsWith("/accounts/login/"),
+
+  const loginResponse = page.waitForResponse(
+    (response) =>
+      new URL(response.url()).pathname === "/accounts/login/" &&
+      response.request().method() === "POST",
+    { timeout: 45000 }
+  );
+  const homeNavigation = page.waitForURL(
+    (url) => url.pathname === "/",
     { timeout: 45000, waitUntil: "domcontentloaded" }
   );
-  await page.waitForLoadState("domcontentloaded", { timeout: 45000 });
+
+  const [response] = await Promise.all([
+    loginResponse,
+    homeNavigation,
+    page.getByRole("button", { name: /^log in$/i }).click({ timeout: 45000 })
+  ]);
+
+  expect(response.status()).toBe(302);
+  expect(response.headers().location).toBe("/");
 }
 
 async function logout(page) {
