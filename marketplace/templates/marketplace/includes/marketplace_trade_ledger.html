@@ -2,8 +2,8 @@
 
 <header class="marketplace-heading" aria-labelledby="marketplace-title">
     <p class="eyebrow">Marketplace</p>
-    <h1 id="marketplace-title">Manufacturing capacity</h1>
-    <p>Search active listings and compare terms. MOQ is minimum order quantity. Lead time is production days; capacity is the volume offered per period.</p>
+    <h1 id="marketplace-title">Browse manufacturing capacity</h1>
+    <p>Compare price, minimum order quantity (MOQ), and production lead time across active listings.</p>
 </header>
 
 <form method="get" action="{% url 'marketplace' %}" class="marketplace-discovery" role="search" aria-label="Search manufacturing capacity">
@@ -17,9 +17,9 @@
 
     <div class="marketplace-results-layout">
         <details class="marketplace-filter-disclosure" open data-active-filters="{% if has_marketplace_filters %}true{% else %}false{% endif %}">
-            <summary><span>Filters and sort</span><span aria-hidden="true">{% if active_filters %}{{ active_filters|length }} active{% else %}Open{% endif %}</span></summary>
+            <summary><span>Filters</span><span aria-hidden="true">{% if active_filters %}{{ active_filters|length }} active{% else %}Open{% endif %}</span></summary>
             <div class="marketplace-filter-rail">
-                <p class="eyebrow">Refine listings</p>
+                <div class="marketplace-filter-heading"><p class="eyebrow">Refine listings</p><button class="marketplace-filter-close" type="button">Close filters</button></div>
                 <div class="marketplace-filter-field">
                     <label for="category">Category</label>
                     <select id="category" name="category">
@@ -50,14 +50,6 @@
                         <option value="verified" {% if verification == "verified" %}selected{% endif %}>Verified only</option>
                     </select>
                 </div>
-                <div class="marketplace-filter-field">
-                    <label for="sort">Sort listings</label>
-                    <select id="sort" name="sort">
-                        <option value="newest" {% if sort == "newest" %}selected{% endif %}>Newest</option>
-                        <option value="price" {% if sort == "price" %}selected{% endif %}>Lowest price</option>
-                        <option value="lead_time" {% if sort == "lead_time" %}selected{% endif %}>Shortest lead time</option>
-                    </select>
-                </div>
                 <div class="marketplace-filter-actions">
                     <button class="button button-primary" type="submit">Apply filters</button>
                     <a href="{% url 'marketplace' %}" class="text-action">Clear all</a>
@@ -68,10 +60,20 @@
         <section id="marketplace-listings" class="marketplace-result-column" aria-labelledby="listings-title" aria-live="polite">
             <div class="marketplace-results-heading">
                 <div>
-                    <p class="eyebrow">Filtered results</p>
+                    <p class="eyebrow">Available capacity</p>
                     <h2 id="listings-title">{{ page_obj.paginator.count }} listing{{ page_obj.paginator.count|pluralize }}</h2>
                 </div>
-                <p class="marketplace-result-range">{% if page_obj.paginator.count %}{{ page_obj.start_index }}–{{ page_obj.end_index }} of {{ page_obj.paginator.count }}{% else %}No results{% endif %}</p>
+                <div class="marketplace-results-tools">
+                    <p class="marketplace-result-range">{% if page_obj.paginator.count %}{{ page_obj.start_index }}–{{ page_obj.end_index }} of {{ page_obj.paginator.count }}{% else %}No results{% endif %}</p>
+                    <div class="marketplace-filter-field marketplace-sort-field">
+                        <label for="sort">Sort</label>
+                        <select id="sort" name="sort">
+                            <option value="newest" {% if sort == "newest" %}selected{% endif %}>Newest</option>
+                            <option value="price" {% if sort == "price" %}selected{% endif %}>Lowest price</option>
+                            <option value="lead_time" {% if sort == "lead_time" %}selected{% endif %}>Shortest lead time</option>
+                        </select>
+                    </div>
+                </div>
             </div>
 
             {% if active_filters %}
@@ -126,6 +128,10 @@
                 disclosure.open = false;
                 disclosure.querySelector("summary").focus();
             }
+        });
+        disclosure.querySelector(".marketplace-filter-close")?.addEventListener("click", () => {
+            disclosure.open = false;
+            disclosure.querySelector("summary").focus();
         });
     });
 </script>

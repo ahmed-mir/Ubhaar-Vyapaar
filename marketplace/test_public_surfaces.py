@@ -115,7 +115,7 @@ class PublicTradeSurfaceTests(TestCase):
             row.count(f'href="{reverse("listing_detail", args=[self.sample_listing.pk])}"'),
             1,
         )
-        self.assertNotIn("View details", row)
+        self.assertIn("View details", row)
 
     def test_listing_image_alt_is_meaningful_without_repeating_the_title(self):
         self.sample_listing.machine_type = "CNC turning"

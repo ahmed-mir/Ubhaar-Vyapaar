@@ -9,7 +9,7 @@
             {% if listing.manufacturer.is_demo %}<span class="sample-badge">Sample</span>{% elif listing.manufacturer.is_publicly_verified %}<span class="trust-badge">Verified</span>{% endif %}
             {% if listing.availability_status %}<span class="listing-availability status-{{ listing.availability_status|lower }}">{{ listing.get_availability_status_display }}</span>{% endif %}
         </div>
-        <h3><a href="{% url 'listing_detail' listing.pk %}">{{ listing.title }}</a></h3>
+        <h3><a href="{% url 'listing_detail' listing.pk %}"><span class="listing-card-title">{{ listing.title }}</span><span class="listing-card-action" aria-hidden="true">View details <span>→</span></span></a></h3>
         <p class="listing-spec-maker"><a href="{% url 'manufacturer_profile' listing.manufacturer.pk %}">{{ listing.manufacturer.business_name }}</a>{% if listing.manufacturer.city or listing.manufacturer.state %}<span>{{ listing.manufacturer.city }}{% if listing.manufacturer.city and listing.manufacturer.state %}, {% endif %}{{ listing.manufacturer.state }}</span>{% endif %}</p>
         {% if listing.machine_type %}<p class="listing-process">{{ listing.machine_type }}</p>{% elif listing.materials %}<p class="listing-process">{{ listing.materials }}</p>{% endif %}
     </div>

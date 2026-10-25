@@ -1878,7 +1878,7 @@ class PlatformReadinessTests(TestCase):
         self.assertContains(home_response, "listing-media-frame")
         self.assertContains(home_response, "media-no-image")
         self.assertContains(home_response, "fallback-brand-mark")
-        self.assertContains(home_response, "Manufacturing capacity")
+        self.assertContains(home_response, "Browse manufacturing capacity")
         self.assertNotContains(home_response, "Product photo coming soon")
         self.assertNotContains(home_response, "Image for ")
 
@@ -2328,7 +2328,7 @@ class LandingPageTests(TestCase):
 
         marketplace_response = self.client.get(reverse("marketplace"))
         self.assertEqual(marketplace_response.status_code, 200)
-        self.assertContains(marketplace_response, "Manufacturing capacity")
+        self.assertContains(marketplace_response, "Browse manufacturing capacity")
         self.assertContains(marketplace_response, 'class="marketplace-discovery"')
         self.assertNotContains(marketplace_response, "Source manufacturing. Faster.")
 

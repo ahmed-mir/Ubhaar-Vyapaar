@@ -18,7 +18,7 @@
         {% include "marketplace/includes/listing_visual.html" with listing=listing image_class="detail-image" placeholder_class="detail-image detail-image-placeholder" image_loading="eager" %}
     </div>
     <aside class="detail-commercial-panel" aria-labelledby="commercial-terms-title">
-        <p class="eyebrow">Specification / Commercial</p>
+        <p class="eyebrow">Commercial summary</p>
         <h2 id="commercial-terms-title">Commercial terms</h2>
         <dl class="detail-facts">
             {% if listing.price_per_unit is not None %}<div><dt>Price</dt><dd>{{ listing.price_per_unit|inr }} / unit</dd></div>{% endif %}
@@ -54,7 +54,7 @@
     <article class="detail-flow">
         {% if listing.description %}<section class="detail-section" aria-labelledby="listing-description-title"><p class="eyebrow">Description</p><h2 id="listing-description-title">Production overview</h2><div class="description-content">{{ listing.description|linebreaks }}</div></section>{% endif %}
         {% if listing.machine_type or listing.materials or listing.technical_capabilities or listing.cluster %}
-        <section class="detail-section" aria-labelledby="technical-fit-title"><p class="eyebrow">Production record</p><h2 id="technical-fit-title">Technical fit</h2><dl class="detail-capability-grid">
+        <section class="detail-section" aria-labelledby="technical-fit-title"><p class="eyebrow">Manufacturing details</p><h2 id="technical-fit-title">Technical fit</h2><dl class="detail-capability-grid">
             {% if listing.machine_type %}<div><dt>Machine type</dt><dd>{{ listing.machine_type }}</dd></div>{% endif %}
             {% if listing.materials %}<div><dt>Materials</dt><dd>{{ listing.materials }}</dd></div>{% endif %}
             {% if listing.technical_capabilities %}<div class="wide-fact"><dt>Technical capabilities</dt><dd>{{ listing.technical_capabilities|linebreaksbr }}</dd></div>{% endif %}
@@ -65,11 +65,10 @@
         {% if not listing.manufacturer.is_demo and listing.manufacturer.review_count %}<section class="detail-section"><h2>Buyer feedback</h2><p>Average rating: {{ listing.manufacturer.average_rating|floatformat:1 }}/5 from {{ listing.manufacturer.review_count }} completed order reviews.</p></section>{% endif %}
     </article>
     <aside class="manufacturer-trust-panel" aria-labelledby="manufacturer-title">
-        <p class="eyebrow">Manufacturer profile</p>
+        <p class="eyebrow">{% if listing.manufacturer.is_demo %}Sample manufacturer profile{% else %}Manufacturer profile{% endif %}</p>
         <h2 id="manufacturer-title"><a href="{% url 'manufacturer_profile' listing.manufacturer.pk %}">{{ listing.manufacturer.business_name }}</a></h2>
         {% if listing.manufacturer.city or listing.manufacturer.state %}<p class="record-meta">{{ listing.manufacturer.city }}{% if listing.manufacturer.city and listing.manufacturer.state %}, {% endif %}{{ listing.manufacturer.state }}</p>{% endif %}
         <p class="verification-status">Verification status: {% if listing.manufacturer.is_demo %}Sample{% elif listing.manufacturer.is_publicly_verified %}Verified{% else %}Not verified{% endif %}</p>
-        {% if listing.manufacturer.is_demo %}<span class="sample-badge">Sample manufacturer</span>{% endif %}
         {% if listing.manufacturer.description %}<p>{{ listing.manufacturer.description|truncatewords:35 }}</p>{% endif %}
         <a class="text-action" href="{% url 'manufacturer_profile' listing.manufacturer.pk %}">Manufacturer profile</a>
     </aside>
@@ -77,8 +76,8 @@
 
 {% if not listing.manufacturer.is_demo and listing.availability_status != "PAUSED" %}
 <section class="quote-process" aria-labelledby="quote-process-title">
-    <p class="eyebrow">Current quotation workflow</p><h2 id="quote-process-title">What happens after a quote request</h2>
-    <ol><li>Buyer submits requirements</li><li>Manufacturer sends a quotation</li><li>Buyer accepts or declines</li><li>An accepted quotation creates an order</li><li>Production milestones and messages are tracked</li></ol>
+    <p class="eyebrow">Quote process</p><h2 id="quote-process-title">What happens next</h2>
+    <ol><li>Send your requirements in a quote request.</li><li>Review the quotation from the manufacturer.</li><li>If accepted, an order opens with messages and milestones.</li></ol>
 </section>
 {% endif %}
 

@@ -2,11 +2,11 @@
 <nav class="trade-breadcrumbs" aria-label="Breadcrumb"><a href="{% url 'marketplace' %}">Marketplace</a><span aria-hidden="true">/</span><span aria-current="page">{{ manufacturer.business_name }}</span></nav>
 
 <header class="manufacturer-sheet-heading">
-    <p class="eyebrow">Manufacturer record</p>
+    <p class="eyebrow">Manufacturer profile</p>
     {% if manufacturer.is_demo %}<span class="sample-badge">Sample manufacturer</span>{% endif %}
     <h1>{{ manufacturer.business_name }}</h1>
     {% if manufacturer.city or manufacturer.state %}<p class="record-meta">{{ manufacturer.city }}{% if manufacturer.city and manufacturer.state %}, {% endif %}{{ manufacturer.state }}</p>{% endif %}
-    {% if manufacturer.is_demo %}<p class="verification-status">Verification status: Sample</p>{% elif manufacturer.is_publicly_verified %}<p class="verification-status">Verification status: Verified</p>{% else %}<p class="verification-status">Verification status: Not verified</p>{% endif %}
+    {% if manufacturer.is_demo %}<p class="verification-status">Sample profile for demonstration</p>{% elif manufacturer.is_publicly_verified %}<p class="verification-status">Profile verified</p>{% else %}<p class="verification-status">Not verified</p>{% endif %}
 </header>
 
 {% if manufacturer.description %}<section class="manufacturer-about" aria-labelledby="manufacturer-about-title"><p class="eyebrow">Business profile</p><h2 id="manufacturer-about-title">About</h2><div>{{ manufacturer.description|linebreaks }}</div></section>{% endif %}
