@@ -3,27 +3,24 @@
 {% block title %}Create listing | Ubhaar-Vyapaar{% endblock %}
 
 {% block content %}
-    <section class="auth-card" aria-labelledby="create-title">
+    <section class="auth-card listing-form-card" aria-labelledby="create-title">
         <a class="back-link" href="{% url 'my_listings' %}">
             &larr; My listings
         </a>
 
         <h1 id="create-title">Create a listing</h1>
 
-        <p class="auth-intro">
-            Describe your manufacturing capacity so buyers can understand
-            your service, minimum order, price, and production time.
-        </p>
+        <p class="auth-intro">Add the details buyers need to assess your manufacturing capacity.</p>
 
         <form
             method="post"
             action="{% url 'create_listing' %}"
             enctype="multipart/form-data"
-            class="styled-form form-grid"
+            class="styled-form form-grid listing-management-form"
             novalidate
         >
             {% csrf_token %}
-            {% include "marketplace/includes/accessible_form.html" %}
+            {% include "marketplace/includes/listing_form_fields.html" %}
 
             <div class="form-actions">
                 <a class="button button-secondary" href="{% url 'my_listings' %}">

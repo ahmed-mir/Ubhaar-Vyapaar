@@ -3,14 +3,14 @@
 {% block title %}Edit listing | Ubhaar-Vyapaar{% endblock %}
 
 {% block content %}
-    <section class="auth-card" aria-labelledby="edit-title">
+    <section class="auth-card listing-form-card" aria-labelledby="edit-title">
         <a class="back-link" href="{% url 'my_listings' %}">
             &larr; My listings
         </a>
 
         <h1 id="edit-title">Edit listing</h1>
 
-        <p class="auth-intro">{{ listing.title }}</p>
+        <p class="auth-intro">Update the details buyers see for {{ listing.title }}.</p>
 
         <p class="message">
             Uncheck "Is active" to hide this listing from buyers.
@@ -21,12 +21,12 @@
             method="post"
             action="{% url 'edit_listing' listing.pk %}"
             enctype="multipart/form-data"
-            class="styled-form form-grid"
+            class="styled-form form-grid listing-management-form"
             novalidate
         >
             {% csrf_token %}
 
-            {% include "marketplace/includes/accessible_form.html" %}
+            {% include "marketplace/includes/listing_form_fields.html" %}
 
             <div class="form-actions">
                 <a class="button button-secondary" href="{% url 'my_listings' %}">

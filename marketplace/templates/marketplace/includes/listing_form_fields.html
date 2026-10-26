@@ -1,0 +1,72 @@
+{% load accessibility %}
+
+{% if form.non_field_errors %}
+    <div class="form-error-summary" role="alert" tabindex="-1">
+        <p>Please review the form errors below.</p>
+        {{ form.non_field_errors }}
+    </div>
+{% endif %}
+
+{% for field in form %}
+    {% if field.name == "title" %}
+        <section class="listing-form-section" aria-labelledby="listing-basics-title">
+            <h2 id="listing-basics-title">Listing basics</h2>
+            <p>Describe the product or service buyers can request.</p>
+            <div class="listing-form-grid">
+    {% elif field.name == "machine_type" %}
+            </div>
+        </section>
+        <section class="listing-form-section" aria-labelledby="listing-capabilities-title">
+            <h2 id="listing-capabilities-title">Production capabilities</h2>
+            <p>Share the machines, materials, and capabilities relevant to this work.</p>
+            <div class="listing-form-grid">
+    {% elif field.name == "image" %}
+            </div>
+        </section>
+        <section class="listing-form-section" aria-labelledby="listing-media-title">
+            <h2 id="listing-media-title">Listing image</h2>
+            <p>An image is optional. Use a clear image of the product or process.</p>
+            <div class="listing-form-grid">
+    {% elif field.name == "minimum_quantity" %}
+            </div>
+        </section>
+        <section class="listing-form-section" aria-labelledby="listing-commercial-title">
+            <h2 id="listing-commercial-title">Commercial details</h2>
+            <p>MOQ means minimum order quantity. Lead time is the production time shown to buyers.</p>
+            <div class="listing-form-grid">
+    {% elif field.name == "available_capacity" %}
+            </div>
+        </section>
+        <section class="listing-form-section" aria-labelledby="listing-capacity-title">
+            <h2 id="listing-capacity-title">Capacity and location</h2>
+            <p>Add an available quantity and period only when you can provide a current estimate.</p>
+            <div class="listing-form-grid">
+    {% elif field.name == "availability_status" %}
+            </div>
+        </section>
+        <section class="listing-form-section" aria-labelledby="listing-availability-title">
+            <h2 id="listing-availability-title">Availability</h2>
+            <div class="listing-form-grid">
+    {% endif %}
+
+    <div class="form-field listing-form-field{% if field.field.widget.input_type == 'checkbox' %} form-field-checkbox{% endif %}{% if field.name == 'description' or field.name == 'technical_capabilities' or field.name == 'image' %} listing-form-field--wide{% endif %}{% if field.errors %} form-field-error{% endif %}">
+        {% if field.field.widget.input_type == "checkbox" %}
+            {{ field|render_accessible_field }}
+            <div>
+                {{ field.label_tag }}
+                {% if field.help_text %}<p id="{{ field.auto_id }}_helptext" class="helptext">{{ field.help_text }}</p>{% endif %}
+            </div>
+        {% else %}
+            {{ field.label_tag }}
+            {{ field|render_accessible_field }}
+            {% if field.help_text %}<p id="{{ field.auto_id }}_helptext" class="helptext">{{ field.help_text }}</p>{% endif %}
+        {% endif %}
+        {% if field.errors %}
+            <div id="{{ field.auto_id }}_error" class="field-errors" role="alert">
+                <ul class="errorlist">{% for error in field.errors %}<li>{{ error }}</li>{% endfor %}</ul>
+            </div>
+        {% endif %}
+    </div>
+{% endfor %}
+        </div>
+    </section>

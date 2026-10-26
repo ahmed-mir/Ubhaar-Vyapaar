@@ -3,7 +3,7 @@
 {% block title %}Edit business profile | Ubhaar-Vyapaar{% endblock %}
 
 {% block content %}
-    <section class="auth-card" aria-labelledby="profile-title">
+    <section class="auth-card profile-edit-card" aria-labelledby="profile-title">
         <a class="back-link" href="{% url 'manufacturer_dashboard' %}">
             &larr; Dashboard
         </a>
@@ -30,20 +30,21 @@
             </p>
         {% endif %}
 
-        <p class="auth-intro">
-            Keep your business information accurate so buyers
-            can understand your services.
-        </p>
+        <p class="auth-intro">Keep your business information accurate so buyers can understand your services.</p>
 
-        <p class="message">
+        <p class="message profile-edit-notice">
             Changing your business name, city, or state requires
             verification again. Your listings will remain saved
             but hidden until approval.
         </p>
 
-        <form method="post" class="styled-form form-grid" novalidate>
+        <form method="post" class="styled-form form-grid profile-edit-form" novalidate>
             {% csrf_token %}
-            {% include "marketplace/includes/accessible_form.html" %}
+            <section class="profile-edit-fields" aria-labelledby="profile-edit-fields-title">
+                <h2 id="profile-edit-fields-title">Business details</h2>
+                <p>Business name, description, and location.</p>
+                {% include "marketplace/includes/accessible_form.html" %}
+            </section>
 
             <button class="button form-submit" type="submit">
                 Save business details

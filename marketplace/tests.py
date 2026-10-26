@@ -86,6 +86,167 @@ class MarketplaceDiscoveryTrustTests(TestCase):
             is_active=True,
         )
 
+    def test_saved_listing_shortlist_uses_named_controls_and_compact_facts(self):
+        buyer = get_user_model().objects.create_user(
+            username="shortlist-buyer",
+            password="password",
+            role="BUYER",
+        )
+        listing = self.create_listing(self.verified, "Shortlist packaging")
+        SavedListing.objects.create(buyer=buyer, listing=listing)
+        self.client.force_login(buyer)
+
+        response = self.client.get(reverse("saved_listings"))
+        content = response.content.decode()
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(content.count("<h1"), 1)
+        self.assertContains(response, "Shortlist packaging")
+        self.assertContains(response, "MOQ")
+        self.assertContains(response, "Lead time")
+        self.assertContains(
+            response,
+            f'aria-label="Remove {listing.title} from saved listings"',
+        )
+        self.assertContains(response, reverse("remove_saved_listing", args=[listing.pk]))
+        self.assertNotContains(response, "listing-media-frame")
+
+    def test_notifications_show_read_state_time_and_existing_open_action(self):
+        buyer = get_user_model().objects.create_user(
+            username="notification-buyer",
+            password="password",
+            role="BUYER",
+        )
+        notification = Notification.objects.create(
+            recipient=buyer,
+            message="A quotation is ready for review.",
+            destination=Notification.Destination.BUYER_REQUESTS,
+        )
+        self.client.force_login(buyer)
+
+        response = self.client.get(reverse("notifications"))
+        content = response.content.decode()
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(content.count("<h1"), 1)
+        self.assertContains(response, "Unread")
+        self.assertContains(response, "datetime=")
+        self.assertContains(response, "Mark all as read")
+        self.assertContains(response, "Open update")
+        self.assertContains(response, reverse("open_notification", args=[notification.pk]))
+
+    def test_manufacturer_listing_forms_group_existing_fields_and_keep_post_behavior(self):
+        self.client.force_login(self.verified_user)
+
+        create_response = self.client.get(reverse("create_listing"))
+        self.assertEqual(create_response.status_code, 200)
+        create_content = create_response.content.decode()
+        self.assertEqual(create_content.count("<h1"), 1)
+        for heading in (
+            "Listing basics",
+            "Production capabilities",
+            "Listing image",
+            "Commercial details",
+            "Capacity and location",
+            "Availability",
+        ):
+            self.assertContains(create_response, heading)
+        for field in (
+            "title",
+            "category",
+            "description",
+            "technical_capabilities",
+            "image",
+            "minimum_quantity",
+            "price_per_unit",
+            "batch_price",
+            "production_days",
+            "available_capacity",
+            "capacity_period",
+            "cluster",
+            "availability_status",
+        ):
+            self.assertIn(f'name="{field}"', create_content)
+
+        create_post = self.client.post(
+            reverse("create_listing"),
+            {
+                "title": "Created through grouped form",
+                "category": CapacityListing.Category.PACKAGING,
+                "description": "Packaging capacity details.",
+                "machine_type": "Offset press",
+                "materials": "Corrugated board",
+                "technical_capabilities": "Two-colour printing",
+                "minimum_quantity": 100,
+                "price_per_unit": "12.50",
+                "batch_price": "",
+                "production_days": 7,
+                "available_capacity": "500",
+                "capacity_period": "per week",
+                "cluster": "Pimpri",
+                "availability_status": CapacityListing.AvailabilityStatus.AVAILABLE,
+            },
+        )
+        self.assertRedirects(create_post, reverse("manufacturer_dashboard"))
+        created = CapacityListing.objects.get(title="Created through grouped form")
+        self.assertEqual(created.manufacturer, self.verified)
+
+        edit_response = self.client.get(reverse("edit_listing", args=[created.pk]))
+        self.assertEqual(edit_response.status_code, 200)
+        self.assertContains(edit_response, 'name="is_active"')
+        edit_post = self.client.post(
+            reverse("edit_listing", args=[created.pk]),
+            {
+                "title": "Updated through grouped form",
+                "category": CapacityListing.Category.PACKAGING,
+                "description": "Updated packaging capacity details.",
+                "machine_type": "Offset press",
+                "materials": "Corrugated board",
+                "technical_capabilities": "Two-colour printing",
+                "minimum_quantity": 100,
+                "price_per_unit": "13.00",
+                "batch_price": "",
+                "production_days": 8,
+                "available_capacity": "500",
+                "capacity_period": "per week",
+                "cluster": "Pimpri",
+                "availability_status": CapacityListing.AvailabilityStatus.AVAILABLE,
+                "is_active": "on",
+            },
+        )
+        self.assertRedirects(edit_post, reverse("my_listings"))
+        created.refresh_from_db()
+        self.assertEqual(created.title, "Updated through grouped form")
+        self.assertEqual(created.price_per_unit, Decimal("13.00"))
+
+    def test_business_profile_editor_keeps_existing_fields_and_save_behavior(self):
+        self.client.force_login(self.verified_user)
+        response = self.client.get(reverse("edit_business_profile"))
+        content = response.content.decode()
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(content.count("<h1"), 1)
+        self.assertContains(response, "Business details")
+        for field in ("business_name", "description", "city", "state"):
+            self.assertIn(f'name="{field}"', content)
+
+        response = self.client.post(
+            reverse("edit_business_profile"),
+            {
+                "business_name": self.verified.business_name,
+                "description": "Updated production capability summary.",
+                "city": self.verified.city,
+                "state": self.verified.state,
+            },
+        )
+        self.assertRedirects(response, reverse("edit_business_profile"))
+        self.verified.refresh_from_db()
+        self.assertEqual(
+            self.verified.description,
+            "Updated production capability summary.",
+        )
+        self.assertTrue(self.verified.is_verified)
+
     def test_buyer_dashboard_renders_compact_summary_and_accessible_quote_decision(self):
         buyer = get_user_model().objects.create_user(
             username="dashboard-buyer",

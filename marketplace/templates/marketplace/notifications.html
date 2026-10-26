@@ -3,84 +3,62 @@
 {% block title %}Notifications | Ubhaar-Vyapaar{% endblock %}
 
 {% block content %}
-    <div class="page-heading">
-        <div>
-            <h1>Notifications</h1>
-            <p>Quote, order, milestone, and message updates that may need attention.</p>
-        </div>
-    </div>
-
-    {% if unread_notification_count %}
-    <form
-        method="post"
-        action="{% url 'mark_all_notifications_read' %}"
-        class="action-links notification-actions"
-    >
-        {% csrf_token %}
-        <button class="button button-secondary" type="submit">
-            Mark all as read
-        </button>
-    </form>
-{% endif %}
-
-    <div class="record-grid">
-        {% for notification in page_obj %}
-            <article class="record-card notification-card">
-                {% if notification.is_read %}
-                    <span class="status-pill">Read</span>
-                {% else %}
-                    <span class="status-pill status-pending">New</span>
-                {% endif %}
-
-                <p>{{ notification.message }}</p>
-
-                <p class="record-meta">
-                    {{ notification.created_at|date:"d M Y, H:i" }}
-                </p>
-
-                <form
-                    method="post"
-                    action="{% url 'open_notification' notification.pk %}"
-                    class="record-actions"
-                >
-                    {% csrf_token %}
-                    <button class="button button-secondary" type="submit">
-                        Open update
-                    </button>
-                </form>
-            </article>
-        {% empty %}
-            <div class="empty-panel">
-                <h2>You're all caught up</h2>
-                <p>Quote, order, and milestone updates will appear here.</p>
+    <div class="authenticated-page notification-page">
+        <header class="page-heading notification-page__header">
+            <div>
+                <p class="eyebrow">Account updates</p>
+                <h1>Notifications</h1>
+                <p>Quote, order, milestone, and message updates for your account.</p>
             </div>
-        {% endfor %}
+            {% if unread_notification_count %}
+                <form method="post" action="{% url 'mark_all_notifications_read' %}">
+                    {% csrf_token %}
+                    <button class="button button-secondary" type="submit">Mark all as read</button>
+                </form>
+            {% endif %}
+        </header>
+
+        <div class="notification-list">
+            {% for notification in page_obj %}
+                <article class="notification-row{% if not notification.is_read %} notification-row--unread{% endif %}">
+                    <div class="notification-row__state">
+                        {% if notification.is_read %}
+                            <span class="status-pill">Read</span>
+                        {% else %}
+                            <span class="status-pill status-pending">Unread</span>
+                        {% endif %}
+                    </div>
+                    <div class="notification-row__content">
+                        <p>{{ notification.message }}</p>
+                        <time datetime="{{ notification.created_at|date:'c' }}">
+                            {{ notification.created_at|date:"d M Y, H:i" }}
+                        </time>
+                    </div>
+                    <form method="post" action="{% url 'open_notification' notification.pk %}">
+                        {% csrf_token %}
+                        <button class="button button-secondary" type="submit" aria-label="Open notification: {{ notification.message }}">
+                            Open update
+                        </button>
+                    </form>
+                </article>
+            {% empty %}
+                <section class="empty-panel authenticated-empty" aria-labelledby="notifications-empty-title">
+                    <h2 id="notifications-empty-title">No notifications yet.</h2>
+                    <p>Updates about your quotes, orders, and messages will appear here.</p>
+                </section>
+            {% endfor %}
+        </div>
+
+        {% if page_obj.has_other_pages %}
+            <nav class="notification-pagination" aria-label="Notification pages">
+                {% if page_obj.has_previous %}
+                    <a class="button button-secondary" href="?page={{ page_obj.previous_page_number }}">Previous</a>
+                {% endif %}
+                <span>Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+                {% if page_obj.has_next %}
+                    <a class="button button-secondary" href="?page={{ page_obj.next_page_number }}">Next</a>
+                {% endif %}
+            </nav>
+        {% endif %}
     </div>
-
-    {% if page_obj.has_other_pages %}
-        <nav class="record-actions" aria-label="Notification pages">
-            {% if page_obj.has_previous %}
-                <a
-                    class="button button-secondary"
-                    href="?page={{ page_obj.previous_page_number }}"
-                >
-                    Previous
-                </a>
-            {% endif %}
-
-            <span>
-                Page {{ page_obj.number }}
-                of {{ page_obj.paginator.num_pages }}
-            </span>
-
-            {% if page_obj.has_next %}
-                <a
-                    class="button button-secondary"
-                    href="?page={{ page_obj.next_page_number }}"
-                >
-                    Next
-                </a>
-            {% endif %}
-        </nav>
-    {% endif %}
 {% endblock %}

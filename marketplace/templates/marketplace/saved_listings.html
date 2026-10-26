@@ -4,97 +4,72 @@
 {% block title %}Saved listings | Ubhaar-Vyapaar{% endblock %}
 
 {% block content %}
-    <div class="page-heading">
-        <div>
-            <h1>Saved listings</h1>
-            <p>Manufacturing partners you saved for comparison.</p>
-        </div>
+    <div class="authenticated-page saved-listings-page">
+        <header class="page-heading saved-listings-page__header">
+            <div>
+                <p class="eyebrow">Buyer workspace</p>
+                <h1>Saved listings</h1>
+                <p>Your shortlist of manufacturing capacity to compare.</p>
+            </div>
+            {% if saved_items %}<a class="button" href="{% url 'marketplace' %}">Browse marketplace</a>{% endif %}
+        </header>
 
-        <a class="button" href="{% url 'marketplace' %}">
-            Browse listings
-        </a>
-    </div>
-
-    <div class="record-grid">
-        {% for item in saved_items %}
-            <article class="record-card">
-                {% if item.listing.is_active and item.listing.manufacturer.is_verified %}
-                    <div
-                        class="listing-media-frame listing-category-{{ item.listing.category|lower }}{% if not item.listing.image %} media-no-image{% endif %}"
-                        data-listing-media
-                    >
-                        {% include "marketplace/includes/listing_visual.html" with listing=item.listing image_class="listing-image" placeholder_class="listing-image-placeholder" %}
+        <div class="saved-listing-list">
+            {% for item in saved_items %}
+                <article class="saved-listing-row">
+                    <div class="saved-listing-row__media">
+                        {% if item.listing.image %}
+                            <img src="{{ item.listing.image.url }}" alt="{{ item.listing.title }}" loading="lazy">
+                        {% else %}
+                            <span aria-hidden="true">{{ item.listing.get_category_display }}</span>
+                        {% endif %}
                     </div>
 
-                    <span class="status-pill status-{{ item.listing.availability_status|lower }}">
-                        {{ item.listing.get_availability_status_display }}
-                    </span>
+                    <div class="saved-listing-row__main">
+                        {% if item.listing.is_active and item.listing.manufacturer.is_verified %}
+                            <div class="saved-listing-row__topline">
+                                <span class="status-pill status-{{ item.listing.availability_status|lower }}">
+                                    {{ item.listing.get_availability_status_display }}
+                                </span>
+                                <span class="saved-listing-row__category">{{ item.listing.get_category_display }}</span>
+                            </div>
+                            <h2><a href="{% url 'listing_detail' item.listing.pk %}">{{ item.listing.title }}</a></h2>
+                            <p class="saved-listing-row__maker">
+                                {{ item.listing.manufacturer.business_name }}
+                                <span aria-hidden="true">·</span>
+                                {{ item.listing.manufacturer.city }}, {{ item.listing.manufacturer.state }}
+                            </p>
+                            <dl class="saved-listing-facts">
+                                <div><dt>Price per unit</dt><dd>{{ item.listing.price_per_unit|inr }}</dd></div>
+                                <div><dt>MOQ</dt><dd>{{ item.listing.minimum_quantity }} units</dd></div>
+                                <div><dt>Lead time</dt><dd>{{ item.listing.production_days }} days</dd></div>
+                            </dl>
+                        {% else %}
+                            <span class="status-pill">Currently unavailable</span>
+                            <h2>Unavailable listing</h2>
+                            <p class="saved-listing-row__maker">This saved listing is no longer publicly available.</p>
+                        {% endif %}
+                    </div>
 
-                    <h2>{{ item.listing.title }}</h2>
-
-                    <p>
-                        {{ item.listing.manufacturer.business_name }}<br>
-                        {{ item.listing.manufacturer.city }},
-                        {{ item.listing.manufacturer.state }}
-                    </p>
-
-                    <dl class="record-facts">
-                        <dt>Price per unit</dt>
-                    <dd>{{ item.listing.price_per_unit|inr }}</dd>
-
-                        <dt>Minimum order</dt>
-                        <dd>{{ item.listing.minimum_quantity }} units</dd>
-
-                        <dt>Production time</dt>
-                        <dd>{{ item.listing.production_days }} days</dd>
-                    </dl>
-
-                    <a
-                        class="button"
-                        href="{% url 'listing_detail' item.listing.pk %}"
-                    >
-                        View details
-                    </a>
-                {% else %}
-                    <span class="status-pill">
-                        Currently unavailable
-                    </span>
-
-                    <h2>Unavailable listing</h2>
-
-                    <p class="record-meta">
-                        This saved service is no longer publicly available.
-                    </p>
-                {% endif %}
-
-                <form
-                    method="post"
-                    action="{% url 'remove_saved_listing' item.listing_id %}"
-                    class="record-actions"
-                >
-                    {% csrf_token %}
-                    <button
-                        class="button button-secondary button-favorite button-favorite-saved"
-                        type="submit"
-                        title="Remove listing from saved items"
-                        aria-label="Remove {{ item.listing.title }} from saved listings"
-                    >
-                        <span class="favorite-icon" aria-hidden="true"></span>
-                        Remove from saved
-                    </button>
-                </form>
-            </article>
-        {% empty %}
-            <div class="empty-panel">
-                <h2>No saved listings yet</h2>
-                <p>
-                    Save manufacturing partners you're interested in so you
-                    can compare capacity, pricing, and lead time later.
-                </p>
-                <a class="button" href="{% url 'marketplace' %}">
-                    Explore listings
-                </a>
-            </div>
-        {% endfor %}
+                    <div class="saved-listing-row__actions">
+                        {% if item.listing.is_active and item.listing.manufacturer.is_verified %}
+                            <a class="button" href="{% url 'listing_detail' item.listing.pk %}">View details</a>
+                        {% endif %}
+                        <form method="post" action="{% url 'remove_saved_listing' item.listing_id %}">
+                            {% csrf_token %}
+                            <button class="button button-secondary" type="submit" aria-label="Remove {{ item.listing.title }} from saved listings">
+                                Remove from saved
+                            </button>
+                        </form>
+                    </div>
+                </article>
+            {% empty %}
+                <section class="empty-panel authenticated-empty" aria-labelledby="saved-empty-title">
+                    <h2 id="saved-empty-title">You haven't saved any listings yet.</h2>
+                    <p>Save listings you are considering and return to them here.</p>
+                    <a class="button" href="{% url 'marketplace' %}">Browse marketplace</a>
+                </section>
+            {% endfor %}
+        </div>
     </div>
 {% endblock %}
