@@ -1130,6 +1130,89 @@ class MarketplaceDiscoveryTrustTests(TestCase):
         self.assertContains(response, reverse("faq"))
 
 
+class PublicWorkflowEducationPageTests(TestCase):
+    def assertSingleH1(self, response):
+        html = response.content.decode()
+        self.assertEqual(len(re.findall(r"<h1\b", html, re.IGNORECASE)), 1)
+
+    def test_how_it_works_explains_buyer_and_manufacturer_flows(self):
+        response = self.client.get(reverse("how_it_works"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertSingleH1(response)
+        self.assertContains(response, 'rel="canonical"')
+        self.assertContains(response, 'property="og:title" content="How it works | Ubhaar-Vyapaar"')
+        self.assertContains(response, "From manufacturing need to order updates")
+        for label in (
+            "Browse capacity",
+            "Review the listing",
+            "Request a quotation",
+            "Review the quotation",
+            "Manage accepted orders",
+            "Quote request",
+            "Manufacturer quotation",
+            "Buyer decision",
+            "Early-access pilot",
+            "Sample listings",
+            "simulated",
+            "real payment processing or escrow",
+        ):
+            with self.subTest(label=label):
+                self.assertContains(response, label)
+        self.assertContains(response, reverse("marketplace"))
+        self.assertContains(response, reverse("register_manufacturer"))
+        self.assertNotContains(response, "On this page")
+        self.assertNotContains(response, "Free during the pilot")
+
+    def test_manufacturer_page_uses_existing_routes_and_careful_verification_copy(self):
+        response = self.client.get(reverse("for_manufacturers"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertSingleH1(response)
+        self.assertContains(response, 'rel="canonical"')
+        self.assertContains(response, 'property="og:title" content="For manufacturers | Ubhaar-Vyapaar"')
+        for label in (
+            "List spare capacity",
+            "Set practical terms upfront",
+            "Respond with a quotation",
+            "Follow accepted orders",
+            "Create a manufacturer account",
+            "How verification is shown",
+            "A KYC status alone does not display the badge",
+            "not a certification, product inspection, or guarantee",
+            "Early-access pilot",
+            "Sample listings",
+        ):
+            with self.subTest(label=label):
+                self.assertContains(response, label)
+        self.assertContains(response, reverse("trust_safety"))
+        self.assertContains(response, reverse("register_manufacturer"))
+        self.assertNotContains(response, "On this page")
+        self.assertNotContains(response, "Approved within")
+        self.assertNotContains(response, "guaranteed approval")
+
+    @override_settings(
+        MANUFACTURER_REQUIRED_DOCUMENTS=[],
+        MANUFACTURER_REVIEW_TIME="",
+    )
+    def test_unconfigured_manufacturer_requirements_and_review_time_are_hidden(self):
+        response = self.client.get(reverse("for_manufacturers"))
+
+        self.assertNotContains(response, "Configured document requirements")
+        self.assertNotContains(response, "Expected review time")
+
+    @override_settings(
+        MANUFACTURER_REQUIRED_DOCUMENTS=["Business registration"],
+        MANUFACTURER_REVIEW_TIME="5 working days",
+    )
+    def test_configured_manufacturer_requirements_and_review_time_are_shown(self):
+        response = self.client.get(reverse("for_manufacturers"))
+
+        self.assertContains(response, "Configured document requirements")
+        self.assertContains(response, "Business registration")
+        self.assertContains(response, "Expected review time: 5 working days")
+
+
 class SeededSampleNameTests(TestCase):
     def setUp(self):
         self.media_root = tempfile.TemporaryDirectory()

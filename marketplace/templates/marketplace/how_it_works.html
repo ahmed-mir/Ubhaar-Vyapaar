@@ -7,40 +7,75 @@
 {% block twitter_title %}How it works | Ubhaar-Vyapaar{% endblock %}
 {% block twitter_description %}See how buyers and manufacturers use capacity listings, quotations, orders, messages, and milestones on Ubhaar-Vyapaar.{% endblock %}
 
+{% block public_page_class %} workflow-education-page{% endblock %}
 {% block page_eyebrow %}How it works{% endblock %}
-{% block page_h1 %}From capacity search to order updates{% endblock %}
-{% block page_lead %}Buyers and manufacturers use listings and quotations to agree terms. Accepted quotations create an order for messages and production milestones.{% endblock %}
+{% block page_h1 %}From manufacturing need to order updates{% endblock %}
+{% block page_lead %}Buyers request quotations for listed capacity. Accepted quotations create an order with messages and production milestones.{% endblock %}
 
 {% block page_body %}
-<div class="public-page-layout">
-    {% include "marketplace/includes/public_page_toc.html" %}
-    <div class="public-content-sections">
-        <section class="public-content-section" id="buyers">
-            <h2>For buyers</h2>
-            <ol class="public-steps">
-                <li>Discover active manufacturing capacity in the marketplace.</li>
-                <li>Review the listing's MOQ, price, lead time, capacity, availability, and manufacturer profile.</li>
-                <li>Submit a quote request with quantity, requirements, and delivery location.</li>
-                <li>Receive a quotation and review its terms.</li>
-                <li>Accept or decline the quotation. Acceptance creates an order with the agreed terms.</li>
-                <li>Use order messages and milestones to follow production progress.</li>
-                <li>After the order is completed, submit a review under the existing review rules.</li>
+    <div class="workflow-education">
+        <section class="workflow-audience-grid" aria-label="Workflows by audience">
+            <section class="workflow-audience" aria-labelledby="workflow-buyer-title">
+                <p class="workflow-section-label">For buyers</p>
+                <h2 id="workflow-buyer-title">Find a fit and request a quote</h2>
+                <ol class="workflow-steps">
+                    <li><span class="workflow-step-number" aria-hidden="true">01</span><div><h3>Browse capacity</h3><p>Search active manufacturing listings by the details available on the marketplace.</p></div></li>
+                    <li><span class="workflow-step-number" aria-hidden="true">02</span><div><h3>Review the listing</h3><p>Compare MOQ (minimum order quantity), price, lead time, location, and stated capacity.</p></div></li>
+                    <li><span class="workflow-step-number" aria-hidden="true">03</span><div><h3>Request a quotation</h3><p>Send the quantity, requirements, and delivery location to the manufacturer.</p></div></li>
+                    <li><span class="workflow-step-number" aria-hidden="true">04</span><div><h3>Review the quotation</h3><p>Check the manufacturer’s price, quantity, production time, and message.</p></div></li>
+                    <li><span class="workflow-step-number" aria-hidden="true">05</span><div><h3>Decide and follow progress</h3><p>Accept or decline. Acceptance creates an order with agreed terms, milestones, and an order message thread.</p></div></li>
+                </ol>
+            </section>
+
+            <section class="workflow-audience" aria-labelledby="workflow-manufacturer-title">
+                <p class="workflow-section-label">For manufacturers</p>
+                <h2 id="workflow-manufacturer-title">Publish capacity and respond</h2>
+                <ol class="workflow-steps">
+                    <li><span class="workflow-step-number" aria-hidden="true">01</span><div><h3>Create an account</h3><p>Set up a manufacturer account and business profile.</p></div></li>
+                    <li><span class="workflow-step-number" aria-hidden="true">02</span><div><h3>List manufacturing capacity</h3><p>Share listing details such as category, MOQ, lead time, location, and availability.</p></div></li>
+                    <li><span class="workflow-step-number" aria-hidden="true">03</span><div><h3>Respond to quote requests</h3><p>Review buyer requirements and send a quotation with your terms.</p></div></li>
+                    <li><span class="workflow-step-number" aria-hidden="true">04</span><div><h3>Manage accepted orders</h3><p>Use order messages and milestones to share progress with the buyer.</p></div></li>
+                </ol>
+                <p class="workflow-inline-note">Listings from profiles awaiting verification remain hidden from public browsing until the profile is verified.</p>
+            </section>
+        </section>
+
+        <section class="workflow-section" aria-labelledby="quote-order-title">
+            <p class="workflow-section-label">Quote to order</p>
+            <h2 id="quote-order-title">A clear path from request to production updates</h2>
+            <ol class="workflow-sequence">
+                <li>Quote request</li>
+                <li>Manufacturer quotation</li>
+                <li>Buyer decision</li>
+                <li>Order</li>
+                <li>Milestones and messages</li>
             </ol>
         </section>
-        <section class="public-content-section" id="manufacturers">
-            <h2>For manufacturers</h2>
-            <ol class="public-steps">
-                <li>Publish manufacturing capacity in a listing.</li>
-                <li>Review incoming quote requests and send quotations.</li>
-                <li>Manage orders created when buyers accept quotations.</li>
-                <li>Update production milestones and communicate through order messages.</li>
-            </ol>
+
+        <section class="workflow-section" aria-labelledby="workflow-live-title">
+            <p class="workflow-section-label">Early-access pilot</p>
+            <h2 id="workflow-live-title">What the platform supports today</h2>
+            <ul class="workflow-capabilities">
+                <li>Marketplace discovery and saved listings</li>
+                <li>Quote requests and manufacturer quotations</li>
+                <li>Accepted orders with production milestones</li>
+                <li>Order-specific messages and profile verification status</li>
+            </ul>
+            <aside class="workflow-pilot-note">
+                <strong>Pilot note</strong>
+                <p>Sample listings are included for illustration and do not accept quote requests. Funding and release labels are simulated; the platform does not provide real payment processing or escrow.</p>
+            </aside>
         </section>
-        <section class="public-content-section" id="orders-and-payments">
-            <h2>Orders and payment status</h2>
-            <p>Order messages and milestones track activity in the application. Funding and release labels are simulated workflow states. Ubhaar-Vyapaar does not process platform payments or escrow.</p>
-            <a class="button button-primary" href="{% url 'marketplace' %}">Browse marketplace</a>
+
+        <section class="workflow-next-steps" aria-labelledby="workflow-next-title">
+            <div class="workflow-next-steps__intro">
+                <p class="workflow-section-label">Choose your next step</p>
+                <h2 id="workflow-next-title">Start with the workflow that fits you</h2>
+            </div>
+            <div class="workflow-next-steps__actions">
+                <div><h3>Looking for manufacturing capacity?</h3><a class="button button-primary" href="{% url 'marketplace' %}">Browse marketplace</a></div>
+                <div><h3>Have capacity to list?</h3><a class="button button-secondary" href="{% url 'register_manufacturer' %}">Get started as a manufacturer</a></div>
+            </div>
         </section>
     </div>
-</div>
 {% endblock %}

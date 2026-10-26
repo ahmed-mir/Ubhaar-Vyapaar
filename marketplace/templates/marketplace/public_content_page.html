@@ -7,7 +7,7 @@
 {% endblock %}
 
 {% block content %}
-<article class="public-content-page">
+<article class="public-content-page{% block public_page_class %}{% endblock %}">
     <header class="public-content-heading">
         <p class="eyebrow">{% block page_eyebrow %}{% endblock %}</p>
         <h1>{% block page_h1 %}{% endblock %}</h1>
