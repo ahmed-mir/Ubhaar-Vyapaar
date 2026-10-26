@@ -27,14 +27,14 @@ test.describe("production auth and access smoke", () => {
     await page.setViewportSize({ width: 360, height: 850 });
     await login(page, buyer.username, password);
     await page.goto("/buyer/dashboard/");
-    await expect(page.getByRole("heading", { name: /what needs attention/i })).toBeVisible();
+    await expect(page.getByRole("heading", { name: /needs your attention/i })).toBeVisible();
     expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(360);
 
     await page.setViewportSize({ width: 1280, height: 900 });
     await logout(page);
     await login(page, buyer.email.toUpperCase(), password);
     await page.goto("/buyer/dashboard/");
-    await expect(page.getByRole("heading", { name: /what needs attention/i })).toBeVisible();
+    await expect(page.getByRole("heading", { name: /needs your attention/i })).toBeVisible();
     expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(1280);
     await logout(page);
 

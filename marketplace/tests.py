@@ -86,6 +86,79 @@ class MarketplaceDiscoveryTrustTests(TestCase):
             is_active=True,
         )
 
+    def test_buyer_dashboard_renders_compact_summary_and_accessible_quote_decision(self):
+        buyer = get_user_model().objects.create_user(
+            username="dashboard-buyer",
+            password="password",
+            role="BUYER",
+        )
+        listing = self.create_listing(
+            self.verified,
+            "Dashboard packaging capacity",
+        )
+        quote_request = QuoteRequest.objects.create(
+            buyer=buyer,
+            listing=listing,
+            quantity=500,
+            requirements="Printed cartons",
+            delivery_location="Pune",
+        )
+        Quotation.objects.create(
+            quote_request=quote_request,
+            quantity=500,
+            price_per_unit=Decimal("18.75"),
+            production_days=9,
+        )
+        QuoteRequest.objects.create(
+            buyer=buyer,
+            listing=listing,
+            quantity=1000,
+            requirements="A second size run",
+            delivery_location="Mumbai",
+            status=QuoteRequest.Status.PENDING,
+        )
+        SavedListing.objects.create(buyer=buyer, listing=listing)
+
+        self.client.force_login(buyer)
+        response = self.client.get(reverse("buyer_dashboard"))
+        content = response.content.decode()
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(content.count("<h1"), 1)
+        self.assertContains(response, "Needs your attention")
+        self.assertContains(response, "Dashboard packaging capacity")
+        self.assertContains(response, "Awaiting your decision")
+        self.assertContains(response, "Pending")
+        self.assertContains(response, "Saved listings")
+        self.assertContains(
+            response,
+            'aria-label="Accept quotation for Dashboard packaging capacity"',
+        )
+        self.assertContains(
+            response,
+            'aria-label="Decline quotation for Dashboard packaging capacity"',
+        )
+        self.assertNotIn("trade ledger", content.lower())
+        self.assertNotIn("capacity register", content.lower())
+
+    def test_new_buyer_dashboard_has_useful_empty_states(self):
+        buyer = get_user_model().objects.create_user(
+            username="new-dashboard-buyer",
+            password="password",
+            role="BUYER",
+        )
+        self.client.force_login(buyer)
+
+        response = self.client.get(reverse("buyer_dashboard"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Nothing waiting for your decision")
+        self.assertContains(response, "No quote requests yet")
+        self.assertContains(response, "No orders in progress")
+        self.assertContains(response, "No accepted quotations yet")
+        self.assertContains(response, "No saved listings yet")
+        self.assertContains(response, "No notifications yet")
+
     def create_review(self, manufacturer, buyer_username, comment):
         buyer = get_user_model().objects.create_user(
             username=buyer_username,

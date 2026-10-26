@@ -4,487 +4,307 @@
 {% block title %}Buyer dashboard | Ubhaar-Vyapaar{% endblock %}
 
 {% block content %}
-    <div class="page-heading dashboard-hero">
+<div class="buyer-dashboard">
+    <header class="buyer-dashboard__header">
         <div>
-            <p class="eyebrow">Buyer workspace</p>
-            <h1>What needs attention?</h1>
-            <p>Quotes, orders, milestones, and messages in one place.</p>
+            <p class="buyer-dashboard__eyebrow">Buyer workspace</p>
+            <h1 id="buyer-dashboard-title">Dashboard</h1>
+            <p class="buyer-dashboard__intro">Your quote requests, decisions and active orders at a glance.</p>
         </div>
+        <a class="button button-primary" href="{% url 'marketplace' %}">Browse marketplace</a>
+    </header>
 
-        <div class="action-links">
-            <a class="button button-secondary" href="{% url 'saved_listings' %}">
-                Saved listings
-            </a>
-<a class="button button-primary" href="{% url 'marketplace' %}">
-                Browse capacity
-            </a>
-        </div>
-    </div>
-
-    <dl class="stats-grid" aria-label="Buyer summary">
-        <div class="stat-card">
-            <dt>Active requests</dt>
-            <dd>{{ stats.active_requests }}</dd>
-        </div>
-
-        <div class="stat-card stat-card-attention">
-            <dt>Pending actions</dt>
-            <dd>{{ stats.pending_actions }}</dd>
-        </div>
-
-        <div class="stat-card stat-card-attention">
-            <dt>Milestones to fund</dt>
-            <dd>{{ stats.milestones_to_fund }}</dd>
-        </div>
-
-        <div class="stat-card stat-card-attention">
-            <dt>Milestones to review</dt>
-            <dd>{{ stats.milestones_to_review }}</dd>
-        </div>
-
-        <div class="stat-card">
-            <dt>Demo releases due</dt>
-            <dd>{{ stats.demo_releases_due }}</dd>
-        </div>
-
-        <div class="stat-card">
-            <dt>Quotations received</dt>
-            <dd>{{ stats.quotations_received }}</dd>
-        </div>
-
-        <div class="stat-card">
-            <dt>Accepted quotations</dt>
-            <dd>{{ stats.accepted_quotations }}</dd>
-        </div>
-
-        <div class="stat-card">
-            <dt>Saved listings</dt>
-            <dd>{{ stats.saved_listings }}</dd>
-        </div>
-
-        <div class="stat-card">
-            <dt>Active orders</dt>
-            <dd>{{ stats.active_orders }}</dd>
-        </div>
-
-        <div class="stat-card">
-            <dt>Unread notifications</dt>
-            <dd>{{ stats.unread_notifications }}</dd>
-        </div>
-    </dl>
-
-    <section class="dashboard-band dashboard-spotlight" aria-labelledby="workflow-title">
-        <div class="section-heading">
+    <section class="buyer-dashboard__section buyer-dashboard__attention" aria-labelledby="buyer-attention-title">
+        <div class="buyer-dashboard__section-heading">
             <div>
-                <p class="eyebrow">Order workflow</p>
-                <h2 id="workflow-title">Milestone actions</h2>
-                <p>Funding, review, and release tasks.</p>
+                <p class="buyer-dashboard__eyebrow">Next steps</p>
+                <h2 id="buyer-attention-title">Needs your attention</h2>
+                <p>Review new quotations and any order milestones waiting for you.</p>
             </div>
+            {% if pending_quotations %}
+                <a class="buyer-dashboard__section-link" href="{% url 'my_quote_requests' %}">View all requests</a>
+            {% endif %}
         </div>
 
-        <div class="record-grid">
-            {% for milestone in funding_milestones %}
-                <article class="record-card action-card">
-                    <span class="status-pill status-pending">
-                        Demo funding needed
-                    </span>
-                    <h3>{{ milestone.title }}</h3>
-                    <p class="record-meta">
-                        Order #{{ milestone.order.pk }} &middot;
-                        {{ milestone.order.manufacturer.business_name }}
-                    </p>
-                    <dl class="record-facts">
-                        <dt>Listing</dt>
-                        <dd>{{ milestone.order.listing.title }}</dd>
-                        <dt>Demo amount</dt>
-                        <dd>{{ milestone.amount|inr }}</dd>
+        <div class="buyer-dashboard__attention-list">
+            {% for quotation in pending_quotations %}
+                <article class="buyer-dashboard__attention-item">
+                    <div class="buyer-dashboard__item-main">
+                        <span class="buyer-dashboard__status buyer-dashboard__status--pending">Quotation received</span>
+                        <h3>{{ quotation.quote_request.listing.title }}</h3>
+                        <p class="buyer-dashboard__meta">{{ quotation.quote_request.listing.manufacturer.business_name }}</p>
+                    </div>
+                    <dl class="buyer-dashboard__quote-facts">
+                        <div><dt>Quantity</dt><dd>{{ quotation.quantity }} units</dd></div>
+                        <div><dt>Unit price</dt><dd>{{ quotation.price_per_unit|inr }}</dd></div>
+                        <div><dt>Quote total</dt><dd>{{ quotation.subtotal|inr }}</dd></div>
+                        <div><dt>Production time</dt><dd>{{ quotation.production_days }} days</dd></div>
                     </dl>
-                    <a class="button button-primary" href="{% url 'fund_milestone' milestone.pk %}">
-                        Fund milestone (demo)
-                    </a>
+                    <form
+                        method="post"
+                        action="{% url 'respond_to_quotation' quotation.pk %}"
+                        class="buyer-dashboard__quote-actions"
+                        data-confirm-accept="Accepting this quotation will create a demo order between you and the manufacturer. No real payment will be processed."
+                    >
+                        {% csrf_token %}
+                        <button class="button button-accept" type="submit" name="status" value="ACCEPTED" aria-label="Accept quotation for {{ quotation.quote_request.listing.title }}">Accept quotation</button>
+                        <button class="button button-reject" type="submit" name="status" value="DECLINED" aria-label="Decline quotation for {{ quotation.quote_request.listing.title }}">Decline</button>
+                    </form>
+                    <p class="buyer-dashboard__fine-print">Accepting creates a demo order. No real payment is processed.</p>
+                </article>
+            {% endfor %}
+
+            {% for milestone in funding_milestones %}
+                <article class="buyer-dashboard__action-row">
+                    <div class="buyer-dashboard__item-main">
+                        <span class="buyer-dashboard__status buyer-dashboard__status--pending">Demo funding needed</span>
+                        <h3>{{ milestone.title }}</h3>
+                        <p class="buyer-dashboard__meta">Order #{{ milestone.order.pk }} · {{ milestone.order.manufacturer.business_name }}</p>
+                    </div>
+                    <div class="buyer-dashboard__action-detail">
+                        <span>Demo amount</span>
+                        <strong>{{ milestone.amount|inr }}</strong>
+                    </div>
+                    <a class="button button-secondary" href="{% url 'fund_milestone' milestone.pk %}">Fund milestone (demo)</a>
                 </article>
             {% endfor %}
 
             {% for milestone in review_milestones %}
-                <article class="record-card action-card">
-                    <span class="status-pill status-pending">
-                        Awaiting your review
-                    </span>
-                    <h3>{{ milestone.title }}</h3>
-                    <p class="record-meta">
-                        Order #{{ milestone.order.pk }} &middot;
-                        {{ milestone.order.manufacturer.business_name }}
-                    </p>
-                    <a class="button button-secondary" href="{% url 'order_detail' milestone.order.pk %}#milestone-{{ milestone.pk }}">
-                        Review milestone
-                    </a>
+                <article class="buyer-dashboard__action-row">
+                    <div class="buyer-dashboard__item-main">
+                        <span class="buyer-dashboard__status buyer-dashboard__status--pending">Awaiting your review</span>
+                        <h3>{{ milestone.title }}</h3>
+                        <p class="buyer-dashboard__meta">Order #{{ milestone.order.pk }} · {{ milestone.order.manufacturer.business_name }}</p>
+                    </div>
+                    <a class="button button-secondary" href="{% url 'order_detail' milestone.order.pk %}#milestone-{{ milestone.pk }}">Review milestone</a>
                 </article>
             {% endfor %}
 
             {% for milestone in release_milestones %}
-                <article class="record-card action-card">
-                    <span class="status-pill status-approved">
-                        Demo release due
-                    </span>
-                    <h3>{{ milestone.title }}</h3>
-                    <p class="record-meta">
-                        Order #{{ milestone.order.pk }} &middot;
-                        {{ milestone.order.manufacturer.business_name }}
-                    </p>
-                    <a class="button button-secondary" href="{% url 'order_detail' milestone.order.pk %}#milestone-{{ milestone.pk }}">
-                        Release demo payment
-                    </a>
+                <article class="buyer-dashboard__action-row">
+                    <div class="buyer-dashboard__item-main">
+                        <span class="buyer-dashboard__status buyer-dashboard__status--approved">Demo release due</span>
+                        <h3>{{ milestone.title }}</h3>
+                        <p class="buyer-dashboard__meta">Order #{{ milestone.order.pk }} · {{ milestone.order.manufacturer.business_name }}</p>
+                    </div>
+                    <a class="button button-secondary" href="{% url 'order_detail' milestone.order.pk %}#milestone-{{ milestone.pk }}">Release demo payment</a>
                 </article>
             {% endfor %}
 
-            {% if not funding_milestones and not review_milestones and not release_milestones %}
-                <div class="empty-panel">
-                    <h2>No milestone actions right now</h2>
-                    <p>Funding, review, and release tasks will appear here when an active order needs your input.</p>
+            {% if not pending_quotations and not funding_milestones and not review_milestones and not release_milestones %}
+                <div class="buyer-dashboard__empty buyer-dashboard__empty--inline">
+                    <span class="buyer-dashboard__empty-mark" aria-hidden="true">✓</span>
+                    <div>
+                        <h3>Nothing waiting for your decision</h3>
+                        <p>New quotations and milestone tasks will appear here.</p>
+                    </div>
                 </div>
             {% endif %}
         </div>
     </section>
 
-    <section class="dashboard-band dashboard-spotlight" aria-labelledby="pending-title">
-        <div class="section-heading">
-            <div>
-                <p class="eyebrow">Priority queue</p>
-                <h2 id="pending-title">Needs your response</h2>
-                <p>Quotes waiting for a decision.</p>
+    <section class="buyer-dashboard__summary" aria-label="Buyer summary">
+        <dl class="buyer-dashboard__key-metrics">
+            <div class="buyer-dashboard__metric">
+                <dt>Active requests</dt>
+                <dd>{{ stats.active_requests }}</dd>
             </div>
-
-            <a class="button button-secondary" href="{% url 'my_quote_requests' %}">
-                View all requests
-            </a>
-        </div>
-
-        <div class="record-grid">
-            {% for quotation in pending_quotations %}
-                <article class="record-card action-card">
-                    <span class="status-pill status-pending">
-                        Quotation received
-                    </span>
-
-                    <h2>{{ quotation.quote_request.listing.title }}</h2>
-
-                    <p class="record-meta">
-                        {{ quotation.quote_request.listing.manufacturer.business_name }}
-                    </p>
-
-                    <dl class="record-facts">
-                        <dt>Quantity</dt>
-                        <dd>{{ quotation.quantity }} units</dd>
-
-                        <dt>Unit price</dt>
-                        <dd>{{ quotation.price_per_unit|inr }}</dd>
-
-                        <dt>Subtotal</dt>
-                        <dd>{{ quotation.subtotal|inr }}</dd>
-
-                        <dt>Production time</dt>
-                        <dd>{{ quotation.production_days }} days</dd>
-                    </dl>
-
-                    <form
-                        method="post"
-                        action="{% url 'respond_to_quotation' quotation.pk %}"
-                        class="record-actions"
-                        data-confirm-accept="Accepting this quotation will create a demo order between you and the manufacturer. No real payment will be processed."
-                    >
-                        {% csrf_token %}
-
-                        <button
-                            class="button button-accept"
-                            type="submit"
-                            name="status"
-                            value="ACCEPTED"
-                        >
-                            Accept quotation
-                        </button>
-
-                        <button
-                            class="button button-reject"
-                            type="submit"
-                            name="status"
-                            value="DECLINED"
-                        >
-                            Decline
-                        </button>
-                    </form>
-
-                    <p class="record-meta">Accepting creates a demo order. No real payment is processed.</p>
-                </article>
-            {% empty %}
-                <div class="empty-panel">
-                    <h2>No quotations need review</h2>
-                    <p>New quotations will appear here.</p>
-                </div>
-            {% endfor %}
-        </div>
+            <div class="buyer-dashboard__metric buyer-dashboard__metric--attention">
+                <dt>Awaiting your decision</dt>
+                <dd>{{ stats.pending_actions }}</dd>
+            </div>
+            <div class="buyer-dashboard__metric">
+                <dt>Active orders</dt>
+                <dd>{{ stats.active_orders }}</dd>
+            </div>
+            <div class="buyer-dashboard__metric">
+                <dt>Saved listings</dt>
+                <dd>{{ stats.saved_listings }}</dd>
+            </div>
+        </dl>
+        <dl class="buyer-dashboard__more-metrics" aria-label="More activity">
+            <div><dt>Quotations received</dt><dd>{{ stats.quotations_received }}</dd></div>
+            <div><dt>Accepted quotations</dt><dd>{{ stats.accepted_quotations }}</dd></div>
+            <div><dt>Milestones to fund</dt><dd>{{ stats.milestones_to_fund }}</dd></div>
+            <div><dt>Milestones to review</dt><dd>{{ stats.milestones_to_review }}</dd></div>
+            <div><dt>Demo releases due</dt><dd>{{ stats.demo_releases_due }}</dd></div>
+            <div><dt>Unread notifications</dt><dd>{{ stats.unread_notifications }}</dd></div>
+        </dl>
     </section>
 
-    <section class="dashboard-band" aria-labelledby="accepted-title">
-        <div class="section-heading">
+    <section class="buyer-dashboard__section" aria-labelledby="buyer-requests-title">
+        <div class="buyer-dashboard__section-heading">
             <div>
-                <p class="eyebrow">Commercial progress</p>
-                <h2 id="accepted-title">Accepted quotations</h2>
-                <p>Locked terms for accepted quotes.</p>
+                <p class="buyer-dashboard__eyebrow">Requests</p>
+                <h2 id="buyer-requests-title">Active quote requests</h2>
             </div>
-
-            <a class="button button-secondary" href="{% url 'buyer_orders' %}">
-                View orders
-            </a>
+            <a class="buyer-dashboard__section-link" href="{% url 'my_quote_requests' %}">View all requests</a>
         </div>
-
-        <div class="record-grid">
-            {% for quotation in accepted_quotations %}
-                <article class="record-card">
-                    <span class="status-pill status-accepted">
-                        Accepted quotation
-                    </span>
-
-                    <h2>{{ quotation.quote_request.listing.title }}</h2>
-
-                    <p class="record-meta">
-                        {{ quotation.quote_request.listing.manufacturer.business_name }}
-                    </p>
-
-                    <dl class="record-facts">
-                        <dt>Quantity</dt>
-                        <dd>{{ quotation.quantity }} units</dd>
-
-                        <dt>Subtotal</dt>
-                        <dd>{{ quotation.subtotal|inr }}</dd>
-
-                        <dt>Production time</dt>
-                        <dd>{{ quotation.production_days }} days</dd>
-                    </dl>
-
-                    {% if quotation.order %}
-                        <a
-                            class="button button-secondary"
-                            href="{% url 'order_detail' quotation.order.pk %}"
-                        >
-                            View order
-                        </a>
-                    {% endif %}
-                </article>
-            {% empty %}
-                <div class="empty-panel">
-                    <h2>No accepted quotations yet</h2>
-                    <p>
-                        Accepted quotations will appear here after you review
-                        a manufacturer response.
-                    </p>
-                </div>
-            {% endfor %}
-        </div>
-    </section>
-
-    <section class="dashboard-band" aria-labelledby="orders-title">
-        <div class="section-heading">
-            <div>
-                <p class="eyebrow">Fulfilment</p>
-                <h2 id="orders-title">Active orders</h2>
-                <p>Track accepted quotes through production.</p>
-            </div>
-
-            <a class="button button-secondary" href="{% url 'buyer_orders' %}">
-                View all orders
-            </a>
-        </div>
-
-        <div class="record-grid">
-            {% for order in active_orders %}
-                <article class="record-card">
-                    <span class="status-pill status-{{ order.status|lower }}">
-                        {{ order.get_status_display }}
-                    </span>
-
-                    <h2>Order #{{ order.pk }}</h2>
-                    <p class="record-meta">
-                        {{ order.listing.title }} &middot;
-                        {{ order.manufacturer.business_name }}
-                    </p>
-
-                    <dl class="record-facts">
-                        <dt>Total amount</dt>
-                        <dd>{{ order.total_amount|inr }}</dd>
-
-                        <dt>Production time</dt>
-                        <dd>{{ order.agreed_production_days }} days</dd>
-                    </dl>
-
-                    <a class="button button-secondary" href="{% url 'order_detail' order.pk %}">
-                        Track order
-                    </a>
-                </article>
-            {% empty %}
-                <div class="empty-panel">
-                    <h2>No active orders</h2>
-                    <p>
-                        Orders will appear after you accept a manufacturer
-                        quotation.
-                    </p>
-                </div>
-            {% endfor %}
-        </div>
-    </section>
-
-    <section class="dashboard-band" aria-labelledby="active-title">
-        <div class="section-heading">
-            <div>
-                <p class="eyebrow">Open requests</p>
-                <h2 id="active-title">Active quote requests</h2>
-                <p>Open requests and pending quotes.</p>
-            </div>
-        </div>
-
-        <div class="record-grid">
+        <div class="buyer-dashboard__list">
             {% for quote in active_requests %}
-                <article class="record-card">
-                    <span class="status-pill status-{{ quote.status|lower }}">
-                        {{ quote.get_status_display }}
-                    </span>
-
-                    <h2>{{ quote.listing.title }}</h2>
-
-                    <p class="record-meta">
-                        {{ quote.listing.manufacturer.business_name }} &middot;
-                        Request #{{ quote.pk }}
-                    </p>
-
-                    <dl class="record-facts">
-                        <dt>Quantity</dt>
-                        <dd>{{ quote.quantity }} units</dd>
-
-                        <dt>Delivery location</dt>
-                        <dd>{{ quote.delivery_location }}</dd>
+                <article class="buyer-dashboard__list-item">
+                    <div class="buyer-dashboard__item-main">
+                        {% if quote.quotation %}
+                            <span class="buyer-dashboard__status buyer-dashboard__status--quoted">Quotation received</span>
+                        {% else %}
+                            <span class="buyer-dashboard__status buyer-dashboard__status--pending">{{ quote.get_status_display }}</span>
+                        {% endif %}
+                        <h3>{{ quote.listing.title }}</h3>
+                        <p class="buyer-dashboard__meta">{{ quote.listing.manufacturer.business_name }} · Request #{{ quote.pk }}</p>
+                    </div>
+                    <dl class="buyer-dashboard__inline-facts">
+                        <div><dt>Quantity</dt><dd>{{ quote.quantity }} units</dd></div>
+                        <div><dt>Delivery location</dt><dd>{{ quote.delivery_location }}</dd></div>
                     </dl>
-
                     {% if quote.listing.is_active and quote.listing.manufacturer.is_verified %}
-                        <a
-                            class="button button-secondary"
-                            href="{% url 'manufacturer_profile' quote.listing.manufacturer.pk %}"
-                        >
-                            View manufacturer
-                        </a>
+                        <a class="button button-secondary" href="{% url 'manufacturer_profile' quote.listing.manufacturer.pk %}">View manufacturer</a>
                     {% endif %}
                 </article>
             {% empty %}
-                <div class="empty-panel">
-                    <h2>No active requests</h2>
-                    <p>
-                        Browse available manufacturing capacity and request
-                        a quote when you find a fit.
-                    </p>
-<a class="button" href="{% url 'marketplace' %}">
-                        Browse listings
-                    </a>
+                <div class="buyer-dashboard__empty">
+                    <h3>No quote requests yet</h3>
+                    <p>Browse manufacturing capacity and send a request when you find a fit.</p>
+                    <a class="button button-secondary" href="{% url 'marketplace' %}">Browse capacity</a>
                 </div>
             {% endfor %}
         </div>
     </section>
 
-    <section class="dashboard-band" aria-labelledby="saved-title">
-        <div class="section-heading">
+    <section class="buyer-dashboard__section" aria-labelledby="buyer-orders-title">
+        <div class="buyer-dashboard__section-heading">
             <div>
-                <p class="eyebrow">Shortlist</p>
-                <h2 id="saved-title">Saved listings</h2>
-                <p>Capacity you saved for later comparison.</p>
+                <p class="buyer-dashboard__eyebrow">Fulfilment</p>
+                <h2 id="buyer-orders-title">Orders in progress</h2>
+                <p>Accepted quotations continue here as you track production.</p>
             </div>
-
-            <a class="button button-secondary" href="{% url 'saved_listings' %}">
-                View saved
-            </a>
+            <a class="buyer-dashboard__section-link" href="{% url 'buyer_orders' %}">View all orders</a>
         </div>
-
-        <div class="record-grid">
-            {% for item in saved_items %}
-                <article class="record-card">
-                    <h2>{{ item.listing.title }}</h2>
-                    <p class="record-meta">
-                        {{ item.listing.manufacturer.business_name }} &middot;
-                        {{ item.listing.manufacturer.city }},
-                        {{ item.listing.manufacturer.state }}
-                    </p>
-
-                    <dl class="record-facts">
-                        <dt>Minimum order</dt>
-                        <dd>{{ item.listing.minimum_quantity }} units</dd>
-
-                        <dt>Unit price</dt>
-                        <dd>{{ item.listing.price_per_unit|inr }}</dd>
+        <div class="buyer-dashboard__list">
+            {% for order in active_orders %}
+                <article class="buyer-dashboard__list-item">
+                    <div class="buyer-dashboard__item-main">
+                        <span class="buyer-dashboard__status buyer-dashboard__status--order">{{ order.get_status_display }}</span>
+                        <h3>Order #{{ order.pk }}</h3>
+                        <p class="buyer-dashboard__meta">{{ order.listing.title }} · {{ order.manufacturer.business_name }}</p>
+                    </div>
+                    <dl class="buyer-dashboard__inline-facts">
+                        <div><dt>Total amount</dt><dd>{{ order.total_amount|inr }}</dd></div>
+                        <div><dt>Production time</dt><dd>{{ order.agreed_production_days }} days</dd></div>
                     </dl>
-
-                    {% if item.listing.is_active and item.listing.manufacturer.is_verified %}
-                        <a
-                            class="button button-secondary"
-                            href="{% url 'listing_detail' item.listing.pk %}"
-                        >
-                            View listing
-                        </a>
-                    {% else %}
-                        <p class="record-meta">
-                            This listing is currently unavailable.
-                        </p>
-                    {% endif %}
+                    <a class="button button-secondary" href="{% url 'order_detail' order.pk %}">Track order</a>
                 </article>
             {% empty %}
-                <div class="empty-panel">
-                    <h2>No saved listings yet</h2>
-                    <p>Save listings to compare manufacturers later.</p>
+                <div class="buyer-dashboard__empty">
+                    <h3>No orders in progress</h3>
+                    <p>When you accept a quotation, the resulting order will be available to track here.</p>
                 </div>
             {% endfor %}
         </div>
     </section>
 
-    <section class="dashboard-band" aria-labelledby="notifications-title">
-        <div class="section-heading">
+    <section class="buyer-dashboard__section" aria-labelledby="buyer-accepted-title">
+        <div class="buyer-dashboard__section-heading">
             <div>
-                <p class="eyebrow">Activity</p>
-                <h2 id="notifications-title">Recent notifications</h2>
-                <p>Updates about quote requests and manufacturer responses.</p>
+                <p class="buyer-dashboard__eyebrow">Agreed terms</p>
+                <h2 id="buyer-accepted-title">Accepted quotations</h2>
             </div>
-
-            <a class="button button-secondary" href="{% url 'notifications' %}">
-                View all notifications
-            </a>
+            <a class="buyer-dashboard__section-link" href="{% url 'buyer_orders' %}">View orders</a>
         </div>
-
-        <div class="record-grid">
-            {% for notification in notifications %}
-                <article class="record-card">
-                    {% if notification.is_read %}
-                        <span class="status-pill">Read</span>
-                    {% else %}
-                        <span class="status-pill status-pending">New</span>
+        <div class="buyer-dashboard__list">
+            {% for quotation in accepted_quotations %}
+                <article class="buyer-dashboard__list-item">
+                    <div class="buyer-dashboard__item-main">
+                        <span class="buyer-dashboard__status buyer-dashboard__status--accepted">Accepted</span>
+                        <h3>{{ quotation.quote_request.listing.title }}</h3>
+                        <p class="buyer-dashboard__meta">{{ quotation.quote_request.listing.manufacturer.business_name }}</p>
+                    </div>
+                    <dl class="buyer-dashboard__inline-facts">
+                        <div><dt>Quantity</dt><dd>{{ quotation.quantity }} units</dd></div>
+                        <div><dt>Quote total</dt><dd>{{ quotation.subtotal|inr }}</dd></div>
+                        <div><dt>Production time</dt><dd>{{ quotation.production_days }} days</dd></div>
+                    </dl>
+                    {% if quotation.order %}
+                        <a class="button button-secondary" href="{% url 'order_detail' quotation.order.pk %}">View order</a>
                     {% endif %}
+                </article>
+            {% empty %}
+                <div class="buyer-dashboard__empty buyer-dashboard__empty--compact">
+                    <h3>No accepted quotations yet</h3>
+                    <p>Accepted terms will appear here after you choose a quotation.</p>
+                </div>
+            {% endfor %}
+        </div>
+    </section>
 
-                    <p>{{ notification.message }}</p>
+    <section class="buyer-dashboard__section" aria-labelledby="buyer-saved-title">
+        <div class="buyer-dashboard__section-heading">
+            <div>
+                <p class="buyer-dashboard__eyebrow">Shortlist</p>
+                <h2 id="buyer-saved-title">Saved listings</h2>
+            </div>
+            <a class="buyer-dashboard__section-link" href="{% url 'saved_listings' %}">View saved listings</a>
+        </div>
+        <div class="buyer-dashboard__list">
+            {% for item in saved_items %}
+                <article class="buyer-dashboard__list-item">
+                    <div class="buyer-dashboard__item-main">
+                        <h3>{{ item.listing.title }}</h3>
+                        <p class="buyer-dashboard__meta">{{ item.listing.manufacturer.business_name }} · {{ item.listing.manufacturer.city }}, {{ item.listing.manufacturer.state }}</p>
+                    </div>
+                    <dl class="buyer-dashboard__inline-facts">
+                        <div><dt>Minimum order</dt><dd>{{ item.listing.minimum_quantity }} units</dd></div>
+                        <div><dt>Unit price</dt><dd>{{ item.listing.price_per_unit|inr }}</dd></div>
+                    </dl>
+                    {% if item.listing.is_active and item.listing.manufacturer.is_verified %}
+                        <a class="button button-secondary" href="{% url 'listing_detail' item.listing.pk %}">View listing</a>
+                    {% else %}
+                        <span class="buyer-dashboard__meta buyer-dashboard__unavailable">This listing is currently unavailable.</span>
+                    {% endif %}
+                </article>
+            {% empty %}
+                <div class="buyer-dashboard__empty">
+                    <h3>No saved listings yet</h3>
+                    <p>Save listings you are considering and they will be ready here for comparison.</p>
+                    <a class="button button-secondary" href="{% url 'marketplace' %}">Browse capacity</a>
+                </div>
+            {% endfor %}
+        </div>
+    </section>
 
-                    <p class="record-meta">
-                        {{ notification.created_at|date:"d M Y, H:i" }}
-                    </p>
-
-                    <form
-                        method="post"
-                        action="{% url 'open_notification' notification.pk %}"
-                        class="record-actions"
-                    >
+    <section class="buyer-dashboard__section" aria-labelledby="buyer-notifications-title">
+        <div class="buyer-dashboard__section-heading">
+            <div>
+                <p class="buyer-dashboard__eyebrow">Activity</p>
+                <h2 id="buyer-notifications-title">Recent notifications</h2>
+            </div>
+            <a class="buyer-dashboard__section-link" href="{% url 'notifications' %}">View all notifications</a>
+        </div>
+        <div class="buyer-dashboard__list">
+            {% for notification in notifications %}
+                <article class="buyer-dashboard__notification">
+                    <div class="buyer-dashboard__notification-state">
+                        {% if notification.is_read %}
+                            <span class="buyer-dashboard__status buyer-dashboard__status--neutral">Read</span>
+                        {% else %}
+                            <span class="buyer-dashboard__status buyer-dashboard__status--pending">New</span>
+                        {% endif %}
+                    </div>
+                    <div class="buyer-dashboard__item-main">
+                        <p>{{ notification.message }}</p>
+                        <time class="buyer-dashboard__meta" datetime="{{ notification.created_at|date:'c' }}">{{ notification.created_at|date:"d M Y, H:i" }}</time>
+                    </div>
+                    <form method="post" action="{% url 'open_notification' notification.pk %}">
                         {% csrf_token %}
-                        <button class="button button-secondary" type="submit">
-                            View details
-                        </button>
+                        <button class="button button-secondary" type="submit" aria-label="View notification: {{ notification.message }}">View details</button>
                     </form>
                 </article>
             {% empty %}
-                <div class="empty-panel">
-                    <h2>No notifications yet</h2>
-                    <p>New activity updates will appear here.</p>
+                <div class="buyer-dashboard__empty buyer-dashboard__empty--compact">
+                    <h3>No notifications yet</h3>
+                    <p>Updates about quote requests and manufacturer responses will appear here.</p>
                 </div>
             {% endfor %}
         </div>
     </section>
+</div>
 {% endblock %}
