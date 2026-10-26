@@ -180,6 +180,31 @@ class PasswordResetEmailTests(TestCase):
         send_mail.assert_not_called()
         self.assertEqual(len(mail.outbox), 0)
 
+    def test_reset_confirmation_copy_is_neutral_for_matching_and_unknown_email(self):
+        get_user_model().objects.create_user(
+            username="neutral-reset-confirmation",
+            email="neutral-reset-confirmation@example.test",
+            password="StrongPass123!",
+        )
+        generic_message = (
+            "If an eligible account matches that email, password reset "
+            "instructions have been sent."
+        )
+
+        for email in (
+            "neutral-reset-confirmation@example.test",
+            "no-reset-account@example.test",
+        ):
+            with self.subTest(email=email):
+                response = self.client.post(
+                    reverse("password_reset"),
+                    {"email": email},
+                    follow=True,
+                )
+
+                self.assertContains(response, generic_message)
+                self.assertNotContains(response, "neutral-reset-confirmation")
+
     def test_reliable_password_reset_form_does_not_swallow_send_failure(self):
         form = ReliablePasswordResetForm()
 

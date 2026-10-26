@@ -1713,3 +1713,188 @@ a { color: var(--uv-teal); }
         margin-left: 30px;
     }
 }
+
+/* Password reset pages reuse the compact, single-column auth surface. */
+.password-reset-layout {
+    grid-template-columns: minmax(0, 560px);
+    justify-content: center;
+    width: min(100% - 40px, 560px);
+    margin: clamp(32px, 5vw, 64px) auto;
+}
+
+.password-reset-main {
+    min-width: 0;
+    padding: clamp(24px, 3.2vw, 36px);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-card);
+    background: var(--color-surface);
+    box-shadow: var(--shadow-soft);
+}
+
+.password-reset-main > .eyebrow {
+    margin: 0 0 var(--space-2);
+    color: var(--color-accent);
+}
+
+.password-reset-main h1 {
+    margin: 0;
+    color: var(--color-primary);
+    font-size: clamp(32px, 3.2vw, 38px);
+    font-weight: 720;
+    line-height: 1.15;
+    letter-spacing: -0.025em;
+}
+
+.password-reset-intro {
+    margin: var(--space-3) 0 var(--space-6);
+    color: var(--color-muted);
+    line-height: 1.55;
+}
+
+.password-reset-form {
+    display: grid;
+    gap: var(--space-4);
+    margin: 0;
+}
+
+.password-reset-form .form-field {
+    min-width: 0;
+    margin: 0;
+}
+
+.password-reset-form .form-field label {
+    display: block;
+    margin-bottom: var(--space-2);
+    color: var(--color-text);
+    font-weight: 650;
+}
+
+.password-reset-form .form-field input:not([type="checkbox"]):not([type="radio"]):not([type="file"]) {
+    box-sizing: border-box;
+    width: 100%;
+    min-width: 0;
+    min-height: 48px;
+    font-size: 16px;
+}
+
+.password-reset-form .form-field .helptext,
+.password-reset-form .password-requirements {
+    color: var(--color-muted);
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+.password-reset-form .form-field .helptext {
+    margin: var(--space-2) 0 0;
+}
+
+.password-reset-form .password-requirements {
+    margin-top: var(--space-2);
+}
+
+.password-reset-form .password-requirements summary {
+    min-height: 44px;
+    color: #0c615b;
+    text-underline-offset: 3px;
+}
+
+.password-reset-form .password-visibility-toggle {
+    min-height: 44px;
+    margin-top: var(--space-2);
+    border-color: #aab8be;
+    border-radius: var(--radius-control);
+    color: var(--color-primary);
+}
+
+.password-reset-form .password-visibility-toggle:focus-visible,
+.password-reset-form .password-requirements summary:focus-visible {
+    outline: 3px solid var(--color-warning);
+    outline-offset: 3px;
+}
+
+.password-reset-form .form-submit,
+.password-reset-state-action {
+    width: 100%;
+    min-height: 48px;
+    margin: 0;
+    justify-content: center;
+    text-align: center;
+}
+
+.password-reset-form .form-error-summary,
+.password-reset-form .field-errors,
+.password-reset-main .form-error-summary {
+    margin: 0;
+    padding: 11px 13px;
+    border: 1px solid #e7c0bd;
+    border-radius: var(--radius-control);
+    background: #fff2f1;
+    color: #8f1d19;
+    overflow-wrap: anywhere;
+}
+
+.password-reset-main .form-error-summary p {
+    margin: 0 0 var(--space-1);
+    color: inherit;
+    font-weight: 650;
+}
+
+.password-reset-main .form-error-summary .errorlist,
+.password-reset-form .field-errors .errorlist {
+    margin: 0;
+    padding-left: 20px;
+}
+
+.password-reset-back {
+    margin: var(--space-5) 0 0;
+    padding-top: var(--space-4);
+    border-top: 1px solid var(--color-border);
+}
+
+.password-reset-back a {
+    color: #0c615b;
+    font-weight: 650;
+    text-underline-offset: 3px;
+}
+
+.password-reset-main .status-pill {
+    display: inline-flex;
+    margin: 0 0 var(--space-3);
+}
+
+.password-reset-state h1 {
+    margin-top: 0;
+}
+
+.password-reset-state .password-reset-intro {
+    margin-bottom: var(--space-6);
+}
+
+.password-reset-main :focus-visible {
+    outline-color: var(--color-accent);
+}
+
+@media (max-width: 600px) {
+    .password-reset-layout {
+        width: min(100% - 32px, 560px);
+        margin: 20px auto 32px;
+    }
+
+    .password-reset-main {
+        padding: 22px;
+    }
+
+    .password-reset-main h1 {
+        font-size: clamp(30px, 8vw, 34px);
+    }
+
+    .password-reset-intro {
+        margin-bottom: var(--space-5);
+    }
+}
+
+@media (max-width: 360px) {
+    .password-reset-main {
+        padding: 18px;
+    }
+}
