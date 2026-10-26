@@ -159,6 +159,154 @@ class MarketplaceDiscoveryTrustTests(TestCase):
         self.assertContains(response, "No saved listings yet")
         self.assertContains(response, "No notifications yet")
 
+    def test_manufacturer_dashboard_prioritizes_owned_requests_and_work(self):
+        buyer = get_user_model().objects.create_user(
+            username="dashboard-request-buyer",
+            password="password",
+            role="BUYER",
+        )
+        pending_listing = self.create_listing(
+            self.verified,
+            "Dashboard packaging capacity",
+        )
+        pending_request = QuoteRequest.objects.create(
+            buyer=buyer,
+            listing=pending_listing,
+            quantity=500,
+            requirements="Printed cartons in two sizes.",
+            delivery_location="Pune",
+        )
+
+        accepted_listing = self.create_listing(
+            self.verified,
+            "Dashboard metal components",
+        )
+        accepted_request = QuoteRequest.objects.create(
+            buyer=buyer,
+            listing=accepted_listing,
+            quantity=300,
+            requirements="Low-volume component batch.",
+            delivery_location="Mumbai",
+            status=QuoteRequest.Status.ACCEPTED,
+        )
+        accepted_quotation = Quotation.objects.create(
+            quote_request=accepted_request,
+            quantity=300,
+            price_per_unit=Decimal("42.00"),
+            production_days=12,
+            status=Quotation.Status.ACCEPTED,
+        )
+        order = Order.objects.create(
+            quotation=accepted_quotation,
+            buyer=buyer,
+            manufacturer=self.verified,
+            listing=accepted_listing,
+            quantity=300,
+            agreed_unit_price=Decimal("42.00"),
+            total_amount=Decimal("12600.00"),
+            agreed_production_days=12,
+            status=Order.Status.IN_PRODUCTION,
+        )
+        Milestone.objects.create(
+            order=order,
+            title="Begin first production batch",
+            percentage=50,
+            amount=Decimal("6300.00"),
+            status=Milestone.Status.PENDING,
+            funding_status=Milestone.FundingStatus.FUNDED,
+        )
+        Milestone.objects.create(
+            order=order,
+            title="Submit production sample",
+            percentage=50,
+            amount=Decimal("6300.00"),
+            status=Milestone.Status.IN_PROGRESS,
+            funding_status=Milestone.FundingStatus.FUNDED,
+        )
+
+        other_manufacturer_user = get_user_model().objects.create_user(
+            username="other-dashboard-maker",
+            password="password",
+            role="MANUFACTURER",
+        )
+        other_manufacturer = ManufacturerProfile.objects.create(
+            user=other_manufacturer_user,
+            business_name="Other Dashboard Works",
+            city="Jaipur",
+            state="Rajasthan",
+        )
+        other_listing = self.create_listing(
+            other_manufacturer,
+            "Another maker's private request",
+        )
+        QuoteRequest.objects.create(
+            buyer=buyer,
+            listing=other_listing,
+            quantity=100,
+            requirements="Private to another manufacturer.",
+            delivery_location="Jaipur",
+        )
+
+        self.client.force_login(self.verified_user)
+        response = self.client.get(reverse("manufacturer_dashboard"))
+        content = response.content.decode()
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(content.count("<h1"), 1)
+        self.assertContains(response, "Verified manufacturer")
+        self.assertContains(response, "Pending requests")
+        self.assertContains(response, "Dashboard packaging capacity")
+        self.assertContains(response, "Printed cartons in two sizes.")
+        self.assertContains(
+            response,
+            'aria-label="Send quotation for Dashboard packaging capacity"',
+        )
+        self.assertContains(
+            response,
+            'aria-label="Accept request for Dashboard packaging capacity"',
+        )
+        self.assertContains(response, "Quotation sent")
+        self.assertContains(response, "Quote total")
+        self.assertContains(response, "12 days")
+        self.assertContains(response, "Orders in progress")
+        self.assertContains(response, "Milestones to update")
+        self.assertContains(response, "Start milestone")
+        self.assertContains(response, "Submit for approval")
+        self.assertContains(response, "Your listings")
+        self.assertNotContains(response, "Another maker&#x27;s private request")
+
+        self.client.force_login(buyer)
+        self.assertEqual(
+            self.client.get(reverse("manufacturer_dashboard")).status_code,
+            403,
+        )
+
+    def test_sparse_manufacturer_dashboard_surfaces_profile_and_first_listing(self):
+        manufacturer_user = get_user_model().objects.create_user(
+            username="sparse-dashboard-maker",
+            password="password",
+            role="MANUFACTURER",
+        )
+        ManufacturerProfile.objects.create(
+            user=manufacturer_user,
+            business_name="Sparse Dashboard Works",
+            city="Indore",
+            state="Madhya Pradesh",
+            kyc_status=ManufacturerProfile.KycStatus.UNDER_REVIEW,
+        )
+        self.client.force_login(manufacturer_user)
+
+        response = self.client.get(reverse("manufacturer_dashboard"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Under review")
+        self.assertContains(response, "Listings become public after verification.")
+        self.assertContains(response, "You haven")
+        self.assertContains(response, "listed any manufacturing capacity yet")
+        self.assertContains(response, "Create your first listing")
+        self.assertNotContains(response, "No production actions right now")
+        self.assertNotContains(response, "No active production orders")
+
     def create_review(self, manufacturer, buyer_username, comment):
         buyer = get_user_model().objects.create_user(
             username=buyer_username,

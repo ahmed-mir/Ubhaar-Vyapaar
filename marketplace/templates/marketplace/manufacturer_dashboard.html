@@ -4,395 +4,269 @@
 {% block title %}Manufacturer dashboard | Ubhaar-Vyapaar{% endblock %}
 
 {% block content %}
-    <div class="page-heading dashboard-hero manufacturer-hero">
+<div class="manufacturer-dashboard{% if not stats.total_listings %} manufacturer-dashboard--no-listings{% endif %}">
+    <header class="manufacturer-dashboard__header">
         <div>
-            <p class="eyebrow">Manufacturer workspace</p>
-            <h1>What needs attention?</h1>
-            <p>Requests, orders, milestones, and listing actions.</p>
+            <p class="manufacturer-dashboard__eyebrow">Manufacturer workspace</p>
+            <h1 id="manufacturer-dashboard-title">Dashboard</h1>
+            <p class="manufacturer-dashboard__intro">Manage buyer requests, capacity and production work.</p>
         </div>
+        <a class="button button-primary" href="{% url 'create_listing' %}">Create listing</a>
+    </header>
 
-        <div class="action-links">
-            <a
-                class="button button-secondary"
-                href="{% url 'edit_business_profile' %}"
-            >
-                Edit business profile
-            </a>
-            <a class="button button-secondary" href="{% url 'my_listings' %}">
-                Manage listings
-            </a>
-            <a class="button button-primary" href="{% url 'create_listing' %}">
-                Add capacity
-            </a>
-        </div>
-    </div>
-
-    <section class="record-card dashboard-focus verification-panel" aria-labelledby="verification-title">
-        <div>
-            <p class="eyebrow">Business verification</p>
-            <h2 id="verification-title">{{ manufacturer.business_name }}</h2>
-
-            <p class="record-meta">
-                {{ manufacturer.city }}, {{ manufacturer.state }}
-            </p>
-
-            {% if manufacturer.is_demo %}
-                <span class="sample-badge">Sample manufacturer</span>
-            {% elif manufacturer.is_publicly_verified %}
-                <span class="trust-badge">Verified manufacturer</span>
-                <p>
-                    Active listings can appear in marketplace search.
-                </p>
-            {% else %}
-                <span class="status-pill status-pending">
-                    {{ manufacturer.get_kyc_status_display }}
-                </span>
-                <p>
-                    Listings become public after verification.
-                </p>
-            {% endif %}
-        </div>
-
-        <div class="action-links">
-            <a class="button button-secondary" href="{% url 'edit_business_profile' %}">
-                Review profile
-            </a>
-            <a class="button" href="{% url 'create_listing' %}">
-                Add capacity
-            </a>
-        </div>
-    </section>
-
-    <dl class="stats-grid" aria-label="Business summary">
-        <div class="stat-card">
-            <dt>Total listings</dt>
-            <dd>{{ stats.total_listings }}</dd>
-        </div>
-
-        <div class="stat-card">
-            <dt>Active listings</dt>
-            <dd>{{ stats.active_listings }}</dd>
-        </div>
-
-        <div class="stat-card">
-            <dt>Public listings</dt>
-            <dd>{{ stats.public_listings }}</dd>
-        </div>
-
-        <div class="stat-card stat-card-attention">
-            <dt>Pending requests</dt>
-            <dd>{{ stats.pending_requests }}</dd>
-        </div>
-
-        <div class="stat-card">
-            <dt>Quotations sent</dt>
-            <dd>{{ stats.quotations_sent }}</dd>
-        </div>
-
-        <div class="stat-card">
-            <dt>Awaiting buyer decision</dt>
-            <dd>{{ stats.quotations_waiting }}</dd>
-        </div>
-
-        <div class="stat-card">
-            <dt>Accepted quotations</dt>
-            <dd>{{ stats.quotations_accepted }}</dd>
-        </div>
-
-        <div class="stat-card">
-            <dt>Active orders</dt>
-            <dd>{{ stats.active_orders }}</dd>
-        </div>
-
-        <div class="stat-card stat-card-attention">
-            <dt>Milestones to start</dt>
-            <dd>{{ stats.milestones_to_start }}</dd>
-        </div>
-
-        <div class="stat-card stat-card-attention">
-            <dt>Milestones to submit</dt>
-            <dd>{{ stats.milestones_to_submit }}</dd>
-        </div>
-
-        <div class="stat-card">
-            <dt>Unread notifications</dt>
-            <dd>{{ stats.unread_notifications }}</dd>
-        </div>
-    </dl>
-
-    <section class="dashboard-band dashboard-spotlight" aria-labelledby="production-title">
-        <div class="section-heading">
-            <div>
-                <p class="eyebrow">Production queue</p>
-                <h2 id="production-title">Milestone actions</h2>
-                <p>Funded work and milestones ready for review.</p>
-            </div>
-
-            <a class="button button-secondary" href="{% url 'manufacturer_orders' %}">
-                View orders
-            </a>
-        </div>
-
-        <div class="record-grid">
-            {% for milestone in milestones_ready_to_start %}
-                <article class="record-card action-card">
-                    <span class="status-pill status-funded">Demo funded</span>
-                    <h3>{{ milestone.title }}</h3>
-                    <p class="record-meta">
-                        Order #{{ milestone.order.pk }} &middot;
-                        {{ milestone.order.listing.title }}
-                    </p>
-                    <form
-                        method="post"
-                        action="{% url 'start_milestone' milestone.pk %}"
-                        class="record-actions"
-                    >
-                        {% csrf_token %}
-                        <button class="button" type="submit">
-                            Start milestone
-                        </button>
-                    </form>
-                </article>
-            {% endfor %}
-
-            {% for milestone in milestones_ready_to_submit %}
-                <article class="record-card action-card">
-                    <span class="status-pill status-in_progress">In progress</span>
-                    <h3>{{ milestone.title }}</h3>
-                    <p class="record-meta">
-                        Order #{{ milestone.order.pk }} &middot;
-                        {{ milestone.order.listing.title }}
-                    </p>
-                    <form
-                        method="post"
-                        action="{% url 'mark_milestone_complete' milestone.pk %}"
-                        class="record-actions"
-                    >
-                        {% csrf_token %}
-                        <button class="button" type="submit">
-                            Submit for approval
-                        </button>
-                    </form>
-                </article>
-            {% endfor %}
-
-            {% if not milestones_ready_to_start and not milestones_ready_to_submit %}
-                <div class="empty-panel">
-                    <h2>No production actions right now</h2>
-                    <p>Demo-funded milestones and in-progress work will appear here when they need action.</p>
-                </div>
-            {% endif %}
-        </div>
-    </section>
-
-    <section class="dashboard-band" aria-labelledby="actions-title">
-        <div class="section-heading">
-            <div>
-                <p class="eyebrow">Operating actions</p>
-                <h2 id="actions-title">Next actions</h2>
-                <p>Keep capacity current and respond to buyers.</p>
+    <section class="manufacturer-dashboard__profile" aria-labelledby="manufacturer-profile-title">
+        <div class="manufacturer-dashboard__profile-copy">
+            <p class="manufacturer-dashboard__eyebrow">Business profile</p>
+            <h2 id="manufacturer-profile-title">{{ manufacturer.business_name }}</h2>
+            <p class="manufacturer-dashboard__meta">{{ manufacturer.city }}, {{ manufacturer.state }}</p>
+            <div class="manufacturer-dashboard__profile-state">
+                {% if manufacturer.is_demo %}
+                    <span class="manufacturer-dashboard__status manufacturer-dashboard__status--sample">Sample manufacturer</span>
+                {% elif manufacturer.is_publicly_verified %}
+                    <span class="manufacturer-dashboard__status manufacturer-dashboard__status--verified">Verified manufacturer</span>
+                    <p>Active listings can appear in marketplace search.</p>
+                {% else %}
+                    {% if manufacturer.kyc_status == "REJECTED" %}
+                        <span class="manufacturer-dashboard__status manufacturer-dashboard__status--attention">{{ manufacturer.get_kyc_status_display }}</span>
+                    {% else %}
+                        <span class="manufacturer-dashboard__status manufacturer-dashboard__status--review">{{ manufacturer.get_kyc_status_display }}</span>
+                    {% endif %}
+                    <p>Listings become public after verification.</p>
+                {% endif %}
             </div>
         </div>
-
-        <div class="record-grid">
-            <article class="record-card action-card">
-                <h3>Add or update capacity</h3>
-                <p class="record-meta">
-                    Keep prices, minimum order, and production days accurate.
-                </p>
-                <div class="record-actions">
-                    <a class="button" href="{% url 'create_listing' %}">
-                        Add capacity
-                    </a>
-                    <a class="button button-secondary" href="{% url 'my_listings' %}">
-                        Manage listings
-                    </a>
-                </div>
-            </article>
-
-            <article class="record-card action-card">
-                <h3>Respond to buyers</h3>
-                <p class="record-meta">
-                    Accept, reject, or quote buyer requests.
-                </p>
-                <div class="record-actions">
-                    <a class="button button-secondary" href="#quote-requests">
-                        View requests
-                    </a>
-                    <a class="button button-secondary" href="{% url 'manufacturer_orders' %}">
-                        Manage orders
-                    </a>
-                    <a class="button button-secondary" href="{% url 'notifications' %}">
-                        Notifications
-                    </a>
-                </div>
-            </article>
-        </div>
+        <a class="button button-secondary" href="{% url 'edit_business_profile' %}">Edit business profile</a>
     </section>
 
-    <section class="dashboard-band" aria-labelledby="active-orders-title">
-        <div class="section-heading">
-            <div>
-                <p class="eyebrow">Active production</p>
-                <h2 id="active-orders-title">Orders in progress</h2>
-                <p>Orders with production or review activity.</p>
+    <section class="manufacturer-dashboard__summary" aria-label="Business summary">
+        <dl class="manufacturer-dashboard__key-metrics">
+            <div class="manufacturer-dashboard__metric manufacturer-dashboard__metric--attention">
+                <dt>Pending requests</dt>
+                <dd>{{ stats.pending_requests }}</dd>
             </div>
+            <div class="manufacturer-dashboard__metric">
+                <dt>Awaiting buyer decision</dt>
+                <dd>{{ stats.quotations_waiting }}</dd>
+            </div>
+            <div class="manufacturer-dashboard__metric">
+                <dt>Active orders</dt>
+                <dd>{{ stats.active_orders }}</dd>
+            </div>
+            <div class="manufacturer-dashboard__metric">
+                <dt>Active listings</dt>
+                <dd>{{ stats.active_listings }}</dd>
+            </div>
+        </dl>
+        <dl class="manufacturer-dashboard__more-metrics" aria-label="More activity">
+            <div><dt>Total listings</dt><dd>{{ stats.total_listings }}</dd></div>
+            <div><dt>Public listings</dt><dd>{{ stats.public_listings }}</dd></div>
+            <div><dt>Quotations sent</dt><dd>{{ stats.quotations_sent }}</dd></div>
+            <div><dt>Accepted quotations</dt><dd>{{ stats.quotations_accepted }}</dd></div>
+            <div><dt>Milestones to start</dt><dd>{{ stats.milestones_to_start }}</dd></div>
+            <div><dt>Milestones to submit</dt><dd>{{ stats.milestones_to_submit }}</dd></div>
+            <div><dt>Unread notifications</dt><dd>{{ stats.unread_notifications }}</dd></div>
+        </dl>
+    </section>
+
+    {% if quotes or stats.total_listings %}
+    <section class="manufacturer-dashboard__section manufacturer-dashboard__requests" id="quote-requests" aria-labelledby="manufacturer-requests-title">
+        <div class="manufacturer-dashboard__section-heading">
+            <div>
+                <p class="manufacturer-dashboard__eyebrow">Buyer demand</p>
+                <h2 id="manufacturer-requests-title">Quote requests</h2>
+                <p>Review buyer requirements and choose the available next step.</p>
+            </div>
+            <span class="manufacturer-dashboard__section-count">{{ stats.pending_requests }} pending</span>
         </div>
 
-        <div class="record-grid">
-            {% for order in active_orders %}
-                <article class="record-card">
-                    <span class="status-pill status-{{ order.status|lower }}">
-                        {{ order.get_status_display }}
-                    </span>
-                    <h3>Order #{{ order.pk }}</h3>
-                    <p class="record-meta">
-                        {{ order.listing.title }} &middot;
-                        Buyer: {{ order.buyer.username }}
-                    </p>
-                    <a class="button button-secondary" href="{% url 'order_detail' order.pk %}">
-                        Manage order
-                    </a>
+        <div class="manufacturer-dashboard__request-list">
+            {% for quote in quotes %}
+                <article class="manufacturer-dashboard__request" id="quote-request-{{ quote.pk }}">
+                    <header class="manufacturer-dashboard__request-header">
+                        <div class="manufacturer-dashboard__request-title">
+                            {% if quote.status == "PENDING" %}
+                                <span class="manufacturer-dashboard__status manufacturer-dashboard__status--pending">Request: {{ quote.get_status_display }}</span>
+                            {% elif quote.status == "ACCEPTED" %}
+                                <span class="manufacturer-dashboard__status manufacturer-dashboard__status--accepted">Request: {{ quote.get_status_display }}</span>
+                            {% else %}
+                                <span class="manufacturer-dashboard__status manufacturer-dashboard__status--neutral">Request: {{ quote.get_status_display }}</span>
+                            {% endif %}
+                            <h3>{{ quote.listing.title }}</h3>
+                            <p class="manufacturer-dashboard__meta">Request #{{ quote.pk }} · {{ quote.created_at|date:"d M Y, H:i" }}</p>
+                        </div>
+                        <div class="manufacturer-dashboard__request-buyer">
+                            <span>Buyer</span>
+                            <strong>{{ quote.buyer.username }}</strong>
+                        </div>
+                    </header>
+
+                    <div class="manufacturer-dashboard__request-content">
+                        <dl class="manufacturer-dashboard__request-facts">
+                            <div><dt>Requested quantity</dt><dd>{{ quote.quantity }} units</dd></div>
+                            <div><dt>Delivery location</dt><dd>{{ quote.delivery_location }}</dd></div>
+                        </dl>
+                        <div class="manufacturer-dashboard__requirements">
+                            <h4>Requirements</h4>
+                            <p>{{ quote.requirements|linebreaksbr }}</p>
+                        </div>
+
+                        {% if quote.quotation %}
+                            <section class="manufacturer-dashboard__quotation" aria-label="Quotation details">
+                                <div class="manufacturer-dashboard__quotation-heading">
+                                    <h4>Quotation sent</h4>
+                                    {% if quote.quotation.status == "SENT" %}
+                                        <span class="manufacturer-dashboard__status manufacturer-dashboard__status--review">{{ quote.quotation.get_status_display }}</span>
+                                    {% elif quote.quotation.status == "ACCEPTED" %}
+                                        <span class="manufacturer-dashboard__status manufacturer-dashboard__status--accepted">{{ quote.quotation.get_status_display }}</span>
+                                    {% else %}
+                                        <span class="manufacturer-dashboard__status manufacturer-dashboard__status--neutral">{{ quote.quotation.get_status_display }}</span>
+                                    {% endif %}
+                                </div>
+                                <dl class="manufacturer-dashboard__quotation-facts">
+                                    <div><dt>Quoted quantity</dt><dd>{{ quote.quotation.quantity }} units</dd></div>
+                                    <div><dt>Unit price</dt><dd>{{ quote.quotation.price_per_unit|inr }}</dd></div>
+                                    <div><dt>Quote total</dt><dd>{{ quote.quotation.subtotal|inr }}</dd></div>
+                                    <div><dt>Production time</dt><dd>{{ quote.quotation.production_days }} days</dd></div>
+                                </dl>
+                                {% if quote.quotation.message %}
+                                    <p class="manufacturer-dashboard__quotation-message">{{ quote.quotation.message|linebreaksbr }}</p>
+                                {% endif %}
+                            </section>
+                        {% elif quote.status != "REJECTED" %}
+                            <div class="manufacturer-dashboard__quotation-prompt">
+                                <p>No quotation has been sent for this request.</p>
+                                <a class="button button-primary" href="{% url 'send_quotation' quote.pk %}" aria-label="Send quotation for {{ quote.listing.title }}">Send quotation</a>
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    {% if quote.status == "PENDING" %}
+                        <form method="post" action="{% url 'update_quote_status' quote.pk %}" class="manufacturer-dashboard__request-actions">
+                            {% csrf_token %}
+                            <button class="button button-accept" type="submit" name="status" value="ACCEPTED" aria-label="Accept request for {{ quote.listing.title }}">Accept request</button>
+                            <button class="button button-reject" type="submit" name="status" value="REJECTED" aria-label="Reject request for {{ quote.listing.title }}">Reject request</button>
+                        </form>
+                    {% else %}
+                        <p class="manufacturer-dashboard__processed">This request has been processed.</p>
+                    {% endif %}
                 </article>
             {% empty %}
-                <div class="empty-panel">
-                    <h2>No active production orders</h2>
-                    <p>Orders appear after buyers accept quotations.</p>
+                <div class="manufacturer-dashboard__empty manufacturer-dashboard__empty--requests">
+                    <h3>No quote requests yet</h3>
+                    <p>Buyer requests will appear here when buyers enquire about your listings.</p>
+                    <a class="button button-secondary" href="{% url 'my_listings' %}">Manage listings</a>
                 </div>
             {% endfor %}
         </div>
     </section>
+    {% endif %}
 
-    {% if recent_reviews %}
-        <section class="dashboard-band" aria-labelledby="reviews-title">
-            <div class="section-heading">
+    {% if active_orders %}
+        <section class="manufacturer-dashboard__section manufacturer-dashboard__orders" aria-labelledby="manufacturer-orders-title">
+            <div class="manufacturer-dashboard__section-heading">
                 <div>
-                    <p class="eyebrow">Recent feedback</p>
-                    <h2 id="reviews-title">Completed order reviews</h2>
+                    <p class="manufacturer-dashboard__eyebrow">Fulfilment</p>
+                    <h2 id="manufacturer-orders-title">Orders in progress</h2>
                 </div>
+                <a class="manufacturer-dashboard__section-link" href="{% url 'manufacturer_orders' %}">View all orders</a>
             </div>
-
-            <div class="record-grid">
-                {% for review in recent_reviews %}
-                    <article class="record-card">
-                        <span class="trust-badge">Overall {{ review.overall_rating }}/5</span>
-                        <h3>Order #{{ review.order.pk }}</h3>
-                        {% if review.comment %}
-                            <p>{{ review.comment|linebreaksbr }}</p>
-                        {% endif %}
+            <div class="manufacturer-dashboard__operational-list">
+                {% for order in active_orders %}
+                    <article class="manufacturer-dashboard__operational-row">
+                        <div class="manufacturer-dashboard__item-main">
+                            <span class="manufacturer-dashboard__status manufacturer-dashboard__status--order">{{ order.get_status_display }}</span>
+                            <h3>Order #{{ order.pk }}</h3>
+                            <p class="manufacturer-dashboard__meta">{{ order.listing.title }} · Buyer: {{ order.buyer.username }}</p>
+                        </div>
+                        <a class="button button-secondary" href="{% url 'order_detail' order.pk %}">Manage order</a>
                     </article>
                 {% endfor %}
             </div>
         </section>
     {% endif %}
 
-    <section class="dashboard-band" id="quote-requests" aria-labelledby="quote-title">
-        <div class="section-heading">
+    {% if milestones_ready_to_start or milestones_ready_to_submit %}
+        <section class="manufacturer-dashboard__section manufacturer-dashboard__milestones" aria-labelledby="manufacturer-milestones-title">
+            <div class="manufacturer-dashboard__section-heading">
+                <div>
+                    <p class="manufacturer-dashboard__eyebrow">Production</p>
+                    <h2 id="manufacturer-milestones-title">Milestones to update</h2>
+                </div>
+                <a class="manufacturer-dashboard__section-link" href="{% url 'manufacturer_orders' %}">View orders</a>
+            </div>
+            <div class="manufacturer-dashboard__operational-list">
+                {% for milestone in milestones_ready_to_start %}
+                    <article class="manufacturer-dashboard__operational-row">
+                        <div class="manufacturer-dashboard__item-main">
+                            <span class="manufacturer-dashboard__status manufacturer-dashboard__status--review">Demo funded</span>
+                            <h3>{{ milestone.title }}</h3>
+                            <p class="manufacturer-dashboard__meta">Order #{{ milestone.order.pk }} · {{ milestone.order.listing.title }}</p>
+                        </div>
+                        <form method="post" action="{% url 'start_milestone' milestone.pk %}">
+                            {% csrf_token %}
+                            <button class="button button-primary" type="submit" aria-label="Start milestone {{ milestone.title }}">Start milestone</button>
+                        </form>
+                    </article>
+                {% endfor %}
+                {% for milestone in milestones_ready_to_submit %}
+                    <article class="manufacturer-dashboard__operational-row">
+                        <div class="manufacturer-dashboard__item-main">
+                            <span class="manufacturer-dashboard__status manufacturer-dashboard__status--order">In progress</span>
+                            <h3>{{ milestone.title }}</h3>
+                            <p class="manufacturer-dashboard__meta">Order #{{ milestone.order.pk }} · {{ milestone.order.listing.title }}</p>
+                        </div>
+                        <form method="post" action="{% url 'mark_milestone_complete' milestone.pk %}">
+                            {% csrf_token %}
+                            <button class="button button-secondary" type="submit" aria-label="Submit milestone {{ milestone.title }} for approval">Submit for approval</button>
+                        </form>
+                    </article>
+                {% endfor %}
+            </div>
+        </section>
+    {% endif %}
+
+    <section class="manufacturer-dashboard__section manufacturer-dashboard__listings" aria-labelledby="manufacturer-listings-title">
+        <div class="manufacturer-dashboard__section-heading">
             <div>
-                <p class="eyebrow">Buyer demand</p>
-                <h2 id="quote-title">Quote requests</h2>
-                <p>Review buyer needs and send quotations.</p>
+                <p class="manufacturer-dashboard__eyebrow">Capacity management</p>
+                <h2 id="manufacturer-listings-title">Your listings</h2>
             </div>
+            <a class="manufacturer-dashboard__section-link" href="{% url 'my_listings' %}">Manage listings</a>
         </div>
-
-        <div class="record-grid">
-        {% for quote in quotes %}
-            <article class="record-card">
-                <span class="status-pill status-{{ quote.status|lower }}">
-                    Request: {{ quote.get_status_display }}
-                </span>
-
-                <h2>{{ quote.listing.title }}</h2>
-
-                <p class="record-meta">
-                    Request #{{ quote.pk }} &middot;
-                    {{ quote.created_at|date:"d M Y, H:i" }}
-                </p>
-
-                <dl class="record-facts">
-                    <dt>Buyer</dt>
-                    <dd>{{ quote.buyer.username }}</dd>
-
-                    <dt>Quantity</dt>
-                    <dd>{{ quote.quantity }} units</dd>
-
-                    <dt>Requirements</dt>
-                    <dd>{{ quote.requirements|linebreaksbr }}</dd>
-
-                    <dt>Delivery location</dt>
-                    <dd>{{ quote.delivery_location }}</dd>
-                </dl>
-
-                {% if quote.quotation %}
-                    <div class="message">
-                        <strong>Quotation sent</strong>
-
-                        <p>
-                            {{ quote.quotation.price_per_unit|inr }} per unit<br>
-                            Quantity: {{ quote.quotation.quantity }} units<br>
-                            Subtotal: {{ quote.quotation.subtotal|inr }}<br>
-                            Production: {{ quote.quotation.production_days }} days<br>
-                            Buyer response: {{ quote.quotation.get_status_display }}
-                        </p>
-
-                        {% if quote.quotation.message %}
-                            <p>{{ quote.quotation.message|linebreaksbr }}</p>
-                        {% endif %}
-                    </div>
-                {% elif quote.status != "REJECTED" %}
-                    <p>
-                        <a
-                            class="button"
-                            href="{% url 'send_quotation' quote.pk %}"
-                        >
-                            Send quotation
-                        </a>
-                    </p>
-                {% endif %}
-
-                {% if quote.status == "PENDING" %}
-                    <form
-                        method="post"
-                        action="{% url 'update_quote_status' quote.pk %}"
-                        class="record-actions"
-                    >
-                        {% csrf_token %}
-
-                        <button
-                            class="button button-accept"
-                            type="submit"
-                            name="status"
-                            value="ACCEPTED"
-                        >
-                            Accept request
-                        </button>
-
-                        <button
-                            class="button button-reject"
-                            type="submit"
-                            name="status"
-                            value="REJECTED"
-                        >
-                            Reject request
-                        </button>
-                    </form>
-                {% else %}
-                    <p class="record-meta">
-                        This request has been processed.
-                    </p>
-                {% endif %}
-            </article>
-        {% empty %}
-            <div class="empty-panel">
-                <h2>No quote requests yet</h2>
-                <p>
-                    Buyer requests will appear here.
-                </p>
-                <a class="button" href="{% url 'my_listings' %}">
-                    View my listings
-                </a>
+        {% if stats.total_listings %}
+            <div class="manufacturer-dashboard__listing-summary">
+                <p><strong>{{ stats.active_listings }}</strong> active <span aria-hidden="true">·</span> <strong>{{ stats.public_listings }}</strong> public <span aria-hidden="true">·</span> <strong>{{ stats.total_listings }}</strong> total</p>
+                <a class="button button-secondary" href="{% url 'create_listing' %}">Add capacity</a>
             </div>
-        {% endfor %}
-        </div>
+        {% else %}
+            <div class="manufacturer-dashboard__empty manufacturer-dashboard__empty--listing">
+                <h3>You haven't listed any manufacturing capacity yet</h3>
+                <p>Create a listing to share your available capacity and start receiving buyer requests.</p>
+                <a class="button button-primary" href="{% url 'create_listing' %}">Create your first listing</a>
+            </div>
+        {% endif %}
     </section>
+
+    {% if recent_reviews %}
+        <section class="manufacturer-dashboard__section manufacturer-dashboard__reviews" aria-labelledby="manufacturer-reviews-title">
+            <div class="manufacturer-dashboard__section-heading">
+                <div>
+                    <p class="manufacturer-dashboard__eyebrow">Recent feedback</p>
+                    <h2 id="manufacturer-reviews-title">Completed order reviews</h2>
+                </div>
+            </div>
+            <div class="manufacturer-dashboard__operational-list">
+                {% for review in recent_reviews %}
+                    <article class="manufacturer-dashboard__operational-row manufacturer-dashboard__review-row">
+                        <div class="manufacturer-dashboard__item-main">
+                            <span class="manufacturer-dashboard__status manufacturer-dashboard__status--verified">Overall {{ review.overall_rating }}/5</span>
+                            <h3>Order #{{ review.order.pk }}</h3>
+                            {% if review.comment %}<p class="manufacturer-dashboard__meta">{{ review.comment|linebreaksbr }}</p>{% endif %}
+                        </div>
+                    </article>
+                {% endfor %}
+            </div>
+        </section>
+    {% endif %}
+</div>
 {% endblock %}
