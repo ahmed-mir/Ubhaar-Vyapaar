@@ -421,6 +421,54 @@ class MarketplaceDiscoveryTrustTests(TestCase):
             Notification.objects.filter(recipient=self.verified_user).exists()
         )
 
+    def test_quote_request_and_quotation_pages_show_context_and_real_fields(self):
+        buyer = get_user_model().objects.create_user(
+            username="workflow-page-buyer",
+            password="password",
+            role="BUYER",
+        )
+        listing = self.create_listing(
+            self.verified,
+            "Workflow corrugated packaging",
+        )
+        quote_request = QuoteRequest.objects.create(
+            buyer=buyer,
+            listing=listing,
+            quantity=500,
+            requirements="Printed cartons with two colours.",
+            delivery_location="Pune",
+        )
+
+        self.client.force_login(buyer)
+        request_page = self.client.get(
+            reverse("request_quote", args=[listing.pk]),
+        )
+        self.assertEqual(request_page.status_code, 200)
+        self.assertEqual(request_page.content.decode().count("<h1"), 1)
+        self.assertContains(request_page, "Minimum order")
+        self.assertContains(request_page, "Lead time")
+        self.assertContains(request_page, "Order requirement")
+        self.assertContains(request_page, 'name="quantity"')
+        self.assertContains(request_page, 'name="requirements"')
+        self.assertContains(request_page, 'name="delivery_location"')
+        self.assertContains(request_page, "Request quote")
+
+        self.client.force_login(self.verified_user)
+        quotation_page = self.client.get(
+            reverse("send_quotation", args=[quote_request.pk]),
+        )
+        self.assertEqual(quotation_page.status_code, 200)
+        self.assertEqual(quotation_page.content.decode().count("<h1"), 1)
+        self.assertContains(quotation_page, "Buyer request")
+        self.assertContains(quotation_page, "Printed cartons with two colours.")
+        self.assertContains(quotation_page, "Pricing")
+        self.assertContains(quotation_page, "Production")
+        self.assertContains(quotation_page, "Message to buyer")
+        self.assertContains(quotation_page, 'name="price_per_unit"')
+        self.assertContains(quotation_page, 'name="production_days"')
+        self.assertContains(quotation_page, 'name="message"')
+        self.assertNotContains(quotation_page, 'name="quantity"')
+
     def test_sample_listing_card_and_detail_have_no_active_quote_cta(self):
         listing = self.create_listing(self.demo, "Sample CTA capacity")
         quote_url = reverse("request_quote", args=[listing.pk])
@@ -1408,6 +1456,49 @@ class OrderMessagingTests(TestCase):
         self.assertEqual(Order.objects.filter(quotation=quotation).count(), 1)
         quotation.refresh_from_db()
         self.assertEqual(quotation.status, Quotation.Status.ACCEPTED)
+
+    def test_manufacturer_can_send_quotation_and_buyer_can_decline(self):
+        quote_request = QuoteRequest.objects.create(
+            buyer=self.other_buyer,
+            listing=self.listing,
+            quantity=150,
+            requirements="Mailer boxes with a printed insert.",
+            delivery_location="Delhi",
+        )
+        self.client.force_login(self.manufacturer_user)
+
+        response = self.client.post(
+            reverse("send_quotation", args=[quote_request.pk]),
+            {
+                "price_per_unit": "15.50",
+                "production_days": "12",
+                "message": "Includes the printed insert.",
+            },
+        )
+
+        self.assertRedirects(response, reverse("manufacturer_dashboard"))
+        quotation = Quotation.objects.get(quote_request=quote_request)
+        self.assertEqual(quotation.quantity, 150)
+        self.assertEqual(quotation.subtotal, Decimal("2325.00"))
+        quote_request.refresh_from_db()
+        self.assertEqual(quote_request.status, QuoteRequest.Status.ACCEPTED)
+
+        self.client.force_login(self.other_buyer)
+        review_page = self.client.get(reverse("my_quote_requests"))
+        self.assertContains(review_page, "Quotation · Awaiting your decision")
+        self.assertContains(review_page, "2,325")
+        self.assertContains(review_page, "Includes the printed insert.")
+        self.assertContains(review_page, "Accept quotation")
+        self.assertContains(review_page, "Decline")
+
+        response = self.client.post(
+            reverse("respond_to_quotation", args=[quotation.pk]),
+            {"status": Quotation.Status.DECLINED},
+        )
+        self.assertRedirects(response, reverse("my_quote_requests"))
+        quotation.refresh_from_db()
+        self.assertEqual(quotation.status, Quotation.Status.DECLINED)
+        self.assertFalse(Order.objects.filter(quotation=quotation).exists())
 
     def test_buyer_cannot_respond_to_another_buyers_quotation(self):
         self.client.force_login(self.other_buyer)

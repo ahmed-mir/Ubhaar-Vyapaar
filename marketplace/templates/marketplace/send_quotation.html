@@ -1,46 +1,80 @@
 {% extends "marketplace/base.html" %}
+{% load accessibility %}
 
 {% block title %}Send quotation | Ubhaar-Vyapaar{% endblock %}
 
 {% block content %}
-    <section class="auth-card" aria-labelledby="quotation-title">
-        <a class="back-link" href="{% url 'manufacturer_dashboard' %}">
-            &larr; Dashboard
+    <div class="quote-workflow-page send-quotation-page">
+        <a class="back-link" href="{% url 'manufacturer_dashboard' %}#quote-requests">
+            &larr; Quote requests
         </a>
 
-        <h1 id="quotation-title">Send quotation</h1>
+        <div class="quote-workflow-layout quote-workflow-layout--send">
+            <section class="quote-workflow-main" aria-labelledby="quotation-title">
+                <header class="quote-workflow-heading">
+                    <p class="quote-workflow-eyebrow">Respond to request #{{ quote_request.pk }}</p>
+                    <h1 id="quotation-title">Send quotation</h1>
+                    <p>Review the buyer's requirements, then provide your unit price and production time.</p>
+                </header>
 
-        <p class="auth-intro">
-            {{ quote_request.listing.title }}<br>
-            Request #{{ quote_request.pk }}
-            from {{ quote_request.buyer.username }}
-        </p>
+                <form method="post" class="quote-workflow-form styled-form form-grid" novalidate>
+                    {% csrf_token %}
+                    {% if form.non_field_errors %}<div class="form-error-summary" role="alert" tabindex="-1">{{ form.non_field_errors }}</div>{% endif %}
+                    <fieldset class="quote-form-group">
+                        <legend>Pricing</legend>
+                        {% for field in form %}
+                            {% if field.name == "price_per_unit" %}
+                                <div class="form-field{% if field.errors %} form-field-error{% endif %}">
+                                    {{ field.label_tag }}{{ field|render_accessible_field }}
+                                    {% if field.help_text %}<p id="{{ field.auto_id }}_helptext" class="helptext">{{ field.help_text }}</p>{% endif %}
+                                    {% if field.errors %}<div id="{{ field.auto_id }}_error" class="field-errors" role="alert"><ul class="errorlist">{% for error in field.errors %}<li>{{ error }}</li>{% endfor %}</ul></div>{% endif %}
+                                </div>
+                            {% endif %}
+                        {% endfor %}
+                    </fieldset>
+                    <fieldset class="quote-form-group quote-form-group--production">
+                        <legend>Production</legend>
+                        {% for field in form %}
+                            {% if field.name == "production_days" %}
+                                <div class="form-field{% if field.errors %} form-field-error{% endif %}">
+                                    {{ field.label_tag }}{{ field|render_accessible_field }}
+                                    {% if field.help_text %}<p id="{{ field.auto_id }}_helptext" class="helptext">{{ field.help_text }}</p>{% endif %}
+                                    {% if field.errors %}<div id="{{ field.auto_id }}_error" class="field-errors" role="alert"><ul class="errorlist">{% for error in field.errors %}<li>{{ error }}</li>{% endfor %}</ul></div>{% endif %}
+                                </div>
+                            {% endif %}
+                        {% endfor %}
+                    </fieldset>
+                    <fieldset class="quote-form-group quote-form-group--message">
+                        <legend>Message to buyer</legend>
+                        {% for field in form %}
+                            {% if field.name == "message" %}
+                                <div class="form-field{% if field.errors %} form-field-error{% endif %}">
+                                    {{ field.label_tag }}{{ field|render_accessible_field }}
+                                    {% if field.help_text %}<p id="{{ field.auto_id }}_helptext" class="helptext">{{ field.help_text }}</p>{% endif %}
+                                    {% if field.errors %}<div id="{{ field.auto_id }}_error" class="field-errors" role="alert"><ul class="errorlist">{% for error in field.errors %}<li>{{ error }}</li>{% endfor %}</ul></div>{% endif %}
+                                </div>
+                            {% endif %}
+                        {% endfor %}
+                    </fieldset>
+                    <button class="button button-primary form-submit" type="submit">Send quotation</button>
+                </form>
+            </section>
 
-        <dl class="record-facts">
-            <dt>Requested quantity</dt>
-            <dd>{{ quote_request.quantity }} units</dd>
-
-            <dt>Requirements</dt>
-            <dd>{{ quote_request.requirements|linebreaksbr }}</dd>
-
-            <dt>Delivery location</dt>
-            <dd>{{ quote_request.delivery_location }}</dd>
-        </dl>
-
-        <p class="message">
-            The subtotal will be your price per unit multiplied by
-            {{ quote_request.quantity }} units.
-            Explain any delivery charges or taxes in your message.
-            You cannot edit the quotation after sending it in this version.
-        </p>
-
-        <form method="post" class="styled-form form-grid" novalidate>
-            {% csrf_token %}
-            {% include "marketplace/includes/accessible_form.html" %}
-
-            <button class="button form-submit" type="submit">
-                Send quotation
-            </button>
-        </form>
-    </section>
+            <aside class="quote-workflow-context quote-request-context" aria-label="Buyer quote request">
+                <p class="quote-workflow-eyebrow">Buyer request</p>
+                <h2>{{ quote_request.listing.title }}</h2>
+                <p class="quote-workflow-context__manufacturer">Request #{{ quote_request.pk }} · {{ quote_request.created_at|date:"d M Y" }}</p>
+                <dl class="quote-context-facts">
+                    <div><dt>Buyer</dt><dd>{{ quote_request.buyer.username }}</dd></div>
+                    <div><dt>Requested quantity</dt><dd>{{ quote_request.quantity }} units</dd></div>
+                    <div><dt>Delivery location</dt><dd>{{ quote_request.delivery_location }}</dd></div>
+                </dl>
+                <div class="quote-workflow-message">
+                    <h3>Requirements</h3>
+                    <p>{{ quote_request.requirements|linebreaksbr }}</p>
+                </div>
+                <p class="quote-workflow-context__note">The quotation total is calculated from your unit price and the requested quantity ({{ quote_request.quantity }} units). Include any delivery charges or taxes in your message. A quotation cannot be edited after sending.</p>
+            </aside>
+        </div>
+    </div>
 {% endblock %}

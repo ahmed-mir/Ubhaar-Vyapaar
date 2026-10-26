@@ -1,57 +1,80 @@
 {% extends "marketplace/base.html" %}
+{% load accessibility currency %}
 
 {% block title %}Request a quote | Ubhaar-Vyapaar{% endblock %}
 {% block meta_description %}Request a quote for {{ listing.title }} from {{ listing.manufacturer.business_name }} on Ubhaar-Vyapaar.{% endblock %}
 {% block body_attributes %}data-analytics-page-event="quote_request_started"{% endblock %}
 
 {% block content %}
-    <section class="auth-card" aria-labelledby="quote-title">
+    <div class="quote-workflow-page quote-request-page">
         <a class="back-link" href="{% url 'listing_detail' listing.pk %}">
             &larr; Back to listing
         </a>
 
-        <h1 id="quote-title">Request a quote</h1>
+        <div class="quote-workflow-layout">
+            <section class="quote-workflow-main" aria-labelledby="quote-title">
+                <header class="quote-workflow-heading">
+                    <p class="quote-workflow-eyebrow">Quote request</p>
+                    <h1 id="quote-title">Request a quote</h1>
+                    <p>Share your quantity, requirements and delivery location. A request does not place an order.</p>
+                </header>
 
-        <p class="auth-intro">
-            <strong>{{ listing.title }}</strong><br>
-            {{ listing.manufacturer.business_name }}<br>
-            MOQ: {{ listing.minimum_quantity }} units
-            {% if listing.machine_type %}
-                &middot; {{ listing.machine_type }}
-            {% endif %}
-        </p>
+                {% if recent_quote %}
+                    <div class="quote-workflow-alert" role="status">
+                        <div>
+                            <strong>Your latest request was saved</strong>
+                            <p>{{ recent_quote.quantity }} units &middot; {{ recent_quote.get_status_display }}</p>
+                        </div>
+                        <a href="{% url 'my_quote_requests' %}">View quote requests</a>
+                    </div>
+                {% endif %}
 
-        {% if recent_quote %}
-            <div class="message">
-                <strong>Your latest saved request: #{{ recent_quote.pk }}</strong>
-                <p>
-                    Quantity: {{ recent_quote.quantity }} units<br>
-                    Status: {{ recent_quote.get_status_display }}
-                </p>
-                <a href="{% url 'my_quote_requests' %}">
-                    View my quote requests
-                </a>
-            </div>
-        {% endif %}
+                <form method="post" class="quote-workflow-form styled-form form-grid" novalidate data-analytics-event="quote_request_submitted">
+                    {% csrf_token %}
+                    <fieldset class="quote-form-group">
+                        <legend>Order requirement</legend>
+                        {% for field in form %}
+                            {% if field.name == "quantity" or field.name == "requirements" %}
+                                <div class="form-field{% if field.errors %} form-field-error{% endif %}">
+                                    {{ field.label_tag }}
+                                    {{ field|render_accessible_field }}
+                                    {% if field.help_text %}<p id="{{ field.auto_id }}_helptext" class="helptext">{{ field.help_text }}</p>{% endif %}
+                                    {% if field.errors %}<div id="{{ field.auto_id }}_error" class="field-errors" role="alert"><ul class="errorlist">{% for error in field.errors %}<li>{{ error }}</li>{% endfor %}</ul></div>{% endif %}
+                                </div>
+                            {% endif %}
+                        {% endfor %}
+                    </fieldset>
+                    <fieldset class="quote-form-group quote-form-group--delivery">
+                        <legend>Delivery</legend>
+                        {% for field in form %}
+                            {% if field.name == "delivery_location" %}
+                                <div class="form-field{% if field.errors %} form-field-error{% endif %}">
+                                    {{ field.label_tag }}
+                                    {{ field|render_accessible_field }}
+                                    {% if field.help_text %}<p id="{{ field.auto_id }}_helptext" class="helptext">{{ field.help_text }}</p>{% endif %}
+                                    {% if field.errors %}<div id="{{ field.auto_id }}_error" class="field-errors" role="alert"><ul class="errorlist">{% for error in field.errors %}<li>{{ error }}</li>{% endfor %}</ul></div>{% endif %}
+                                </div>
+                            {% endif %}
+                        {% endfor %}
+                    </fieldset>
+                    {% if form.non_field_errors %}
+                        <div class="form-error-summary" role="alert" tabindex="-1">{{ form.non_field_errors }}</div>
+                    {% endif %}
+                    <button class="button button-primary form-submit" type="submit">Request quote</button>
+                </form>
+            </section>
 
-        <p class="auth-intro">
-            Share your quantity, requirements, and delivery location.
-            Submitting this form creates a new request and does
-            not place an order.
-        </p>
-
-        <form
-            method="post"
-            class="styled-form form-grid"
-            novalidate
-            data-analytics-event="quote_request_submitted"
-        >
-            {% csrf_token %}
-            {% include "marketplace/includes/accessible_form.html" %}
-
-            <button class="button form-submit" type="submit">
-                Submit quote request
-            </button>
-        </form>
-    </section>
+            <aside class="quote-workflow-context" aria-label="Listing you're enquiring about">
+                <p class="quote-workflow-eyebrow">Listing</p>
+                <h2>{{ listing.title }}</h2>
+                <p class="quote-workflow-context__manufacturer">{{ listing.manufacturer.business_name }}</p>
+                <dl class="quote-context-facts">
+                    <div><dt>Minimum order</dt><dd>{{ listing.minimum_quantity }} units</dd></div>
+                    <div><dt>Lead time</dt><dd>{{ listing.production_days }} days</dd></div>
+                    {% if listing.price_per_unit %}<div><dt>Indicative unit price</dt><dd>{{ listing.price_per_unit|inr }}</dd></div>{% endif %}
+                </dl>
+                <p class="quote-workflow-context__note">Your quantity must meet the minimum order. The manufacturer can review your requirements before sending a quotation.</p>
+            </aside>
+        </div>
+    </div>
 {% endblock %}

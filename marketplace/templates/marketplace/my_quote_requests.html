@@ -4,192 +4,128 @@
 {% block title %}My quote requests | Ubhaar-Vyapaar{% endblock %}
 
 {% block content %}
-    <div class="page-heading">
-        <div>
-            <h1>My quote requests</h1>
-            <p>Track your requests and responses from manufacturers.</p>
-        </div>
-
-        <a class="button" href="{% url 'marketplace' %}">
-            Browse listings
-        </a>
-    </div>
-
-    <dl class="stats-grid" aria-label="Quote request summary">
-        <div class="stat-card">
-            <dt>Total requests</dt>
-            <dd>{{ stats.total_requests }}</dd>
-        </div>
-    
-        <div class="stat-card">
-            <dt>Awaiting manufacturer response</dt>
-            <dd>{{ stats.pending_requests }}</dd>
-        </div>
-    
-        <div class="stat-card stat-card-attention">
-            <dt>Quotations needing your response</dt>
-            <dd>{{ stats.awaiting_response }}</dd>
-        </div>
-    
-        <div class="stat-card">
-            <dt>Quotations you accepted</dt>
-            <dd>{{ stats.accepted_quotations }}</dd>
-        </div>
-    </dl>
-
-    <h2 class="dashboard-section-title">Your requests</h2>
-
-    <div class="record-grid">
-        {% for quote in quotes %}
-            <article class="record-card">
-                <span class="status-pill status-{{ quote.status|lower }}">
-                    Request: {{ quote.get_status_display }}
-                </span>
-
-                <h2>
-                    {% if quote.listing.is_active and quote.listing.manufacturer.is_verified %}
-                        <a href="{% url 'listing_detail' quote.listing.pk %}">
-                            {{ quote.listing.title }}
-                        </a>
-                    {% else %}
-                        {{ quote.listing.title }}
-                    {% endif %}
-                </h2>
-
-                <p>{{ quote.listing.manufacturer.business_name }}</p>
-
-                <p class="record-meta">
-                    Request #{{ quote.pk }} &middot;
-                    {{ quote.created_at|date:"d M Y, H:i" }}
-                </p>
-
-                <dl class="record-facts">
-                    <dt>Quantity</dt>
-                    <dd>{{ quote.quantity }} units</dd>
-
-                    <dt>Requirements</dt>
-                    <dd>{{ quote.requirements|linebreaksbr }}</dd>
-
-                    <dt>Delivery location</dt>
-                    <dd>{{ quote.delivery_location }}</dd>
-                </dl>
-
-                {% if quote.quotation %}
-                    <div class="message">
-                        <h3>Manufacturer's quotation</h3>
-
-                        <p>
-                            Price per unit:
-                            {{ quote.quotation.price_per_unit|inr }}<br>
-
-                            Quantity:
-                            {{ quote.quotation.quantity }} units<br>
-
-                            Subtotal:
-                            {{ quote.quotation.subtotal|inr }}<br>
-
-                            Production time:
-                            {{ quote.quotation.production_days }} days
-                        </p>
-
-                        {% if quote.quotation.message %}
-                            <p>
-                                {{ quote.quotation.message|linebreaksbr }}
-                            </p>
-                        {% endif %}
-
-                        <p>
-                            <strong>Quotation status:</strong>
-                            {{ quote.quotation.get_status_display }}
-                        </p>
-
-                        {% if quote.quotation.status == "SENT" %}
-                            <p class="message warning">
-                                Accepting this quotation will create an order
-                                between you and the manufacturer. No real
-                                payment or escrow will be started.
-                            </p>
-
-                            <form
-                                method="post"
-                                action="{% url 'respond_to_quotation' quote.quotation.pk %}"
-                                class="record-actions"
-                                data-confirm-accept="Accepting this quotation will create a demo order between you and the manufacturer. No real payment will be processed."
-                            >
-                                {% csrf_token %}
-
-                                <button
-                                    class="button button-accept"
-                                    type="submit"
-                                    name="status"
-                                    value="ACCEPTED"
-                                >
-                                    Accept quotation
-                                </button>
-
-                                <button
-                                    class="button button-reject"
-                                    type="submit"
-                                    name="status"
-                                    value="DECLINED"
-                                >
-                                    Decline quotation
-                                </button>
-                            </form>
-
-                            <p class="record-meta">
-                                Your response cannot be changed through
-                                this page. Accepting creates a demo order
-                                and does not take real payment.
-                            </p>
-                        {% elif quote.quotation.responded_at %}
-                            <p class="record-meta">
-                                Responded on
-                                {{ quote.quotation.responded_at|date:"d M Y, H:i" }}.
-                            </p>
-                        {% endif %}
-
-                        {% if quote.quotation.order %}
-                            <p>
-                                <a
-                                    class="button button-secondary"
-                                    href="{% url 'order_detail' quote.quotation.order.pk %}"
-                                >
-                                    View order
-                                </a>
-                            </p>
-                        {% endif %}
-
-                        <p class="record-meta">
-                            The subtotal excludes any separately stated
-                            charges. Payment and escrow states are demo-only.
-                        </p>
-                    </div>
-                {% else %}
-                    <p class="record-meta">
-                        {% if quote.status == "PENDING" %}
-                            Awaiting a response from the manufacturer.
-                        {% elif quote.status == "ACCEPTED" %}
-                            The manufacturer accepted your request,
-                            but has not sent a priced quotation yet.
-                        {% elif quote.status == "REJECTED" %}
-                            The manufacturer declined this request.
-                            You can explore other available services.
-                        {% endif %}
-                    </p>
-                {% endif %}
-            </article>
-        {% empty %}
-            <div class="empty-panel">
-                <h2>You haven't requested a quote yet</h2>
-                <p>
-                    Find a service and share your requirements
-                    with its manufacturer.
-                </p>
-                <a class="button" href="{% url 'marketplace' %}">
-                    Explore listings
-                </a>
+    <div class="quote-workflow-page quote-requests-page">
+        <header class="quote-requests-heading">
+            <div>
+                <p class="quote-workflow-eyebrow">Buyer workspace</p>
+                <h1>Quote requests</h1>
+                <p>Review manufacturer responses and decide on quotations.</p>
             </div>
-        {% endfor %}
+            <a class="button button-secondary" href="{% url 'marketplace' %}">Browse capacity</a>
+        </header>
+
+        <dl class="quote-request-summary" aria-label="Quote request summary">
+            <div><dt>Total requests</dt><dd>{{ stats.total_requests }}</dd></div>
+            <div><dt>Awaiting manufacturer</dt><dd>{{ stats.pending_requests }}</dd></div>
+            <div class="quote-request-summary__attention"><dt>Awaiting your decision</dt><dd>{{ stats.awaiting_response }}</dd></div>
+            <div><dt>Accepted</dt><dd>{{ stats.accepted_quotations }}</dd></div>
+        </dl>
+
+        <section class="quote-request-list" aria-labelledby="quote-request-list-title">
+            <div class="quote-request-list__heading">
+                <div>
+                    <p class="quote-workflow-eyebrow">Request history</p>
+                    <h2 id="quote-request-list-title">Your requests</h2>
+                </div>
+            </div>
+
+            {% for quote in quotes %}
+                <article class="quote-flow-card">
+                    <header class="quote-flow-card__header">
+                        <div>
+                            {% if quote.quotation %}
+                                {% if quote.quotation.status == "SENT" %}
+                                    <span class="quote-status quote-status--pending">Quotation · Awaiting your decision</span>
+                                {% elif quote.quotation.status == "ACCEPTED" %}
+                                    <span class="quote-status quote-status--accepted">Quotation · Accepted</span>
+                                {% else %}
+                                    <span class="quote-status quote-status--neutral">Quotation · Declined</span>
+                                {% endif %}
+                            {% elif quote.status == "PENDING" %}
+                                <span class="quote-status quote-status--pending">Request · Awaiting manufacturer</span>
+                            {% elif quote.status == "ACCEPTED" %}
+                                <span class="quote-status quote-status--neutral">Request · Accepted</span>
+                            {% else %}
+                                <span class="quote-status quote-status--neutral">Request · Declined</span>
+                            {% endif %}
+                            <h3>
+                                {% if quote.listing.is_active and quote.listing.manufacturer.is_verified %}
+                                    <a href="{% url 'listing_detail' quote.listing.pk %}">{{ quote.listing.title }}</a>
+                                {% else %}
+                                    {{ quote.listing.title }}
+                                {% endif %}
+                            </h3>
+                            <p class="quote-flow-card__meta">{{ quote.listing.manufacturer.business_name }} <span aria-hidden="true">·</span> Request #{{ quote.pk }} <span aria-hidden="true">·</span> {{ quote.created_at|date:"d M Y" }}</p>
+                        </div>
+                    </header>
+
+                    <dl class="quote-flow-facts">
+                        <div><dt>Requested quantity</dt><dd>{{ quote.quantity }} units</dd></div>
+                        <div><dt>Delivery location</dt><dd>{{ quote.delivery_location }}</dd></div>
+                    </dl>
+                    <div class="quote-workflow-message quote-workflow-message--request">
+                        <h4>Your requirements</h4>
+                        <p>{{ quote.requirements|linebreaksbr }}</p>
+                    </div>
+
+                    {% if quote.quotation %}
+                        <section class="quote-flow-quotation" aria-labelledby="quotation-{{ quote.quotation.pk }}-title">
+                            <div class="quote-flow-quotation__heading">
+                                <div>
+                                    <p class="quote-workflow-eyebrow">Manufacturer response</p>
+                                    <h4 id="quotation-{{ quote.quotation.pk }}-title">Quotation</h4>
+                                </div>
+                            </div>
+
+                            <dl class="quote-commercial-facts">
+                                <div><dt>Quantity</dt><dd>{{ quote.quotation.quantity }} units</dd></div>
+                                <div><dt>Unit price</dt><dd>{{ quote.quotation.price_per_unit|inr }}</dd></div>
+                                <div class="quote-commercial-facts__total"><dt>Subtotal</dt><dd>{{ quote.quotation.subtotal|inr }}</dd></div>
+                                <div><dt>Production time</dt><dd>{{ quote.quotation.production_days }} days</dd></div>
+                            </dl>
+
+                            {% if quote.quotation.message %}
+                                <div class="quote-workflow-message quote-workflow-message--quotation">
+                                    <h5>Manufacturer's message</h5>
+                                    <p>{{ quote.quotation.message|linebreaksbr }}</p>
+                                </div>
+                            {% endif %}
+
+                            {% if quote.quotation.status == "SENT" %}
+                                <div class="quote-decision-note" role="note">
+                                    Accepting creates an order for these terms. No real payment or escrow is processed.
+                                </div>
+                                <form method="post" action="{% url 'respond_to_quotation' quote.quotation.pk %}" class="quote-decision-actions" data-confirm-accept="Accepting this quotation will create a demo order between you and the manufacturer. No real payment will be processed.">
+                                    {% csrf_token %}
+                                    <button class="button button-primary" type="submit" name="status" value="ACCEPTED" aria-label="Accept quotation for {{ quote.listing.title }}">Accept quotation</button>
+                                    <button class="button button-subtle-danger" type="submit" name="status" value="DECLINED" aria-label="Decline quotation for {{ quote.listing.title }}">Decline</button>
+                                </form>
+                            {% elif quote.quotation.status == "ACCEPTED" %}
+                                <p class="quote-flow-state-message">Quotation accepted{% if quote.quotation.responded_at %} on {{ quote.quotation.responded_at|date:"d M Y" }}{% endif %}. The order is ready for you to review.</p>
+                            {% else %}
+                                <p class="quote-flow-state-message">Quotation declined{% if quote.quotation.responded_at %} on {{ quote.quotation.responded_at|date:"d M Y" }}{% endif %}.</p>
+                            {% endif %}
+
+                            {% if quote.quotation.order %}
+                                <a class="button button-secondary quote-flow-order-link" href="{% url 'order_detail' quote.quotation.order.pk %}">View order</a>
+                            {% endif %}
+                            <p class="quote-flow-disclosure">Subtotal excludes any separately stated charges. Payment and escrow states are demonstration-only.</p>
+                        </section>
+                    {% elif quote.status == "PENDING" %}
+                        <p class="quote-flow-state-message">The manufacturer has not responded yet.</p>
+                    {% elif quote.status == "ACCEPTED" %}
+                        <p class="quote-flow-state-message">The manufacturer accepted your request but has not sent a priced quotation.</p>
+                    {% else %}
+                        <p class="quote-flow-state-message">The manufacturer declined this request. You can browse other available capacity.</p>
+                    {% endif %}
+                </article>
+            {% empty %}
+                <div class="empty-panel quote-requests-empty">
+                    <h2>You haven't requested a quote yet</h2>
+                    <p>Find manufacturing capacity and share your order requirements with a manufacturer.</p>
+                    <a class="button button-primary" href="{% url 'marketplace' %}">Browse capacity</a>
+                </div>
+            {% endfor %}
+        </section>
     </div>
 {% endblock %}
