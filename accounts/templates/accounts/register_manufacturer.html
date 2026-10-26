@@ -1,77 +1,76 @@
 {% extends "marketplace/base.html" %}
-{% load static %}
 
 {% block title %}Register your business | Ubhaar-Vyapaar{% endblock %}
 
 {% block content %}
-    <section class="auth-split" aria-labelledby="business-title">
-        <div class="auth-story-panel" data-reveal="left">
-            <img src="{% static 'marketplace/images/brand/logo-light.svg' %}" alt="Ubhaar-Vyapaar" width="340" height="72">
-            <p class="eyebrow">Manufacturer access</p>
-            <h1 id="business-title">List capacity for buyers ready to compare.</h1>
-            <p>Create listings and respond to quote requests.</p>
-            <div class="auth-industrial-visual" aria-hidden="true"><span></span><span></span><span></span></div>
-        </div>
+<section class="auth-page-shell manufacturer-registration-layout" aria-labelledby="business-title">
+    <div class="auth-page-main manufacturer-registration-main">
+        <p class="eyebrow">Manufacturer registration</p>
+        <h1 id="business-title">Create your manufacturer account</h1>
+        <p class="manufacturer-registration-intro">Set up your account and business profile to list manufacturing capacity.</p>
+        <p class="message info manufacturer-review-note" role="note">Your business profile begins under review. Listings are public only after business verification.</p>
 
-        <div class="auth-form-panel" data-reveal="right">
-        <a class="back-link" href="{% url 'home' %}">
-            ← Browse listings
-        </a>
-
-        <h2>Create manufacturer account</h2>
-
-        <p class="message">Your business profile begins under review. Listings are public only after business verification.</p>
-
-        <form method="post" class="styled-form auth-form" novalidate>
+        <form method="post" class="styled-form auth-form manufacturer-registration-form" novalidate>
             {% csrf_token %}
-            {% if form.non_field_errors %}<div class="form-error-summary" role="alert" tabindex="-1">{{ form.non_field_errors }}</div>{% endif %}
+            {% if form.non_field_errors %}
+                <div class="form-error-summary" role="alert" tabindex="-1">{{ form.non_field_errors }}</div>
+            {% endif %}
 
             <fieldset class="account-form-group">
                 <legend>Account</legend>
-                <p class="helptext">Your username is used to sign in to your account.</p>
                 {% include "accounts/includes/account_field.html" with field=form.username %}
                 {% include "accounts/includes/account_field.html" with field=form.email %}
-                {% include "accounts/includes/account_field.html" with field=form.phone %}
+                {% include "accounts/includes/account_field.html" with field=form.password1 %}
+                {% include "accounts/includes/account_field.html" with field=form.password2 %}
             </fieldset>
 
             <fieldset class="account-form-group">
                 <legend>Business details</legend>
                 {% include "accounts/includes/account_field.html" with field=form.business_name %}
                 {% include "accounts/includes/account_field.html" with field=form.description %}
-                {% include "accounts/includes/account_field.html" with field=form.city %}
-                {% include "accounts/includes/account_field.html" with field=form.state %}
             </fieldset>
 
             <fieldset class="account-form-group">
-                <legend>Password</legend>
-                {% include "accounts/includes/account_field.html" with field=form.password1 %}
-                {% include "accounts/includes/account_field.html" with field=form.password2 %}
+                <legend>Location</legend>
+                <div class="manufacturer-location-grid">
+                    {% include "accounts/includes/account_field.html" with field=form.city %}
+                    {% include "accounts/includes/account_field.html" with field=form.state %}
+                </div>
             </fieldset>
 
             <fieldset class="account-form-group">
-                <legend>Legal acknowledgements</legend>
+                <legend>Contact</legend>
+                {% include "accounts/includes/account_field.html" with field=form.phone %}
+            </fieldset>
+
+            <fieldset class="account-form-group manufacturer-agreements">
+                <legend>Agreements</legend>
                 {% include "accounts/includes/account_field.html" with field=form.legal_acknowledgement %}
                 <p class="auth-consent-note">Review the <a href="{% url 'terms' %}" target="_blank" rel="noopener">Terms &amp; Conditions</a> and <a href="{% url 'privacy_policy' %}" target="_blank" rel="noopener">Privacy Policy</a> before creating an account.</p>
             </fieldset>
 
-            <button class="button button-primary form-submit" type="submit">
-                Create manufacturer account
-            </button>
+            <button class="button button-primary form-submit" type="submit">Create manufacturer account</button>
         </form>
 
-        <div class="auth-links">
-            <p>
-                Already registered?
-                <a href="{% url 'login' %}">Log in</a>
-            </p>
+        <div class="auth-links manufacturer-registration-links">
+            <p>Already registered? <a href="{% url 'login' %}">Log in</a></p>
+            <p>Looking for manufacturing services? <a href="{% url 'register' %}">Create a buyer account</a></p>
+        </div>
+    </div>
 
-            <p>
-                Looking for manufacturing services?
-                <a href="{% url 'register' %}">
-                    Create a buyer account
-                </a>
-            </p>
-        </div>
-        </div>
-    </section>
+    <aside class="auth-support-panel" aria-labelledby="manufacturer-support-title">
+        <p class="eyebrow">Early-access pilot</p>
+        <h2 id="manufacturer-support-title">For manufacturers</h2>
+        <ul class="auth-support-list">
+            <li>
+                <span class="auth-support-mark" aria-hidden="true">1</span>
+                <span>List available manufacturing capacity.</span>
+            </li>
+            <li>
+                <span class="auth-support-mark" aria-hidden="true">2</span>
+                <span>Respond to quote requests and manage orders.</span>
+            </li>
+        </ul>
+    </aside>
+</section>
 {% endblock %}

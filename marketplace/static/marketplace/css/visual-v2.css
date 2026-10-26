@@ -1402,3 +1402,314 @@ a { color: var(--uv-teal); }
         margin-left: 30px;
     }
 }
+
+/* Manufacturer registration uses the same auth shell and field treatment. */
+.manufacturer-registration-layout {
+    grid-template-columns: minmax(0, 720px) minmax(240px, 290px);
+    align-items: start;
+    gap: clamp(24px, 4vw, 40px);
+    width: min(100% - 48px, 1080px);
+    margin: clamp(28px, 4.5vw, 56px) auto;
+}
+
+.manufacturer-registration-main {
+    min-width: 0;
+    padding: clamp(24px, 3vw, 36px);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-card);
+    background: var(--color-surface);
+    box-shadow: var(--shadow-soft);
+}
+
+.manufacturer-registration-main > .eyebrow {
+    margin: 0 0 var(--space-2);
+    color: var(--color-accent);
+}
+
+.manufacturer-registration-main h1 {
+    margin: 0;
+    color: var(--color-primary);
+    font-size: clamp(32px, 3.2vw, 38px);
+    font-weight: 720;
+    line-height: 1.15;
+    letter-spacing: -0.025em;
+}
+
+.manufacturer-registration-intro {
+    margin: var(--space-2) 0 var(--space-4);
+    color: var(--color-muted);
+    line-height: 1.5;
+}
+
+.manufacturer-review-note {
+    margin: 0 0 var(--space-6);
+    padding: 12px 14px;
+    border: 1px solid #c8dae2;
+    border-radius: var(--radius-control);
+    background: #eef5f7;
+    color: var(--color-primary);
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+.manufacturer-registration-form {
+    display: grid;
+    gap: var(--space-5);
+    margin: 0;
+}
+
+.manufacturer-registration-form .account-form-group {
+    min-width: 0;
+    margin: 0;
+    padding: 0 0 var(--space-5);
+    border: 0;
+    border-bottom: 1px solid var(--color-border);
+    border-radius: 0;
+    background: transparent;
+}
+
+.manufacturer-registration-form .account-form-group legend {
+    width: 100%;
+    margin: 0 0 var(--space-4);
+    padding: 0;
+    color: var(--color-primary);
+    font-size: 18px;
+    font-weight: 700;
+    line-height: 1.35;
+}
+
+.manufacturer-registration-form .account-form-group .form-field {
+    min-width: 0;
+    margin: 0 0 var(--space-4);
+}
+
+.manufacturer-registration-form .account-form-group .form-field:last-child {
+    margin-bottom: 0;
+}
+
+.manufacturer-registration-form .form-field label {
+    display: block;
+    margin-bottom: var(--space-2);
+    color: var(--color-text);
+    font-weight: 650;
+}
+
+.manufacturer-registration-form .form-field input:not([type="checkbox"]):not([type="radio"]):not([type="file"]),
+.manufacturer-registration-form .form-field select,
+.manufacturer-registration-form .form-field textarea {
+    box-sizing: border-box;
+    width: 100%;
+    min-width: 0;
+    min-height: 48px;
+    font-size: 16px;
+}
+
+.manufacturer-registration-form .form-field textarea {
+    min-height: 112px;
+    resize: vertical;
+}
+
+.manufacturer-registration-form .form-field .helptext,
+.manufacturer-registration-form .password-requirements {
+    color: var(--color-muted);
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+.manufacturer-registration-form .form-field .helptext {
+    margin: var(--space-2) 0 0;
+}
+
+.manufacturer-registration-form .password-requirements {
+    margin-top: var(--space-2);
+}
+
+.manufacturer-registration-form .password-requirements summary {
+    min-height: 44px;
+    color: #0c615b;
+    text-underline-offset: 3px;
+}
+
+.manufacturer-registration-form .password-visibility-toggle {
+    min-height: 44px;
+    margin-top: var(--space-2);
+    border-color: #aab8be;
+    border-radius: var(--radius-control);
+    color: var(--color-primary);
+}
+
+.manufacturer-registration-form .password-visibility-toggle:focus-visible,
+.manufacturer-registration-form .password-requirements summary:focus-visible {
+    outline: 3px solid var(--color-warning);
+    outline-offset: 3px;
+}
+
+.manufacturer-registration-form .form-field-checkbox {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--space-3);
+}
+
+.manufacturer-registration-form .form-field-checkbox > input[type="checkbox"] {
+    width: 22px;
+    height: 22px;
+    flex: 0 0 22px;
+    margin: 2px 0 0;
+    accent-color: var(--color-accent);
+}
+
+.manufacturer-registration-form .form-field-checkbox > div {
+    min-width: 0;
+}
+
+.manufacturer-registration-form .form-field-checkbox label {
+    margin: 0;
+    font-size: 15px;
+    font-weight: 600;
+    line-height: 1.5;
+    overflow-wrap: anywhere;
+}
+
+.manufacturer-registration-form .field-errors,
+.manufacturer-registration-main .form-error-summary {
+    margin-top: var(--space-2);
+    padding: 11px 13px;
+    border: 1px solid #e7c0bd;
+    border-radius: var(--radius-control);
+    background: #fff2f1;
+    color: #8f1d19;
+    overflow-wrap: anywhere;
+}
+
+.manufacturer-registration-main .form-error-summary {
+    margin: 0;
+}
+
+.manufacturer-registration-main .form-error-summary p {
+    margin: 0 0 var(--space-1);
+    color: inherit;
+    font-weight: 650;
+}
+
+.manufacturer-registration-form .field-errors .errorlist,
+.manufacturer-registration-main .form-error-summary .errorlist {
+    margin: 0;
+    padding-left: 20px;
+}
+
+.manufacturer-registration-form .auth-consent-note {
+    margin: var(--space-3) 0 0 35px;
+    color: var(--color-muted);
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+.manufacturer-registration-form .auth-consent-note a,
+.manufacturer-registration-links a {
+    color: #0c615b;
+    font-weight: 650;
+    text-underline-offset: 3px;
+}
+
+.manufacturer-registration-form .form-submit {
+    width: 100%;
+    min-height: 48px;
+    margin: 0;
+}
+
+.manufacturer-registration-links {
+    margin-top: var(--space-6);
+    padding-top: var(--space-4);
+    border-top: 1px solid var(--color-border);
+}
+
+.manufacturer-registration-links p {
+    margin: 0 0 var(--space-3);
+    color: var(--color-muted);
+}
+
+.manufacturer-registration-links p:last-child {
+    margin-bottom: 0;
+}
+
+.manufacturer-registration-main :focus-visible {
+    outline-color: var(--color-accent);
+}
+
+.manufacturer-location-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--space-4);
+}
+
+.manufacturer-location-grid .form-field {
+    margin-bottom: 0;
+}
+
+.manufacturer-registration-layout .auth-support-panel {
+    position: sticky;
+    top: 96px;
+}
+
+@media (max-width: 900px) {
+    .manufacturer-registration-layout {
+        grid-template-columns: minmax(0, 760px);
+        width: min(100% - 40px, 760px);
+        gap: var(--space-5);
+        margin: 28px auto 40px;
+    }
+
+    .manufacturer-registration-layout .auth-support-panel {
+        position: static;
+    }
+}
+
+@media (max-width: 600px) {
+    .manufacturer-registration-layout {
+        width: min(100% - 32px, 760px);
+        margin: 20px auto 32px;
+    }
+
+    .manufacturer-registration-main {
+        padding: 22px;
+    }
+
+    .manufacturer-registration-main h1 {
+        font-size: clamp(30px, 8vw, 34px);
+    }
+
+    .manufacturer-registration-intro {
+        margin-bottom: var(--space-3);
+    }
+
+    .manufacturer-review-note {
+        margin-bottom: var(--space-5);
+    }
+
+    .manufacturer-registration-form {
+        gap: var(--space-4);
+    }
+
+    .manufacturer-location-grid {
+        grid-template-columns: minmax(0, 1fr);
+        gap: var(--space-4);
+    }
+}
+
+@media (max-width: 360px) {
+    .manufacturer-registration-main {
+        padding: 18px;
+    }
+
+    .manufacturer-registration-form .account-form-group {
+        padding-bottom: var(--space-4);
+    }
+
+    .manufacturer-registration-form .form-field-checkbox {
+        gap: var(--space-2);
+    }
+
+    .manufacturer-registration-form .auth-consent-note {
+        margin-left: 30px;
+    }
+}
