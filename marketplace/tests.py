@@ -1308,6 +1308,35 @@ class OrderMessagingTests(TestCase):
         self.client.force_login(self.other_manufacturer_user)
         self.assertEqual(self.client.get(url).status_code, 404)
 
+    def test_order_detail_prioritizes_terms_milestones_and_role_specific_actions(self):
+        self.client.force_login(self.buyer)
+        buyer_response = self.client.get(
+            reverse("order_detail", args=[self.order.pk]),
+        )
+        self.assertEqual(buyer_response.status_code, 200)
+        buyer_content = buyer_response.content.decode()
+        self.assertEqual(buyer_content.count("<h1"), 1)
+        self.assertContains(buyer_response, "Commercial terms")
+        self.assertContains(buyer_response, "Simulated payment state")
+        self.assertContains(buyer_response, "Milestone 1")
+        self.assertContains(buyer_response, "No messages yet")
+        self.assertContains(buyer_response, "Fund milestone (demo)")
+        self.assertNotContains(buyer_response, "Start milestone")
+        self.assertContains(buyer_response, 'for="id_body"')
+
+        self.milestone.status = Milestone.Status.IN_PROGRESS
+        self.milestone.funding_status = Milestone.FundingStatus.FUNDED
+        self.milestone.save(
+            update_fields=["status", "funding_status", "updated_at"],
+        )
+        self.client.force_login(self.manufacturer_user)
+        manufacturer_response = self.client.get(
+            reverse("order_detail", args=[self.order.pk]),
+        )
+        self.assertEqual(manufacturer_response.status_code, 200)
+        self.assertContains(manufacturer_response, "Submit for approval")
+        self.assertNotContains(manufacturer_response, "Fund milestone (demo)")
+
     def test_buyer_message_notifies_order_manufacturer(self):
         self.client.force_login(self.buyer)
 

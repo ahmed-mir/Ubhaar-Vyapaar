@@ -4,60 +4,38 @@
 {% block title %}My orders | Ubhaar-Vyapaar{% endblock %}
 
 {% block content %}
-    <div class="page-heading">
-        <div>
-            <p class="eyebrow">Buyer workspace</p>
-            <h1>My orders</h1>
-            <p>
-                Track demo orders created from accepted quotations.
-                No real payment or escrow is handled in this version.
-            </p>
-        </div>
-
-        <a class="button button-secondary" href="{% url 'buyer_dashboard' %}">
-            Dashboard
-        </a>
-    </div>
-
-    <div class="record-grid">
-        {% for order in orders %}
-            <article class="record-card">
-                <span class="status-pill status-{{ order.status|lower }}">
-                    {{ order.get_status_display }}
-                </span>
-
-                <h2>Order #{{ order.pk }}</h2>
-                <p class="record-meta">
-                    {{ order.listing.title }} &middot;
-                    {{ order.manufacturer.business_name }}
-                </p>
-
-                <dl class="record-facts">
-                    <dt>Quantity</dt>
-                    <dd>{{ order.quantity }} units</dd>
-
-                    <dt>Total amount</dt>
-                    <dd>{{ order.total_amount|inr }}</dd>
-
-                    <dt>Terms locked</dt>
-                    <dd>{{ order.terms_locked_at|date:"d M Y, H:i" }}</dd>
-                </dl>
-
-                <a class="button" href="{% url 'order_detail' order.pk %}">
-                    Track order
-                </a>
-            </article>
-        {% empty %}
-            <div class="empty-panel">
-                <h2>No orders yet</h2>
-                <p>
-                    Accepted quotations will appear here as active orders
-                    with locked terms and milestone tracking.
-                </p>
-<a class="button" href="{% url 'marketplace' %}">
-                    Browse capacity
-                </a>
+    <div class="order-index-page">
+        <header class="order-index-heading">
+            <div>
+                <p class="order-workspace__eyebrow">Buyer workspace</p>
+                <h1>My orders</h1>
+                <p>Track orders created from accepted quotations. Funding and release states are simulated; no real payment is processed.</p>
             </div>
-        {% endfor %}
+            <a class="button button-secondary" href="{% url 'buyer_dashboard' %}">Dashboard</a>
+        </header>
+
+        <section class="order-index-list" aria-label="Your orders">
+            {% for order in orders %}
+                <article class="order-index-card">
+                    <header>
+                        <span class="status-pill status-{{ order.status|lower }}">{{ order.get_status_display }}</span>
+                        <h2>Order #{{ order.pk }}</h2>
+                        <p>{{ order.listing.title }} <span aria-hidden="true">&middot;</span> Manufacturer: {{ order.manufacturer.business_name }}</p>
+                    </header>
+                    <dl>
+                        <div><dt>Quantity</dt><dd>{{ order.quantity|indian_number }} units</dd></div>
+                        <div><dt>Order total</dt><dd>{{ order.total_amount|inr }}</dd></div>
+                        <div><dt>Terms locked</dt><dd>{{ order.terms_locked_at|date:"d M Y, H:i" }}</dd></div>
+                    </dl>
+                    <a class="button button-primary" href="{% url 'order_detail' order.pk %}">View order</a>
+                </article>
+            {% empty %}
+                <div class="empty-panel order-index-empty">
+                    <h2>No orders yet</h2>
+                    <p>After you accept a quotation, its order and milestones will appear here.</p>
+                    <a class="button button-primary" href="{% url 'marketplace' %}">Browse capacity</a>
+                </div>
+            {% endfor %}
+        </section>
     </div>
 {% endblock %}

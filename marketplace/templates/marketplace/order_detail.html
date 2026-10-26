@@ -4,481 +4,261 @@
 {% block title %}Order #{{ order.pk }} | Ubhaar-Vyapaar{% endblock %}
 
 {% block content %}
-    <a
-        class="back-link"
-        href="{% if user.role == 'BUYER' %}{% url 'buyer_orders' %}{% else %}{% url 'manufacturer_orders' %}{% endif %}"
-    >
-        &larr; Orders
-    </a>
+    <div class="order-workspace">
+        <a class="back-link order-workspace__back" href="{% if user.role == 'BUYER' %}{% url 'buyer_orders' %}{% else %}{% url 'manufacturer_orders' %}{% endif %}">
+            &larr; Orders
+        </a>
 
-    <div class="page-heading dashboard-hero order-hero workflow-hero">
-        <div>
-            <p class="eyebrow">Demo order workflow</p>
-            <h1>Order #{{ order.pk }}</h1>
-            <p>
-                {{ order.listing.title }} with {{ order.manufacturer.business_name }}.
-                Milestone funding and release states are simulated only.
-                No real money is processed, held, or transferred.
-            </p>
-        </div>
-
-        <span class="status-pill status-{{ order.status|lower }}">
-            {{ order.get_status_display }}
-        </span>
-    </div>
-
-    <section class="next-action-panel" aria-labelledby="next-action-title">
-        <div>
-            <p class="eyebrow">Next action</p>
-            <h2 id="next-action-title">{{ next_action.title }}</h2>
-            <p>{{ next_action.body }}</p>
-        </div>
-
-        {% if next_action.url_name %}
-            <a class="button button-primary" href="{% url next_action.url_name next_action.url_arg %}">
-                {{ next_action.button }}
-            </a>
-        {% elif next_action.anchor %}
-            <a class="button button-secondary" href="#{{ next_action.anchor }}">
-                {{ next_action.button }}
-            </a>
-        {% endif %}
-    </section>
-
-    <section class="order-timeline-panel" aria-labelledby="order-timeline-title">
-        <div class="section-heading">
+        <header class="order-workspace__header">
             <div>
-                <p class="eyebrow">Status timeline</p>
-                <h2 id="order-timeline-title">Order progress</h2>
-            </div>
-        </div>
-
-        <ol class="order-timeline workflow-timeline">
-            {% for step in timeline_steps %}
-                <li class="timeline-step {% if step.complete %}timeline-step-complete{% endif %}">
-                    <span class="timeline-dot" aria-hidden="true"></span>
-                    <span class="visually-hidden">
-                        Step {{ forloop.counter }} of {{ timeline_steps|length }}.
-                        {% if step.complete %}Completed.{% else %}Not completed yet.{% endif %}
-                    </span>
-                    <strong>{{ step.title }}</strong>
-                    <span class="timeline-state">
-                        {% if step.complete %}Completed{% else %}Waiting{% endif %}
-                    </span>
-                    <span>{{ step.body }}</span>
-                    {% if step.date %}
-                        <span class="record-meta">{{ step.date|date:"d M Y, H:i" }}</span>
-                    {% endif %}
-                </li>
-            {% endfor %}
-        </ol>
-    </section>
-
-    <section class="dashboard-band" aria-labelledby="financial-title">
-        <div class="section-heading">
-            <div>
-                <p class="eyebrow">Simulated funding</p>
-                <h2 id="financial-title">Financial summary</h2>
-                <p>Calculated from the order value and milestone demo funding states.</p>
-            </div>
-        </div>
-
-        <div class="finance-summary-grid">
-            <div class="finance-summary-card">
-                <span>Total Order Value</span>
-                <strong>{{ financial_summary.order_value|inr }}</strong>
-            </div>
-            <div class="finance-summary-card">
-                <span>Funded (demo)</span>
-                <strong>{{ financial_summary.funded|inr }}</strong>
-            </div>
-            <div class="finance-summary-card">
-                <span>Released (demo)</span>
-                <strong>{{ financial_summary.released|inr }}</strong>
-            </div>
-            <div class="finance-summary-card">
-                <span>Remaining / Unfunded</span>
-                <strong>{{ financial_summary.remaining|inr }}</strong>
-            </div>
-        </div>
-
-        <p class="demo-disclaimer">
-            Demo funding is for workflow simulation only. Ubhaar-Vyapaar does
-            not collect payment details or move money in this prototype.
-        </p>
-    </section>
-
-    <section class="dashboard-band" aria-labelledby="milestones-title">
-        <div class="section-heading">
-            <div>
-                <p class="eyebrow">Production checkpoints</p>
-                <h2 id="milestones-title">Milestones</h2>
-                <p>
-                    Fund, start, submit, approve, and release each simulated
-                    milestone in sequence.
-                </p>
-            </div>
-        </div>
-
-        <div class="record-grid milestone-grid">
-            {% for milestone in milestones %}
-                <article class="record-card milestone-card" id="milestone-{{ milestone.pk }}">
-                    <div class="milestone-card-top">
-                        <span class="status-pill status-{{ milestone.status|lower }}">
-                            {{ milestone.get_status_display }}
-                        </span>
-                        <span class="status-pill status-{{ milestone.funding_status|lower }}">
-                            {{ milestone.get_funding_status_display }}
-                        </span>
-                    </div>
-
-                    <h3>{{ milestone.title }}</h3>
-
-                    {% if milestone.description %}
-                        <p class="record-meta">{{ milestone.description }}</p>
-                    {% endif %}
-
-                    <p class="milestone-hint">{{ milestone.workflow_hint }}</p>
-
-                    <dl class="record-facts">
-                        <dt>Share</dt>
-                        <dd>{{ milestone.percentage }}%</dd>
-
-                        {% if milestone.amount %}
-                            <dt>Demo amount</dt>
-                            <dd>{{ milestone.amount|inr }}</dd>
-                        {% endif %}
-
-                        {% if milestone.due_date %}
-                            <dt>Due date</dt>
-                            <dd>{{ milestone.due_date|date:"d M Y" }}</dd>
-                        {% endif %}
-
-                        {% if milestone.funded_at %}
-                            <dt>Demo funded</dt>
-                            <dd>{{ milestone.funded_at|date:"d M Y, H:i" }}</dd>
-                        {% endif %}
-
-                        {% if milestone.started_at %}
-                            <dt>Started</dt>
-                            <dd>{{ milestone.started_at|date:"d M Y, H:i" }}</dd>
-                        {% endif %}
-
-                        {% if milestone.completed_at %}
-                            <dt>Submitted</dt>
-                            <dd>{{ milestone.completed_at|date:"d M Y, H:i" }}</dd>
-                        {% endif %}
-
-                        {% if milestone.approved_at %}
-                            <dt>Approved</dt>
-                            <dd>{{ milestone.approved_at|date:"d M Y, H:i" }}</dd>
-                        {% endif %}
-
-                        {% if milestone.released_at %}
-                            <dt>Demo released</dt>
-                            <dd>{{ milestone.released_at|date:"d M Y, H:i" }}</dd>
-                        {% endif %}
-
-                        {% if milestone.buyer_feedback %}
-                            <dt>Buyer feedback</dt>
-                            <dd>{{ milestone.buyer_feedback|linebreaksbr }}</dd>
-                        {% endif %}
-                    </dl>
-
+                <p class="order-workspace__eyebrow">Order #{{ order.pk }} <span aria-hidden="true">&middot;</span> Accepted {{ order.terms_locked_at|date:"d M Y" }}</p>
+                <h1>{{ order.listing.title }}</h1>
+                <p class="order-workspace__counterparty">
                     {% if user.role == "BUYER" %}
-                        {% if milestone.can_fund %}
-                            <a class="button button-primary full-width" href="{% url 'fund_milestone' milestone.pk %}">
-                                Fund milestone (demo)
-                            </a>
-                        {% endif %}
-
-                        {% if milestone.can_review %}
-                            <form
-                                method="post"
-                                action="{% url 'respond_to_milestone' milestone.pk %}"
-                                class="styled-form milestone-review-form"
-                            >
-                                {% csrf_token %}
-
-                                <p>
-                                    <label for="feedback-{{ milestone.pk }}">
-                                        Feedback
-                                    </label>
-                                    <textarea
-                                        id="feedback-{{ milestone.pk }}"
-                                        name="buyer_feedback"
-                                        rows="3"
-                                        placeholder="Optional note for the manufacturer"
-                                    ></textarea>
-                                </p>
-
-                                <div class="record-actions">
-                                    <button
-                                        class="button button-accept"
-                                        type="submit"
-                                        name="status"
-                                        value="APPROVED"
-                                    >
-                                        Approve milestone
-                                    </button>
-
-                                    <button
-                                        class="button button-reject"
-                                        type="submit"
-                                        name="status"
-                                        value="REJECTED"
-                                    >
-                                        Request changes
-                                    </button>
-                                </div>
-                            </form>
-                        {% endif %}
-
-                        {% if milestone.can_release %}
-                            <form
-                                method="post"
-                                action="{% url 'release_milestone_payment' milestone.pk %}"
-                                class="record-actions"
-                            >
-                                {% csrf_token %}
-                                <button class="button button-primary" type="submit">
-                                    Release demo payment
-                                </button>
-                            </form>
-                            <p class="record-meta">
-                                This marks the simulated milestone amount as released.
-                                No real payment is transferred.
-                            </p>
-                        {% endif %}
-                    {% elif user.role == "MANUFACTURER" %}
-                        {% if milestone.can_start %}
-                            <form
-                                method="post"
-                                action="{% url 'start_milestone' milestone.pk %}"
-                                class="record-actions"
-                            >
-                                {% csrf_token %}
-                                <button class="button" type="submit">
-                                    Start milestone
-                                </button>
-                            </form>
-                        {% endif %}
-
-                        {% if milestone.can_submit %}
-                            <form
-                                method="post"
-                                action="{% url 'mark_milestone_complete' milestone.pk %}"
-                                class="record-actions"
-                            >
-                                {% csrf_token %}
-                                <button class="button" type="submit">
-                                    Submit for approval
-                                </button>
-                            </form>
-                        {% endif %}
+                        Manufacturer: {{ order.manufacturer.business_name }}
+                    {% else %}
+                        Buyer: {{ order.buyer.username }}
                     {% endif %}
-                </article>
-            {% empty %}
-                <div class="empty-panel">
-                    <h2>No milestones yet</h2>
-                    <p>Milestones are created when an order is created.</p>
-                </div>
-            {% endfor %}
-        </div>
-    </section>
-
-    <div class="record-grid order-summary-grid dashboard-band">
-        <article class="record-card">
-            <p class="eyebrow">Locked terms</p>
-            <h2>Order and quotation summary</h2>
-
-            <dl class="record-facts">
-                <dt>Listing</dt>
-                <dd>{{ order.listing.title }}</dd>
-
-                <dt>Buyer</dt>
-                <dd>{{ order.buyer.username }}</dd>
-
-                <dt>Manufacturer</dt>
-                <dd>{{ order.manufacturer.business_name }}</dd>
-
-                <dt>Quantity</dt>
-                <dd>{{ order.quantity }} units</dd>
-
-                <dt>Agreed unit price</dt>
-                <dd>{{ order.agreed_unit_price|inr }}</dd>
-
-                <dt>Total amount</dt>
-                <dd>{{ order.total_amount|inr }}</dd>
-
-                <dt>Production time</dt>
-                <dd>{{ order.agreed_production_days }} days</dd>
-            </dl>
-        </article>
-
-        <article class="record-card">
-            <p class="eyebrow">Specification snapshot</p>
-            <h2>Buyer requirements</h2>
-
-            <dl class="record-facts">
-                <dt>Requirements</dt>
-                <dd>{{ order.specifications_snapshot.requirements|linebreaksbr }}</dd>
-
-                <dt>Delivery location</dt>
-                <dd>{{ order.specifications_snapshot.delivery_location }}</dd>
-
-                {% if order.specifications_snapshot.machine_type %}
-                    <dt>Machine type</dt>
-                    <dd>{{ order.specifications_snapshot.machine_type }}</dd>
-                {% endif %}
-
-                {% if order.specifications_snapshot.materials %}
-                    <dt>Materials</dt>
-                    <dd>{{ order.specifications_snapshot.materials }}</dd>
-                {% endif %}
-            </dl>
-        </article>
-    </div>
-
-    <section class="dashboard-band conversation-band" aria-labelledby="conversation-title">
-        <div class="section-heading">
-            <div>
-                <p class="eyebrow">Collaboration</p>
-                <h2 id="conversation-title">Order conversation</h2>
-                <p>
-                    Messages are scoped to order #{{ order.pk }} and visible
-                    only to this buyer and manufacturer.
                 </p>
             </div>
-        </div>
+            <span class="status-pill status-{{ order.status|lower }} order-workspace__status">{{ order.get_status_display }}</span>
+        </header>
 
-        <div class="conversation-layout">
-            <div class="conversation-thread order-conversation-thread" aria-live="polite">
-                {% for order_message in order.messages.all %}
-                    <article
-                        class="conversation-message {% if order_message.sender == user %}conversation-message-own{% endif %}"
-                    >
-                        <div class="conversation-message-header">
-                            <strong>
-                                {% if order_message.sender == user %}
-                                    You
-                                {% elif order_message.sender == order.buyer %}
-                                    Buyer: {{ order_message.sender.username }}
-                                {% else %}
-                                    Manufacturer: {{ order_message.sender.username }}
-                                {% endif %}
-                            </strong>
-
-                            <span>
-                                {{ order_message.created_at|date:"d M Y, H:i" }}
-                            </span>
-                        </div>
-
-                        <p>{{ order_message.body|linebreaksbr }}</p>
-                    </article>
-                {% empty %}
-                    <div class="empty-panel">
-                        <h2>No order messages yet</h2>
-                        <p>
-                            Use this thread for production updates,
-                            clarification, and milestone-specific questions.
-                        </p>
-                    </div>
-                {% endfor %}
+        <section class="order-next-action" aria-labelledby="next-action-title">
+            <div>
+                <p class="order-workspace__eyebrow">Next action</p>
+                <h2 id="next-action-title">{{ next_action.title }}</h2>
+                {% if next_action.url_name == "fund_milestone" %}
+                    <p>Confirm the simulated state so the manufacturer can start production.</p>
+                {% else %}
+                    <p>{{ next_action.body }}</p>
+                {% endif %}
             </div>
+            {% if next_action.url_name %}
+                <a class="button button-primary" href="{% url next_action.url_name next_action.url_arg %}">{{ next_action.button }}</a>
+            {% elif next_action.anchor %}
+                <a class="button button-secondary" href="#{{ next_action.anchor }}">{{ next_action.button }}</a>
+            {% endif %}
+        </section>
 
-            <aside class="order-side-rail">
-                <form
-                    method="post"
-                    action="{% url 'send_order_message' order.pk %}"
-                    class="styled-form conversation-form"
-                    novalidate
-                >
-                    {% csrf_token %}
-                    <h3>Send an order update</h3>
-                    {% with form=message_form %}
-                        {% include "marketplace/includes/accessible_form.html" %}
-                    {% endwith %}
-
-                    <button class="button" type="submit">
-                        Send message
-                    </button>
-                </form>
-
-                <section class="record-card activity-card" aria-labelledby="activity-title">
-                    <p class="eyebrow">Recent activity</p>
-                    <h3 id="activity-title">Order history</h3>
-                    <div class="activity-list">
-                        {% for item in activity_items %}
-                            <article>
-                                <p>{{ item.message }}</p>
-                                <span>{{ item.created_at|date:"d M Y, H:i" }}</span>
-                            </article>
-                        {% empty %}
-                            <p class="record-meta">
-                                Order activity will appear here as workflow
-                                actions are completed.
-                            </p>
-                        {% endfor %}
-                    </div>
-                </section>
-            </aside>
-        </div>
-    </section>
-
-    {% if order.status == "COMPLETED" %}
-        <section class="dashboard-band" aria-labelledby="review-title">
-            <div class="section-heading">
+        <section class="order-commercial" aria-labelledby="order-commercial-title">
+            <div class="order-section-heading">
                 <div>
-                    <h2 id="review-title">Order review</h2>
-                    <p>
-                        Completed orders can be reviewed once by the buyer.
-                    </p>
+                    <p class="order-workspace__eyebrow">Agreed quotation</p>
+                    <h2 id="order-commercial-title">Commercial terms</h2>
+                </div>
+            </div>
+            <dl class="order-commercial__facts">
+                <div><dt>Quantity</dt><dd>{{ order.quantity|indian_number }} units</dd></div>
+                <div><dt>Unit price</dt><dd>{{ order.agreed_unit_price|inr }}</dd></div>
+                <div class="order-commercial__total"><dt>Order total</dt><dd>{{ order.total_amount|inr }}</dd></div>
+                <div><dt>Production time</dt><dd>{{ order.agreed_production_days }} days</dd></div>
+                <div><dt>Delivery location</dt><dd>{{ order.specifications_snapshot.delivery_location }}</dd></div>
+            </dl>
+            {% if order.quotation.message %}
+                <div class="order-agreed-message">
+                    <h3>Agreed quotation note</h3>
+                    <p>{{ order.quotation.message|linebreaksbr }}</p>
+                </div>
+            {% endif %}
+        </section>
+
+        <section class="order-funding" aria-labelledby="funding-summary-title">
+            <div class="order-section-heading">
+                <div>
+                    <p class="order-workspace__eyebrow">Simulated payment state</p>
+                    <h2 id="funding-summary-title">Milestone funding status</h2>
+                </div>
+                <span class="order-demo-label">Demo only</span>
+            </div>
+            <dl class="order-funding__facts">
+                <div><dt>Funded, including released</dt><dd>{{ financial_summary.funded|inr }}</dd></div>
+                <div><dt>Marked released</dt><dd>{{ financial_summary.released|inr }}</dd></div>
+                <div><dt>Not yet funded</dt><dd>{{ financial_summary.remaining|inr }}</dd></div>
+            </dl>
+            <p class="order-funding__disclaimer">These are workflow simulation states. The platform does not collect payment details or process, hold, or transfer money.</p>
+        </section>
+
+        <section class="order-milestones" aria-labelledby="milestones-title">
+            <div class="order-section-heading">
+                <div>
+                    <p class="order-workspace__eyebrow">Production checkpoints</p>
+                    <h2 id="milestones-title">Milestones</h2>
+                    <p>Review each checkpoint, its current state, and the action available to you.</p>
                 </div>
             </div>
 
-            <div class="record-grid">
-                {% if order.review %}
-                    <article class="record-card">
-                        <span class="trust-badge">
-                            Overall {{ order.review.overall_rating }}/5
-                        </span>
+            <ol class="order-milestone-list">
+                {% for milestone in milestones %}
+                    <li class="order-milestone-item" id="milestone-{{ milestone.pk }}">
+                        <span class="order-milestone-item__step" aria-hidden="true">{{ forloop.counter }}</span>
+                        <article class="order-milestone-card">
+                            <header class="order-milestone-card__header">
+                                <div>
+                                    <p class="order-milestone-card__sequence">Milestone {{ forloop.counter }}</p>
+                                    <h3>{{ milestone.title }}</h3>
+                                </div>
+                                <div class="order-milestone-card__statuses" aria-label="Milestone status">
+                                    <span class="status-pill status-{{ milestone.status|lower }}">{{ milestone.get_status_display }}</span>
+                                    <span class="status-pill status-{{ milestone.funding_status|lower }}">{{ milestone.get_funding_status_display }}</span>
+                                </div>
+                            </header>
 
-                        <h3>Buyer feedback</h3>
+                            {% if milestone.description %}<p class="order-milestone-card__description">{{ milestone.description|linebreaksbr }}</p>{% endif %}
+                            <p class="order-milestone-card__hint">{{ milestone.workflow_hint }}</p>
 
-                        <dl class="record-facts">
-                            <dt>Quality</dt>
-                            <dd>{{ order.review.quality_rating }}/5</dd>
+                            <dl class="order-milestone-card__facts">
+                                <div><dt>Order share</dt><dd>{{ milestone.percentage }}%</dd></div>
+                                {% if milestone.amount %}<div><dt>Simulated amount</dt><dd>{{ milestone.amount|inr }}</dd></div>{% endif %}
+                                {% if milestone.due_date %}<div><dt>Due date</dt><dd>{{ milestone.due_date|date:"d M Y" }}</dd></div>{% endif %}
+                                {% if milestone.funded_at %}<div><dt>Marked funded</dt><dd>{{ milestone.funded_at|date:"d M Y, H:i" }}</dd></div>{% endif %}
+                                {% if milestone.started_at %}<div><dt>Started</dt><dd>{{ milestone.started_at|date:"d M Y, H:i" }}</dd></div>{% endif %}
+                                {% if milestone.completed_at %}<div><dt>Submitted</dt><dd>{{ milestone.completed_at|date:"d M Y, H:i" }}</dd></div>{% endif %}
+                                {% if milestone.approved_at %}<div><dt>Approved</dt><dd>{{ milestone.approved_at|date:"d M Y, H:i" }}</dd></div>{% endif %}
+                                {% if milestone.released_at %}<div><dt>Marked released</dt><dd>{{ milestone.released_at|date:"d M Y, H:i" }}</dd></div>{% endif %}
+                            </dl>
+                            {% if milestone.buyer_feedback %}
+                                <div class="order-milestone-feedback"><strong>Buyer feedback</strong><p>{{ milestone.buyer_feedback|linebreaksbr }}</p></div>
+                            {% endif %}
 
-                            <dt>Timeliness</dt>
-                            <dd>{{ order.review.timeliness_rating }}/5</dd>
+                            <div class="order-milestone-card__actions">
+                                {% if user.role == "BUYER" %}
+                                    {% if milestone.can_fund %}
+                                        {% if next_action.url_name != "fund_milestone" or next_action.url_arg != milestone.pk %}
+                                            <a class="button button-primary" href="{% url 'fund_milestone' milestone.pk %}">Fund milestone (demo)</a>
+                                        {% endif %}
+                                    {% endif %}
+                                    {% if milestone.can_review %}
+                                        <form method="post" action="{% url 'respond_to_milestone' milestone.pk %}" class="order-milestone-review-form">
+                                            {% csrf_token %}
+                                            <div class="form-field">
+                                                <label for="feedback-{{ milestone.pk }}">Feedback <span class="order-form-optional">(optional)</span></label>
+                                                <textarea id="feedback-{{ milestone.pk }}" name="buyer_feedback" rows="3" placeholder="Optional note for the manufacturer"></textarea>
+                                            </div>
+                                            <button class="button button-primary" type="submit" name="status" value="APPROVED">Approve milestone</button>
+                                            <button class="button button-subtle-danger" type="submit" name="status" value="REJECTED">Request changes</button>
+                                        </form>
+                                    {% endif %}
+                                    {% if milestone.can_release %}
+                                        <form method="post" action="{% url 'release_milestone_payment' milestone.pk %}" class="order-milestone-release-form">
+                                            {% csrf_token %}
+                                            <button class="button button-primary" type="submit">Release demo payment</button>
+                                        </form>
+                                    {% endif %}
+                                {% elif user.role == "MANUFACTURER" %}
+                                    {% if milestone.can_start %}
+                                        <form method="post" action="{% url 'start_milestone' milestone.pk %}">
+                                            {% csrf_token %}<button class="button button-primary" type="submit">Start milestone</button>
+                                        </form>
+                                    {% endif %}
+                                    {% if milestone.can_submit %}
+                                        <form method="post" action="{% url 'mark_milestone_complete' milestone.pk %}">
+                                            {% csrf_token %}<button class="button button-primary" type="submit">Submit for approval</button>
+                                        </form>
+                                    {% endif %}
+                                {% endif %}
+                            </div>
+                        </article>
+                    </li>
+                {% empty %}
+                    <li class="order-milestone-empty">
+                        <div class="empty-panel">
+                            <h3>No milestones yet</h3>
+                            <p>Milestones are created when an order is created.</p>
+                        </div>
+                    </li>
+                {% endfor %}
+            </ol>
+        </section>
 
-                            <dt>Communication</dt>
-                            <dd>{{ order.review.communication_rating }}/5</dd>
-                        </dl>
+        <section class="order-conversation" aria-labelledby="conversation-title">
+            <div class="order-section-heading">
+                <div>
+                    <p class="order-workspace__eyebrow">Order-specific communication</p>
+                    <h2 id="conversation-title">Messages</h2>
+                    <p>This thread is visible only to the Buyer and Manufacturer on this order.</p>
+                </div>
+            </div>
 
-                        {% if order.review.comment %}
-                            <p>{{ order.review.comment|linebreaksbr }}</p>
-                        {% endif %}
-                    </article>
-                {% elif user.role == "BUYER" %}
-                    <article class="record-card">
-                        <h3>Share your experience</h3>
-                        <p class="record-meta">
-                            Your review will appear on the manufacturer's
-                            public profile.
-                        </p>
-                        <a class="button" href="{% url 'review_order' order.pk %}">
-                            Write review
-                        </a>
-                    </article>
-                {% else %}
-                    <div class="empty-panel">
-                        <h2>No review yet</h2>
-                        <p>The buyer can review this order after completion.</p>
-                    </div>
-                {% endif %}
+            <div class="order-conversation__layout">
+                <div class="order-conversation__thread" aria-label="Order messages">
+                    {% for order_message in order.messages.all %}
+                        <article class="order-message{% if order_message.sender == user %} order-message--own{% endif %}">
+                            <header>
+                                <strong>
+                                    {% if order_message.sender == user %}You{% elif order_message.sender == order.buyer %}Buyer: {{ order_message.sender.username }}{% else %}Manufacturer: {{ order_message.sender.username }}{% endif %}
+                                </strong>
+                                <time datetime="{{ order_message.created_at|date:'c' }}">{{ order_message.created_at|date:"d M Y, H:i" }}</time>
+                            </header>
+                            <p>{{ order_message.body|linebreaksbr }}</p>
+                        </article>
+                    {% empty %}
+                        <div class="order-messages-empty">
+                            <h3>No messages yet</h3>
+                            <p>Use this thread for order-specific updates and questions.</p>
+                        </div>
+                    {% endfor %}
+                </div>
+
+                <aside class="order-conversation__sidebar">
+                    <form method="post" action="{% url 'send_order_message' order.pk %}" class="order-message-form" novalidate>
+                        {% csrf_token %}
+                        <h3>Send a message</h3>
+                        {% with form=message_form %}{% include "marketplace/includes/accessible_form.html" %}{% endwith %}
+                        <button class="button button-primary" type="submit">Send message</button>
+                    </form>
+
+                    <section class="order-activity" aria-labelledby="activity-title">
+                        <p class="order-workspace__eyebrow">Recent activity</p>
+                        <h3 id="activity-title">Order updates</h3>
+                        <div class="order-activity__list">
+                            {% for item in activity_items %}
+                                <article><p>{{ item.message }}</p><time datetime="{{ item.created_at|date:'c' }}">{{ item.created_at|date:"d M Y, H:i" }}</time></article>
+                            {% empty %}
+                                <p class="order-activity__empty">Order updates will appear here as workflow actions are completed.</p>
+                            {% endfor %}
+                        </div>
+                    </section>
+                </aside>
             </div>
         </section>
-    {% endif %}
+
+        <details class="order-secondary-details">
+            <summary>Requirements and order details</summary>
+            <div class="order-secondary-details__content">
+                <dl class="order-specification-facts">
+                    <div><dt>Buyer requirements</dt><dd>{{ order.specifications_snapshot.requirements|linebreaksbr }}</dd></div>
+                    {% if order.specifications_snapshot.machine_type %}<div><dt>Machine type</dt><dd>{{ order.specifications_snapshot.machine_type }}</dd></div>{% endif %}
+                    {% if order.specifications_snapshot.materials %}<div><dt>Materials</dt><dd>{{ order.specifications_snapshot.materials }}</dd></div>{% endif %}
+                    <div><dt>Buyer</dt><dd>{{ order.buyer.username }}</dd></div>
+                    <div><dt>Manufacturer</dt><dd>{{ order.manufacturer.business_name }}</dd></div>
+                    <div><dt>Terms locked</dt><dd>{{ order.terms_locked_at|date:"d M Y, H:i" }}</dd></div>
+                </dl>
+            </div>
+        </details>
+
+        {% if order.status == "COMPLETED" %}
+            <section class="order-review" aria-labelledby="review-title">
+                <div class="order-section-heading">
+                    <div><p class="order-workspace__eyebrow">Completed order</p><h2 id="review-title">Order review</h2></div>
+                </div>
+                {% if order.review %}
+                    <article class="order-review-card">
+                        <span class="trust-badge">Overall {{ order.review.overall_rating }}/5</span>
+                        <h3>Buyer feedback</h3>
+                        <dl><div><dt>Quality</dt><dd>{{ order.review.quality_rating }}/5</dd></div><div><dt>Timeliness</dt><dd>{{ order.review.timeliness_rating }}/5</dd></div><div><dt>Communication</dt><dd>{{ order.review.communication_rating }}/5</dd></div></dl>
+                        {% if order.review.comment %}<p>{{ order.review.comment|linebreaksbr }}</p>{% endif %}
+                    </article>
+                {% elif user.role == "BUYER" %}
+                    <article class="order-review-card">
+                        <h3>Share your experience</h3>
+                        <p>This completed order can be reviewed once.</p>
+                        <a class="button button-secondary" href="{% url 'review_order' order.pk %}">Write review</a>
+                    </article>
+                {% else %}
+                    <p class="order-activity__empty">The Buyer can review this order after completion.</p>
+                {% endif %}
+            </section>
+        {% endif %}
+    </div>
 {% endblock %}
