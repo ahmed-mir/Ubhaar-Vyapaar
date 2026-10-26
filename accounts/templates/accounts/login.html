@@ -1,69 +1,28 @@
 {% extends "marketplace/base.html" %}
-{% load static %}
 
 {% block title %}Log in | Ubhaar-Vyapaar{% endblock %}
 
 {% block content %}
-<section class="auth-split" aria-labelledby="login-title">
-    <div class="auth-story-panel" data-reveal="left">
-        <img src="{% static 'marketplace/images/brand/logo-light.svg' %}" alt="Ubhaar-Vyapaar" width="340" height="72">
+<section class="auth-page-shell login-layout" aria-labelledby="login-title">
+    <div class="auth-page-main login-main">
         <p class="eyebrow">Account access</p>
-        <h1 id="login-title">Continue your marketplace work.</h1>
-        <p>Access quotes, listings, orders, and milestones.</p>
-        <div class="auth-industrial-visual" aria-hidden="true"><span></span><span></span><span></span></div>
+        <h1 id="login-title">Log in</h1>
+        <p class="login-intro">Access your listings, quote requests and orders.</p>
+
+        <form method="post" class="styled-form auth-form login-form" novalidate>
+            {% csrf_token %}
+            {% include "marketplace/includes/accessible_form.html" %}
+
+            <p class="login-forgot"><a href="{% url 'password_reset' %}">Forgot your password?</a></p>
+
+            <input type="hidden" name="next" value="{{ next }}">
+
+            <button class="button button-primary form-submit" type="submit">Log in</button>
+        </form>
+
+        <p class="login-create-account">New to Ubhaar-Vyapaar? <a href="{% url 'get_started' %}">Get started</a></p>
     </div>
 
-    <div class="auth-form-panel" data-reveal="right">
-    <a class="back-link" href="{% url 'home' %}">
-        ← Browse listings
-    </a>
-
-    <h2>Log in</h2>
-
-    <p class="auth-intro">Manage listings, quote requests, and orders.</p>
-
-    <form method="post" class="styled-form auth-form" novalidate>
-        {% csrf_token %}
-        {% include "marketplace/includes/accessible_form.html" %}
-
-        <input
-            type="hidden"
-            name="next"
-            value="{{ next }}"
-        >
-
-        <button
-            class="button button-primary form-submit"
-            type="submit"
-        >
-            Log in
-        </button>
-    </form>
-
-    <div class="auth-links">
-
-        <p>
-            <a href="{% url 'password_reset' %}">
-                Forgot your password?
-            </a>
-        </p>
-
-        <p>
-            Looking for manufacturing services?
-            <a href="{% url 'get_started' %}">
-                Get started
-            </a>
-        </p>
-
-        <p>
-            Own a manufacturing business?
-            <a href="{% url 'register_manufacturer' %}">
-                Register your business
-            </a>
-        </p>
-
-    </div>
-
-    </div>
+    {% include "accounts/includes/auth_support_panel.html" %}
 </section>
 {% endblock %}

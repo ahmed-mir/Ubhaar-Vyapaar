@@ -966,3 +966,169 @@ a { color: var(--uv-teal); }
         margin-bottom: var(--space-3);
     }
 }
+
+/* Login uses the shared auth shell with a controlled form width and quiet support panel. */
+.login-layout {
+    grid-template-columns: minmax(0, 480px) minmax(240px, 290px);
+    justify-content: center;
+    align-items: center;
+    gap: clamp(24px, 4vw, 40px);
+    width: min(100% - 48px, 880px);
+    margin: clamp(32px, 5vw, 64px) auto;
+}
+
+.login-main {
+    padding: clamp(24px, 3.2vw, 36px);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-card);
+    background: var(--color-surface);
+    box-shadow: var(--shadow-soft);
+}
+
+.login-main > .eyebrow {
+    margin: 0 0 var(--space-2);
+    color: var(--color-accent);
+}
+
+.login-main h1 {
+    margin: 0;
+    color: var(--color-primary);
+    font-size: clamp(32px, 3.2vw, 38px);
+    font-weight: 720;
+    line-height: 1.15;
+    letter-spacing: -0.025em;
+}
+
+.login-intro {
+    margin: var(--space-2) 0 var(--space-6);
+    color: var(--color-muted);
+    line-height: 1.5;
+}
+
+.login-form {
+    display: grid;
+    gap: var(--space-4);
+    margin: 0;
+}
+
+.login-form .form-field {
+    min-width: 0;
+    margin: 0;
+}
+
+.login-form .form-field label {
+    display: block;
+    margin-bottom: var(--space-2);
+}
+
+.login-form .form-field input:not([type="checkbox"]):not([type="radio"]):not([type="file"]) {
+    box-sizing: border-box;
+    width: 100%;
+    min-width: 0;
+    font-size: 16px;
+}
+
+.login-form .password-visibility-toggle {
+    min-height: 44px;
+    margin-top: var(--space-2);
+    border-color: #aab8be;
+    border-radius: var(--radius-control);
+    color: var(--color-primary);
+}
+
+.login-form .password-visibility-toggle:focus-visible {
+    outline: 3px solid var(--color-warning);
+    outline-offset: 3px;
+}
+
+.login-forgot {
+    margin: calc(-1 * var(--space-2)) 0 0;
+    text-align: right;
+}
+
+.login-forgot a,
+.login-create-account a {
+    color: #0c615b;
+    font-weight: 650;
+    text-underline-offset: 3px;
+}
+
+.login-form .form-submit {
+    width: 100%;
+    min-height: 48px;
+}
+
+.login-create-account {
+    margin: var(--space-5) 0 0;
+    padding-top: var(--space-4);
+    border-top: 1px solid var(--color-border);
+    color: var(--color-muted);
+}
+
+.login-main .form-error-summary,
+.login-main .field-errors {
+    margin: 0;
+    padding: 12px 14px;
+    border: 1px solid #e7c0bd;
+    border-radius: var(--radius-control);
+    background: #fff2f1;
+    color: #8f1d19;
+}
+
+.login-main .form-error-summary p {
+    margin: 0 0 var(--space-1);
+    color: inherit;
+    font-weight: 650;
+}
+
+.login-main .form-error-summary .errorlist,
+.login-main .field-errors .errorlist {
+    margin: 0;
+    padding-left: 20px;
+}
+
+.login-main :focus-visible {
+    outline-color: var(--color-accent);
+}
+
+@media (max-width: 900px) {
+    .login-layout {
+        grid-template-columns: minmax(0, 480px);
+        width: min(100% - 40px, 480px);
+        margin: 28px auto 40px;
+    }
+}
+
+@media (max-width: 600px) {
+    .login-layout {
+        width: min(100% - 32px, 480px);
+        gap: var(--space-4);
+        margin: 20px auto 32px;
+    }
+
+    .login-main {
+        padding: 22px;
+    }
+
+    .login-main h1 {
+        font-size: clamp(30px, 8vw, 34px);
+    }
+
+    .login-intro {
+        margin-bottom: var(--space-5);
+    }
+}
+
+@media (max-width: 360px) {
+    .login-main {
+        padding: 18px;
+    }
+
+    .login-form {
+        gap: var(--space-3);
+    }
+
+    .login-layout .auth-support-panel {
+        padding: 16px;
+    }
+}

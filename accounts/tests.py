@@ -530,3 +530,35 @@ class EmailOrUsernameAuthenticationTests(TestCase):
         self.assertContains(response, 'name="username"')
         self.assertContains(response, "Email or username")
         self.assertNotContains(response, 'name="email"')
+
+    def test_login_keeps_safe_next_redirect_and_rejects_external_destination(self):
+        self.create_user("safe-next-login", "safe-next-login@example.test")
+
+        safe_response = self.client.post(
+            reverse("login"),
+            {
+                "username": "safe-next-login",
+                "password": "StrongPass123!",
+                "next": reverse("buyer_dashboard"),
+            },
+        )
+        self.assertRedirects(
+            safe_response,
+            reverse("buyer_dashboard"),
+            fetch_redirect_response=False,
+        )
+
+        self.client.logout()
+        unsafe_response = self.client.post(
+            reverse("login"),
+            {
+                "username": "safe-next-login",
+                "password": "StrongPass123!",
+                "next": "https://example.invalid/",
+            },
+        )
+        self.assertRedirects(
+            unsafe_response,
+            reverse("home"),
+            fetch_redirect_response=False,
+        )
