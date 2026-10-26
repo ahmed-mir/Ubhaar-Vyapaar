@@ -84,6 +84,10 @@ class BuyerRegistrationForm(RegistrationConsentMixin, UserCreationForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.fields["username"].help_text = (
+            "Your username is your unique account name. You can also log in "
+            "with your email."
+        )
         self.fields["email"].required = True
         self.fields["phone"].required = False
         self.fields["phone"].help_text = "Optional. Used only for account or workflow contact if provided."

@@ -1132,3 +1132,273 @@ a { color: var(--uv-teal); }
         padding: 16px;
     }
 }
+
+/* Buyer registration shares the Phase 3A auth shell and page surfaces. */
+.buyer-registration-layout {
+    grid-template-columns: minmax(0, 720px) minmax(240px, 290px);
+    align-items: start;
+    gap: clamp(24px, 4vw, 40px);
+    width: min(100% - 48px, 1080px);
+    margin: clamp(28px, 4.5vw, 56px) auto;
+}
+
+.buyer-registration-main {
+    padding: clamp(24px, 3vw, 36px);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-card);
+    background: var(--color-surface);
+    box-shadow: var(--shadow-soft);
+}
+
+.buyer-registration-main > .eyebrow {
+    margin: 0 0 var(--space-2);
+    color: var(--color-accent);
+}
+
+.buyer-registration-main h1 {
+    margin: 0;
+    color: var(--color-primary);
+    font-size: clamp(32px, 3.2vw, 38px);
+    font-weight: 720;
+    line-height: 1.15;
+    letter-spacing: -0.025em;
+}
+
+.buyer-registration-intro {
+    margin: var(--space-2) 0 var(--space-6);
+    color: var(--color-muted);
+    line-height: 1.5;
+}
+
+.buyer-registration-form {
+    display: grid;
+    gap: var(--space-5);
+    margin: 0;
+}
+
+.buyer-registration-form .account-form-group {
+    min-width: 0;
+    margin: 0;
+    padding: 0 0 var(--space-5);
+    border: 0;
+    border-bottom: 1px solid var(--color-border);
+    border-radius: 0;
+    background: transparent;
+}
+
+.buyer-registration-form .account-form-group legend {
+    width: 100%;
+    margin: 0 0 var(--space-4);
+    padding: 0;
+    color: var(--color-primary);
+    font-size: 18px;
+    font-weight: 700;
+    line-height: 1.35;
+}
+
+.buyer-registration-form .account-form-group .form-field {
+    min-width: 0;
+    margin: 0 0 var(--space-4);
+}
+
+.buyer-registration-form .account-form-group .form-field:last-child {
+    margin-bottom: 0;
+}
+
+.buyer-registration-form .form-field label {
+    display: block;
+    margin-bottom: var(--space-2);
+    color: var(--color-text);
+    font-weight: 650;
+}
+
+.buyer-registration-form .form-field input:not([type="checkbox"]):not([type="radio"]):not([type="file"]),
+.buyer-registration-form .form-field select,
+.buyer-registration-form .form-field textarea {
+    box-sizing: border-box;
+    width: 100%;
+    min-width: 0;
+    min-height: 48px;
+    font-size: 16px;
+}
+
+.buyer-registration-form .form-field .helptext,
+.buyer-registration-form .password-requirements {
+    color: var(--color-muted);
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+.buyer-registration-form .form-field .helptext {
+    margin: var(--space-2) 0 0;
+}
+
+.buyer-registration-form .password-requirements {
+    margin-top: var(--space-2);
+}
+
+.buyer-registration-form .password-requirements summary {
+    color: #0c615b;
+    text-underline-offset: 3px;
+}
+
+.buyer-registration-form .password-requirements summary:focus-visible,
+.buyer-registration-form .password-visibility-toggle:focus-visible {
+    outline: 3px solid var(--color-warning);
+    outline-offset: 3px;
+}
+
+.buyer-registration-form .password-visibility-toggle {
+    min-height: 44px;
+    margin-top: var(--space-2);
+    border-color: #aab8be;
+    border-radius: var(--radius-control);
+    color: var(--color-primary);
+}
+
+.buyer-registration-form .form-field-checkbox {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--space-3);
+}
+
+.buyer-registration-form .form-field-checkbox > input[type="checkbox"] {
+    width: 22px;
+    height: 22px;
+    flex: 0 0 22px;
+    margin: 2px 0 0;
+    accent-color: var(--color-accent);
+}
+
+.buyer-registration-form .form-field-checkbox > div {
+    min-width: 0;
+}
+
+.buyer-registration-form .form-field-checkbox label {
+    margin: 0;
+    font-size: 15px;
+    font-weight: 600;
+    line-height: 1.5;
+    overflow-wrap: anywhere;
+}
+
+.buyer-registration-form .form-field-error input:not([type="checkbox"]),
+.buyer-registration-form .form-field-error textarea {
+    border-color: var(--color-danger);
+}
+
+.buyer-registration-form .field-errors,
+.buyer-registration-main .form-error-summary {
+    margin-top: var(--space-2);
+    padding: 11px 13px;
+    border: 1px solid #e7c0bd;
+    border-radius: var(--radius-control);
+    background: #fff2f1;
+    color: #8f1d19;
+    overflow-wrap: anywhere;
+}
+
+.buyer-registration-main .form-error-summary {
+    margin: 0;
+}
+
+.buyer-registration-main .form-error-summary p {
+    margin: 0 0 var(--space-1);
+    color: inherit;
+    font-weight: 650;
+}
+
+.buyer-registration-form .field-errors .errorlist,
+.buyer-registration-main .form-error-summary .errorlist {
+    margin: 0;
+    padding-left: 20px;
+}
+
+.buyer-registration-form .auth-consent-note {
+    margin: var(--space-3) 0 0 35px;
+    color: var(--color-muted);
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+.buyer-registration-form .auth-consent-note a,
+.buyer-registration-links a {
+    color: #0c615b;
+    font-weight: 650;
+    text-underline-offset: 3px;
+}
+
+.buyer-registration-form .form-submit {
+    width: 100%;
+    min-height: 48px;
+    margin: 0;
+}
+
+.buyer-registration-links {
+    margin-top: var(--space-6);
+    padding-top: var(--space-4);
+    border-top: 1px solid var(--color-border);
+}
+
+.buyer-registration-links p {
+    margin: 0 0 var(--space-3);
+    color: var(--color-muted);
+}
+
+.buyer-registration-links p:last-child {
+    margin-bottom: 0;
+}
+
+.buyer-registration-main :focus-visible {
+    outline-color: var(--color-accent);
+}
+
+@media (max-width: 900px) {
+    .buyer-registration-layout {
+        grid-template-columns: minmax(0, 760px);
+        width: min(100% - 40px, 760px);
+        gap: var(--space-5);
+        margin: 28px auto 40px;
+    }
+}
+
+@media (max-width: 600px) {
+    .buyer-registration-layout {
+        width: min(100% - 32px, 760px);
+        margin: 20px auto 32px;
+    }
+
+    .buyer-registration-main {
+        padding: 22px;
+    }
+
+    .buyer-registration-main h1 {
+        font-size: clamp(30px, 8vw, 34px);
+    }
+
+    .buyer-registration-intro {
+        margin-bottom: var(--space-5);
+    }
+
+    .buyer-registration-form {
+        gap: var(--space-4);
+    }
+}
+
+@media (max-width: 360px) {
+    .buyer-registration-main {
+        padding: 18px;
+    }
+
+    .buyer-registration-form .account-form-group {
+        padding-bottom: var(--space-4);
+    }
+
+    .buyer-registration-form .form-field-checkbox {
+        gap: var(--space-2);
+    }
+
+    .buyer-registration-form .auth-consent-note {
+        margin-left: 30px;
+    }
+}

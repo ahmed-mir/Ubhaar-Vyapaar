@@ -1,69 +1,48 @@
 {% extends "marketplace/base.html" %}
-{% load static %}
 
 {% block title %}Buyer registration | Ubhaar-Vyapaar{% endblock %}
 
 {% block content %}
-    <section class="auth-split" aria-labelledby="register-title">
-        <div class="auth-story-panel" data-reveal="left">
-            <img src="{% static 'marketplace/images/brand/logo-light.svg' %}" alt="Ubhaar-Vyapaar" width="340" height="72">
-            <p class="eyebrow">Buyer access</p>
-            <h1 id="register-title">Request quotes from manufacturers.</h1>
-            <p>Create a buyer account to compare and track responses.</p>
-            <div class="auth-industrial-visual" aria-hidden="true"><span></span><span></span><span></span></div>
-        </div>
+<section class="auth-page-shell buyer-registration-layout" aria-labelledby="register-title">
+    <div class="auth-page-main buyer-registration-main">
+        <p class="eyebrow">Buyer registration</p>
+        <h1 id="register-title">Create your buyer account</h1>
+        <p class="buyer-registration-intro">Find manufacturing capacity, request quotes and track orders.</p>
 
-        <div class="auth-form-panel" data-reveal="right">
-        <a class="back-link" href="{% url 'home' %}">
-            ← Browse listings
-        </a>
-
-        <h2>Create buyer account</h2>
-
-        <p class="auth-intro">Start requesting quotes from marketplace listings.</p>
-
-        <form method="post" class="styled-form auth-form" novalidate>
+        <form method="post" class="styled-form auth-form buyer-registration-form" novalidate>
             {% csrf_token %}
-            {% if form.non_field_errors %}<div class="form-error-summary" role="alert" tabindex="-1">{{ form.non_field_errors }}</div>{% endif %}
+            {% if form.non_field_errors %}
+                <div class="form-error-summary" role="alert" tabindex="-1">{{ form.non_field_errors }}</div>
+            {% endif %}
 
             <fieldset class="account-form-group">
                 <legend>Account details</legend>
-                <p class="helptext">Your username is used to sign in to your account.</p>
                 {% include "accounts/includes/account_field.html" with field=form.username %}
                 {% include "accounts/includes/account_field.html" with field=form.email %}
-                {% include "accounts/includes/account_field.html" with field=form.phone %}
-            </fieldset>
-
-            <fieldset class="account-form-group">
-                <legend>Password</legend>
                 {% include "accounts/includes/account_field.html" with field=form.password1 %}
                 {% include "accounts/includes/account_field.html" with field=form.password2 %}
             </fieldset>
 
             <fieldset class="account-form-group">
-                <legend>Legal acknowledgements</legend>
+                <legend>Contact details</legend>
+                {% include "accounts/includes/account_field.html" with field=form.phone %}
+            </fieldset>
+
+            <fieldset class="account-form-group buyer-agreements">
+                <legend>Agreements</legend>
                 {% include "accounts/includes/account_field.html" with field=form.legal_acknowledgement %}
                 <p class="auth-consent-note">Review the <a href="{% url 'terms' %}" target="_blank" rel="noopener">Terms &amp; Conditions</a> and <a href="{% url 'privacy_policy' %}" target="_blank" rel="noopener">Privacy Policy</a> before creating an account.</p>
             </fieldset>
 
-            <button class="button button-primary form-submit" type="submit">
-                Create buyer account
-            </button>
+            <button class="button button-primary form-submit" type="submit">Create buyer account</button>
         </form>
 
-        <div class="auth-links">
-            <p>
-                Already have an account?
-                <a href="{% url 'login' %}">Log in</a>
-            </p>
+        <div class="auth-links buyer-registration-links">
+            <p>Already have an account? <a href="{% url 'login' %}">Log in</a></p>
+            <p>Want to offer manufacturing services? <a href="{% url 'register_manufacturer' %}">Register your business</a></p>
+        </div>
+    </div>
 
-            <p>
-                Want to offer manufacturing services?
-                <a href="{% url 'register_manufacturer' %}">
-                    Register your business
-                </a>
-            </p>
-        </div>
-        </div>
-    </section>
+    {% include "accounts/includes/auth_support_panel.html" %}
+</section>
 {% endblock %}

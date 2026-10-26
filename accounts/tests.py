@@ -261,7 +261,10 @@ class RegistrationConsentTests(TestCase):
             "legal_acknowledgement",
         ):
             self.assertContains(response, f'name="{field_name}"')
-        self.assertContains(response, "Your username is used to sign in")
+        self.assertContains(
+            response,
+            "Your username is your unique account name. You can also log in with your email.",
+        )
 
         response = self.client.post(
             reverse("register"),
