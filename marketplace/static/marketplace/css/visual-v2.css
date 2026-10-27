@@ -4341,6 +4341,12 @@ a { color: var(--uv-teal); }
     .cookie-policy-list > div { grid-template-columns: minmax(0, 1fr); gap: 4px; padding: 13px 8px; }
     .cookie-policy-list dd { padding-left: 0; }
 }
+@media (max-width: 760px) {
+    .marketplace-filter-field input,
+    .marketplace-filter-field select,
+    .marketplace-sort-field select,
+    .listing-form-field input[type="file"] { font-size: 16px; }
+}
 @media (max-width: 360px) {
     .public-content-page.public-info-page.legal-policy-page { width: min(100% - 24px, 1120px); }
     .legal-policy-page .legal-payment-disclosure { padding: 13px; }

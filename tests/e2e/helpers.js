@@ -229,10 +229,8 @@ async function verifyManufacturerInAdmin(page, businessName) {
 }
 
 async function searchListing(page, listingTitle) {
-  await page.goto("/");
+  await page.goto(`/marketplace/?q=${encodeURIComponent(listingTitle)}`);
   await dismissCookieBanner(page);
-  await page.locator('[name="q"]').fill(listingTitle);
-  await page.getByRole("button", { name: /search suppliers/i }).click();
   await expect(page.getByRole("link", { name: listingTitle, exact: true })).toBeVisible();
 }
 
@@ -248,11 +246,12 @@ async function requestQuote(page, listingTitle, quote) {
   await page.locator('[name="quantity"]').fill(String(quote.quantity));
   await page.locator('[name="requirements"]').fill(quote.requirements);
   await page.locator('[name="delivery_location"]').fill(quote.deliveryLocation);
-  await page.getByRole("button", { name: /submit quote request/i }).click();
+  await page.getByRole("button", { name: /request quote/i }).click();
   await expect(page.getByText(/your quote request was submitted/i)).toBeVisible();
-  const latestRequest = page.getByText(/your latest saved request: #\d+/i).first();
-  await expect(latestRequest).toBeVisible();
-  return Number((await latestRequest.textContent()).match(/#(\d+)/)[1]);
+  await page.goto("/my-quote-requests/");
+  const latestRequest = page.locator(".quote-flow-card__meta").first();
+  await expect(latestRequest).toContainText(/Request #\d+/);
+  return Number((await latestRequest.textContent()).match(/Request #(\d+)/)[1]);
 }
 
 async function sendQuotation(page, quoteRequestId, quotation) {
@@ -276,7 +275,9 @@ async function acceptQuotationAndOpenOrder(page) {
   await page.getByRole("button", { name: /accept quotation/i }).first().click();
   await expect(page.getByText(/you accepted the quotation/i)).toBeVisible();
   await page.getByRole("link", { name: /view order/i }).first().click();
-  await expect(page.getByRole("heading", { name: /order #/i })).toBeVisible();
+  await expect(page).toHaveURL(/\/orders\/\d+\/$/);
+  await expect(page.locator("main h1")).toBeVisible();
+  await expect(page.locator("main")).toContainText(/Order #\d+/);
   return Number(page.url().match(/\/orders\/(\d+)\//)[1]);
 }
 

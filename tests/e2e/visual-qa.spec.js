@@ -9,13 +9,21 @@ const pages = [
   ["search-results", "/marketplace/?q=packaging"],
   ["empty-results", "/marketplace/?q=__visual_qa_no_match__"],
   ["login", "/accounts/login/"],
+  ["get-started", "/accounts/get-started/"],
   ["buyer-registration", "/accounts/register/"],
   ["manufacturer-registration", "/accounts/register/manufacturer/"],
+  ["password-reset", "/accounts/password/reset/"],
+  ["password-reset-done", "/accounts/password/reset/done/"],
+  ["password-reset-confirm", "/accounts/password/reset/MQ/invalid-token/"],
+  ["password-reset-complete", "/accounts/password/reset/complete/"],
   ["about", "/about/"],
   ["how-it-works", "/how-it-works/"],
   ["for-manufacturers", "/for-manufacturers/"],
+  ["pricing", "/pricing-fees/"],
   ["trust-safety", "/trust-safety/"],
   ["faq", "/faq/"],
+  ["contact", "/contact/"],
+  ["grievance", "/grievance-redressal/"],
   ["privacy-policy", "/privacy/"],
   ["terms", "/terms/"],
   ["cookie-policy", "/cookies/"],
@@ -75,6 +83,15 @@ test.describe("public visual QA", () => {
           for (const item of document.querySelectorAll("h1, h2, h3, .button")) {
             if (item.getBoundingClientRect().width && item.scrollWidth > item.clientWidth + 2) {
               errors.push(`clipped text: ${item.textContent.trim().slice(0, 40)}`);
+            }
+          }
+          if (innerWidth < 768) {
+            for (const control of document.querySelectorAll(
+              ".marketplace-discovery input:not([type=hidden]):not([type=checkbox]):not([type=radio]), .marketplace-discovery select, .marketplace-discovery textarea"
+            )) {
+              if (parseFloat(getComputedStyle(control).fontSize) < 16) {
+                errors.push(`marketplace control text below 16px: ${control.name}`);
+              }
             }
           }
           const heading = document.querySelector("h1");
