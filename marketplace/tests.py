@@ -3,6 +3,7 @@ import json
 from io import StringIO
 import re
 import tempfile
+from pathlib import Path
 from unittest.mock import PropertyMock, patch
 
 from django.contrib.auth import get_user_model
@@ -1241,6 +1242,7 @@ class SeededSampleNameTests(TestCase):
 
     def test_seeded_names_stay_sample_classified_and_cleanup_is_idempotent(self):
         call_command("seed_demo_data", stdout=StringIO())
+        self.assertEqual(list(Path(self.media_root.name).iterdir()), [])
 
         profiles = ManufacturerProfile.objects.filter(
             user__username__startswith="demo_mfr_"

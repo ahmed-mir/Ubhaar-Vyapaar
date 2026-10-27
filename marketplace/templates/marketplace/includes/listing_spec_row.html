@@ -1,7 +1,8 @@
-{% load currency %}
+{% load currency listing_media %}
+{% listing_image_url listing as resolved_image_url %}
 <article class="listing-spec-row" data-sample-listing="{% if listing.manufacturer.is_demo %}true{% else %}false{% endif %}">
-    <div class="listing-spec-media listing-media-frame{% if not listing.image %} media-no-image{% endif %}" data-listing-media>
-        {% include "marketplace/includes/listing_visual.html" with listing=listing image_class="listing-image" placeholder_class="listing-image-placeholder" %}
+    <div class="listing-spec-media listing-media-frame{% if not resolved_image_url %} media-no-image{% endif %}" data-listing-media>
+        {% include "marketplace/includes/listing_visual.html" with listing=listing resolved_image_url=resolved_image_url image_class="listing-image" placeholder_class="listing-image-placeholder" %}
     </div>
     <div class="listing-spec-main">
         <div class="listing-spec-flags">

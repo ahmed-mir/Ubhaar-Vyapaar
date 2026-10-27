@@ -1382,7 +1382,7 @@ def listing_detail(request, pk):
 
     social_image_url = (
         urljoin(f"{settings.SITE_ORIGIN}/", listing.image.url)
-        if listing.image
+        if listing.image and not listing.manufacturer.is_demo
         else ""
     )
     listing_url = _absolute_site_url(

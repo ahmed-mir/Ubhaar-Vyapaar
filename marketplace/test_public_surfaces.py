@@ -117,9 +117,85 @@ class PublicTradeSurfaceTests(TestCase):
         )
         self.assertIn("View details", row)
 
+    def test_sample_images_use_first_party_assets_on_public_surfaces(self):
+        self.sample_listing.image = "demo/listings/printed-labels.webp"
+        self.sample_listing.availability_status = (
+            CapacityListing.AvailabilityStatus.AVAILABLE
+        )
+        self.sample_listing.save(update_fields=["image", "availability_status"])
+        for index in range(2):
+            CapacityListing.objects.create(
+                manufacturer=self.real_manufacturer,
+                title=f"Homepage real capacity {index}",
+                category=CapacityListing.Category.METAL,
+                description="Available production capacity.",
+                price_per_unit=Decimal("25.00"),
+                minimum_quantity=50,
+                production_days=5,
+                availability_status=CapacityListing.AvailabilityStatus.AVAILABLE,
+            )
+        CapacityListing.objects.create(
+            manufacturer=self.sample_manufacturer,
+            title="Homepage Sample Media",
+            category=CapacityListing.Category.METAL,
+            description="Illustrative sample capacity.",
+            image="demo/listings/printed-labels.webp",
+            price_per_unit=Decimal("18.00"),
+            minimum_quantity=40,
+            production_days=7,
+            availability_status=CapacityListing.AvailabilityStatus.AVAILABLE,
+        )
+        expected_image = "/static/marketplace/images/demo/printed-labels.webp"
+
+        for url in (
+            reverse("home"),
+            reverse("marketplace"),
+            reverse("listing_detail", args=[self.sample_listing.pk]),
+            reverse("manufacturer_profile", args=[self.sample_manufacturer.pk]),
+        ):
+            with self.subTest(url=url):
+                response = self.client.get(url)
+                self.assertEqual(response.status_code, 200)
+                self.assertContains(response, expected_image)
+                self.assertNotContains(response, "res.cloudinary.com")
+
+        detail = self.client.get(
+            reverse("listing_detail", args=[self.sample_listing.pk]),
+        )
+        self.assertContains(detail, "Sample")
+        self.assertNotContains(detail, "Request a quote")
+        self.assertNotContains(detail, "listing-service-jsonld")
+
+    def test_unknown_sample_image_reference_uses_immediate_fallback(self):
+        self.sample_listing.image = "demo/listings/retired-sample.webp"
+        self.sample_listing.save(update_fields=["image"])
+
+        response = self.client.get(
+            reverse("listing_detail", args=[self.sample_listing.pk]),
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertNotContains(response, "res.cloudinary.com")
+        self.assertNotContains(response, "retired-sample.webp")
+        self.assertContains(response, "media-no-image")
+        self.assertContains(response, "detail-image-placeholder")
+
+    def test_real_listing_image_continues_to_use_its_storage_url(self):
+        self.real_listing.image = "listings/real-capacity.webp"
+        self.real_listing.save(update_fields=["image"])
+        expected_image = self.real_listing.image.url
+
+        response = self.client.get(
+            reverse("listing_detail", args=[self.real_listing.pk]),
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, expected_image)
+        self.assertNotContains(response, "marketplace/images/demo/")
+
     def test_listing_image_alt_is_meaningful_without_repeating_the_title(self):
         self.sample_listing.machine_type = "CNC turning"
-        self.sample_listing.image = "listings/sample-cnc.jpg"
+        self.sample_listing.image = "demo/listings/printed-labels.webp"
         self.sample_listing.save(update_fields=["machine_type", "image"])
 
         response = self.client.get(

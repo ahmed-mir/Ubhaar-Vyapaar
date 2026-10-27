@@ -3,8 +3,6 @@ from pathlib import Path
 
 from django.conf import settings
 from django.contrib.auth import get_user_model
-from django.core.files import File
-from django.core.files.storage import default_storage
 from django.core.management.base import BaseCommand, CommandError
 from django.db import transaction
 from django.utils import timezone
@@ -447,7 +445,7 @@ class Command(BaseCommand):
         listings = {}
 
         for item in LISTINGS:
-            image_name = self.ensure_demo_image(item["image"])
+            image_name = self.demo_image_reference(item["image"])
             listing, _ = CapacityListing.objects.update_or_create(
                 manufacturer=manufacturers[item["manufacturer"]],
                 title=item["title"],
@@ -473,7 +471,7 @@ class Command(BaseCommand):
 
         return listings
 
-    def ensure_demo_image(self, filename):
+    def demo_image_reference(self, filename):
         if not filename:
             return ""
 
@@ -482,13 +480,10 @@ class Command(BaseCommand):
         if not source_path.exists():
             raise FileNotFoundError(f"Missing demo asset: {source_path}")
 
-        storage_name = f"demo/listings/{filename}"
-
-        if default_storage.exists(storage_name):
-            return storage_name
-
-        with source_path.open("rb") as source_file:
-            return default_storage.save(storage_name, File(source_file))
+        # Sample images are served from the repository's static directory.
+        # Keep a stable name on the listing without copying demo files into
+        # environment-specific media storage such as production Cloudinary.
+        return f"demo/listings/{filename}"
 
     def seed_reviews(self, listings):
         User = get_user_model()

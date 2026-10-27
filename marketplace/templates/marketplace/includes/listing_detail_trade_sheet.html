@@ -1,4 +1,5 @@
-{% load currency %}
+{% load currency listing_media %}
+{% listing_image_url listing as resolved_image_url %}
 <nav class="trade-breadcrumbs" aria-label="Breadcrumb">
     <a href="{% url 'marketplace' %}">Marketplace</a><span aria-hidden="true">/</span><span aria-current="page">{{ listing.title }}</span>
 </nav>
@@ -14,8 +15,8 @@
 </header>
 
 <div class="listing-sheet-overview">
-    <div class="listing-sheet-media listing-media-frame{% if not listing.image %} media-no-image{% endif %}" data-listing-media>
-        {% include "marketplace/includes/listing_visual.html" with listing=listing image_class="detail-image" placeholder_class="detail-image detail-image-placeholder" image_loading="eager" %}
+    <div class="listing-sheet-media listing-media-frame{% if not resolved_image_url %} media-no-image{% endif %}" data-listing-media>
+        {% include "marketplace/includes/listing_visual.html" with listing=listing resolved_image_url=resolved_image_url image_class="detail-image" placeholder_class="detail-image detail-image-placeholder" image_loading="eager" %}
     </div>
     <aside class="detail-commercial-panel" aria-labelledby="commercial-terms-title">
         <p class="eyebrow">Commercial summary</p>

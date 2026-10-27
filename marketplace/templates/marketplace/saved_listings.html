@@ -1,5 +1,5 @@
 {% extends "marketplace/base.html" %}
-{% load currency %}
+{% load currency listing_media %}
 
 {% block title %}Saved listings | Ubhaar-Vyapaar{% endblock %}
 
@@ -16,10 +16,11 @@
 
         <div class="saved-listing-list">
             {% for item in saved_items %}
+                {% listing_image_url item.listing as saved_image_url %}
                 <article class="saved-listing-row">
                     <div class="saved-listing-row__media">
-                        {% if item.listing.image %}
-                            <img src="{{ item.listing.image.url }}" alt="{{ item.listing.title }}" loading="lazy">
+                        {% if saved_image_url %}
+                            <img src="{{ saved_image_url }}" alt="{{ item.listing.title }}" loading="lazy" width="240" height="180">
                         {% else %}
                             <span aria-hidden="true">{{ item.listing.get_category_display }}</span>
                         {% endif %}
