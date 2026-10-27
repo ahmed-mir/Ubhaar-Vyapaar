@@ -7,11 +7,13 @@
 {% block twitter_title %}Refund &amp; Cancellation Policy | Ubhaar-Vyapaar{% endblock %}
 {% block twitter_description %}Understand the current limits of payment processing, platform refunds, and order cancellation workflows on Ubhaar-Vyapaar.{% endblock %}
 
+{% block public_page_class %} public-info-page legal-policy-page legal-refund-page{% endblock %}
 {% block page_eyebrow %}Refunds and cancellations{% endblock %}
 {% block page_h1 %}Refund &amp; Cancellation Policy{% endblock %}
 {% block page_lead %}This page describes the payment and cancellation functionality currently available in the application.{% endblock %}
 
 {% block page_body %}
+<div class="legal-short-policy-content">
 <section class="public-content-section">
     <h2>No platform payment processing</h2>
     <p>Ubhaar-Vyapaar uses simulated funding and release states in demo order workflows. The platform does not charge, collect, hold, move, or release real payments and does not provide real escrow.</p>
@@ -21,4 +23,6 @@
     <h2>Order cancellations</h2>
     <p>The application does not provide a self-service order cancellation workflow or define cancellation windows or penalties. Buyers and manufacturers should communicate about cancellation requests through their order messages.</p>
 </section>
+</div>
+{% include "marketplace/includes/legal_policy_help.html" %}
 {% endblock %}

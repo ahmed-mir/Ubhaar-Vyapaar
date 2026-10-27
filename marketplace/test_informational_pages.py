@@ -230,6 +230,66 @@ class InformationalPageTests(TestCase):
         self.assertNotContains(response, "review time")
         self.assertNotContains(response, "success rate")
 
+    def test_legal_pages_use_contents_navigation_and_policy_contact_paths(self):
+        for route_name in ("privacy_policy", "terms"):
+            with self.subTest(route_name=route_name):
+                response = self.client.get(reverse(route_name))
+                self.assertContains(response, 'class="legal-page-toc-desktop"')
+                self.assertContains(response, 'class="legal-page-toc-mobile"')
+                self.assertContains(response, reverse("contact"))
+                self.assertContains(response, reverse("grievance_redressal"))
+
+        for route_name in ("cookie_policy", "refund_policy"):
+            with self.subTest(route_name=route_name):
+                response = self.client.get(reverse(route_name))
+                self.assertContains(response, reverse("contact"))
+                self.assertContains(response, reverse("grievance_redressal"))
+
+    def test_privacy_retention_and_analytics_copy_matches_current_behavior(self):
+        privacy = self.client.get(reverse("privacy_policy"))
+        self.assertContains(privacy, "does not set a specific retention period")
+        self.assertContains(privacy, "contact-submission records may be retained")
+        self.assertContains(privacy, "loaded only when a measurement ID is configured")
+        self.assertContains(privacy, "stored for 180 days")
+        self.assertNotContains(privacy, "GDPR")
+
+        cookies = self.client.get(reverse("cookie_policy"))
+        self.assertContains(cookies, "accept or reject analytics")
+        self.assertContains(cookies, "Cookie settings")
+        self.assertContains(cookies, "stored for 180 days")
+        self.assertNotContains(cookies, "Marketing</dt>")
+        self.assertContains(cookies, reverse("privacy_policy"))
+
+    def test_terms_and_refund_policy_keep_simulated_payment_and_verification_truth(self):
+        terms = self.client.get(reverse("terms"))
+        self.assertContains(terms, "does not process real payments")
+        self.assertContains(terms, "simulated milestone funding states")
+        self.assertContains(terms, "not a certification, endorsement, or product or transaction guarantee")
+        self.assertContains(terms, reverse("trust_safety"))
+
+        refund = self.client.get(reverse("refund_policy"))
+        self.assertContains(refund, "does not charge, collect, hold, move, or release real payments")
+        self.assertContains(refund, "does not process monetary refunds")
+        for response in (terms, refund):
+            content = response.content.decode().lower()
+            self.assertNotIn("secure payments", content)
+            self.assertNotIn("guaranteed refund", content)
+            self.assertNotIn("funds are protected", content)
+
+    @override_settings(TERMS_VERSION="", PRIVACY_POLICY_VERSION="", LEGAL_CONTACT_EMAIL="")
+    def test_unconfigured_policy_versions_and_contact_details_stay_hidden(self):
+        for route_name in ("privacy_policy", "terms"):
+            with self.subTest(route_name=route_name):
+                response = self.client.get(reverse(route_name))
+                self.assertNotContains(response, "Policy version:")
+                self.assertNotContains(response, "Terms version:")
+                self.assertNotContains(response, "mailto:")
+
+    @override_settings(TERMS_VERSION="terms-test-version", PRIVACY_POLICY_VERSION="privacy-test-version")
+    def test_configured_policy_versions_render_from_existing_settings(self):
+        self.assertContains(self.client.get(reverse("privacy_policy")), "privacy-test-version")
+        self.assertContains(self.client.get(reverse("terms")), "terms-test-version")
+
     @override_settings(
         MANUFACTURER_REQUIRED_DOCUMENTS=["Business registration record", "GST registration"],
         MANUFACTURER_REVIEW_TIME="Three business days",

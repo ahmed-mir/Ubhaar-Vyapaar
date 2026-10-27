@@ -7,29 +7,40 @@
 {% block twitter_title %}Cookie Policy | Ubhaar-Vyapaar{% endblock %}
 {% block twitter_description %}See how necessary cookies and optional consent-based Google Analytics work on Ubhaar-Vyapaar.{% endblock %}
 
+{% block public_page_class %} public-info-page legal-policy-page legal-cookie-page{% endblock %}
 {% block page_eyebrow %}Cookie notice{% endblock %}
 {% block page_h1 %}Cookie Policy{% endblock %}
 {% block page_lead %}This page describes cookies and optional analytics in the current application.{% endblock %}
 
 {% block page_body %}
+<div class="legal-short-policy-content">
 <section class="public-content-section">
-    <h2>Current cookies and storage</h2>
-    <div class="public-facts-table-wrap">
-        <table class="public-facts-table">
-            <thead><tr><th scope="col">Category</th><th scope="col">What exists</th><th scope="col">Purpose and timing</th></tr></thead>
-            <tbody>
-                <tr><th scope="row">Strictly necessary</th><td>Django session cookie</td><td>Keeps users logged in and supports account workflows.</td></tr>
-                <tr><th scope="row">Strictly necessary</th><td>Django CSRF cookie/token</td><td>Protects forms from cross-site request forgery.</td></tr>
-                <tr><th scope="row">Strictly necessary</th><td>Cookie preference cookie</td><td>Remembers whether optional analytics were accepted or rejected after a choice is made.</td></tr>
-                <tr><th scope="row">Analytics</th><td>Google Analytics, only if configured and accepted</td><td>Measures product usage. It is not loaded before analytics consent.</td></tr>
-                <tr><th scope="row">Marketing</th><td>None used by the current application</td><td>No marketing cookies are used.</td></tr>
-            </tbody>
-        </table>
-    </div>
+    <h2>Cookies used by the application</h2>
+    <dl class="cookie-policy-list">
+        <div>
+            <dt>Strictly necessary</dt>
+            <dd><strong>Django session cookie</strong><p>Keeps users signed in and supports account workflows.</p></dd>
+        </div>
+        <div>
+            <dt>Strictly necessary</dt>
+            <dd><strong>Django CSRF cookie and token</strong><p>Protects forms from cross-site request forgery.</p></dd>
+        </div>
+        <div>
+            <dt>Strictly necessary</dt>
+            <dd><strong>Cookie preference cookie</strong><p>Remembers the analytics choice you make. The preference is stored for 180 days.</p></dd>
+        </div>
+        <div>
+            <dt>Analytics</dt>
+            <dd><strong>Google Analytics, if configured and enabled</strong><p>Measures product usage. Analytics is loaded only after you accept it or save preferences with analytics enabled.</p></dd>
+        </div>
+    </dl>
     <p>The current application does not use advertising pixels, embedded maps, video embeds, chat widgets, or social widgets.</p>
 </section>
 <section class="public-content-section">
-    <h2>Consent approach</h2>
-    <p>Necessary cookies support login, forms, security, and remembering the cookie choice. Optional analytics are off by default and load only if a Google Analytics measurement ID is configured and the user accepts analytics.</p>
+    <h2>Manage your choice</h2>
+    <p>Optional analytics are off by default. You can accept or reject analytics, or manage your preferences in the cookie panel. To change a saved choice later, use <strong>Cookie settings</strong> in the site footer.</p>
+    <p>See the <a href="{% url 'privacy_policy' %}">Privacy Policy</a> for how information is handled more broadly.</p>
 </section>
+</div>
+{% include "marketplace/includes/legal_policy_help.html" %}
 {% endblock %}

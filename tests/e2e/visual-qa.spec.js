@@ -17,6 +17,9 @@ const pages = [
   ["trust-safety", "/trust-safety/"],
   ["faq", "/faq/"],
   ["privacy-policy", "/privacy/"],
+  ["terms", "/terms/"],
+  ["cookie-policy", "/cookies/"],
+  ["refund-policy", "/refund-policy/"],
   ["help", "/help/"],
 ];
 

@@ -7,13 +7,14 @@
 {% block twitter_title %}Privacy Policy | Ubhaar-Vyapaar{% endblock %}
 {% block twitter_description %}Read how Ubhaar-Vyapaar handles account, listing, quotation, order, message, cookie, and analytics information in its current marketplace workflows.{% endblock %}
 
+{% block public_page_class %} public-info-page legal-policy-page legal-privacy-page{% endblock %}
 {% block page_eyebrow %}Privacy notice{% endblock %}
 {% block page_h1 %}Privacy Policy{% endblock %}
 {% block page_lead %}This policy explains how Ubhaar-Vyapaar collects and uses information in its B2B marketplace workflows.{% endblock %}
 
 {% block page_body %}
-<div class="public-page-layout">
-    {% include "marketplace/includes/public_page_toc.html" %}
+<div class="public-page-layout legal-policy-layout">
+    <div class="legal-page-toc-slot">{% include "marketplace/includes/legal_page_toc.html" %}</div>
     <div class="public-content-sections">
         {% if legal_entity_name or legal_contact_email %}
         <section class="public-content-section">
@@ -59,8 +60,8 @@
         </section>
 
         <section class="public-content-section" id="cookies-and-storage">
-            <h2>Cookies and local storage</h2>
-            <p>The current site uses strictly necessary Django session and CSRF cookies, plus a cookie preference cookie after a user makes a choice. Optional Google Analytics is loaded only when a measurement ID is configured and the user accepts analytics. Marketing cookies are not used. See the <a href="{% url 'cookie_policy' %}">Cookie Policy</a> for details.</p>
+            <h2>Cookies and browser preferences</h2>
+            <p>The current site uses strictly necessary Django session and CSRF cookies, plus a cookie preference cookie after a user makes a choice. That preference is stored for 180 days. Optional Google Analytics is loaded only when a measurement ID is configured and the user accepts analytics. See the <a href="{% url 'cookie_policy' %}">Cookie Policy</a> for details.</p>
         </section>
 
         <section class="public-content-section" id="service-providers">
@@ -84,6 +85,7 @@
             <h2>User rights and requests</h2>
             <p>Users can change their password from account settings. Manufacturers can edit their business profile. A safe self-service account deletion workflow is not currently implemented because deleting accounts may affect business records, orders, messages, and reviews.</p>
             {% if legal_contact_email %}<p>To request correction, access, deletion, or review of account data, email <a href="mailto:{{ legal_contact_email }}">{{ legal_contact_email }}</a>.</p>{% endif %}
+            <p>For an account-data question when no email address is shown, use the <a href="{% url 'contact' %}">Contact page</a>.</p>
         </section>
 
         <section class="public-content-section" id="childrens-data">
@@ -97,4 +99,5 @@
         </section>
     </div>
 </div>
+{% include "marketplace/includes/legal_policy_help.html" %}
 {% endblock %}

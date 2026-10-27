@@ -1,0 +1,18 @@
+{% if contents_items %}
+<nav class="legal-page-toc-desktop" aria-label="Policy contents">
+    <p class="public-page-toc-title">On this page</p>
+    <ul>
+        {% for item in contents_items %}
+            <li><a href="#{{ item.0 }}">{{ item.1 }}</a></li>
+        {% endfor %}
+    </ul>
+</nav>
+<details class="legal-page-toc-mobile">
+    <summary>On this page</summary>
+    <ul>
+        {% for item in contents_items %}
+            <li><a href="#{{ item.0 }}">{{ item.1 }}</a></li>
+        {% endfor %}
+    </ul>
+</details>
+{% endif %}

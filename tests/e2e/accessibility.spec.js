@@ -43,6 +43,25 @@ test.describe("accessibility and keyboard UX", () => {
     await expect(page.locator("#main-content")).toBeFocused();
   });
 
+  test("legal contents disclosure and anchors work with keyboard on mobile", async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 850 });
+    await page.goto("/terms/");
+
+    const rejectCookies = page.getByRole("button", { name: /reject analytics/i });
+    if (await rejectCookies.isVisible()) await rejectCookies.click();
+
+    const contents = page.locator(".legal-page-toc-mobile");
+    const summary = contents.locator("summary");
+    await expect(summary).toBeVisible();
+    await summary.focus();
+    await page.keyboard.press("Enter");
+    await expect(contents).toHaveAttribute("open", "");
+    await contents.getByRole("link", { name: "Payments" }).click();
+    await expect(page).toHaveURL(/#terms-payments$/);
+    await expect(page.locator("#terms-payments")).toBeInViewport();
+    expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);
+  });
+
   test("FAQ groups and disclosures work with keyboard on mobile", async ({ page }) => {
     await page.setViewportSize({ width: 360, height: 800 });
     await page.goto("/faq/");

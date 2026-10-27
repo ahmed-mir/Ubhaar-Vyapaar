@@ -7,15 +7,16 @@
 {% block twitter_title %}Terms &amp; Conditions | Ubhaar-Vyapaar{% endblock %}
 {% block twitter_description %}Read the Ubhaar-Vyapaar terms for accounts, listings, quotations, orders, reviews, and the current simulated payment workflow.{% endblock %}
 
+{% block public_page_class %} public-info-page legal-policy-page legal-terms-page{% endblock %}
 {% block page_eyebrow %}Platform terms{% endblock %}
 {% block page_h1 %}Terms &amp; Conditions{% endblock %}
 {% block page_lead %}These terms describe the marketplace workflows currently available on Ubhaar-Vyapaar.{% endblock %}
 
 {% block page_body %}
-<div class="public-page-layout">
-    {% include "marketplace/includes/public_page_toc.html" %}
+<div class="public-page-layout legal-policy-layout">
+    <div class="legal-page-toc-slot">{% include "marketplace/includes/legal_page_toc.html" %}</div>
     <div class="public-content-sections">
-        <section class="public-content-section public-callout" id="terms-payments">
+        <section class="public-content-section public-callout legal-payment-disclosure" id="terms-payments">
             <h2>Payments</h2>
             <p>Ubhaar-Vyapaar currently uses demo and simulated milestone funding states only. The platform does not process real payments, charge payment cards or UPI, move money, or provide a real escrow account.</p>
             <p>Demo funding and release states are workflow markers only and do not represent real money movement or regulated financial services.</p>
@@ -31,6 +32,7 @@
             <h2>Listings, quotations, and orders</h2>
             <p>Manufacturers are responsible for the accuracy of listings, prices, lead times, capacity statements, images, and quotations. Buyers are responsible for providing practical quote requirements and delivery information.</p>
             <p>Accepting a quotation currently creates a demo order with locked terms and simulated milestones. It does not create platform-processed payment, escrow, shipping, tax, or regulated financial-service obligations.</p>
+            <p>An eligible non-Sample Manufacturer profile displays a Verified badge only when its profile verification flag is approved. The badge is not a certification, endorsement, or product or transaction guarantee. Read <a href="{% url 'trust_safety' %}">what Verified means</a>.</p>
         </section>
 
         <section class="public-content-section" id="communication-reviews">
@@ -71,4 +73,5 @@
         </section>
     </div>
 </div>
+{% include "marketplace/includes/legal_policy_help.html" %}
 {% endblock %}

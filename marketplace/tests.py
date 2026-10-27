@@ -2154,10 +2154,10 @@ class PolicyPageTests(TestCase):
                 response = self.client.get(reverse(name))
                 self.assertEqual(response.status_code, 200)
 
-    def test_cookie_policy_does_not_claim_optional_tracking(self):
+    def test_cookie_policy_does_not_list_unused_cookie_categories(self):
         response = self.client.get(reverse("cookie_policy"))
 
-        self.assertContains(response, "None used by the current application")
+        self.assertNotContains(response, "<dt>Marketing</dt>")
         self.assertNotContains(response, "Accept All")
 
     def test_terms_disclose_simulated_payments(self):
