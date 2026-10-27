@@ -111,6 +111,7 @@ class InformationalPageTests(TestCase):
                 self.assertNotContains(response, "LEGAL_CONTACT_EMAIL")
                 self.assertNotContains(response, "LEGAL_ENTITY_NAME")
         trust = self.client.get(reverse("trust_safety"))
+        self.assertContains(trust, reverse("contact"))
         self.assertNotContains(trust, "#communication-and-reporting")
 
     @override_settings(
@@ -119,7 +120,7 @@ class InformationalPageTests(TestCase):
         LEGAL_CONTACT_LABEL="Support email",
     )
     def test_real_configured_contact_details_render_on_applicable_pages(self):
-        for route_name in ("contact", "privacy_policy", "terms"):
+        for route_name in ("contact", "privacy_policy", "terms", "trust_safety"):
             with self.subTest(route_name=route_name):
                 response = self.client.get(reverse(route_name))
                 self.assertContains(response, "support@ubhaar-vyapaar.in")
@@ -169,15 +170,39 @@ class InformationalPageTests(TestCase):
     def test_pricing_trust_and_sample_language_stay_factual(self):
         pricing = self.client.get(reverse("pricing_fees"))
         self.assertContains(pricing, "does not calculate or collect platform fees")
-        self.assertContains(pricing, "does not collect, hold, move, or release funds")
+        self.assertContains(pricing, "does not process real payments")
+        self.assertContains(pricing, "money is collected, held, moved, or released")
         self.assertNotContains(pricing, "commission")
         self.assertNotContains(pricing, "subscription")
+        self.assertNotContains(pricing, "escrow")
+        self.assertNotContains(pricing, "Free during the pilot")
 
         trust = self.client.get(reverse("trust_safety"))
         self.assertContains(trust, "A KYC status by itself does not display the badge")
         self.assertContains(trust, "Sample manufacturers are not shown with the Verified badge")
         self.assertContains(trust, "not a certification")
         self.assertContains(trust, "insurance")
+        self.assertContains(trust, "Report a concern")
+        self.assertContains(trust, "No response time or dispute outcome is promised")
+        self.assertNotContains(trust, "escrow")
+
+        about = self.client.get(reverse("about"))
+        self.assertContains(about, "A marketplace for manufacturing capacity")
+        self.assertContains(about, "early-access pilot")
+        self.assertContains(about, "Manufacturers publish capacity listings")
+        self.assertContains(about, "Accepting a quotation creates an order")
+        self.assertNotContains(about, "escrow")
+        self.assertNotContains(about, "Our team")
+
+    @override_settings(
+        GRIEVANCE_OFFICER_NAME="R. Sharma",
+        GRIEVANCE_CONTACT_EMAIL="grievance@ubhaar-vyapaar.in",
+    )
+    def test_configured_grievance_contact_is_shown_on_trust_page(self):
+        response = self.client.get(reverse("trust_safety"))
+        self.assertContains(response, "Grievance officer: R. Sharma")
+        self.assertContains(response, "grievance@ubhaar-vyapaar.in")
+        self.assertContains(response, reverse("grievance_redressal"))
 
     def test_manufacturer_page_omits_unconfigured_documents_and_review_time(self):
         response = self.client.get(reverse("for_manufacturers"))

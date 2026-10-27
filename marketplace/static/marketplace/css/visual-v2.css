@@ -545,6 +545,141 @@ a { color: var(--uv-teal); }
     .landing-lede { margin-bottom: 14px; }
 }
 
+/* About, pricing, and trust information pages */
+.public-content-page.public-info-page {
+    width: min(100% - 48px, 1120px);
+    max-width: 1120px;
+    margin: 0 auto;
+    padding: 38px 0 72px;
+    color: var(--color-text);
+}
+.public-info-page .public-content-heading {
+    max-width: 860px;
+    margin-bottom: 28px;
+    border-color: var(--color-border);
+}
+.public-info-page .public-content-heading .eyebrow,
+.public-info-page .public-section-eyebrow { color: var(--color-accent); }
+.public-info-page .public-content-heading h1 {
+    max-width: 820px;
+    color: var(--color-primary);
+    font-size: clamp(32px, 4vw, 46px);
+    line-height: 1.12;
+    letter-spacing: -.02em;
+}
+.public-info-page .public-content-heading > p:last-child {
+    max-width: 72ch;
+    color: var(--color-muted);
+    font-size: 17px;
+    line-height: 1.55;
+}
+.public-info-page .public-content-body { max-width: none; }
+.public-info-page h2 {
+    margin: 0 0 10px;
+    color: var(--color-primary);
+    font-size: clamp(21px, 2.3vw, 27px);
+    line-height: 1.28;
+}
+.public-info-page h3 { margin: 0 0 6px; color: var(--color-primary); font-size: 17px; line-height: 1.35; }
+.public-info-page p,
+.public-info-page li { color: var(--color-muted); line-height: 1.6; }
+.public-info-page p { margin: 8px 0 12px; }
+.public-info-page .public-section-eyebrow { margin: 0 0 6px; font-size: 12px; font-weight: 750; letter-spacing: .06em; text-transform: uppercase; }
+.public-info-page .text-link { color: var(--color-accent); font-weight: 700; text-underline-offset: 3px; }
+.public-info-page a:focus-visible { outline: 3px solid #a96e1c; outline-offset: 3px; }
+
+.about-product-content,
+.pricing-information-content,
+.trust-information-content { display: grid; gap: 22px; }
+.about-product-section { padding: 0 0 20px; border-bottom: 1px solid var(--color-border); }
+.about-product-section--why p { max-width: 76ch; }
+.about-capability-list,
+.trust-practical-checks ul {
+    display: grid;
+    gap: 0 28px;
+    margin: 12px 0 14px;
+    padding: 0;
+    list-style: none;
+}
+.about-capability-list { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.about-capability-list li,
+.trust-practical-checks li { position: relative; padding: 11px 8px 11px 27px; border-top: 1px solid var(--color-border); }
+.about-capability-list li::before,
+.trust-practical-checks li::before { content: ""; position: absolute; top: 19px; left: 8px; width: 7px; height: 7px; border-radius: 50%; background: var(--color-accent); }
+.about-audience-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; margin-top: 16px; }
+.about-audience-list > div { min-width: 0; padding: 18px 20px; border: 1px solid var(--color-border); border-radius: var(--radius-card); background: var(--color-surface); }
+.about-audience-list p { margin: 0; }
+.about-pilot-section {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 24px;
+    padding: 23px 25px;
+    border-radius: var(--radius-card);
+    background: var(--color-primary);
+}
+.about-pilot-section .public-section-eyebrow { color: #9cd5ce; }
+.about-pilot-section h2 { color: #fff; }
+.about-pilot-section p:not(.public-section-eyebrow) { max-width: 75ch; margin-bottom: 0; color: #e2ecef; }
+.about-pilot-section .button { flex: 0 0 auto; }
+.about-pilot-section .button-primary { border-color: #fff; background: #fff; color: var(--color-primary); }
+
+.pricing-facts { border-top: 1px solid var(--color-border); }
+.pricing-fact-row { display: grid; grid-template-columns: minmax(190px, 240px) minmax(0, 1fr); gap: 24px; align-items: start; padding: 18px 12px; border-bottom: 1px solid var(--color-border); }
+.public-info-page .pricing-fact-row h2 { margin: 0; font-size: 18px; }
+.pricing-fact-row p { max-width: 76ch; margin: 0; }
+.pricing-contact-note { display: flex; align-items: center; justify-content: space-between; gap: 24px; padding: 19px 21px; border-left: 3px solid var(--color-accent); border-radius: 0 var(--radius-card) var(--radius-card) 0; background: #eef6f5; }
+.pricing-contact-note p { max-width: 74ch; margin-bottom: 0; }
+.pricing-contact-note .button { flex: 0 0 auto; }
+
+.trust-meaning-section { max-width: 78ch; padding: 0 0 18px; border-bottom: 1px solid var(--color-border); }
+.trust-limits-section { display: grid; grid-template-columns: minmax(220px, .8fr) minmax(0, 1.2fr); gap: 28px; padding: 22px 24px; border: 1px solid #e8dcb8; border-left: 4px solid var(--color-warning); border-radius: var(--radius-card); background: #fffaf0; }
+.trust-limits-section > div > p:last-child { max-width: 44ch; margin-bottom: 0; }
+.trust-limit-list { display: grid; gap: 0; margin: 0; padding: 0; list-style: none; }
+.trust-limit-list li { position: relative; padding: 9px 4px 9px 26px; border-bottom: 1px solid #efe7d6; }
+.trust-limit-list li:last-child { border-bottom: 0; }
+.trust-limit-list li::before { content: ""; position: absolute; top: 17px; left: 7px; width: 8px; height: 8px; border: 2px solid #87621b; border-radius: 50%; }
+.trust-practical-checks { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 28px; }
+.trust-practical-checks > div { min-width: 0; padding: 19px 21px; border: 1px solid var(--color-border); border-radius: var(--radius-card); background: var(--color-surface); }
+.trust-practical-checks ul { grid-template-columns: minmax(0, 1fr); margin-bottom: 0; }
+.trust-report-section { display: flex; align-items: center; justify-content: space-between; gap: 24px; padding: 19px 0; border-top: 1px solid var(--color-border); border-bottom: 1px solid var(--color-border); }
+.trust-report-section > div { min-width: 0; }
+.trust-report-section p:not(.public-section-eyebrow) { max-width: 76ch; }
+.trust-report-section .button { flex: 0 0 auto; }
+.trust-configured-contact { margin: 10px 0; padding: 10px 14px; border-left: 3px solid var(--color-accent); background: #eef6f5; }
+.trust-configured-contact p { margin: 2px 0; }
+.trust-pilot-disclosure { padding: 18px 21px; border-left: 3px solid var(--color-warning); border-radius: 0 var(--radius-card) var(--radius-card) 0; background: #fff9e9; }
+.trust-pilot-disclosure h2 { font-size: 20px; }
+.trust-pilot-disclosure p:last-child { max-width: 82ch; margin-bottom: 0; }
+
+@media (max-width: 760px) {
+    .public-content-page.public-info-page { width: min(100% - 32px, 1120px); padding: 24px 0 48px; }
+    .public-info-page .public-content-heading { margin-bottom: 20px; padding-bottom: 18px; }
+    .public-info-page .public-content-heading h1 { font-size: clamp(29px, 8vw, 36px); }
+    .public-info-page .public-content-heading > p:last-child { font-size: 16px; }
+    .about-capability-list,
+    .about-audience-list,
+    .trust-practical-checks { grid-template-columns: minmax(0, 1fr); }
+    .about-audience-list { gap: 10px; }
+    .about-audience-list > div,
+    .trust-practical-checks > div { padding: 16px; }
+    .about-pilot-section,
+    .pricing-contact-note,
+    .trust-report-section { align-items: stretch; flex-direction: column; gap: 12px; padding: 18px; }
+    .about-pilot-section .button,
+    .pricing-contact-note .button,
+    .trust-report-section .button { width: 100%; justify-content: center; }
+    .pricing-fact-row { grid-template-columns: minmax(0, 1fr); gap: 3px; padding: 14px 8px; }
+    .trust-limits-section { grid-template-columns: minmax(0, 1fr); gap: 8px; padding: 17px; }
+}
+@media (max-width: 360px) {
+    .public-content-page.public-info-page { width: min(100% - 24px, 1120px); }
+    .trust-limits-section { padding: 15px; }
+    .about-pilot-section,
+    .pricing-contact-note,
+    .trust-report-section { padding: 16px; }
+}
+
 /* Marketplace and public manufacturer/listing surfaces. Preserve legacy hooks while
    replacing the rendered ledger rows with decision-oriented marketplace cards. */
 .marketplace-heading,

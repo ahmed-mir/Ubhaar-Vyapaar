@@ -1,27 +1,40 @@
 {% extends "marketplace/public_content_page.html" %}
 
 {% block title %}Pricing &amp; Fees | Ubhaar-Vyapaar{% endblock %}
-{% block meta_description %}See how listing prices, quotations, platform fees, and payment processing work in the current Ubhaar-Vyapaar application.{% endblock %}
+{% block meta_description %}Understand current listing prices, platform fee behavior, and simulated payment states on Ubhaar-Vyapaar.{% endblock %}
 {% block social_title %}Pricing &amp; Fees | Ubhaar-Vyapaar{% endblock %}
-{% block social_description %}See how listing prices, quotations, platform fees, and payment processing work in the current Ubhaar-Vyapaar application.{% endblock %}
+{% block social_description %}Understand current listing prices, platform fee behavior, and simulated payment states on Ubhaar-Vyapaar.{% endblock %}
 {% block twitter_title %}Pricing &amp; Fees | Ubhaar-Vyapaar{% endblock %}
-{% block twitter_description %}See how listing prices, quotations, platform fees, and payment processing work in the current Ubhaar-Vyapaar application.{% endblock %}
+{% block twitter_description %}Understand current listing prices, platform fee behavior, and simulated payment states on Ubhaar-Vyapaar.{% endblock %}
 
+{% block public_page_class %} public-info-page pricing-information-page{% endblock %}
 {% block page_eyebrow %}Pricing &amp; Fees{% endblock %}
-{% block page_h1 %}Current pricing and payment behavior{% endblock %}
-{% block page_lead %}The application displays manufacturer-provided listing prices and quotations. Platform fees and payment processing are not active in the current product.{% endblock %}
+{% block page_h1 %}Pricing and fees in the current pilot{% endblock %}
+{% block page_lead %}The application displays manufacturer-provided listing prices and quotations. It does not publish a separate future platform fee schedule.{% endblock %}
 
 {% block page_body %}
-<section class="public-content-section">
-    <div class="public-facts-table-wrap">
-        <table class="public-facts-table">
-            <tbody>
-                <tr><th scope="row">Listing prices</th><td>Manufacturers provide the listing price and quotation terms. Buyers should review the quotation before accepting it.</td></tr>
-                <tr><th scope="row">Platform fees</th><td>The current application does not calculate or collect platform fees.</td></tr>
-                <tr><th scope="row">Payments and escrow</th><td>Payment and escrow processing are not live. Funding and release labels shown in the order workflow are simulated states; the platform does not collect, hold, move, or release funds.</td></tr>
-            </tbody>
-        </table>
-    </div>
-    <p>Confirm commercial terms with the manufacturer before accepting a quotation.</p>
-</section>
+<div class="pricing-information-content">
+    <section class="pricing-facts" aria-label="Current pricing and payment information">
+        <div class="pricing-fact-row">
+            <h2>Listing prices and quotations</h2>
+            <p>Manufacturers provide listing prices where available and set the terms in their quotations. Review the quotation with the manufacturer before accepting it.</p>
+        </div>
+        <div class="pricing-fact-row">
+            <h2>Platform fees</h2>
+            <p>The current application does not calculate or collect platform fees. No fixed or future platform fee schedule is published here.</p>
+        </div>
+        <div class="pricing-fact-row">
+            <h2>Payments</h2>
+            <p>The platform does not process real payments. Funding and release labels in the order workflow are simulated and do not mean that money is collected, held, moved, or released.</p>
+        </div>
+    </section>
+
+    <aside class="pricing-contact-note">
+        <div>
+            <h2>Questions about current pricing?</h2>
+            <p>Use the Contact page for questions about the platform. For listing or quotation terms, speak with the other party before accepting.</p>
+        </div>
+        <a class="button button-secondary" href="{% url 'contact' %}">Contact Ubhaar-Vyapaar</a>
+    </aside>
+</div>
 {% endblock %}
