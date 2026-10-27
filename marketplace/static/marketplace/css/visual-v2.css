@@ -4132,3 +4132,88 @@ a { color: var(--uv-teal); }
     .workflow-audience, .workflow-section, .manufacturer-value-section { padding: 16px; }
     .workflow-step-number { width: 28px; height: 28px; }
 }
+
+/* FAQ, contact, and grievance support pages */
+.public-content-page.public-info-page.public-faq-page { max-width: 960px; }
+.public-faq-page .public-content-body { max-width: 900px; }
+.public-faq-page .public-content-sections {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: start;
+    gap: 26px 38px;
+}
+.public-faq-page .public-faq-group { min-width: 0; }
+.public-faq-page .public-faq-group + .public-faq-group { margin-top: 0; }
+.public-faq-page .public-faq-group h2 { font-size: 20px; }
+.public-faq-page .public-faq-list details { border-color: var(--color-border); }
+.public-faq-page .public-faq-list summary {
+    min-height: 56px;
+    padding: 13px 2px;
+    color: var(--color-primary);
+    font-size: 15px;
+}
+.public-faq-page .public-faq-list summary::after { color: var(--color-accent); }
+.public-faq-page .public-faq-list details p { color: var(--color-muted); line-height: 1.6; }
+.public-faq-page .public-faq-list details a,
+.public-faq-page .public-faq-contact a { color: var(--color-accent); font-weight: 700; text-underline-offset: 3px; }
+.public-faq-page .public-faq-contact { margin: 28px 0 0; padding-top: 17px; border-top: 1px solid var(--color-border); }
+
+.public-content-page.public-info-page.public-contact-page { max-width: 1120px; }
+.public-contact-page .public-content-body { max-width: 1050px; }
+.public-contact-page .contact-page-layout {
+    grid-template-columns: minmax(0, 1.35fr) minmax(250px, .65fr);
+    align-items: start;
+    gap: clamp(24px, 4vw, 48px);
+}
+.public-contact-page .contact-form-section {
+    min-width: 0;
+    padding: 0;
+    border: 0;
+}
+.public-contact-page .contact-form-section h2 { margin-bottom: 16px; }
+.public-contact-page .contact-guidance {
+    min-width: 0;
+    padding: 20px;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-card);
+    background: var(--color-surface);
+}
+.public-contact-page .contact-guidance h2 { font-size: 19px; }
+.public-contact-page .contact-guidance h3 { margin: 18px 0 5px; font-size: 15px; }
+.public-contact-page .contact-guidance p { overflow-wrap: anywhere; }
+.public-contact-page .contact-guidance a { color: var(--color-accent); font-weight: 700; text-underline-offset: 3px; }
+.public-contact-page .contact-guidance-links { margin-top: 18px; padding-top: 8px; border-top: 1px solid var(--color-border); }
+.public-contact-page .contact-guidance-links p { margin: 9px 0; }
+.public-contact-page .contact-form .form-submit { min-width: 190px; }
+
+.public-content-page.public-info-page.public-grievance-page { max-width: 960px; }
+.public-grievance-page .public-content-body { max-width: 900px; }
+.public-grievance-page .grievance-content { display: grid; gap: 22px; }
+.public-grievance-page .grievance-contact-options { padding-bottom: 20px; border-bottom: 1px solid var(--color-border); }
+.public-grievance-page .grievance-contact-options > h2 { margin-bottom: 16px; }
+.public-grievance-page .grievance-contact-options > div { display: grid; grid-template-columns: minmax(190px, .7fr) minmax(0, 1fr); column-gap: 24px; align-items: start; padding: 15px 0; border-top: 1px solid var(--color-border); }
+.public-grievance-page .grievance-contact-options h3 { margin: 0; }
+.public-grievance-page .grievance-contact-options p { margin: 0 0 8px; }
+.public-grievance-page .grievance-contact-options a { color: var(--color-accent); font-weight: 700; text-underline-offset: 3px; }
+.public-grievance-page .grievance-configured-details { padding: 18px 20px; border-left: 3px solid var(--color-accent); background: #eef6f5; }
+.public-grievance-page .grievance-configured-details h2 { margin-bottom: 10px; font-size: 20px; }
+.public-grievance-page .grievance-configured-details p:last-child { margin-bottom: 0; }
+.public-grievance-page .grievance-process-note { max-width: 76ch; margin: 0; color: var(--color-muted); font-size: 14px; }
+
+@media (max-width: 760px) {
+    .public-content-page.public-info-page.public-faq-page,
+    .public-content-page.public-info-page.public-contact-page,
+    .public-content-page.public-info-page.public-grievance-page { width: min(100% - 32px, 1120px); padding: 24px 0 48px; }
+    .public-faq-page .public-content-sections { grid-template-columns: minmax(0, 1fr); gap: 23px; }
+    .public-faq-page .public-faq-group h2 { margin-bottom: 5px; }
+    .public-contact-page .contact-page-layout { grid-template-columns: minmax(0, 1fr); gap: 24px; }
+    .public-contact-page .contact-form-section { order: 0; }
+    .public-contact-page .contact-guidance { order: 1; padding: 17px; }
+    .public-contact-page .contact-form .form-submit { width: 100%; justify-content: center; }
+    .public-grievance-page .grievance-contact-options > div { grid-template-columns: minmax(0, 1fr); row-gap: 6px; }
+}
+@media (max-width: 360px) {
+    .public-content-page.public-info-page.public-faq-page,
+    .public-content-page.public-info-page.public-contact-page,
+    .public-content-page.public-info-page.public-grievance-page { width: min(100% - 24px, 1120px); }
+}

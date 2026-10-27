@@ -377,61 +377,37 @@ def trust_safety(request):
 def faq(request):
     faq_groups = [
         {
-            "id": "faq-marketplace",
-            "title": "Marketplace",
+            "id": "faq-getting-started",
+            "title": "Getting started",
             "items": [
-                {"question": "How do I find manufacturing capacity?", "answer": "Browse active listings or search and filter by the fields available in the marketplace."},
-                {"question": "Can a manufacturer pause a listing?", "answer": "Yes. Paused listings may remain visible after available listings, but are not prioritized in default discovery and are labeled as paused."},
-            ],
-        },
-        {
-            "id": "faq-buyers",
-            "title": "Buyers",
-            "items": [
-                {"question": "How do I request a quote?", "answer": "Open a listing that accepts requests and provide the requested quantity, requirements, and delivery location. Sample listings are illustrative and do not accept quote requests."},
-            ],
-        },
-        {
-            "id": "faq-manufacturers",
-            "title": "Manufacturers",
-            "items": [
-                {"question": "What can a manufacturer manage?", "answer": "A manufacturer account can create and edit capacity listings, respond to quote requests with quotations, and manage accepted orders and milestones."},
+                {"question": "How do I find manufacturing capacity?", "answer": "Browse active listings or search and filter by the details available in the marketplace."},
+                {"question": "Can a manufacturer pause a listing?", "answer": "Yes. Paused listings may remain visible, are labeled as paused, and are not prioritized in default discovery."},
+                {"question": "Can I change my password?", "answer": "Yes. Signed-in users can change their password from account settings."},
             ],
         },
         {
             "id": "faq-quotations",
-            "title": "Quotations",
+            "title": "Quote requests",
             "items": [
-                {"question": "What happens when a buyer accepts or declines a quotation?", "answer": "A buyer can accept or decline the quotation. Acceptance creates an order with the accepted terms, messages, and production milestones."},
+                {"question": "How do I request a quotation?", "answer": "Open a listing that accepts requests and provide the requested quantity, requirements, and delivery location. Sample listings are illustrative and do not accept quote requests."},
+                {"question": "What can a manufacturer manage?", "answer": "A manufacturer account can create and edit capacity listings, respond to quote requests with quotations, and manage accepted orders and milestones."},
             ],
         },
         {
             "id": "faq-orders",
             "title": "Orders and milestones",
             "items": [
-                {"question": "How do order messages, milestones, and reviews work?", "answer": "Order participants can exchange messages and update production milestones. A buyer can leave a review after the order is completed, subject to the existing review rules."},
+                {"question": "What happens when a buyer accepts or declines a quotation?", "answer": "A buyer can accept or decline a quotation. Acceptance creates an order with the accepted terms, messages, and production milestones."},
+                {"question": "How do order messages, milestones, and reviews work?", "answer": "Order participants can exchange messages and update production milestones. A buyer can leave a review after an order is completed, subject to the existing review rules."},
             ],
         },
         {
-            "id": "faq-verification",
-            "title": "Verification",
+            "id": "faq-verification-payments",
+            "title": "Verification and payments",
             "items": [
-                {"question": "What does Verified mean?", "answer": "The Verified badge appears only for non-sample manufacturer accounts whose verification flag is approved. A KYC status by itself does not display the badge."},
-            ],
-        },
-        {
-            "id": "faq-payments",
-            "title": "Payments",
-            "items": [
-                {"question": "Does Ubhaar-Vyapaar process payments or escrow?", "answer": "No. The platform does not process payments or provide escrow. Any funding or release labels in the order workflow are simulated."},
-                {"question": "Does the platform collect a fee?", "answer": "The current application does not calculate or collect platform fees."},
-            ],
-        },
-        {
-            "id": "faq-accounts",
-            "title": "Accounts",
-            "items": [
-                {"question": "Can I change my password?", "answer": "Yes. Signed-in users can change their password from account settings."},
+                {"question": "What does Verified mean?", "answer": "The Verified badge appears only on eligible non-Sample manufacturer profiles when the profile's existing verification flag is approved. KYC status by itself does not display the badge. This status is not a product or transaction guarantee."},
+                {"question": "Does Ubhaar-Vyapaar process payments?", "answer": "No. The platform does not process real payments or collect, hold, or release money. Funding and release states shown in the order workflow are simulated and do not represent actual funds."},
+                {"question": "Does the platform collect a fee?", "answer": "The current application does not calculate or collect platform fees. Any listing or quotation prices are part of the Buyer–Manufacturer commercial discussion."},
             ],
         },
     ]

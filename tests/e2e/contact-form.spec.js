@@ -20,7 +20,7 @@ test.describe("contact form local QA", () => {
     expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(360);
   });
 
-  test("1280px contact form remains balanced and does not overflow", async ({ page }) => {
+  test("1280px contact form leads the layout and does not overflow", async ({ page }) => {
     await page.setViewportSize({ width: 1280, height: 900 });
     await page.goto("/contact/");
     const rejectCookies = page.getByRole("button", { name: /reject analytics/i });
@@ -31,7 +31,8 @@ test.describe("contact form local QA", () => {
     const [guidanceBox, formBox] = await Promise.all([guidance.boundingBox(), form.boundingBox()]);
     expect(guidanceBox).not.toBeNull();
     expect(formBox).not.toBeNull();
-    expect(formBox.x).toBeGreaterThan(guidanceBox.x);
+    expect(formBox.x).toBeLessThan(guidanceBox.x);
+    expect(formBox.width).toBeGreaterThan(guidanceBox.width);
     expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(1280);
     await page.screenshot({ path: "test-results/contact-form-1280.png", fullPage: true });
   });
@@ -67,6 +68,6 @@ test.describe("contact form local QA", () => {
     await expect(email).toHaveAttribute("aria-invalid", "true");
     await expect(email).toHaveAttribute("aria-describedby", /id_email_error/);
     await expect(page.locator("#id_email_error")).toBeVisible();
-    await expect(page.getByRole("alert").first()).toContainText("Please review the form errors");
+    await expect(page.getByRole("alert").first()).toContainText("Please review the fields marked below");
   });
 });

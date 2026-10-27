@@ -7,14 +7,13 @@
 {% block twitter_title %}FAQ | Ubhaar-Vyapaar{% endblock %}
 {% block twitter_description %}Answers about marketplace listings, buyer quote requests, manufacturer accounts, quotations, orders, verification, and payments.{% endblock %}
 
+{% block public_page_class %} public-info-page public-faq-page{% endblock %}
 {% block page_eyebrow %}FAQ{% endblock %}
-{% block page_h1 %}Questions about using the marketplace{% endblock %}
-{% block page_lead %}Answers below describe the current application and its buyer and manufacturer workflows.{% endblock %}
+{% block page_h1 %}Frequently asked questions{% endblock %}
+{% block page_lead %}Short answers about listings, quotations, orders, and the current platform.{% endblock %}
 
 {% block page_body %}
-<div class="public-page-layout">
-    {% include "marketplace/includes/public_page_toc.html" %}
-    <div class="public-content-sections">
+<div class="public-content-sections">
         {% for group in faq_groups %}
         <section class="public-faq-group" id="{{ group.id }}">
             <h2>{{ group.title }}</h2>
@@ -24,13 +23,19 @@
                     <summary>{{ item.question }}</summary>
                     <p>{{ item.answer }}</p>
                     {% if item.question == "What does Verified mean?" %}
-                    <p><a href="{% url 'trust_safety' %}">Read the Trust &amp; Safety explanation</a>.</p>
+                    <p><a href="{% url 'trust_safety' %}">Read how verification works and what it does not mean</a>.</p>
+                    {% elif item.question == "What can a manufacturer manage?" %}
+                    <p><a href="{% url 'for_manufacturers' %}">See the Manufacturer workflow</a>.</p>
+                    {% elif item.question == "What happens when a buyer accepts or declines a quotation?" %}
+                    <p><a href="{% url 'how_it_works' %}">See the quote-to-order workflow</a>.</p>
+                    {% elif item.question == "Does the platform collect a fee?" %}
+                    <p><a href="{% url 'pricing_fees' %}">Read the current pricing and fee information</a>.</p>
                     {% endif %}
                 </details>
                 {% endfor %}
             </div>
         </section>
         {% endfor %}
-    </div>
 </div>
+<p class="public-faq-contact">Still have a question? <a href="{% url 'contact' %}">Contact us</a>.</p>
 {% endblock %}

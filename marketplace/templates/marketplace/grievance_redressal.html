@@ -7,18 +7,36 @@
 {% block twitter_title %}Grievance Redressal | Ubhaar-Vyapaar{% endblock %}
 {% block twitter_description %}Review information for grievances and service concerns, including current order communication options on Ubhaar-Vyapaar.{% endblock %}
 
+{% block public_page_class %} public-info-page public-grievance-page{% endblock %}
 {% block page_eyebrow %}Grievance Redressal{% endblock %}
-{% block page_h1 %}Grievance contact{% endblock %}
-{% block page_lead %}Information about contacting the platform and communicating about an order.{% endblock %}
+{% block page_h1 %}Raise a platform concern{% endblock %}
+{% block page_lead %}Use the contact option that fits your concern. Configured grievance contact details are shown below when available.{% endblock %}
 
 {% block page_body %}
-<section class="public-content-section">
-    {% if legal_entity_name %}<p>Platform operator: {{ legal_entity_name }}</p>{% endif %}
+<div class="grievance-content">
+    <section class="grievance-contact-options" aria-labelledby="grievance-options-title">
+        <h2 id="grievance-options-title">Choose a contact path</h2>
+        <div class="grievance-option">
+            <h3>Platform or service concern</h3>
+            <p>Use the Contact form to raise a concern about a listing, account, or using the platform.</p>
+            <a class="text-link" href="{% url 'contact' %}">Contact Ubhaar-Vyapaar</a>
+        </div>
+        <div class="grievance-option">
+            <h3>Concern about an accepted order</h3>
+            <p>Order participants can communicate with each other through order messages.</p>
+        </div>
+    </section>
+
     {% if grievance_officer_name or grievance_contact_email %}
+    <section class="grievance-configured-details" aria-labelledby="grievance-details-title">
+        <p class="public-section-eyebrow">Configured details</p>
+        <h2 id="grievance-details-title">Grievance contact</h2>
+        {% if legal_entity_name %}<p>Platform operator: {{ legal_entity_name }}</p>{% endif %}
         {% if grievance_officer_name %}<p>Grievance officer: {{ grievance_officer_name }}</p>{% endif %}
-        {% if grievance_contact_email %}<p>Grievance contact: <a href="mailto:{{ grievance_contact_email }}">{{ grievance_contact_email }}</a></p>{% endif %}
-    {% else %}
-        <p>For a concern about an accepted order, participants can communicate through its order messages. The application does not provide a separate grievance form or formal dispute-resolution workflow.</p>
+        {% if grievance_contact_email %}<p>Grievance email: <a href="mailto:{{ grievance_contact_email }}">{{ grievance_contact_email }}</a></p>{% endif %}
+    </section>
     {% endif %}
-</section>
+
+    <p class="grievance-process-note">The application does not provide a separate grievance form or formal dispute-resolution workflow.</p>
+</div>
 {% endblock %}

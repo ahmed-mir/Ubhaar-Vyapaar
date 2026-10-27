@@ -152,20 +152,39 @@ class InformationalPageTests(TestCase):
     def test_faq_is_grouped_accessible_and_matches_current_behavior(self):
         response = self.client.get(reverse("faq"))
         for label in (
-            "Marketplace",
-            "Buyers",
-            "Manufacturers",
-            "Quotations",
+            "Getting started",
+            "Quote requests",
             "Orders and milestones",
-            "Verification",
-            "Payments",
-            "Accounts",
+            "Verification and payments",
         ):
             self.assertContains(response, label)
         self.assertEqual(response.content.count(b"<details>"), 10)
         self.assertContains(response, "Sample listings are illustrative")
-        self.assertContains(response, "funding or release labels")
+        self.assertContains(response, "do not represent actual funds")
+        self.assertContains(response, "does not calculate or collect platform fees")
+        self.assertContains(response, reverse("trust_safety"))
+        self.assertContains(response, reverse("for_manufacturers"))
+        self.assertContains(response, reverse("how_it_works"))
+        self.assertContains(response, reverse("pricing_fees"))
+        self.assertContains(response, reverse("contact"))
         self.assertNotContains(response, "FAQPage")
+
+    def test_contact_places_form_before_secondary_guidance_and_hides_missing_details(self):
+        response = self.client.get(reverse("contact"))
+        html = response.content.decode()
+        self.assertLess(html.index('class="public-content-section contact-form-section"'), html.index('class="contact-guidance"'))
+        self.assertContains(response, "Other ways to get help")
+        self.assertContains(response, reverse("grievance_redressal"))
+        self.assertNotContains(response, "mailto:")
+
+    def test_grievance_page_keeps_contact_path_when_details_are_missing(self):
+        response = self.client.get(reverse("grievance_redressal"))
+        self.assertContains(response, "Choose a contact path")
+        self.assertContains(response, "Platform or service concern")
+        self.assertContains(response, "accepted order")
+        self.assertContains(response, reverse("contact"))
+        self.assertNotContains(response, "Grievance contact</h2>")
+        self.assertNotContains(response, "Not configured")
 
     def test_pricing_trust_and_sample_language_stay_factual(self):
         pricing = self.client.get(reverse("pricing_fees"))

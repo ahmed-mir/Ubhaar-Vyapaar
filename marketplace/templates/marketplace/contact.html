@@ -2,27 +2,19 @@
 {% load accessibility %}
 
 {% block title %}Contact | Ubhaar-Vyapaar{% endblock %}
-{% block meta_description %}Find contact information and practical guidance for questions about Ubhaar-Vyapaar.{% endblock %}
+{% block meta_description %}Contact Ubhaar-Vyapaar with questions about the marketplace, accounts, or platform use. For accepted orders, use order messages.{% endblock %}
 {% block social_title %}Contact | Ubhaar-Vyapaar{% endblock %}
-{% block social_description %}Find contact information and practical guidance for questions about Ubhaar-Vyapaar.{% endblock %}
+{% block social_description %}Contact Ubhaar-Vyapaar with questions about the marketplace, accounts, or platform use. For accepted orders, use order messages.{% endblock %}
 {% block twitter_title %}Contact | Ubhaar-Vyapaar{% endblock %}
-{% block twitter_description %}Find contact information and practical guidance for questions about Ubhaar-Vyapaar.{% endblock %}
+{% block twitter_description %}Contact Ubhaar-Vyapaar with questions about the marketplace, accounts, or platform use. For accepted orders, use order messages.{% endblock %}
 
+{% block public_page_class %} public-info-page public-contact-page{% endblock %}
 {% block page_eyebrow %}Contact{% endblock %}
 {% block page_h1 %}Contact Ubhaar-Vyapaar{% endblock %}
-{% block page_lead %}Send a message about using the marketplace. For a specific accepted order, use its messages to communicate with the other participant.{% endblock %}
+{% block page_lead %}Send a question about the marketplace, your account, or using the platform.{% endblock %}
 
 {% block page_body %}
 <div class="contact-page-layout">
-    <aside class="public-content-section contact-guidance" aria-label="Contact information">
-        {% if legal_entity_name %}<p>Platform operator: {{ legal_entity_name }}</p>{% endif %}
-        {% if legal_contact_email %}
-            <p>{{ legal_contact_label|default:"Contact" }}: <a href="mailto:{{ legal_contact_email }}">{{ legal_contact_email }}</a></p>
-        {% endif %}
-        <p>For a specific accepted order, use its messages to communicate with the other participant.</p>
-        <p>You can also review <a href="{% url 'faq' %}">Frequently asked questions</a> or <a href="{% url 'how_it_works' %}">How it works</a>.</p>
-    </aside>
-
     <section class="public-content-section contact-form-section" aria-labelledby="contact-form-title">
         <h2 id="contact-form-title">Send a message</h2>
 
@@ -31,12 +23,12 @@
 
             {% if form.errors %}
                 <div class="form-error-summary" role="alert" tabindex="-1">
-                    <p>Please review the form errors below.</p>
+                    <p>Please review the fields marked below.</p>
                     <ul class="errorlist">
                         {% for error in form.non_field_errors %}<li>{{ error }}</li>{% endfor %}
                         {% for field in form %}
-                            {% if field.name != "company_website" %}
-                                {% for error in field.errors %}<li><a href="#{{ field.id_for_label }}">{{ field.label }}: {{ error }}</a></li>{% endfor %}
+                            {% if field.name != "company_website" and field.errors %}
+                                <li><a href="#{{ field.id_for_label }}">{{ field.label }}</a></li>
                             {% endif %}
                         {% endfor %}
                     </ul>
@@ -66,5 +58,22 @@
             <button class="button button-primary form-submit" type="submit">Send message</button>
         </form>
     </section>
+
+    <aside class="contact-guidance" aria-label="Other ways to get help">
+        <h2>Other ways to get help</h2>
+        {% if legal_entity_name %}<p>Platform operator: {{ legal_entity_name }}</p>{% endif %}
+        {% if legal_contact_email %}
+            <p>{{ legal_contact_label|default:"Contact" }}: <a href="mailto:{{ legal_contact_email }}">{{ legal_contact_email }}</a></p>
+        {% endif %}
+        <div class="contact-guidance-item">
+            <h3>About an accepted order?</h3>
+            <p>Use the order messages to contact the other participant.</p>
+        </div>
+        <div class="contact-guidance-links">
+            <p><a href="{% url 'faq' %}">Browse frequently asked questions</a></p>
+            <p><a href="{% url 'how_it_works' %}">See how the marketplace works</a></p>
+            <p><a href="{% url 'grievance_redressal' %}">Grievance Redressal</a></p>
+        </div>
+    </aside>
 </div>
 {% endblock %}
