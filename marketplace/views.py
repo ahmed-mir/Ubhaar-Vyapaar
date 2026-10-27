@@ -1078,7 +1078,7 @@ def home(request):
         "@type": "Organization",
         "name": "Ubhaar-Vyapaar",
         "url": site_url,
-        "logo": _absolute_site_url(static("marketplace/images/brand/logo.svg")),
+        "logo": _absolute_site_url(static("marketplace/images/brand/logo-mark.svg")),
     }
     if _is_real_configured_email(settings.LEGAL_CONTACT_EMAIL):
         organization_schema["email"] = settings.LEGAL_CONTACT_EMAIL.strip()
@@ -1321,7 +1321,7 @@ def marketplace(request):
         "name": "Ubhaar-Vyapaar",
         "url": site_url,
         "logo": _absolute_site_url(
-            static("marketplace/images/brand/logo.svg")
+            static("marketplace/images/brand/logo-mark.svg")
         ),
     }
     if _is_real_configured_email(settings.LEGAL_CONTACT_EMAIL):

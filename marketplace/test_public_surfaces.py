@@ -1,6 +1,8 @@
 import json
 import re
 from decimal import Decimal
+from pathlib import Path
+from xml.etree import ElementTree
 
 from django.contrib.auth import get_user_model
 from django.test import TestCase, override_settings
@@ -300,4 +302,62 @@ class PublicTradeSurfaceTests(TestCase):
         )
         self.assertEqual(listing_response.content.decode().count('"@type": "BreadcrumbList"'), 1)
         self.assertEqual(profile_response.content.decode().count('"@type": "BreadcrumbList"'), 1)
+
+    def test_shared_chrome_and_schema_reference_the_canonical_mark(self):
+        response = self.client.get(reverse("home"))
+
+        self.assertContains(
+            response,
+            'src="/static/marketplace/images/brand/logo.svg"',
+        )
+        self.assertContains(
+            response,
+            'src="/static/marketplace/images/brand/logo-light.svg"',
+        )
+        self.assertContains(
+            response,
+            'type="image/svg+xml" sizes="any" href="/static/marketplace/images/brand/favicon.svg"',
+        )
+        self.assertContains(
+            response,
+            'sizes="16x16 32x32 48x48" href="/static/marketplace/images/brand/favicon.ico"',
+        )
+        self.assertContains(
+            response,
+            'sizes="180x180" href="/static/marketplace/images/brand/apple-touch-icon.png"',
+        )
+
+        schemas = [
+            json.loads(script)
+            for script in re.findall(
+                r'<script[^>]*type="application/ld\+json"[^>]*>(.*?)</script>',
+                response.content.decode(),
+                re.DOTALL,
+            )
+        ]
+        organization = next(item for item in schemas if item["@type"] == "Organization")
+        self.assertTrue(organization["logo"].endswith("/images/brand/logo-mark.svg"))
+
+        brand_dir = Path(__file__).parent / "static" / "marketplace" / "images" / "brand"
+        svg_namespace = "{http://www.w3.org/2000/svg}"
+
+        def canonical_shapes(name):
+            root = ElementTree.parse(brand_dir / name).getroot()
+            return [
+                (
+                    element.tag.removeprefix(svg_namespace),
+                    element.attrib.get("x"),
+                    element.attrib.get("y"),
+                    element.attrib.get("width"),
+                    element.attrib.get("height"),
+                    element.attrib.get("rx"),
+                    element.attrib.get("d"),
+                    element.attrib.get("fill"),
+                )
+                for element in root
+                if element.tag in {f"{svg_namespace}rect", f"{svg_namespace}path"}
+            ]
+
+        self.assertEqual(canonical_shapes("favicon.svg"), canonical_shapes("logo-mark.svg"))
+        self.assertEqual(canonical_shapes("logo.svg"), canonical_shapes("logo-light.svg"))
 

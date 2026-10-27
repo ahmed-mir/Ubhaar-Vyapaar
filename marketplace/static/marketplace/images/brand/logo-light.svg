@@ -1,11 +1,8 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 340 72" role="img" aria-labelledby="title desc">
-  <title id="title">Ubhaar-Vyapaar logo light</title>
-  <desc id="desc">Light Ubhaar-Vyapaar logo for dark surfaces.</desc>
-  <rect x="4" y="4" width="64" height="64" rx="16" fill="#F6FAFB"/>
-  <path d="M20 17v23.2C20 49.3 26.5 55 35.8 55 45.1 55 52 49.3 52 40.2V17h-8.5v22.8c0 4.8-2.9 7.6-7.7 7.6-4.7 0-7.5-2.8-7.5-7.6V17H20Z" fill="#0D2632"/>
-  <path d="M22.8 18h8.1l6.9 15.4L47.7 18h8.1L43.1 40.8 22.8 18Z" fill="#D99B45"/>
-  <path d="M22 43h10.2l6.8-8.2 4.8 5.7H53L39 24.5 22 43Z" fill="#2DB5A7"/>
-  <path d="M43 25h9v9" fill="none" stroke="#0D2632" stroke-width="3.8" stroke-linecap="round" stroke-linejoin="round"/>
-  <path d="M30 39.5 52 17.5" fill="none" stroke="#0D2632" stroke-width="3.8" stroke-linecap="round"/>
-  <text x="86" y="45" fill="#F6FAFB" font-family="Inter, Segoe UI, Arial, sans-serif" font-size="27" font-weight="720" letter-spacing="0">Ubhaar-Vyapaar</text>
+  <title id="title">Ubhaar-Vyapaar logo</title>
+  <desc id="desc">Canonical Ubhaar-Vyapaar dark-green UV mark with a light wordmark for dark surfaces.</desc>
+  <rect x="4" y="4" width="64" height="64" rx="12" fill="#16241F"/>
+  <path d="M22 17v23c0 8 5.4 13 14 13s14-5 14-13V17h-7v23c0 4.2-2.5 6.6-7 6.6s-7-2.4-7-6.6V17h-7Z" fill="#F5EBDD"/>
+  <path d="M28 19h7.6L40 32.7 48.4 19H56L42.8 43H37L28 19Z" fill="#B96A35"/>
+  <text x="88" y="45" fill="#F6FAFB" font-family="Georgia, 'Times New Roman', serif" font-size="28" font-weight="600" letter-spacing="0">Ubhaar-Vyapaar</text>
 </svg>
