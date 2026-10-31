@@ -2909,7 +2909,7 @@ class LandingPageTests(TestCase):
         self.assertEqual(root_response.status_code, 200)
         self.assertContains(
             root_response,
-            "Find manufacturers with spare capacity for small-batch orders",
+            "Find manufacturers with spare capacity for small&#8209;batch orders",
         )
         self.assertNotContains(root_response, "Source manufacturing. Faster.")
 
@@ -2949,7 +2949,7 @@ class LandingPageTests(TestCase):
         self.assertEqual(len(re.findall(r"<h1\b", content)), 1)
         self.assertRegex(content, r'<form[^>]+method="get"[^>]+action="/marketplace/"')
         self.assertRegex(content, r'<input[^>]+name="q"')
-        self.assertContains(response, 'href="/marketplace/" data-analytics="hero_browse"')
+        self.assertContains(response, '<button class="button button-primary" type="submit" data-analytics="hero_browse">Search capacity</button>')
         self.assertContains(response, 'href="/accounts/register/manufacturer/" data-analytics="hero_list"')
 
     def test_categories_only_show_real_active_listing_counts_and_routes(self):

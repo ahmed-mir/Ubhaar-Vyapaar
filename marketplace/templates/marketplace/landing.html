@@ -1,6 +1,8 @@
 {% extends "marketplace/base.html" %}
 {% load structured_data listing_media %}
 
+{% block body_attributes %}class="landing-route"{% endblock %}
+
 {% block title %}Ubhaar-Vyapaar: Find manufacturers with spare capacity for small-batch orders{% endblock %}
 {% block meta_description %}Discover manufacturing capacity, compare practical details, request quotations and follow order milestones with Ubhaar-Vyapaar.{% endblock %}
 {% block social_title %}Ubhaar-Vyapaar: Find manufacturers with spare capacity for small-batch orders{% endblock %}
@@ -16,21 +18,18 @@
 <div class="landing-page">
     <section class="landing-hero" aria-labelledby="landing-title">
         <div class="container landing-hero-grid">
-            <div class="landing-hero-copy">
+        <div class="landing-hero-copy">
                 <p class="landing-badge"><span aria-hidden="true"></span>Early-access pilot</p>
-                <h1 id="landing-title">Find manufacturers with spare capacity for small-batch orders</h1>
+                <h1 id="landing-title">Find manufacturers with spare capacity for small&#8209;batch orders</h1>
                 <p class="landing-lede">Browse Indian manufacturing capacity, compare practical details and request a quotation.</p>
-                <div class="landing-primary-actions">
-                    <a class="button button-primary" href="{% url 'marketplace' %}" data-analytics="hero_browse">Browse capacity</a>
-                    <a class="landing-manufacturer-link" href="{{ manufacturer_cta_url }}" data-analytics="hero_list">I'm a manufacturer</a>
-                </div>
                 <form class="landing-search" method="get" action="{% url 'marketplace' %}" role="search">
                     <label for="landing-query">Search by product or process</label>
                     <div class="landing-search-row">
-                        <input id="landing-query" type="search" name="q" placeholder="For example, packaging">
-                        <button class="button button-secondary" type="submit">Search</button>
+                        <input id="landing-query" type="search" name="q" placeholder="What do you need made?">
+                        <button class="button button-primary" type="submit" data-analytics="hero_browse">Search capacity</button>
                     </div>
                 </form>
+                <a class="button button-secondary landing-manufacturer-link" href="{{ manufacturer_cta_url }}" data-analytics="hero_list">I'm a manufacturer</a>
             </div>
 
             {% if featured_listings %}
@@ -47,14 +46,14 @@
                             <h2>{{ preview_listing.title }}</h2>
                             <p class="landing-preview-maker">{{ preview_listing.manufacturer.business_name }} · {{ preview_listing.manufacturer.city }}{% if preview_listing.manufacturer.state %}, {{ preview_listing.manufacturer.state }}{% endif %}</p>
                             <dl class="landing-preview-facts">
-                                {% if preview_listing.minimum_quantity %}<div><dt>Minimum order quantity (MOQ)</dt><dd>{{ preview_listing.minimum_quantity }}</dd></div>{% endif %}
-                                {% if preview_listing.production_days %}<div><dt>Production lead time</dt><dd>{{ preview_listing.production_days }} days</dd></div>{% endif %}
-                                {% if preview_listing.price_per_unit %}<div><dt>Indicative unit price</dt><dd>₹{{ preview_listing.price_per_unit }}</dd></div>{% endif %}
+                                {% if preview_listing.minimum_quantity %}<div><dt>MOQ</dt><dd>{{ preview_listing.minimum_quantity }}</dd></div>{% endif %}
+                                {% if preview_listing.production_days %}<div><dt>Lead time</dt><dd>{{ preview_listing.production_days }} days</dd></div>{% endif %}
+                                {% if preview_listing.price_per_unit %}<div><dt>Unit price</dt><dd>₹{{ preview_listing.price_per_unit }}</dd></div>{% endif %}
                             </dl>
                             {% if preview_listing.manufacturer.is_publicly_verified %}<span class="landing-preview-verified">Verified profile</span>{% endif %}
                         </div>
                     </article>
-                    <div class="landing-preview-flow"><p>After a quotation is accepted</p><ol><li>Quotation</li><li>Production</li><li>Dispatch</li></ol></div>
+                    <div class="landing-preview-flow"><p>Typical workflow</p><ol aria-label="Request to order workflow"><li>Request quote</li><li>Review terms</li><li>Track order</li></ol></div>
                 </aside>
                 {% endwith %}
             {% else %}
@@ -68,10 +67,10 @@
 
     <section class="landing-facts" aria-label="Marketplace details">
         <div class="container landing-facts-grid">
-            <div><strong>MOQ shown upfront</strong><span>Minimum order quantity is listed when provided.</span></div>
-            <div><strong>Lead time shown</strong><span>Compare stated production days.</span></div>
-            <div><strong>Quote before ordering</strong><span>Review terms before accepting a quotation.</span></div>
-            <div><strong>Order milestones</strong><span>Follow progress after a quotation is accepted.</span></div>
+            <div><svg aria-hidden="true" viewBox="0 0 24 24" focusable="false"><path d="M4 7h16M4 12h10M4 17h7"/></svg><strong>MOQ upfront</strong><span>Minimum order quantity, when provided.</span></div>
+            <div><svg aria-hidden="true" viewBox="0 0 24 24" focusable="false"><circle cx="12" cy="12" r="8"/><path d="M12 7v5l3 2"/></svg><strong>Lead time</strong><span>Compare stated production days.</span></div>
+            <div><svg aria-hidden="true" viewBox="0 0 24 24" focusable="false"><path d="M4 5h16v11H8l-4 4V5Z"/><path d="M8 9h8M8 12h5"/></svg><strong>Quote first</strong><span>Review terms before accepting a quotation.</span></div>
+            <div><svg aria-hidden="true" viewBox="0 0 24 24" focusable="false"><path d="M4 18V6m0 12h16M8 15l3-4 3 2 5-6"/></svg><strong>Order milestones</strong><span>Follow progress after acceptance.</span></div>
         </div>
     </section>
 
@@ -83,6 +82,18 @@
                 <li><span class="landing-step-number">02</span><h3>Review fit</h3><p>Compare location, minimum quantity and stated lead time.</p></li>
                 <li><span class="landing-step-number">03</span><h3>Request a quote</h3><p>Share your requirements with a listing owner.</p></li>
                 <li><span class="landing-step-number">04</span><h3>Track the order</h3><p>Follow messages and milestones for an accepted quotation.</p></li>
+            </ol>
+        </div>
+    </section>
+
+    <section class="landing-section landing-example" aria-labelledby="example-title">
+        <div class="container">
+            <div class="landing-example-intro"><p class="eyebrow">Illustrative example</p><h2 id="example-title">A short run of product labels</h2><p>A hypothetical small D2C brand needs a short run of labels. This example shows how it might use the platform.</p></div>
+            <ol class="landing-example-steps">
+                <li><span>01</span><h3>Search capacity</h3></li>
+                <li><span>02</span><h3>Compare practical details</h3></li>
+                <li><span>03</span><h3>Request and review a quotation</h3></li>
+                <li><span>04</span><h3>Track the accepted order</h3></li>
             </ol>
         </div>
     </section>
@@ -114,7 +125,7 @@
                 {% listing_image_url listing as featured_image_url %}
                 <article class="landing-listing-card" {% if listing.manufacturer.is_demo %}data-sample-listing="true"{% endif %}>
                     <a class="landing-listing-media" href="{% url 'listing_detail' listing.pk %}" aria-label="View {{ listing.title }}">
-                        {% if featured_image_url %}<img src="{{ featured_image_url }}" alt="" width="800" height="600" loading="lazy" decoding="async">{% else %}<span class="landing-listing-fallback" aria-hidden="true">{{ listing.get_category_display }}</span>{% endif %}
+                        {% if featured_image_url %}<img src="{{ featured_image_url }}" alt="" width="800" height="600" loading="lazy" decoding="async">{% else %}<span class="landing-listing-fallback" aria-hidden="true"><svg viewBox="0 0 160 90" focusable="false"><path d="M32 67h96M43 67V39h28v28m10 0V26h36v41M51 48h12m28-11h20m-20 12h20m-20 12h20"/></svg><span>{{ listing.get_category_display }}</span></span>{% endif %}
                         {% if listing.manufacturer.is_demo %}<span class="landing-listing-sample">Sample</span>{% endif %}
                     </a>
                     <div class="landing-listing-content">
@@ -122,13 +133,14 @@
                         <h3><a href="{% url 'listing_detail' listing.pk %}">{{ listing.title }}</a></h3>
                         <p class="landing-listing-maker">{{ listing.manufacturer.business_name }}</p>
                         <p class="landing-listing-location">{{ listing.manufacturer.city }}{% if listing.manufacturer.state %}, {{ listing.manufacturer.state }}{% endif %}</p>
-                        <div class="landing-listing-facts">{% if listing.minimum_quantity %}<span>MOQ {{ listing.minimum_quantity }}</span>{% endif %}{% if listing.production_days %}<span>{{ listing.production_days }} day lead time</span>{% endif %}{% if listing.price_per_unit %}<span>₹{{ listing.price_per_unit }} / unit</span>{% endif %}</div>
+                        {% if listing.minimum_quantity or listing.production_days or listing.price_per_unit %}<dl class="landing-listing-facts">{% if listing.price_per_unit %}<div><dt>Price</dt><dd>₹{{ listing.price_per_unit }} / unit</dd></div>{% endif %}{% if listing.minimum_quantity %}<div><dt>MOQ</dt><dd>{{ listing.minimum_quantity }}</dd></div>{% endif %}{% if listing.production_days %}<div><dt>Lead time</dt><dd>{{ listing.production_days }} days</dd></div>{% endif %}</dl>{% endif %}
                         {% if listing.manufacturer.is_publicly_verified %}<span class="landing-verified">Verified profile</span>{% endif %}
-                        {% if not listing.manufacturer.is_demo %}<a class="landing-quote-link" href="{% url 'listing_detail' listing.pk %}#request-quote">View listing and request a quote <span aria-hidden="true">→</span></a>{% else %}<span class="landing-sample-note">Sample listing for illustration</span>{% endif %}
+                        {% if not listing.manufacturer.is_demo %}<a class="landing-quote-link" href="{% url 'listing_detail' listing.pk %}#request-quote">View listing and request a quote <span aria-hidden="true">→</span></a>{% endif %}
                     </div>
                 </article>
                 {% endfor %}
             </div>
+            <p class="landing-sample-grid-note">Listings marked <strong>Sample</strong> are illustrative.</p>
         </div>
     </section>
     {% endif %}
@@ -137,8 +149,8 @@
         <div class="container">
             <div class="landing-section-heading"><p class="eyebrow">For buyers and manufacturers</p><h2 id="paths-title">One marketplace, two ways to use it</h2></div>
             <div class="landing-path-grid">
-                <article class="landing-path-card"><p class="eyebrow">For buyers</p><h3>Find a fit for your next order</h3><p>Discover capacity, compare listing details and request a quotation.</p><a class="button button-primary" href="{% url 'marketplace' %}">Browse capacity</a></article>
-                <article class="landing-path-card landing-path-manufacturer"><p class="eyebrow">For manufacturers</p><h3>Share available capacity</h3><p>List capacity, respond to quote requests and manage accepted orders.</p><a class="button button-secondary" href="{{ manufacturer_cta_url }}">I'm a manufacturer</a></article>
+                <article class="landing-path-card"><span class="landing-path-icon" aria-hidden="true"><svg viewBox="0 0 24 24" focusable="false"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m15.5 15.5 5 5M7.5 10.5h6M10.5 7.5v6"/></svg></span><p class="eyebrow">For buyers</p><h3>Find a fit for your next order</h3><ul><li>Browse manufacturing capacity</li><li>Compare MOQ and lead time</li><li>Request quotes and track accepted orders</li></ul><a class="button button-primary" href="{% url 'marketplace' %}">Browse capacity</a></article>
+                <article class="landing-path-card landing-path-manufacturer"><span class="landing-path-icon" aria-hidden="true"><svg viewBox="0 0 24 24" focusable="false"><path d="M3 20V9l6 3V8l6 4V5h6v15H3Z"/><path d="M7 16h2m3 0h2m3 0h2"/></svg></span><p class="eyebrow">For manufacturers</p><h3>Share available capacity</h3><ul><li>List available capacity</li><li>Respond to quote requests</li><li>Manage quotations and accepted orders</li></ul><a class="button button-secondary" href="{{ manufacturer_cta_url }}">I'm a manufacturer</a></article>
             </div>
         </div>
     </section>
@@ -147,28 +159,33 @@
         <div class="container">
             <div class="landing-section-heading"><p class="eyebrow">Designed for practical decisions</p><h2 id="why-title">Useful details, in one workflow</h2></div>
             <ul class="landing-benefits">
-                <li><h3>Compare stated terms</h3><p>See minimum quantity, production lead time and price when a listing provides them.</p></li>
-                <li><h3>Agree through quotations</h3><p>Share requirements and review quotation terms before an order.</p></li>
-                <li><h3>Follow order milestones</h3><p>Keep order messages and progress together after acceptance.</p></li>
+                <li><span class="landing-benefit-icon" aria-hidden="true"><svg viewBox="0 0 24 24" focusable="false"><path d="M4 5h16M4 12h16M4 19h16M8 3v4m8 3v4m-5 3v4"/></svg></span><h3>Practical details</h3><p>Compare MOQ, lead time and price when a listing provides them.</p></li>
+                <li><span class="landing-benefit-icon" aria-hidden="true"><svg viewBox="0 0 24 24" focusable="false"><path d="M4 5h16v11H8l-4 4V5Z"/><path d="M8 9h8M8 12h5"/></svg></span><h3>Quote first</h3><p>Share requirements and review quotation terms before an order.</p></li>
+                <li><span class="landing-benefit-icon" aria-hidden="true"><svg viewBox="0 0 24 24" focusable="false"><path d="M4 18V6m0 12h16M8 15l3-4 3 2 5-6"/></svg></span><h3>Order progress</h3><p>Keep order messages and milestones together after acceptance.</p></li>
             </ul>
         </div>
     </section>
 
     <section class="landing-trust-panel" aria-labelledby="trust-title">
         <div class="container landing-trust-panel-inner">
-            <div><p class="eyebrow">Trust and safety</p><h2 id="trust-title">Know what verification means</h2><p>The Verified badge appears only on non-sample profiles with an approved verification flag. A KYC status alone does not qualify. The badge is not a certification or a guarantee of quality or delivery.</p><p>Review business terms and carry out your own commercial checks before placing an order.</p><a class="landing-trust-link" href="{% url 'trust_safety' %}">Learn about trust and safety <span aria-hidden="true">→</span></a></div>
+            <div class="landing-trust-copy"><p class="eyebrow">Trust and safety</p><h2 id="trust-title">Know what verification means</h2><p>The Verified badge appears only on eligible non-Sample profiles with an approved verification flag. A KYC status alone does not qualify.</p><a class="landing-trust-link" href="{% url 'trust_safety' %}">Learn about trust &amp; safety <span aria-hidden="true">→</span></a></div>
+            <div class="landing-trust-details">
+                <div><span class="landing-trust-check" aria-hidden="true">✓</span><p><strong>It indicates</strong><br>A profile’s approved verification flag.</p></div>
+                <div><span class="landing-trust-mark" aria-hidden="true">i</span><p><strong>It does not guarantee</strong><br>Certification, endorsement, quality, delivery or payment.</p></div>
+                <div><span class="landing-trust-check" aria-hidden="true">✓</span><p><strong>Check for yourself</strong><br>Specifications, quotation terms and delivery expectations.</p></div>
+            </div>
         </div>
     </section>
 
     <section class="landing-section landing-state" aria-labelledby="state-title">
         <div class="container landing-state-inner">
-            <div class="landing-state-copy"><p class="eyebrow">Current platform state</p><h2 id="state-title">Built for real manufacturing workflows, currently in early access</h2><p>Marketplace discovery, quote requests, quotations, order milestones and messaging are available today.</p><ul class="landing-state-notes"><li>Sample listings are shown for illustration.</li><li>Payment and escrow states are simulated. The platform does not process payments.</li></ul></div>
+            <div class="landing-state-copy"><p class="eyebrow">Available in the pilot</p><h2 id="state-title">Built for real manufacturing workflows, currently in early access</h2><p>Marketplace discovery, quote requests, quotations, order milestones and messaging are available today.</p><ul class="landing-state-notes"><li>Sample listings are shown for illustration.</li><li>The platform does not process real payments. Funding and release states are simulated; no money is collected, held, moved or released by the platform.</li></ul></div>
             <section class="landing-waitlist" id="early-access" aria-labelledby="waitlist-title">
                 <p class="eyebrow">Early-access interest</p><h3 id="waitlist-title">Interested in using Ubhaar-Vyapaar?</h3><p>Share your email and whether you're buying or manufacturing.</p>
                 <form method="post" action="#early-access" class="styled-form waitlist-form" novalidate data-analytics-event="waitlist_submit">
                     {% csrf_token %}
                     {% if waitlist_form.errors %}<div class="form-error-summary" role="alert" tabindex="-1"><p>Please review the form errors below.</p><ul class="errorlist">{% for error in waitlist_form.non_field_errors %}<li>{{ error }}</li>{% endfor %}{% for field in waitlist_form %}{% if field.name != "website" %}{% for error in field.errors %}<li><a href="#{{ field.id_for_label }}">{{ field.label }}: {{ error }}</a></li>{% endfor %}{% endif %}{% endfor %}</ul></div>{% endif %}
-                    {% for field in waitlist_form %}{% if field.name != "website" %}<div class="form-field{% if field.errors %} form-field-error{% endif %}">{{ field.label_tag }}{{ field }}{% if field.help_text %}<p id="{{ field.auto_id }}_helptext" class="helptext">{{ field.help_text }}</p>{% endif %}{% if field.errors %}<div id="{{ field.auto_id }}_error" class="field-errors" role="alert"><ul class="errorlist">{% for error in field.errors %}<li>{{ error }}</li>{% endfor %}</ul></div>{% endif %}</div>{% endif %}{% endfor %}
+                    {% for field in waitlist_form %}{% if field.name != "website" %}<div class="form-field{% if field.errors %} form-field-error{% endif %}"><label for="{{ field.id_for_label }}">{{ field.label }}</label>{{ field }}{% if field.help_text %}<p id="{{ field.auto_id }}_helptext" class="helptext">{{ field.help_text }}</p>{% endif %}{% if field.errors %}<div id="{{ field.auto_id }}_error" class="field-errors" role="alert"><ul class="errorlist">{% for error in field.errors %}<li>{{ error }}</li>{% endfor %}</ul></div>{% endif %}</div>{% endif %}{% endfor %}
                     <div class="contact-honeypot" aria-hidden="true">{{ waitlist_form.website }}</div>
                     <p class="waitlist-privacy">We use your email to manage early-access interest. We do not add you to a marketing list automatically. See our <a href="{% url 'privacy_policy' %}">Privacy Policy</a>.</p>
                     <button class="button button-primary form-submit" type="submit">Join early access</button>
@@ -180,7 +197,7 @@
     {% if faq_items %}
     <section class="landing-section landing-faq" aria-labelledby="faq-title">
         <div class="container landing-faq-inner">
-            <div><p class="eyebrow">Questions and answers</p><h2 id="faq-title">Frequently asked questions</h2><a class="text-link" href="{% url 'faq' %}">View all FAQs <span aria-hidden="true">→</span></a></div>
+            <div><p class="eyebrow">Questions and answers</p><h2 id="faq-title">Frequently asked questions</h2><a class="text-link landing-faq-all" href="{% url 'faq' %}">View all FAQs <span aria-hidden="true">→</span></a></div>
             <div class="landing-faq-list">{% for item in faq_items|slice:":6" %}<details><summary>{{ item.question }}</summary><p>{{ item.answer }}</p>{% if item.question == "What does Verified mean?" %}<p><a href="{% url 'trust_safety' %}">Learn about trust and safety</a>.</p>{% endif %}</details>{% endfor %}</div>
         </div>
     </section>
