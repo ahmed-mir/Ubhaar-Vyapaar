@@ -13,16 +13,14 @@
             {% csrf_token %}
             {% include "marketplace/includes/accessible_form.html" %}
 
-            <p class="login-forgot"><a href="{% url 'password_reset' %}">Forgot your password?</a></p>
-
             <input type="hidden" name="next" value="{{ next }}">
 
             <button class="button button-primary form-submit" type="submit">Log in</button>
+            <p class="login-forgot"><a href="{% url 'password_reset' %}">Forgot your password?</a></p>
         </form>
 
         <p class="login-create-account">New to Ubhaar-Vyapaar? <a href="{% url 'get_started' %}">Get started</a></p>
     </div>
 
-    {% include "accounts/includes/auth_support_panel.html" %}
 </section>
 {% endblock %}

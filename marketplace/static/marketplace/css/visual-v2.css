@@ -4736,3 +4736,53 @@ h1, h2, h3, h4 { letter-spacing: -0.02em; }
     .listing-spec-values dd { font-size: 13px; }
     .quote-process ol { grid-template-columns: minmax(0, 1fr); }
 }
+
+/* Account entry: a single readable surface shared by authentication flows. */
+.login-layout, .buyer-registration-layout, .manufacturer-registration-layout,
+.password-reset-layout, .get-started-layout {
+    display: block;
+    width: min(100% - 32px, 560px);
+    margin: clamp(24px, 4vw, 48px) auto 56px;
+}
+.get-started-layout { width: min(100% - 32px, 680px); }
+.login-main, .buyer-registration-main, .manufacturer-registration-main, .password-reset-main {
+    padding: clamp(22px, 3vw, 32px);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-control);
+    background: var(--color-surface);
+    box-shadow: none;
+}
+.auth-page-main h1 { overflow-wrap: anywhere; }
+.buyer-registration-form, .manufacturer-registration-form { gap: var(--space-4); }
+.buyer-registration-form .account-form-group, .manufacturer-registration-form .account-form-group {
+    padding-bottom: var(--space-4);
+}
+.buyer-registration-form .account-form-group legend, .manufacturer-registration-form .account-form-group legend {
+    margin-bottom: var(--space-3);
+    font-size: 16px;
+}
+.auth-page-shell .form-field-checkbox { flex-wrap: wrap; }
+.auth-page-shell .form-field-checkbox > div:not(.field-errors) { flex: 1 1 0; }
+.auth-page-shell .form-field-checkbox .field-errors { flex-basis: 100%; }
+.auth-page-shell .password-visibility-toggle { min-height: 44px; }
+.auth-page-shell .password-requirements summary { min-height: 44px; display: flex; align-items: center; cursor: pointer; }
+.auth-page-shell .field-errors { padding: 6px 0; border: 0; background: transparent; color: #8f1d19; }
+.auth-page-shell .field-errors .errorlist { margin: 0; }
+.buyer-registration-form .auth-consent-note, .manufacturer-registration-form .auth-consent-note {
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+}
+.login-form .login-forgot { margin: 0; }
+.role-choice-card { border-radius: var(--radius-control); box-shadow: none; }
+.role-choice-grid { align-items: stretch; }
+@media (max-width: 600px) {
+    .login-layout, .buyer-registration-layout, .manufacturer-registration-layout,
+    .password-reset-layout, .get-started-layout { width: 100%; margin: 20px auto 40px; }
+    .login-main, .buyer-registration-main, .manufacturer-registration-main, .password-reset-main {
+        padding: 0;
+        border: 0;
+        background: transparent;
+    }
+}
