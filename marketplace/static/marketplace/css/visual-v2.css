@@ -4638,3 +4638,101 @@ h1, h2, h3, h4 { letter-spacing: -0.02em; }
     .public-content-page.public-info-page.legal-policy-page { width: min(100% - 24px, 1120px); }
     .legal-policy-page .legal-payment-disclosure { padding: 13px; }
 }
+
+/* Phase 7B: shared discovery cards and quieter commercial surfaces. */
+.marketplace-listing-rows {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px;
+    border: 0;
+    margin-top: 16px;
+}
+
+.listing-spec-row {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0;
+    min-width: 0;
+    padding: 0;
+    overflow: hidden;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-xs);
+    background: var(--surface);
+}
+
+.listing-spec-media {
+    aspect-ratio: 16 / 9;
+    width: 100%;
+    min-height: 0;
+    border: 0;
+    border-radius: 0;
+}
+.listing-spec-media:not(.media-no-image):not(.media-failed) .listing-image-placeholder { display: none; }
+
+.listing-spec-main { padding: 15px 16px 8px; }
+.listing-spec-main h3 { margin: 8px 0; font-size: 18px; }
+.listing-card-title {
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    overflow: hidden;
+    overflow-wrap: anywhere;
+}
+.listing-card-action { display: block; margin-top: 8px; font-size: 13px; font-weight: 650; }
+.listing-spec-values {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px 16px;
+    margin: auto 16px 16px;
+    padding-top: 12px;
+    border-top: 1px solid var(--border);
+}
+.listing-spec-values > div { display: block; padding: 0; border: 0; }
+.listing-spec-values dd { margin-top: 3px; }
+.marketplace-empty-state { grid-column: 1 / -1; }
+
+.detail-commercial-panel { display: flex; flex-direction: column; }
+.detail-commercial-panel form, .detail-commercial-panel .compact-message { order: 1; }
+.listing-sheet-media { aspect-ratio: 16 / 10; }
+.listing-sheet-media > img { display: block; width: 100%; height: 100%; max-height: none; object-fit: contain; }
+.detail-flow { max-width: 72ch; }
+.detail-capability-grid > div {
+    padding: 10px 0;
+    border: 0;
+    border-bottom: 1px solid var(--border);
+    border-radius: 0;
+    background: transparent;
+}
+.detail-commercial-panel .detail-facts > div { border-radius: 0; }
+.manufacturer-trust-panel {
+    padding: 16px 0;
+    border: 0;
+    border-top: 1px solid var(--border);
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+}
+.quote-process, .similar-listings, .manufacturer-about, .manufacturer-reviews, .manufacturer-listings {
+    padding: 18px 0;
+    border: 0;
+    border-top: 1px solid var(--border);
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+}
+.manufacturer-review-list > article { border: 0; border-left: 2px solid var(--border); border-radius: 0; }
+.quote-process ol { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+
+@media (max-width: 900px) {
+    .listing-spec-row { display: flex; }
+    .listing-sheet-overview .detail-commercial-panel { order: -1; }
+    .listing-sheet-media { max-height: 320px; }
+}
+@media (max-width: 600px) {
+    .marketplace-listing-rows { grid-template-columns: minmax(0, 1fr); }
+    .listing-spec-main h3 { font-size: 17px; }
+    .listing-spec-values dt { font-size: 12px; }
+    .listing-spec-values dd { font-size: 13px; }
+    .quote-process ol { grid-template-columns: minmax(0, 1fr); }
+}

@@ -71,7 +71,7 @@
         {% if listing.manufacturer.city or listing.manufacturer.state %}<p class="record-meta">{{ listing.manufacturer.city }}{% if listing.manufacturer.city and listing.manufacturer.state %}, {% endif %}{{ listing.manufacturer.state }}</p>{% endif %}
         <p class="verification-status">Verification status: {% if listing.manufacturer.is_demo %}Sample{% elif listing.manufacturer.is_publicly_verified %}Verified{% else %}Not verified{% endif %}</p>
         {% if listing.manufacturer.description %}<p>{{ listing.manufacturer.description|truncatewords:35 }}</p>{% endif %}
-        <a class="text-action" href="{% url 'manufacturer_profile' listing.manufacturer.pk %}">Manufacturer profile</a>
+        <a class="text-action" href="{% url 'manufacturer_profile' listing.manufacturer.pk %}">View manufacturer profile</a>
     </aside>
 </div>
 
