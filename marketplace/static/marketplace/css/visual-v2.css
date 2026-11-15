@@ -4786,3 +4786,87 @@ h1, h2, h3, h4 { letter-spacing: -0.02em; }
         background: transparent;
     }
 }
+
+/* Buyer procurement surfaces: compact facts and divided activity records. */
+.buyer-dashboard__key-metrics, .quote-requests-page .quote-request-summary {
+    gap: 0;
+    border-block: 1px solid var(--color-border);
+}
+.buyer-dashboard__metric, .quote-requests-page .quote-request-summary > div,
+.quote-requests-page .quote-request-summary > .quote-request-summary__attention {
+    min-height: 0;
+    padding: 12px 16px;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+}
+.buyer-dashboard__metric dd, .quote-requests-page .quote-request-summary dd { font-size: 22px; }
+.buyer-dashboard__attention {
+    padding: 0 0 20px;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+}
+.buyer-dashboard__attention-item, .buyer-dashboard__action-row,
+.buyer-dashboard__list-item, .buyer-dashboard__notification {
+    border-radius: 0;
+    box-shadow: none;
+}
+.buyer-dashboard__empty-mark { display: none; }
+.buyer-dashboard__empty { min-height: 0; border: 0; border-radius: 0; background: transparent; padding: 12px 0; }
+.quote-requests-page .quote-flow-card {
+    padding: 22px 0;
+    margin: 0;
+    border: 0;
+    border-top: 1px solid var(--color-border);
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+}
+.quote-requests-page .quote-flow-quotation {
+    padding: 18px 0 0;
+    border: 0;
+    border-top: 1px solid var(--color-border);
+    border-radius: 0;
+    background: transparent;
+}
+.quote-requests-page .quote-commercial-facts > div,
+.quote-requests-page .quote-commercial-facts > .quote-commercial-facts__total {
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+}
+.quote-requests-page .quote-workflow-message {
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+}
+.quote-request-identity { overflow-wrap: anywhere; }
+.saved-listing-grid { align-items: stretch; }
+.saved-listing-entry { min-width: 0; display: flex; flex-direction: column; }
+.saved-listing-entry > .listing-spec-row { flex: 1; }
+.saved-listing-entry > form { margin-top: 8px; }
+.saved-listing-entry > form .button { min-height: 44px; }
+.saved-listing-unavailable { flex: 1; padding: 18px; border: 1px solid var(--color-border); background: var(--color-surface); }
+.saved-listing-unavailable h2 { font-size: 18px; }
+.saved-listing-grid > .authenticated-empty { grid-column: 1 / -1; }
+.buyer-notification-page .notification-list { gap: 0; border-top: 1px solid var(--color-border); }
+.buyer-notification-page .notification-row {
+    border: 0;
+    border-bottom: 1px solid var(--color-border);
+    border-radius: 0;
+    box-shadow: none;
+}
+.buyer-notification-page .notification-row--unread { border-left: 3px solid var(--color-accent); }
+@media (max-width: 900px) {
+    .quote-request-page .quote-workflow-main { grid-row: 1; }
+    .quote-request-page .quote-workflow-context { grid-row: 2; }
+}
+@media (max-width: 760px) {
+    .buyer-dashboard__metric, .quote-requests-page .quote-request-summary > div { padding: 10px 8px; }
+    .buyer-dashboard__attention { padding: 0 0 16px; }
+    .quote-requests-page .quote-flow-card { padding: 18px 0; }
+    .quote-requests-page .quote-commercial-facts { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}

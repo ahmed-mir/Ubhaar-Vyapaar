@@ -110,7 +110,19 @@ class MarketplaceDiscoveryTrustTests(TestCase):
             f'aria-label="Remove {listing.title} from saved listings"',
         )
         self.assertContains(response, reverse("remove_saved_listing", args=[listing.pk]))
-        self.assertNotContains(response, "listing-media-frame")
+        self.assertContains(response, 'class="listing-spec-row"')
+
+    def test_unavailable_saved_listing_keeps_remove_action_without_public_link(self):
+        buyer = get_user_model().objects.create_user(username="unavailable-buyer", password="password", role="BUYER")
+        listing = self.create_listing(self.verified, "Unavailable capacity")
+        SavedListing.objects.create(buyer=buyer, listing=listing)
+        listing.is_active = False
+        listing.save(update_fields=["is_active"])
+        self.client.force_login(buyer)
+        response = self.client.get(reverse("saved_listings"))
+        self.assertContains(response, "Currently unavailable")
+        self.assertNotContains(response, reverse("listing_detail", args=[listing.pk]))
+        self.assertContains(response, reverse("remove_saved_listing", args=[listing.pk]))
 
     def test_notifications_show_read_state_time_and_existing_open_action(self):
         buyer = get_user_model().objects.create_user(
@@ -315,11 +327,9 @@ class MarketplaceDiscoveryTrustTests(TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "Nothing waiting for your decision")
-        self.assertContains(response, "No quote requests yet")
-        self.assertContains(response, "No orders in progress")
-        self.assertContains(response, "No accepted quotations yet")
-        self.assertContains(response, "No saved listings yet")
-        self.assertContains(response, "No notifications yet")
+        self.assertContains(response, "Browse manufacturing capacity to start sourcing")
+        self.assertContains(response, reverse("marketplace"))
+        self.assertNotContains(response, "No accepted quotations yet")
 
     def test_manufacturer_dashboard_prioritizes_owned_requests_and_work(self):
         buyer = get_user_model().objects.create_user(

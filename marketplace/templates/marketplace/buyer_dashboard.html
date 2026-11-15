@@ -8,7 +8,7 @@
     <header class="buyer-dashboard__header">
         <div>
             <p class="buyer-dashboard__eyebrow">Buyer workspace</p>
-            <h1 id="buyer-dashboard-title">Dashboard</h1>
+            <h1 id="buyer-dashboard-title">Buyer dashboard</h1>
             <p class="buyer-dashboard__intro">Your quote requests, decisions and active orders at a glance.</p>
         </div>
         <a class="button button-primary" href="{% url 'marketplace' %}">Browse marketplace</a>
@@ -47,8 +47,8 @@
                         data-confirm-accept="Accepting this quotation will create a demo order between you and the manufacturer. No real payment will be processed."
                     >
                         {% csrf_token %}
-                        <button class="button button-accept" type="submit" name="status" value="ACCEPTED" aria-label="Accept quotation for {{ quotation.quote_request.listing.title }}">Accept quotation</button>
-                        <button class="button button-reject" type="submit" name="status" value="DECLINED" aria-label="Decline quotation for {{ quotation.quote_request.listing.title }}">Decline</button>
+                        <button class="button button-primary" type="submit" name="status" value="ACCEPTED" aria-label="Accept quotation for {{ quotation.quote_request.listing.title }}">Accept quotation</button>
+                        <button class="button button-subtle-danger" type="submit" name="status" value="DECLINED" aria-label="Decline quotation for {{ quotation.quote_request.listing.title }}">Decline</button>
                     </form>
                     <p class="buyer-dashboard__fine-print">Accepting creates a demo order. No real payment is processed.</p>
                 </article>
@@ -96,7 +96,11 @@
                     <span class="buyer-dashboard__empty-mark" aria-hidden="true">✓</span>
                     <div>
                         <h3>Nothing waiting for your decision</h3>
-                        <p>New quotations and milestone tasks will appear here.</p>
+                        {% if active_requests or active_orders or saved_items or notifications or accepted_quotations %}
+                            <p>New quotations and milestone tasks will appear here.</p>
+                        {% else %}
+                            <p>Browse manufacturing capacity to start sourcing. New quotations and milestone tasks will appear here.</p>
+                        {% endif %}
                     </div>
                 </div>
             {% endif %}
@@ -122,16 +126,9 @@
                 <dd>{{ stats.saved_listings }}</dd>
             </div>
         </dl>
-        <dl class="buyer-dashboard__more-metrics" aria-label="More activity">
-            <div><dt>Quotations received</dt><dd>{{ stats.quotations_received }}</dd></div>
-            <div><dt>Accepted quotations</dt><dd>{{ stats.accepted_quotations }}</dd></div>
-            <div><dt>Milestones to fund</dt><dd>{{ stats.milestones_to_fund }}</dd></div>
-            <div><dt>Milestones to review</dt><dd>{{ stats.milestones_to_review }}</dd></div>
-            <div><dt>Demo releases due</dt><dd>{{ stats.demo_releases_due }}</dd></div>
-            <div><dt>Unread notifications</dt><dd>{{ stats.unread_notifications }}</dd></div>
-        </dl>
     </section>
 
+    {% if active_requests %}
     <section class="buyer-dashboard__section" aria-labelledby="buyer-requests-title">
         <div class="buyer-dashboard__section-heading">
             <div>
@@ -156,7 +153,9 @@
                         <div><dt>Quantity</dt><dd>{{ quote.quantity }} units</dd></div>
                         <div><dt>Delivery location</dt><dd>{{ quote.delivery_location }}</dd></div>
                     </dl>
-                    {% if quote.listing.is_active and quote.listing.manufacturer.is_verified %}
+                    {% if quote.quotation %}
+                        <a class="button button-secondary" href="{% url 'my_quote_requests' %}">View request</a>
+                    {% elif quote.listing.is_active and quote.listing.manufacturer.is_verified %}
                         <a class="button button-secondary" href="{% url 'manufacturer_profile' quote.listing.manufacturer.pk %}">View manufacturer</a>
                     {% endif %}
                 </article>
@@ -169,7 +168,9 @@
             {% endfor %}
         </div>
     </section>
+    {% endif %}
 
+    {% if active_orders %}
     <section class="buyer-dashboard__section" aria-labelledby="buyer-orders-title">
         <div class="buyer-dashboard__section-heading">
             <div>
@@ -201,7 +202,9 @@
             {% endfor %}
         </div>
     </section>
+    {% endif %}
 
+    {% if accepted_quotations %}
     <section class="buyer-dashboard__section" aria-labelledby="buyer-accepted-title">
         <div class="buyer-dashboard__section-heading">
             <div>
@@ -235,7 +238,9 @@
             {% endfor %}
         </div>
     </section>
+    {% endif %}
 
+    {% if saved_items %}
     <section class="buyer-dashboard__section" aria-labelledby="buyer-saved-title">
         <div class="buyer-dashboard__section-heading">
             <div>
@@ -270,7 +275,9 @@
             {% endfor %}
         </div>
     </section>
+    {% endif %}
 
+    {% if notifications %}
     <section class="buyer-dashboard__section" aria-labelledby="buyer-notifications-title">
         <div class="buyer-dashboard__section-heading">
             <div>
@@ -306,5 +313,6 @@
             {% endfor %}
         </div>
     </section>
+    {% endif %}
 </div>
 {% endblock %}

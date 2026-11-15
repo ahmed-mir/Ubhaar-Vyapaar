@@ -153,19 +153,19 @@
 
                         {% if user.role == "BUYER" %}
 
-                            <a class="nav-link nav-link-strong{% if current_url == 'buyer_dashboard' %} nav-link-active{% endif %}" href="{% url 'buyer_dashboard' %}">
+                            <a class="nav-link nav-link-strong{% if current_url == 'buyer_dashboard' %} nav-link-active{% endif %}" href="{% url 'buyer_dashboard' %}" {% if current_url == 'buyer_dashboard' %}aria-current="page"{% endif %}>
                                 Dashboard
                             </a>
 
-                            <a class="nav-link{% if current_url == 'my_quote_requests' %} nav-link-active{% endif %}" href="{% url 'my_quote_requests' %}">
+                            <a class="nav-link{% if current_url == 'my_quote_requests' %} nav-link-active{% endif %}" href="{% url 'my_quote_requests' %}" {% if current_url == 'my_quote_requests' %}aria-current="page"{% endif %}>
                                 Requests
                             </a>
 
-                            <a class="nav-link{% if current_url == 'buyer_orders' %} nav-link-active{% endif %}" href="{% url 'buyer_orders' %}">
+                            <a class="nav-link{% if current_url == 'buyer_orders' %} nav-link-active{% endif %}" href="{% url 'buyer_orders' %}" {% if current_url == 'buyer_orders' %}aria-current="page"{% endif %}>
                                 Orders
                             </a>
 
-                            <a class="nav-link{% if current_url == 'saved_listings' %} nav-link-active{% endif %}" href="{% url 'saved_listings' %}">
+                            <a class="nav-link{% if current_url == 'saved_listings' %} nav-link-active{% endif %}" href="{% url 'saved_listings' %}" {% if current_url == 'saved_listings' %}aria-current="page"{% endif %}>
                                 Saved
                             </a>
 
@@ -191,7 +191,7 @@
                 <div class="nav-group nav-group-account">
                     {% if user.is_authenticated %}
 
-                        <a class="nav-link notification-link{% if current_url == 'notifications' %} nav-link-active{% endif %}" href="{% url 'notifications' %}">
+                        <a class="nav-link notification-link{% if current_url == 'notifications' %} nav-link-active{% endif %}" href="{% url 'notifications' %}" {% if current_url == 'notifications' %}aria-current="page"{% endif %}>
                             Notifications
 
                             {% if unread_notification_count %}

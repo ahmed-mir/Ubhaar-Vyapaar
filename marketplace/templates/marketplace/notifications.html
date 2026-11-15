@@ -3,7 +3,7 @@
 {% block title %}Notifications | Ubhaar-Vyapaar{% endblock %}
 
 {% block content %}
-    <div class="authenticated-page notification-page">
+    <div class="authenticated-page notification-page{% if user.role == 'BUYER' %} buyer-notification-page{% endif %}">
         <header class="page-heading notification-page__header">
             <div>
                 <p class="eyebrow">Account updates</p>
@@ -54,7 +54,7 @@
                 {% if page_obj.has_previous %}
                     <a class="button button-secondary" href="?page={{ page_obj.previous_page_number }}">Previous</a>
                 {% endif %}
-                <span>Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+                <span aria-current="page">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
                 {% if page_obj.has_next %}
                     <a class="button button-secondary" href="?page={{ page_obj.next_page_number }}">Next</a>
                 {% endif %}
