@@ -1,4 +1,6 @@
 from decimal import Decimal
+import hashlib
+import hmac
 import json
 from io import StringIO
 import re
@@ -22,6 +24,8 @@ from .models import (
     Notification,
     Order,
     OrderMessage,
+    PaymentTransaction,
+    PaymentWebhookEvent,
     Quotation,
     QuoteRequest,
     Review,
@@ -87,7 +91,7 @@ class MarketplaceDiscoveryTrustTests(TestCase):
             is_active=True,
         )
 
-    def test_buyer_detail_does_not_offer_sample_listing_save(self):
+    def test_buyer_can_save_sample_listing_without_transaction_actions(self):
         buyer = get_user_model().objects.create_user(
             username="sample-save-detail-buyer",
             password="password",
@@ -99,14 +103,13 @@ class MarketplaceDiscoveryTrustTests(TestCase):
         response = self.client.get(reverse("listing_detail", args=[listing.pk]))
 
         self.assertEqual(response.status_code, 200)
-        self.assertContains(
-            response,
-            "Sample listings are for demonstration and cannot be saved.",
-        )
-        self.assertNotContains(response, reverse("save_listing", args=[listing.pk]))
-        self.assertNotContains(response, "Save listing")
+        self.assertContains(response, reverse("save_listing", args=[listing.pk]))
+        self.assertContains(response, "Save listing")
+        self.assertContains(response, "Sample")
+        self.assertNotContains(response, reverse("buy_now", args=[listing.pk]))
+        self.assertNotContains(response, reverse("request_quote", args=[listing.pk]))
 
-    def test_direct_sample_save_post_redirects_with_info_without_saving(self):
+    def test_direct_sample_save_post_redirects_and_saves(self):
         buyer = get_user_model().objects.create_user(
             username="sample-save-post-buyer",
             password="password",
@@ -121,13 +124,8 @@ class MarketplaceDiscoveryTrustTests(TestCase):
         )
 
         self.assertRedirects(response, reverse("listing_detail", args=[listing.pk]))
-        self.assertContains(
-            response,
-            "Sample listings cannot be added to saved listings.",
-        )
-        self.assertFalse(
-            SavedListing.objects.filter(buyer=buyer, listing=listing).exists()
-        )
+        self.assertContains(response, "Listing saved.")
+        self.assertTrue(SavedListing.objects.filter(buyer=buyer, listing=listing).exists())
 
     def test_real_listing_save_and_duplicate_save_behavior_are_preserved(self):
         buyer = get_user_model().objects.create_user(
@@ -1288,7 +1286,9 @@ class PublicWorkflowEducationPageTests(TestCase):
             "Early-access pilot",
             "Sample listings",
             "simulated",
-            "real payment processing or escrow",
+            "Razorpay Test Mode",
+            "sandbox milestone payments only",
+            "does not provide escrow or settlement",
         ):
             with self.subTest(label=label):
                 self.assertContains(response, label)
@@ -1890,6 +1890,7 @@ class OrderMessagingTests(TestCase):
 
         self.assertRedirects(response, reverse("my_quote_requests"))
         order = Order.objects.get(quotation=quotation)
+        self.assertEqual(order.source, Order.Source.QUOTATION)
         self.assertEqual(order.buyer, self.other_buyer)
         self.assertEqual(order.total_amount, Decimal("2250.00"))
         self.assertEqual(order.milestones.count(), 2)
@@ -2349,11 +2350,12 @@ class PolicyPageTests(TestCase):
         self.assertNotContains(response, "<dt>Marketing</dt>")
         self.assertNotContains(response, "Accept All")
 
-    def test_terms_disclose_simulated_payments(self):
+    def test_terms_disclose_test_only_payments_and_simulated_release(self):
         response = self.client.get(reverse("terms"))
 
-        self.assertContains(response, "does not process real payments")
-        self.assertContains(response, "real escrow account")
+        self.assertContains(response, "Razorpay Test Mode")
+        self.assertContains(response, "not live payments")
+        self.assertContains(response, "payout and milestone release remain simulated")
 
 
 class AccessibilityContrastTests(TestCase):
@@ -3183,3 +3185,482 @@ class LandingPageTests(TestCase):
         self.assertEqual(len(parse_json_ld(response)), 2)
         self.assertContains(response, "Does the platform process payments or escrow?")
         self.assertContains(response, "Sample listings are shown for illustration.")
+
+
+@override_settings(
+    PASSWORD_HASHERS=["django.contrib.auth.hashers.MD5PasswordHasher"],
+)
+class BuyNowOrderTests(TestCase):
+    def setUp(self):
+        User = get_user_model()
+        self.buyer = User.objects.create_user(
+            username="buy-now-buyer", password="password", role="BUYER"
+        )
+        self.manufacturer_user = User.objects.create_user(
+            username="buy-now-maker", password="password", role="MANUFACTURER"
+        )
+        self.manufacturer = ManufacturerProfile.objects.create(
+            user=self.manufacturer_user,
+            business_name="Buy Now Works",
+            city="Pune",
+            state="Maharashtra",
+            is_verified=True,
+        )
+        self.listing = self.make_listing(self.manufacturer)
+
+    def make_listing(self, manufacturer, **kwargs):
+        defaults = {
+            "manufacturer": manufacturer,
+            "title": "Custom cartons",
+            "category": CapacityListing.Category.PACKAGING,
+            "description": "Printed cartons in fixed quantities.",
+            "minimum_quantity": 100,
+            "price_per_unit": Decimal("12.50"),
+            "production_days": 9,
+            "available_capacity": 500,
+            "availability_status": CapacityListing.AvailabilityStatus.AVAILABLE,
+            "is_active": True,
+        }
+        defaults.update(kwargs)
+        return CapacityListing.objects.create(**defaults)
+
+    def create_order(self, quantity="120", **extra):
+        self.client.force_login(self.buyer)
+        data = {
+            "quantity": quantity,
+            "delivery_location": "Pune, Maharashtra",
+        }
+        data.update(extra)
+        return self.client.post(reverse("buy_now", args=[self.listing.pk]), data)
+
+    def test_eligible_buyer_sees_both_fixed_price_and_quote_actions(self):
+        self.client.force_login(self.buyer)
+        response = self.client.get(reverse("listing_detail", args=[self.listing.pk]))
+        self.assertContains(response, reverse("buy_now", args=[self.listing.pk]))
+        self.assertContains(response, "Buy now")
+        self.assertContains(response, reverse("request_quote", args=[self.listing.pk]))
+        self.assertContains(response, "Request a quote")
+
+    def test_buy_now_creates_direct_order_from_server_price_and_two_milestones(self):
+        response = self.create_order(
+            "120", price_per_unit="0.01", total_amount="0.01"
+        )
+        order = Order.objects.get(source=Order.Source.BUY_NOW)
+        self.assertRedirects(response, reverse("order_detail", args=[order.pk]))
+        self.assertIsNone(order.quotation)
+        self.assertEqual(order.buyer, self.buyer)
+        self.assertEqual(order.manufacturer, self.manufacturer)
+        self.assertEqual(order.listing, self.listing)
+        self.assertEqual(order.quantity, 120)
+        self.assertEqual(order.agreed_unit_price, Decimal("12.50"))
+        self.assertEqual(order.total_amount, Decimal("1500.00"))
+        self.assertEqual(order.agreed_production_days, 9)
+        self.assertEqual(order.status, Order.Status.AWAITING_FUNDING)
+        self.assertEqual(order.specifications_snapshot["delivery_location"], "Pune, Maharashtra")
+        self.assertEqual(
+            list(order.milestones.values_list("title", "percentage", "amount")),
+            [
+                ("Production complete", 80, Decimal("1200.00")),
+                ("Ready to ship", 20, Decimal("300.00")),
+            ],
+        )
+        self.assertTrue(all(not item.funded_at for item in order.milestones.all()))
+
+    def test_quantity_below_moq_and_over_capacity_are_rejected(self):
+        response = self.create_order("99")
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Please order at least 100 units.")
+        self.assertFalse(Order.objects.filter(source=Order.Source.BUY_NOW).exists())
+
+        response = self.create_order("501")
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "exceeds the listed available capacity")
+        self.assertFalse(Order.objects.filter(source=Order.Source.BUY_NOW).exists())
+
+    def test_direct_purchase_rejects_sample_unverified_paused_and_inactive_listings(self):
+        demo_user = get_user_model().objects.create_user(
+            username="demo_mfr_buy_now", password="password", role="MANUFACTURER"
+        )
+        demo = ManufacturerProfile.objects.create(
+            user=demo_user,
+            business_name="Sample Works",
+            city="Pune",
+            state="Maharashtra",
+            is_verified=True,
+        )
+        unverified_user = get_user_model().objects.create_user(
+            username="unverified-buy-now", password="password", role="MANUFACTURER"
+        )
+        unverified = ManufacturerProfile.objects.create(
+            user=unverified_user,
+            business_name="Unverified Works",
+            city="Pune",
+            state="Maharashtra",
+            is_verified=False,
+        )
+        blocked = [
+            self.make_listing(demo, title="Sample direct purchase"),
+            self.make_listing(unverified, title="Unverified direct purchase"),
+            self.make_listing(self.manufacturer, title="Paused purchase", availability_status="PAUSED"),
+            self.make_listing(self.manufacturer, title="Inactive purchase", is_active=False),
+        ]
+        self.client.force_login(self.buyer)
+        for listing in blocked:
+            with self.subTest(listing=listing.title):
+                response = self.client.post(
+                    reverse("buy_now", args=[listing.pk]),
+                    {"quantity": 100, "delivery_location": "Pune"},
+                )
+                self.assertEqual(response.status_code, 404)
+        self.assertFalse(Order.objects.exists())
+
+    def test_manufacturer_cannot_purchase_listings(self):
+        self.client.force_login(self.manufacturer_user)
+        response = self.client.get(reverse("buy_now", args=[self.listing.pk]))
+        self.assertEqual(response.status_code, 403)
+
+    def test_direct_order_detail_and_manufacturer_order_list_are_null_safe(self):
+        self.create_order()
+        order = Order.objects.get(source=Order.Source.BUY_NOW)
+        self.assertContains(self.client.get(reverse("order_detail", args=[order.pk])), "Direct purchase confirmed")
+        self.assertContains(self.client.get(reverse("buyer_orders")), "Custom cartons")
+        self.client.force_login(self.manufacturer_user)
+        self.assertContains(self.client.get(reverse("manufacturer_orders")), "Custom cartons")
+
+
+@override_settings(
+    PASSWORD_HASHERS=["django.contrib.auth.hashers.MD5PasswordHasher"],
+    RAZORPAY_ENABLED=True,
+    RAZORPAY_KEY_ID="rzp_test_phase8a",
+    RAZORPAY_KEY_SECRET="test_key_secret_only",
+    RAZORPAY_WEBHOOK_SECRET="test_webhook_secret_only",
+)
+class RazorpayTestModeTests(TestCase):
+    def setUp(self):
+        User = get_user_model()
+        self.buyer = User.objects.create_user(
+            username="razorpay-buyer", password="password", role="BUYER"
+        )
+        self.manufacturer_user = User.objects.create_user(
+            username="razorpay-maker", password="password", role="MANUFACTURER"
+        )
+        self.manufacturer = ManufacturerProfile.objects.create(
+            user=self.manufacturer_user,
+            business_name="Test Mode Works",
+            city="Pune",
+            state="Maharashtra",
+            is_verified=True,
+        )
+        self.listing = CapacityListing.objects.create(
+            manufacturer=self.manufacturer,
+            title="Test cartons",
+            category=CapacityListing.Category.PACKAGING,
+            description="Fixed-price test capacity.",
+            minimum_quantity=100,
+            price_per_unit=Decimal("10.00"),
+            production_days=8,
+            available_capacity=500,
+            availability_status=CapacityListing.AvailabilityStatus.AVAILABLE,
+            is_active=True,
+        )
+        self.client.force_login(self.buyer)
+        self.client.post(
+            reverse("buy_now", args=[self.listing.pk]),
+            {"quantity": 120, "delivery_location": "Pune"},
+        )
+        self.order = Order.objects.get(source=Order.Source.BUY_NOW)
+        self.milestone = self.order.milestones.get(title="Production complete")
+
+    def make_transaction(self, amount=None, **overrides):
+        if amount is None:
+            amount = self.milestone.amount
+        values = {
+            "buyer": self.buyer,
+            "milestone": self.milestone,
+            "amount": amount,
+            "currency": "INR",
+            "provider": PaymentTransaction.Provider.RAZORPAY,
+            "provider_order_id": "order_test_phase8a",
+        }
+        values.update(overrides)
+        return PaymentTransaction.objects.create(**values)
+
+    def checkout_signature(self, order_id, payment_id):
+        message = f"{order_id}|{payment_id}".encode()
+        return hmac.new(
+            b"test_key_secret_only", message, hashlib.sha256
+        ).hexdigest()
+
+    def gateway_objects(self, amount_paise=96000, order_id="order_test_phase8a", payment_id="pay_test_phase8a", payment_status="captured", order_status="paid"):
+        payment = {
+            "id": payment_id,
+            "order_id": order_id,
+            "amount": amount_paise,
+            "currency": "INR",
+            "status": payment_status,
+        }
+        gateway_order = {
+            "id": order_id,
+            "amount": amount_paise,
+            "amount_paid": amount_paise if order_status == "paid" else 0,
+            "currency": "INR",
+            "status": order_status,
+        }
+        return payment, gateway_order
+
+    @patch("marketplace.views.get_razorpay_client")
+    def test_funding_post_creates_gateway_order_from_database_milestone_amount(self, get_client):
+        client = get_client.return_value
+        client.order.create.return_value = {
+            "id": "order_created_test",
+            "amount": 96000,
+            "currency": "INR",
+        }
+        response = self.client.post(
+            reverse("fund_milestone", args=[self.milestone.pk]),
+            {"amount": "0.01", "total": "0.01"},
+        )
+        payment_transaction = PaymentTransaction.objects.get(milestone=self.milestone)
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Razorpay Test Mode")
+        self.assertContains(response, "rzp_test_phase8a")
+        self.assertNotContains(response, "test_key_secret_only")
+        self.assertNotContains(response, "test_webhook_secret_only")
+        self.assertEqual(payment_transaction.amount, Decimal("960.00"))
+        self.assertEqual(payment_transaction.provider_order_id, "order_created_test")
+        client.order.create.assert_called_once()
+        self.assertEqual(client.order.create.call_args.kwargs["data"]["amount"], 96000)
+        self.assertEqual(client.order.create.call_args.kwargs["data"]["currency"], "INR")
+        self.assertEqual(self.milestone.funding_status, Milestone.FundingStatus.NOT_FUNDED)
+
+    @patch("marketplace.views.get_razorpay_client")
+    def test_valid_signed_callback_funds_only_after_gateway_confirms_capture(self, get_client):
+        payment_transaction = self.make_transaction()
+        payment, gateway_order = self.gateway_objects()
+        get_client.return_value.payment.fetch.return_value = payment
+        get_client.return_value.order.fetch.return_value = gateway_order
+        response = self.client.post(
+            reverse("verify_milestone_payment"),
+            {
+                "payment_transaction_id": payment_transaction.pk,
+                "razorpay_order_id": payment_transaction.provider_order_id,
+                "razorpay_payment_id": payment["id"],
+                "razorpay_signature": self.checkout_signature(payment_transaction.provider_order_id, payment["id"]),
+            },
+        )
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.url, reverse("order_detail", args=[self.order.pk]))
+        payment_transaction.refresh_from_db()
+        self.milestone.refresh_from_db()
+        self.order.refresh_from_db()
+        self.assertEqual(payment_transaction.status, PaymentTransaction.Status.CAPTURED)
+        self.assertEqual(self.milestone.funding_status, Milestone.FundingStatus.FUNDED)
+        self.assertIsNotNone(self.milestone.funded_at)
+        self.assertEqual(self.order.status, Order.Status.FUNDED)
+        landing = self.client.get(response.url)
+        self.assertContains(landing, "Test payment recorded. Manufacturer payout remains simulated.")
+        notification_count = Notification.objects.filter(order=self.order).count()
+        self.assertEqual(notification_count, 6)
+        self.client.post(
+            reverse("verify_milestone_payment"),
+            {
+                "payment_transaction_id": payment_transaction.pk,
+                "razorpay_order_id": payment_transaction.provider_order_id,
+                "razorpay_payment_id": payment["id"],
+                "razorpay_signature": self.checkout_signature(payment_transaction.provider_order_id, payment["id"]),
+            },
+            follow=True,
+        )
+        self.assertEqual(Notification.objects.filter(order=self.order).count(), notification_count)
+
+    @patch("marketplace.views.get_razorpay_client")
+    def test_invalid_signature_mismatched_order_amount_and_uncaptured_state_never_fund(self, get_client):
+        payment_transaction = self.make_transaction()
+        base = {
+            "payment_transaction_id": payment_transaction.pk,
+            "razorpay_order_id": payment_transaction.provider_order_id,
+            "razorpay_payment_id": "pay_test_bad",
+            "razorpay_signature": "invalid",
+        }
+        response = self.client.post(reverse("verify_milestone_payment"), base)
+        self.assertRedirects(response, reverse("order_detail", args=[self.order.pk]))
+        get_client.assert_not_called()
+        self.assertEqual(self.milestone.funding_status, Milestone.FundingStatus.NOT_FUNDED)
+
+        base["razorpay_signature"] = self.checkout_signature(payment_transaction.provider_order_id, "pay_test_bad")
+        base["razorpay_order_id"] = "order_other"
+        self.client.post(reverse("verify_milestone_payment"), base)
+        get_client.assert_not_called()
+        base["razorpay_order_id"] = payment_transaction.provider_order_id
+        payment, gateway_order = self.gateway_objects(amount_paise=96001, payment_id="pay_test_bad")
+        get_client.return_value.payment.fetch.return_value = payment
+        get_client.return_value.order.fetch.return_value = gateway_order
+        self.client.post(reverse("verify_milestone_payment"), base)
+        self.assertEqual(self.milestone.funding_status, Milestone.FundingStatus.NOT_FUNDED)
+
+        payment, gateway_order = self.gateway_objects(payment_id="pay_test_bad", payment_status="authorized", order_status="created")
+        get_client.return_value.payment.fetch.return_value = payment
+        get_client.return_value.order.fetch.return_value = gateway_order
+        self.client.post(reverse("verify_milestone_payment"), base)
+        self.assertEqual(self.milestone.funding_status, Milestone.FundingStatus.NOT_FUNDED)
+
+    @patch("marketplace.views.get_razorpay_client")
+    def test_failed_callback_keeps_milestone_payable(self, get_client):
+        payment_transaction = self.make_transaction()
+        payment, _ = self.gateway_objects(payment_status="failed", order_status="created")
+        get_client.return_value.payment.fetch.return_value = payment
+        self.client.post(
+            reverse("report_milestone_payment_failure"),
+            {
+                "payment_transaction_id": payment_transaction.pk,
+                "razorpay_order_id": payment_transaction.provider_order_id,
+                "razorpay_payment_id": payment["id"],
+            },
+            follow=True,
+        )
+        payment_transaction.refresh_from_db()
+        self.assertEqual(payment_transaction.status, PaymentTransaction.Status.FAILED)
+        self.assertEqual(self.milestone.funding_status, Milestone.FundingStatus.NOT_FUNDED)
+        failed_response = self.client.post(
+            reverse("report_milestone_payment_failure"),
+            {
+                "payment_transaction_id": payment_transaction.pk,
+                "razorpay_order_id": payment_transaction.provider_order_id,
+                "razorpay_payment_id": payment["id"],
+            },
+            follow=True,
+        )
+        self.assertContains(failed_response, "Payment was not completed. You can try again.")
+
+    @patch("marketplace.views.get_razorpay_client")
+    def test_failed_payment_can_be_retried_with_a_fresh_test_order(self, get_client):
+        old_transaction = self.make_transaction(status=PaymentTransaction.Status.FAILED)
+        get_client.return_value.order.create.return_value = {
+            "id": "order_retry_test",
+            "amount": 96000,
+            "currency": "INR",
+        }
+        response = self.client.post(reverse("fund_milestone", args=[self.milestone.pk]))
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(
+            PaymentTransaction.objects.filter(milestone=self.milestone).count(), 2
+        )
+        self.assertEqual(
+            PaymentTransaction.objects.exclude(pk=old_transaction.pk).get().provider_order_id,
+            "order_retry_test",
+        )
+        self.assertEqual(self.milestone.funding_status, Milestone.FundingStatus.NOT_FUNDED)
+
+    def post_webhook(self, event_id, event_type="payment.captured", entity=None, raw_body=None, signature_secret="test_webhook_secret_only"):
+        if raw_body is None:
+            raw_body = json.dumps(
+                {"event": event_type, "payload": {"payment": {"entity": entity}}},
+                separators=(",", ":"),
+            ).encode()
+        signature = hmac.new(
+            signature_secret.encode(), raw_body, hashlib.sha256
+        ).hexdigest()
+        return self.client.post(
+            reverse("razorpay_webhook"),
+            data=raw_body,
+            content_type="application/json",
+            HTTP_X_RAZORPAY_SIGNATURE=signature,
+            HTTP_X_RAZORPAY_EVENT_ID=event_id,
+        )
+
+    def test_webhook_uses_raw_body_signature_rejects_invalid_and_deduplicates_capture(self):
+        payment_transaction = self.make_transaction()
+        entity = {
+            "id": "pay_webhook_captured",
+            "order_id": payment_transaction.provider_order_id,
+            "amount": 96000,
+            "currency": "INR",
+            "status": "captured",
+        }
+        raw_body = json.dumps(
+            {"event": "payment.captured", "payload": {"payment": {"entity": entity}}},
+            separators=(",", ":"),
+        ).encode()
+        wrong_body = raw_body + b" "
+        bad_signature = hmac.new(b"test_webhook_secret_only", wrong_body, hashlib.sha256).hexdigest()
+        rejected = self.client.post(
+            reverse("razorpay_webhook"), data=raw_body, content_type="application/json",
+            HTTP_X_RAZORPAY_SIGNATURE=bad_signature, HTTP_X_RAZORPAY_EVENT_ID="evt_bad_raw",
+        )
+        self.assertEqual(rejected.status_code, 400)
+        self.assertFalse(PaymentWebhookEvent.objects.exists())
+
+        first = self.post_webhook("evt_captured_1", entity=entity)
+        self.assertEqual(first.status_code, 200)
+        created_notifications = Notification.objects.filter(order=self.order).count()
+        duplicate = self.post_webhook("evt_captured_1", entity=entity)
+        self.assertEqual(duplicate.status_code, 200)
+        payment_transaction.refresh_from_db()
+        self.milestone.refresh_from_db()
+        self.assertEqual(payment_transaction.status, PaymentTransaction.Status.CAPTURED)
+        self.assertEqual(self.milestone.funding_status, Milestone.FundingStatus.FUNDED)
+        self.assertEqual(PaymentWebhookEvent.objects.count(), 1)
+        self.assertEqual(Notification.objects.filter(order=self.order).count(), created_notifications)
+
+    def test_webhook_failure_then_capture_is_order_safe_and_failure_does_not_fund(self):
+        payment_transaction = self.make_transaction()
+        failed_entity = {
+            "id": "pay_webhook_failed",
+            "order_id": payment_transaction.provider_order_id,
+            "amount": 96000,
+            "currency": "INR",
+            "status": "failed",
+        }
+        self.post_webhook("evt_failed_first", "payment.failed", failed_entity)
+        payment_transaction.refresh_from_db()
+        self.assertEqual(payment_transaction.status, PaymentTransaction.Status.FAILED)
+        self.assertEqual(self.milestone.funding_status, Milestone.FundingStatus.NOT_FUNDED)
+        captured_entity = {**failed_entity, "id": "pay_webhook_retried", "status": "captured"}
+        self.post_webhook("evt_captured_later", "payment.captured", captured_entity)
+        payment_transaction.refresh_from_db()
+        self.milestone.refresh_from_db()
+        self.assertEqual(payment_transaction.status, PaymentTransaction.Status.CAPTURED)
+        self.assertEqual(payment_transaction.provider_payment_id, "pay_webhook_retried")
+        self.assertEqual(self.milestone.funding_status, Milestone.FundingStatus.FUNDED)
+
+    def test_webhook_rejects_bad_signature_and_ignores_mismatched_amount(self):
+        self.make_transaction()
+        entity = {
+            "id": "pay_mismatch",
+            "order_id": "order_test_phase8a",
+            "amount": 999,
+            "currency": "INR",
+            "status": "captured",
+        }
+        raw_body = json.dumps(
+            {"event": "payment.captured", "payload": {"payment": {"entity": entity}}}
+        ).encode()
+        response = self.client.post(
+            reverse("razorpay_webhook"), data=raw_body, content_type="application/json",
+            HTTP_X_RAZORPAY_SIGNATURE="bad", HTTP_X_RAZORPAY_EVENT_ID="evt_bad_sig",
+        )
+        self.assertEqual(response.status_code, 400)
+        self.post_webhook("evt_bad_amount", entity=entity)
+        event = PaymentWebhookEvent.objects.get(event_id="evt_bad_amount")
+        self.assertEqual(event.status, PaymentWebhookEvent.ProcessingStatus.IGNORED)
+        self.assertEqual(self.milestone.funding_status, Milestone.FundingStatus.NOT_FUNDED)
+
+    def test_other_buyer_and_manufacturer_cannot_verify_a_payment(self):
+        payment_transaction = self.make_transaction()
+        payload = {
+            "payment_transaction_id": payment_transaction.pk,
+            "razorpay_order_id": payment_transaction.provider_order_id,
+            "razorpay_payment_id": "pay_test_phase8a",
+            "razorpay_signature": self.checkout_signature(payment_transaction.provider_order_id, "pay_test_phase8a"),
+        }
+        other_buyer = get_user_model().objects.create_user(
+            username="another-buyer", password="password", role="BUYER"
+        )
+        self.client.force_login(other_buyer)
+        self.assertEqual(self.client.post(reverse("verify_milestone_payment"), payload).status_code, 404)
+        self.client.force_login(self.manufacturer_user)
+        self.assertEqual(self.client.post(reverse("verify_milestone_payment"), payload).status_code, 403)
+        self.assertEqual(
+            self.client.post(reverse("fund_milestone", args=[self.milestone.pk])).status_code,
+            403,
+        )

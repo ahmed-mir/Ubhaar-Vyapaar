@@ -1,4 +1,5 @@
 import logging
+import json
 
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
@@ -8,6 +9,7 @@ from django.core.validators import validate_email
 from django.core.paginator import Paginator
 from django.db.models import Case, Count, IntegerField, Q, When
 from django.db import IntegrityError, transaction
+from django.views.decorators.csrf import csrf_exempt
 from django.utils import timezone
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.http import require_http_methods, require_POST
@@ -24,6 +26,7 @@ from urllib.parse import urlencode, urljoin
 from .forms import (
     CapacityListingEditForm,
     CapacityListingForm,
+    BuyNowForm,
     ContactSubmissionForm,
     WaitlistEntryForm,
     OrderMessageForm,
@@ -39,11 +42,20 @@ from .models import (
     Milestone,
     Notification,
     Order,
+    PaymentTransaction,
+    PaymentWebhookEvent,
     QuoteRequest,
     Quotation,
     Review,
     SavedListing,
     WaitlistEntry,
+)
+from .payments import (
+    amount_to_paise,
+    checkout_signature_is_valid,
+    get_razorpay_client,
+    razorpay_test_mode_enabled,
+    webhook_signature_is_valid,
 )
 
 logger = logging.getLogger(__name__)
@@ -406,7 +418,7 @@ def faq(request):
             "title": "Verification and payments",
             "items": [
                 {"question": "What does Verified mean?", "answer": "The Verified badge appears only on eligible non-Sample manufacturer profiles when the profile's existing verification flag is approved. KYC status by itself does not display the badge. This status is not a product or transaction guarantee."},
-                {"question": "Does Ubhaar-Vyapaar process payments?", "answer": "No. The platform does not process real payments or collect, hold, or release money. Funding and release states shown in the order workflow are simulated and do not represent actual funds."},
+                {"question": "Does Ubhaar-Vyapaar process payments?", "answer": "When enabled, milestone checkout uses Razorpay Test Mode only. Test transactions are not live payments. Manufacturer payout and milestone release remain simulated; the platform does not provide escrow or settlement."},
                 {"question": "Does the platform collect a fee?", "answer": "The current application does not calculate or collect platform fees. Any listing or quotation prices are part of the Buyer–Manufacturer commercial discussion."},
             ],
         },
@@ -590,6 +602,7 @@ def create_order_from_quotation(quotation):
             "total_amount": quotation.subtotal,
             "agreed_production_days": quotation.production_days,
             "status": Order.Status.AWAITING_FUNDING,
+            "source": Order.Source.QUOTATION,
         },
     )
 
@@ -776,6 +789,18 @@ def order_is_closed(order):
 
 def add_milestone_action_flags(milestone, user):
     closed = order_is_closed(milestone.order)
+    milestone.payment_enabled = _order_uses_razorpay_test_mode(milestone.order)
+    milestone.has_captured_test_payment = milestone.payment_transactions.filter(
+        status=PaymentTransaction.Status.CAPTURED
+    ).exists()
+    milestone.funding_status_label = milestone.get_funding_status_display()
+    if milestone.payment_enabled:
+        if milestone.funding_status == Milestone.FundingStatus.NOT_FUNDED:
+            milestone.funding_status_label = "Payment due · Test Mode"
+        elif milestone.has_captured_test_payment:
+            milestone.funding_status_label = "Test payment recorded"
+        elif milestone.funding_status == Milestone.FundingStatus.RELEASED:
+            milestone.funding_status_label = "Release simulated"
 
     milestone.can_fund = (
         user.role == "BUYER"
@@ -812,9 +837,17 @@ def add_milestone_action_flags(milestone, user):
 
     if milestone.status == Milestone.Status.PENDING:
         if milestone.funding_status == Milestone.FundingStatus.NOT_FUNDED:
-            milestone.workflow_hint = "Awaiting buyer demo funding."
+            milestone.workflow_hint = (
+                "Awaiting Buyer payment in Razorpay Test Mode."
+                if milestone.payment_enabled
+                else "Awaiting buyer demo funding."
+            )
         else:
-            milestone.workflow_hint = "Ready for manufacturer to start."
+            milestone.workflow_hint = (
+                "Payment recorded. Milestone ready to start."
+                if milestone.has_captured_test_payment and user.role == "MANUFACTURER"
+                else "Ready for manufacturer to start."
+            )
     elif milestone.status == Milestone.Status.IN_PROGRESS:
         milestone.workflow_hint = "Manufacturer is working on this milestone."
     elif milestone.status == Milestone.Status.COMPLETED:
@@ -852,6 +885,14 @@ def build_next_action(order, user, milestones):
     for milestone in milestones:
         if user.role == "BUYER":
             if milestone.can_fund:
+                if milestone.payment_enabled:
+                    return {
+                        "title": f"Pay {milestone.title} (Test Mode)",
+                        "body": "Razorpay Test Mode records a test payment only. Manufacturer payout remains simulated.",
+                        "url_name": "fund_milestone",
+                        "url_arg": milestone.pk,
+                        "button": "Pay milestone",
+                    }
                 return {
                     "title": f"Confirm demo funding for {milestone.title}",
                     "body": "This is a simulated funding step. No real payment will be processed.",
@@ -933,16 +974,26 @@ def build_order_timeline(order, milestones):
     )
     has_order_review = Review.objects.filter(order=order).exists()
 
-    return [
-        {
+    if order.quotation_id:
+        origin_step = {
             "title": "Quotation accepted",
             "body": "Buyer accepted the quotation.",
             "complete": order.quotation.status == Quotation.Status.ACCEPTED,
             "date": order.quotation.responded_at,
-        },
+        }
+    else:
+        origin_step = {
+            "title": "Direct purchase confirmed",
+            "body": "Buyer confirmed the listing's fixed-price terms.",
+            "complete": True,
+            "date": order.terms_locked_at,
+        }
+
+    return [
+        origin_step,
         {
             "title": "Order created",
-            "body": "Commercial terms were locked into a demo order.",
+            "body": "Commercial terms were locked into the order.",
             "complete": True,
             "date": order.created_at,
         },
@@ -952,8 +1003,16 @@ def build_order_timeline(order, milestones):
             "complete": has_milestones,
         },
         {
-            "title": "Demo funding",
-            "body": "All milestone funding is simulated; no real money is held.",
+            "title": (
+                "Milestone payments"
+                if _order_uses_razorpay_test_mode(order)
+                else "Demo funding"
+            ),
+            "body": (
+                "Test payments are not live. Manufacturer payout and release remain simulated."
+                if _order_uses_razorpay_test_mode(order)
+                else "All milestone funding is simulated; no real money is held."
+            ),
             "complete": all_funded,
         },
         {
@@ -1017,7 +1076,7 @@ LANDING_FAQ_ITEMS = [
     },
     {
         "question": "Does the platform process payments or escrow?",
-        "answer": "No. Payments and escrow are not processed by the platform. Any funding or release labels in the order workflow are simulated.",
+        "answer": "When enabled, milestone checkout uses Razorpay Test Mode only; test transactions are not live payments. Manufacturer payout and release remain simulated, and the platform does not provide escrow or settlement.",
     },
 ]
 
@@ -1380,6 +1439,12 @@ def listing_detail(request, pk):
             listing=listing,
         ).exists()
 
+    can_buy_now = (
+        request.user.is_authenticated
+        and request.user.role == "BUYER"
+        and _listing_is_buy_now_eligible(listing)
+    )
+
     social_image_url = (
         urljoin(f"{settings.SITE_ORIGIN}/", listing.image.url)
         if listing.image and not listing.manufacturer.is_demo
@@ -1471,6 +1536,129 @@ def listing_detail(request, pk):
             "breadcrumb_schema": breadcrumb_schema,
             "service_schema": service_schema,
             "similar_listings": similar_listings,
+            "can_buy_now": can_buy_now,
+        },
+    )
+
+
+def _listing_is_buy_now_eligible(listing):
+    return bool(
+        listing.is_active
+        and listing.manufacturer.is_verified
+        and not listing.manufacturer.is_demo
+        and listing.availability_status
+        in {
+            CapacityListing.AvailabilityStatus.AVAILABLE,
+            CapacityListing.AvailabilityStatus.LIMITED,
+        }
+        and listing.price_per_unit is not None
+        and listing.price_per_unit > 0
+    )
+
+
+@require_http_methods(["GET", "POST"])
+def buy_now(request, pk):
+    if not request.user.is_authenticated:
+        return redirect(f"{reverse('login')}?next={request.path}")
+    if request.user.role != "BUYER":
+        raise PermissionDenied("Only buyers can purchase listings.")
+
+    listing = get_object_or_404(
+        CapacityListing.objects.select_related("manufacturer", "manufacturer__user"),
+        pk=pk,
+        is_active=True,
+        manufacturer__is_verified=True,
+    )
+    if not _listing_is_buy_now_eligible(listing):
+        raise Http404("This listing is not available for direct purchase.")
+
+    form = BuyNowForm(
+        request.POST if request.method == "POST" else None,
+        listing=listing,
+    )
+    if request.method == "POST" and form.is_valid():
+        quantity = form.cleaned_data["quantity"]
+        unit_price = listing.price_per_unit
+        total = unit_price * quantity
+        delivery_location = form.cleaned_data["delivery_location"].strip()
+        with transaction.atomic():
+            order = Order.objects.create(
+                source=Order.Source.BUY_NOW,
+                quotation=None,
+                buyer=request.user,
+                manufacturer=listing.manufacturer,
+                listing=listing,
+                specifications_snapshot={
+                    "listing_title": listing.title,
+                    "listing_category": listing.get_category_display(),
+                    "delivery_location": delivery_location,
+                    "machine_type": listing.machine_type,
+                    "materials": listing.materials,
+                    "technical_capabilities": listing.technical_capabilities,
+                    "purchase_source": "BUY_NOW",
+                },
+                quantity=quantity,
+                agreed_unit_price=unit_price,
+                total_amount=total,
+                agreed_production_days=listing.production_days,
+                status=Order.Status.AWAITING_FUNDING,
+                terms_locked_at=timezone.now(),
+            )
+            first_milestone = (total * Decimal("0.80")).quantize(
+                Decimal("0.01")
+            )
+            Milestone.objects.bulk_create(
+                [
+                    Milestone(
+                        order=order,
+                        title="Production complete",
+                        description=(
+                            "Manufacturer marks this complete when production "
+                            "is ready for buyer review."
+                        ),
+                        percentage=80,
+                        amount=first_milestone,
+                    ),
+                    Milestone(
+                        order=order,
+                        title="Ready to ship",
+                        description=(
+                            "Final packing or dispatch readiness checkpoint."
+                        ),
+                        percentage=20,
+                        amount=total - first_milestone,
+                    ),
+                ]
+            )
+            create_order_notification(
+                request.user,
+                f"Direct purchase Order #{order.pk} was created. Review its milestone payment options.",
+                order,
+            )
+            create_order_notification(
+                listing.manufacturer.user,
+                f"A Buyer placed direct purchase Order #{order.pk} for {concise_label(listing.title)}.",
+                order,
+            )
+        messages.success(request, "Direct purchase confirmed. Your order is ready.")
+        return redirect("order_detail", pk=order.pk)
+
+    quantity = form["quantity"].value() or form.fields["quantity"].initial
+    try:
+        requested_quantity = max(0, int(quantity))
+    except (TypeError, ValueError):
+        requested_quantity = max(1, listing.minimum_quantity)
+    estimated_total = listing.price_per_unit * requested_quantity
+    first_milestone = (estimated_total * Decimal("0.80")).quantize(Decimal("0.01"))
+    return render(
+        request,
+        "marketplace/buy_now.html",
+        {
+            "form": form,
+            "listing": listing,
+            "estimated_total": estimated_total,
+            "first_milestone": first_milestone,
+            "second_milestone": estimated_total - first_milestone,
         },
     )
 @login_required
@@ -1648,6 +1836,10 @@ def buyer_dashboard(request):
         "listing",
         "manufacturer",
     )[:4]
+    for order in active_orders:
+        order.status_label = _order_status_label(
+            order, _order_uses_razorpay_test_mode(order)
+        )
 
     funding_milestones = Milestone.objects.filter(
         order__buyer=request.user,
@@ -1659,7 +1851,12 @@ def buyer_dashboard(request):
         ],
         status=Milestone.Status.PENDING,
         funding_status=Milestone.FundingStatus.NOT_FUNDED,
-    ).select_related("order", "order__manufacturer", "order__listing")
+    ).select_related(
+        "order", "order__manufacturer", "order__manufacturer__user", "order__listing"
+    )
+    funding_milestones = list(funding_milestones)
+    for milestone in funding_milestones:
+        milestone.payment_enabled = _order_uses_razorpay_test_mode(milestone.order)
 
     review_milestones = Milestone.objects.filter(
         order__buyer=request.user,
@@ -1701,7 +1898,7 @@ def buyer_dashboard(request):
             is_read=False,
         ).count(),
         "active_orders": active_order_queryset.count(),
-        "milestones_to_fund": funding_milestones.count(),
+        "milestones_to_fund": len(funding_milestones),
         "milestones_to_review": review_milestones.count(),
         "demo_releases_due": release_milestones.count(),
     }
@@ -1735,6 +1932,10 @@ def buyer_orders(request):
         "milestones",
     )
 
+    for order in orders:
+        order.payment_test_mode = _order_uses_razorpay_test_mode(order)
+        order.status_label = _order_status_label(order, order.payment_test_mode)
+
     return render(
         request,
         "marketplace/buyer_orders.html",
@@ -1753,6 +1954,10 @@ def manufacturer_orders(request):
         "milestones",
     )
 
+    for order in orders:
+        order.payment_test_mode = _order_uses_razorpay_test_mode(order)
+        order.status_label = _order_status_label(order, order.payment_test_mode)
+
     return render(
         request,
         "marketplace/manufacturer_orders.html",
@@ -1770,6 +1975,13 @@ def order_detail(request, pk):
     financial_summary = build_order_financial_summary(order, milestones)
     next_action = build_next_action(order, request.user, milestones)
     timeline_steps = build_order_timeline(order, milestones)
+    payment_test_mode = _order_uses_razorpay_test_mode(order)
+    for step in timeline_steps:
+        if step["title"] == "Demo funding" and payment_test_mode:
+            step["title"] = "Milestone payments"
+            step["body"] = (
+                "Test payments are not live. Manufacturer payout and release remain simulated."
+            )
     activity_items = Notification.objects.filter(
         recipient=request.user,
         order=order,
@@ -1780,6 +1992,13 @@ def order_detail(request, pk):
         "marketplace/order_detail.html",
         {
             "order": order,
+            "payment_test_mode": payment_test_mode,
+            "order_origin_label": (
+                "Direct purchase confirmed"
+                if order.source == Order.Source.BUY_NOW
+                else "Quotation accepted"
+            ),
+            "order_status_label": _order_status_label(order, payment_test_mode),
             "milestones": milestones,
             "financial_summary": financial_summary,
             "next_action": next_action,
@@ -1791,11 +2010,362 @@ def order_detail(request, pk):
     )
 
 
+def _order_uses_razorpay_test_mode(order):
+    return bool(
+        razorpay_test_mode_enabled()
+        and order.manufacturer.is_verified
+        and not order.manufacturer.is_demo
+    )
+
+
+def _order_status_label(order, payment_test_mode=False):
+    if payment_test_mode:
+        if order.status == Order.Status.AWAITING_FUNDING:
+            return "Awaiting milestone payment"
+        if order.status == Order.Status.FUNDED:
+            return "Milestone payment recorded"
+    return order.get_status_display()
+
+
+def _mark_payment_captured(payment_transaction, payment_id):
+    with transaction.atomic():
+        saved_payment = PaymentTransaction.objects.select_for_update().select_related(
+            "milestone__order",
+            "milestone__order__buyer",
+            "milestone__order__manufacturer__user",
+        ).get(pk=payment_transaction.pk)
+        if saved_payment.status == PaymentTransaction.Status.CAPTURED:
+            return False
+
+        milestone = Milestone.objects.select_for_update().get(
+            pk=saved_payment.milestone_id
+        )
+        saved_payment.status = PaymentTransaction.Status.CAPTURED
+        saved_payment.provider_payment_id = payment_id
+        saved_payment.captured_at = timezone.now()
+        saved_payment.save(
+            update_fields=(
+                "status",
+                "provider_payment_id",
+                "captured_at",
+                "updated_at",
+            )
+        )
+
+        milestone_updated = Milestone.objects.filter(
+            pk=milestone.pk,
+            order__buyer=saved_payment.buyer,
+            status=Milestone.Status.PENDING,
+            funding_status=Milestone.FundingStatus.NOT_FUNDED,
+        ).update(
+            funding_status=Milestone.FundingStatus.FUNDED,
+            funded_at=timezone.now(),
+        )
+        if milestone_updated:
+            milestone.refresh_from_db()
+            previous_order_status, _ = refresh_order_status(milestone.order)
+            create_order_notification(
+                milestone.order.manufacturer.user,
+                (
+                    f"Payment recorded in Razorpay Test Mode for {concise_label(milestone.title)} "
+                    f"on Order #{milestone.order_id}. The milestone is ready to start; "
+                    "Manufacturer payout remains simulated."
+                ),
+                milestone.order,
+            )
+            create_order_notification(
+                saved_payment.buyer,
+                (
+                    f"Test payment recorded for {concise_label(milestone.title)} "
+                    f"on Order #{milestone.order_id}. Manufacturer payout remains simulated."
+                ),
+                milestone.order,
+            )
+            notify_order_status_change(milestone.order, previous_order_status)
+        return bool(milestone_updated)
+
+
+def _mark_payment_failed(payment_transaction, payment_id=""):
+    with transaction.atomic():
+        saved_payment = PaymentTransaction.objects.select_for_update().get(
+            pk=payment_transaction.pk
+        )
+        if saved_payment.status == PaymentTransaction.Status.CAPTURED:
+            return False
+        saved_payment.status = PaymentTransaction.Status.FAILED
+        if payment_id:
+            saved_payment.provider_payment_id = payment_id
+        saved_payment.save(
+            update_fields=("status", "provider_payment_id", "updated_at")
+        )
+        return True
+
+
+def _gateway_payment_matches(payment_transaction, payment, gateway_order):
+    try:
+        amount = amount_to_paise(payment_transaction.amount)
+        return bool(
+            payment.get("order_id") == payment_transaction.provider_order_id
+            and gateway_order.get("id") == payment_transaction.provider_order_id
+            and int(payment.get("amount", -1)) == amount
+            and int(gateway_order.get("amount", -1)) == amount
+            and payment.get("currency") == payment_transaction.currency == "INR"
+            and gateway_order.get("currency") == payment_transaction.currency
+        )
+    except (TypeError, ValueError, ArithmeticError):
+        return False
+
+
+def _start_razorpay_milestone_payment(milestone, buyer):
+    with transaction.atomic():
+        locked = Milestone.objects.select_for_update().select_related(
+            "order__manufacturer",
+            "order__manufacturer__user",
+        ).get(pk=milestone.pk, order__buyer=buyer)
+        add_milestone_action_flags(locked, buyer)
+        if not locked.can_fund or not _order_uses_razorpay_test_mode(locked.order):
+            return None, "This milestone cannot be paid in its current state."
+        if locked.amount is None or locked.amount <= 0:
+            return None, "This milestone does not have a payable amount."
+
+        payment_transaction = PaymentTransaction.objects.filter(
+            milestone=locked,
+            provider=PaymentTransaction.Provider.RAZORPAY,
+            status=PaymentTransaction.Status.CREATED,
+        ).order_by("-created_at", "-pk").first()
+        if payment_transaction and payment_transaction.amount != locked.amount:
+            payment_transaction.status = PaymentTransaction.Status.FAILED
+            payment_transaction.save(update_fields=("status", "updated_at"))
+            payment_transaction = None
+
+        if payment_transaction is None:
+            payment_transaction = PaymentTransaction.objects.create(
+                buyer=buyer,
+                milestone=locked,
+                amount=locked.amount,
+                currency="INR",
+                provider=PaymentTransaction.Provider.RAZORPAY,
+            )
+
+        if payment_transaction.provider_order_id:
+            return payment_transaction, ""
+
+        try:
+            expected_paise = amount_to_paise(locked.amount)
+            gateway_order = get_razorpay_client().order.create(
+                data={
+                    "amount": expected_paise,
+                    "currency": "INR",
+                    "receipt": f"uv-m{locked.pk}-t{payment_transaction.pk}",
+                    "notes": {
+                        "milestone_id": str(locked.pk),
+                        "payment_transaction_id": str(payment_transaction.pk),
+                    },
+                }
+            )
+            if (
+                not gateway_order.get("id")
+                or int(gateway_order.get("amount", -1)) != expected_paise
+                or gateway_order.get("currency") != "INR"
+            ):
+                raise ValueError("Razorpay returned an inconsistent order.")
+            payment_transaction.provider_order_id = gateway_order["id"]
+            payment_transaction.save(
+                update_fields=("provider_order_id", "updated_at")
+            )
+        except Exception as exc:
+            payment_transaction.status = PaymentTransaction.Status.FAILED
+            payment_transaction.save(update_fields=("status", "updated_at"))
+            logger.warning(
+                "Razorpay Test Mode order creation failed for transaction %s (%s)",
+                payment_transaction.pk,
+                type(exc).__name__,
+            )
+            return None, "Test payment could not be started. Please try again."
+        return payment_transaction, ""
+
+
+@login_required
+@require_POST
+def verify_milestone_payment(request):
+    if request.user.role != "BUYER":
+        raise PermissionDenied("Only buyers can verify milestone payments.")
+
+    transaction_id = request.POST.get("payment_transaction_id", "")
+    try:
+        payment_transaction = PaymentTransaction.objects.select_related(
+            "milestone__order__manufacturer",
+            "milestone__order__manufacturer__user",
+        ).get(pk=transaction_id, buyer=request.user)
+    except (PaymentTransaction.DoesNotExist, ValueError, TypeError):
+        raise Http404("Payment transaction not found.")
+
+    gateway_order_id = request.POST.get("razorpay_order_id", "")
+    payment_id = request.POST.get("razorpay_payment_id", "")
+    signature = request.POST.get("razorpay_signature", "")
+    if (
+        not _order_uses_razorpay_test_mode(payment_transaction.milestone.order)
+        or not payment_transaction.provider_order_id
+        or gateway_order_id != payment_transaction.provider_order_id
+        or not checkout_signature_is_valid(gateway_order_id, payment_id, signature)
+    ):
+        messages.error(request, "The test payment could not be verified.")
+        return redirect("order_detail", pk=payment_transaction.milestone.order_id)
+
+    if payment_transaction.status == PaymentTransaction.Status.CAPTURED:
+        messages.success(request, "This test payment has already been recorded.")
+        return redirect("order_detail", pk=payment_transaction.milestone.order_id)
+
+    try:
+        client = get_razorpay_client()
+        payment = client.payment.fetch(payment_id)
+        gateway_order = client.order.fetch(gateway_order_id)
+    except Exception as exc:
+        logger.warning(
+            "Razorpay Test Mode verification failed for transaction %s (%s)",
+            payment_transaction.pk,
+            type(exc).__name__,
+        )
+        messages.error(request, "The test payment could not be verified. You can try again.")
+        return redirect("order_detail", pk=payment_transaction.milestone.order_id)
+
+    if (
+        not _gateway_payment_matches(payment_transaction, payment, gateway_order)
+        or payment.get("id") != payment_id
+        or payment.get("status") != "captured"
+        or gateway_order.get("status") != "paid"
+    ):
+        messages.error(request, "The test payment is not captured for this order.")
+        return redirect("order_detail", pk=payment_transaction.milestone.order_id)
+
+    _mark_payment_captured(payment_transaction, payment_id)
+    messages.success(
+        request,
+        "Test payment recorded. Manufacturer payout remains simulated.",
+    )
+    return redirect("order_detail", pk=payment_transaction.milestone.order_id)
+
+
+@login_required
+@require_POST
+def report_milestone_payment_failure(request):
+    if request.user.role != "BUYER":
+        raise PermissionDenied("Only buyers can report milestone payments.")
+    try:
+        payment_transaction = PaymentTransaction.objects.select_related(
+            "milestone__order"
+        ).get(
+            pk=request.POST.get("payment_transaction_id", ""),
+            buyer=request.user,
+        )
+    except (PaymentTransaction.DoesNotExist, ValueError, TypeError):
+        raise Http404("Payment transaction not found.")
+
+    gateway_order_id = request.POST.get("razorpay_order_id", "")
+    payment_id = request.POST.get("razorpay_payment_id", "")
+    if (
+        gateway_order_id == payment_transaction.provider_order_id
+        and payment_id
+        and razorpay_test_mode_enabled()
+    ):
+        try:
+            gateway_payment = get_razorpay_client().payment.fetch(payment_id)
+            if (
+                gateway_payment.get("order_id") == gateway_order_id
+                and gateway_payment.get("status") == "failed"
+                and int(gateway_payment.get("amount", -1))
+                == amount_to_paise(payment_transaction.amount)
+                and gateway_payment.get("currency") == "INR"
+            ):
+                _mark_payment_failed(payment_transaction, payment_id)
+        except Exception as exc:
+            logger.warning(
+                "Razorpay failure confirmation failed for transaction %s (%s)",
+                payment_transaction.pk,
+                type(exc).__name__,
+            )
+    messages.info(request, "Payment was not completed. You can try again.")
+    return redirect("order_detail", pk=payment_transaction.milestone.order_id)
+
+
+@csrf_exempt
+@require_POST
+def razorpay_webhook(request):
+    if not razorpay_test_mode_enabled():
+        return HttpResponse(status=404)
+    signature = request.headers.get("X-Razorpay-Signature", "")
+    event_id = request.headers.get("X-Razorpay-Event-Id", "").strip()
+    if not event_id or len(event_id) > 128 or not webhook_signature_is_valid(
+        request.body, signature
+    ):
+        return HttpResponse(status=400)
+    try:
+        payload = json.loads(request.body.decode("utf-8"))
+    except (UnicodeDecodeError, json.JSONDecodeError):
+        return HttpResponse(status=400)
+
+    event_type = str(payload.get("event", ""))[:80]
+    with transaction.atomic():
+        event, created = PaymentWebhookEvent.objects.get_or_create(
+            event_id=event_id,
+            defaults={"event_type": event_type},
+        )
+        if not created:
+            return HttpResponse("ok", content_type="text/plain")
+
+        entity = (
+            payload.get("payload", {}).get("payment", {}).get("entity", {})
+        )
+        order_id = entity.get("order_id")
+        payment_id = entity.get("id")
+        payment_transaction = PaymentTransaction.objects.select_for_update().filter(
+            provider=PaymentTransaction.Provider.RAZORPAY,
+            provider_order_id=order_id,
+        ).first()
+        if payment_transaction is None:
+            event.status = PaymentWebhookEvent.ProcessingStatus.IGNORED
+            event.processing_note = "No matching payment transaction."
+        else:
+            event.payment_transaction = payment_transaction
+            amount_matches = False
+            try:
+                amount_matches = (
+                    int(entity.get("amount", -1))
+                    == amount_to_paise(payment_transaction.amount)
+                    and entity.get("currency") == payment_transaction.currency == "INR"
+                )
+            except (TypeError, ValueError, ArithmeticError):
+                pass
+
+            if event_type == "payment.captured" and entity.get("status") == "captured" and payment_id and amount_matches:
+                _mark_payment_captured(payment_transaction, payment_id)
+                event.status = PaymentWebhookEvent.ProcessingStatus.PROCESSED
+                event.processing_note = "Captured payment verified against transaction."
+            elif event_type == "payment.failed" and entity.get("status") == "failed" and payment_id and amount_matches:
+                _mark_payment_failed(payment_transaction, payment_id)
+                event.status = PaymentWebhookEvent.ProcessingStatus.PROCESSED
+                event.processing_note = "Failed payment recorded; milestone remains payable."
+            else:
+                event.status = PaymentWebhookEvent.ProcessingStatus.IGNORED
+                event.processing_note = "Unsupported or mismatched payment event."
+        event.processed_at = timezone.now()
+        event.save(
+            update_fields=(
+                "event_type",
+                "status",
+                "payment_transaction",
+                "processed_at",
+                "processing_note",
+            )
+        )
+    return HttpResponse("ok", content_type="text/plain")
+
+
 @login_required
 @require_http_methods(["GET", "POST"])
 def fund_milestone(request, pk):
     if request.user.role != "BUYER":
-        raise PermissionDenied("Only buyers can demo-fund milestones.")
+        raise PermissionDenied("Only buyers can fund milestones.")
 
     milestone = get_object_or_404(
         Milestone.objects.select_related(
@@ -1809,6 +2379,7 @@ def fund_milestone(request, pk):
         order__buyer=request.user,
     )
     add_milestone_action_flags(milestone, request.user)
+    test_mode = milestone.payment_enabled
 
     if request.method == "GET":
         return render(
@@ -1817,15 +2388,47 @@ def fund_milestone(request, pk):
             {
                 "milestone": milestone,
                 "order": milestone.order,
+                "razorpay_test_mode": test_mode,
             },
         )
 
     if not milestone.can_fund:
         messages.info(
             request,
-            "This milestone cannot be demo-funded in its current state.",
+            "This milestone cannot be funded in its current state.",
         )
         return redirect("order_detail", pk=milestone.order_id)
+
+    if test_mode:
+        payment_transaction, error_message = _start_razorpay_milestone_payment(
+            milestone, request.user
+        )
+        if not payment_transaction:
+            messages.error(request, error_message)
+            return redirect("order_detail", pk=milestone.order_id)
+        return render(
+            request,
+            "marketplace/razorpay_checkout.html",
+            {
+                "order": milestone.order,
+                "milestone": milestone,
+                "payment_transaction": payment_transaction,
+                "razorpay_key_id": settings.RAZORPAY_KEY_ID,
+                "razorpay_order_id": payment_transaction.provider_order_id,
+                "amount_paise": amount_to_paise(payment_transaction.amount),
+                "checkout_options": {
+                    "key": settings.RAZORPAY_KEY_ID,
+                    "amount": amount_to_paise(payment_transaction.amount),
+                    "currency": "INR",
+                    "name": "Ubhaar-Vyapaar",
+                    "description": f"{milestone.title} · Order #{milestone.order_id}",
+                    "order_id": payment_transaction.provider_order_id,
+                    "theme": {"color": "#176b50"},
+                },
+                "verify_url": reverse("verify_milestone_payment"),
+                "failure_url": reverse("report_milestone_payment_failure"),
+            },
+        )
 
     with transaction.atomic():
         updated = Milestone.objects.filter(
@@ -1894,7 +2497,7 @@ def start_milestone(request, pk):
     if not milestone.can_start:
         messages.info(
             request,
-            "This milestone cannot be started until it is demo-funded.",
+                "This milestone cannot be started until its funding step is recorded.",
         )
         return redirect("order_detail", pk=milestone.order_id)
 
@@ -2048,7 +2651,7 @@ def mark_milestone_complete(request, pk):
     else:
         messages.info(
             request,
-            "This milestone must be demo-funded and in progress before submission.",
+            "This milestone must be funded and in progress before submission.",
         )
 
     return redirect("order_detail", pk=milestone.order_id)
@@ -2238,6 +2841,10 @@ def manufacturer_dashboard(request):
             Order.Status.CANCELLED,
         ],
     ).select_related("buyer", "listing")
+    for order in active_orders:
+        order.status_label = _order_status_label(
+            order, _order_uses_razorpay_test_mode(order)
+        )
 
     milestones_ready_to_start = Milestone.objects.filter(
         order__manufacturer__user=request.user,
@@ -2624,8 +3231,8 @@ def respond_to_quotation(request, pk):
                     request.user,
                     message=(
                         f"Order #{order.pk} was created from your accepted "
-                        f"quotation for {listing_title}. Confirm demo milestone "
-                        "funding to start production."
+                        f"quotation for {listing_title}. Review its milestone "
+                        "funding options to start production."
                     ),
                     order=order,
                 )
@@ -2634,8 +3241,7 @@ def respond_to_quotation(request, pk):
         if new_status == Quotation.Status.ACCEPTED:
             messages.success(
                 request,
-                "You accepted the quotation. A demo order was created. "
-                "No real payment or escrow has been started.",
+                "You accepted the quotation and an order was created. No payment is taken at acceptance.",
             )
         else:
             messages.success(
@@ -2689,13 +3295,6 @@ def save_listing(request, pk):
         pk=pk,
         is_active=True,
     )
-
-    if listing.manufacturer.is_demo:
-        messages.info(
-            request,
-            "Sample listings cannot be added to saved listings.",
-        )
-        return redirect("listing_detail", pk=listing.pk)
 
     saved_item, created = SavedListing.objects.get_or_create(
         buyer=request.user,

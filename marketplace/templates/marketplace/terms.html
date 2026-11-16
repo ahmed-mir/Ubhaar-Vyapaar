@@ -1,11 +1,11 @@
 {% extends "marketplace/public_content_page.html" %}
 
 {% block title %}Terms &amp; Conditions | Ubhaar-Vyapaar{% endblock %}
-{% block meta_description %}Read the Ubhaar-Vyapaar terms for accounts, listings, quotations, orders, reviews, and the current simulated payment workflow.{% endblock %}
+{% block meta_description %}Read the Ubhaar-Vyapaar terms for accounts, listings, quotations, orders, reviews, and Razorpay Test Mode milestone payments.{% endblock %}
 {% block social_title %}Terms &amp; Conditions | Ubhaar-Vyapaar{% endblock %}
-{% block social_description %}Read the Ubhaar-Vyapaar terms for accounts, listings, quotations, orders, reviews, and the current simulated payment workflow.{% endblock %}
+{% block social_description %}Read the Ubhaar-Vyapaar terms for accounts, listings, quotations, orders, reviews, and Razorpay Test Mode milestone payments.{% endblock %}
 {% block twitter_title %}Terms &amp; Conditions | Ubhaar-Vyapaar{% endblock %}
-{% block twitter_description %}Read the Ubhaar-Vyapaar terms for accounts, listings, quotations, orders, reviews, and the current simulated payment workflow.{% endblock %}
+{% block twitter_description %}Read the Ubhaar-Vyapaar terms for accounts, listings, quotations, orders, reviews, and Razorpay Test Mode milestone payments.{% endblock %}
 
 {% block public_page_class %} public-info-page legal-policy-page legal-terms-page{% endblock %}
 {% block page_eyebrow %}Platform terms{% endblock %}
@@ -18,20 +18,20 @@
     <div class="public-content-sections">
         <section class="public-content-section public-callout legal-payment-disclosure" id="terms-payments">
             <h2>Payments</h2>
-            <p>Ubhaar-Vyapaar currently uses demo and simulated milestone funding states only. The platform does not process real payments, charge payment cards or UPI, move money, or provide a real escrow account.</p>
-            <p>Demo funding and release states are workflow markers only and do not represent real money movement or regulated financial services.</p>
+            <p>When enabled, milestone checkout uses Razorpay Test Mode only. Sandbox transactions are not live payments. The platform does not accept live payments or provide escrow or settlement.</p>
+            <p>Manufacturer payout and milestone release remain simulated. Test payment records confirm only a sandbox transaction and do not represent money paid to a Manufacturer.</p>
         </section>
 
         <section class="public-content-section" id="accounts-and-roles">
             <h2>Accounts and roles</h2>
-            <p>Users are responsible for keeping account credentials secure and for providing accurate account information. Buyer accounts can browse, save listings, request quotes, accept quotations, manage demo orders, message manufacturers, and leave completed-order reviews.</p>
-            <p>Manufacturer accounts can create capacity listings, maintain business profiles, respond to quote requests, send quotations, manage demo order milestones, and message buyers.</p>
+            <p>Users are responsible for keeping account credentials secure and for providing accurate account information. Buyer accounts can browse, save listings, request quotes, make eligible fixed-price purchases, accept quotations, manage orders, message manufacturers, and leave completed-order reviews.</p>
+            <p>Manufacturer accounts can create capacity listings, maintain business profiles, respond to quote requests, send quotations, manage order milestones, and message buyers.</p>
         </section>
 
         <section class="public-content-section" id="listings-quotes-orders">
             <h2>Listings, quotations, and orders</h2>
             <p>Manufacturers are responsible for the accuracy of listings, prices, lead times, capacity statements, images, and quotations. Buyers are responsible for providing practical quote requirements and delivery information.</p>
-            <p>Accepting a quotation currently creates a demo order with locked terms and simulated milestones. It does not create platform-processed payment, escrow, shipping, tax, or regulated financial-service obligations.</p>
+            <p>Accepting a quotation creates an order with locked terms and milestones. Eligible public fixed-price listings may also create an order through Buy Now. Neither flow itself takes payment. Test Mode milestone payments, when enabled, are sandbox only; Manufacturer payout and milestone release remain simulated.</p>
             <p>An eligible non-Sample Manufacturer profile displays a Verified badge only when its profile verification flag is approved. The badge is not a certification, endorsement, or product or transaction guarantee. Read <a href="{% url 'trust_safety' %}">what Verified means</a>.</p>
         </section>
 

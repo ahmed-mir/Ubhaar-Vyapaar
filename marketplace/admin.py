@@ -7,6 +7,8 @@ from .models import (
     Order,
     Milestone,
     OrderMessage,
+    PaymentTransaction,
+    PaymentWebhookEvent,
     QuoteRequest,
     Quotation,
     Review,
@@ -129,6 +131,7 @@ class OrderAdmin(admin.ModelAdmin):
         "manufacturer",
         "listing",
         "status",
+        "source",
         "total_amount",
         "terms_locked_at",
     )
@@ -158,6 +161,60 @@ class MilestoneAdmin(admin.ModelAdmin):
     list_filter = ("status",)
     search_fields = ("title", "order__listing__title")
     readonly_fields = ("completed_at", "approved_at", "created_at", "updated_at")
+
+
+@admin.register(PaymentTransaction)
+class PaymentTransactionAdmin(admin.ModelAdmin):
+    list_display = (
+        "id",
+        "milestone",
+        "buyer",
+        "provider",
+        "amount",
+        "currency",
+        "status",
+        "provider_order_id",
+        "provider_payment_id",
+        "captured_at",
+    )
+    list_filter = ("provider", "status", "currency", "created_at")
+    search_fields = ("provider_order_id", "provider_payment_id", "buyer__username")
+    readonly_fields = tuple(field.name for field in PaymentTransaction._meta.fields)
+    date_hierarchy = "created_at"
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False
+
+
+@admin.register(PaymentWebhookEvent)
+class PaymentWebhookEventAdmin(admin.ModelAdmin):
+    list_display = (
+        "event_id",
+        "event_type",
+        "status",
+        "payment_transaction",
+        "received_at",
+        "processed_at",
+    )
+    list_filter = ("event_type", "status", "received_at")
+    search_fields = ("event_id", "event_type")
+    readonly_fields = tuple(field.name for field in PaymentWebhookEvent._meta.fields)
+    date_hierarchy = "received_at"
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False
 
 
 @admin.register(Review)

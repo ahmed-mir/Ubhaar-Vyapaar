@@ -8,3 +8,4 @@ psycopg2-binary==2.9.13
 Pillow==12.1.1
 cloudinary==1.46.3
 sentry-sdk==2.38.0
+razorpay==2.0.1

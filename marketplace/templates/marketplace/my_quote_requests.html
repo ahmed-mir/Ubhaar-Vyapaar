@@ -93,9 +93,9 @@
 
                             {% if quote.quotation.status == "SENT" %}
                                 <div class="quote-decision-note" role="note">
-                                    Accepting creates an order for these terms. No real payment or escrow is processed.
+                                    Accepting creates an order for these terms. No payment is taken at this step.
                                 </div>
-                                <form method="post" action="{% url 'respond_to_quotation' quote.quotation.pk %}" class="quote-decision-actions" data-confirm-accept="Accepting this quotation will create a demo order between you and the manufacturer. No real payment will be processed.">
+                                <form method="post" action="{% url 'respond_to_quotation' quote.quotation.pk %}" class="quote-decision-actions" data-confirm-accept="Accepting this quotation creates an order for these terms. No payment is taken at this step.">
                                     {% csrf_token %}
                                     <button class="button button-primary" type="submit" name="status" value="ACCEPTED" aria-label="Accept quotation and create order for {{ quote.listing.title }}">Accept quotation and create order</button>
                                     <button class="button button-subtle-danger" type="submit" name="status" value="DECLINED" aria-label="Decline quotation for {{ quote.listing.title }}">Decline</button>
@@ -109,7 +109,7 @@
                             {% if quote.quotation.order %}
                                 <a class="button button-secondary quote-flow-order-link" href="{% url 'order_detail' quote.quotation.order.pk %}">View order</a>
                             {% endif %}
-                            <p class="quote-flow-disclosure">Subtotal excludes any separately stated charges. Payment and escrow states are demonstration-only.</p>
+                            <p class="quote-flow-disclosure">Subtotal excludes separately stated charges. Milestone checkout, when enabled, uses Razorpay Test Mode; Manufacturer payout and release remain simulated.</p>
                         </section>
                     {% elif quote.status == "PENDING" %}
                         <p class="quote-flow-state-message">The manufacturer has not responded yet.</p>

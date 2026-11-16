@@ -38,6 +38,11 @@ urlpatterns = [
         name="request_quote",
     ),
     path(
+        "listings/<int:pk>/buy-now/",
+        views.buy_now,
+        name="buy_now",
+    ),
+    path(
         "my-quote-requests/",
         views.my_quote_requests,
         name="my_quote_requests",
@@ -86,6 +91,21 @@ urlpatterns = [
         "milestones/<int:pk>/fund/",
         views.fund_milestone,
         name="fund_milestone",
+    ),
+    path(
+        "payments/razorpay/verify/",
+        views.verify_milestone_payment,
+        name="verify_milestone_payment",
+    ),
+    path(
+        "payments/razorpay/failure/",
+        views.report_milestone_payment_failure,
+        name="report_milestone_payment_failure",
+    ),
+    path(
+        "payments/razorpay/webhook/",
+        views.razorpay_webhook,
+        name="razorpay_webhook",
     ),
     path(
         "milestones/<int:pk>/start/",

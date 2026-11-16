@@ -265,6 +265,10 @@ class Quotation(models.Model):
 
 
 class Order(models.Model):
+    class Source(models.TextChoices):
+        QUOTATION = "QUOTATION", "Accepted quotation"
+        BUY_NOW = "BUY_NOW", "Direct purchase"
+
     class Status(models.TextChoices):
         CONFIRMED = "CONFIRMED", "Confirmed"
         AWAITING_FUNDING = "AWAITING_FUNDING", "Awaiting demo funding"
@@ -281,6 +285,13 @@ class Order(models.Model):
         Quotation,
         on_delete=models.PROTECT,
         related_name="order",
+        null=True,
+        blank=True,
+    )
+    source = models.CharField(
+        max_length=20,
+        choices=Source.choices,
+        default=Source.QUOTATION,
     )
     buyer = models.ForeignKey(
         settings.AUTH_USER_MODEL,
@@ -384,6 +395,93 @@ class Milestone(models.Model):
 
     def __str__(self):
         return f"{self.title} for order #{self.order_id}"
+
+
+class PaymentTransaction(models.Model):
+    class Provider(models.TextChoices):
+        RAZORPAY = "RAZORPAY", "Razorpay"
+
+    class Status(models.TextChoices):
+        CREATED = "CREATED", "Created"
+        CAPTURED = "CAPTURED", "Captured"
+        FAILED = "FAILED", "Failed"
+        REFUNDED = "REFUNDED", "Refunded"
+
+    buyer = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.PROTECT,
+        related_name="payment_transactions",
+        limit_choices_to={"role": "BUYER"},
+    )
+    milestone = models.ForeignKey(
+        Milestone,
+        on_delete=models.PROTECT,
+        related_name="payment_transactions",
+    )
+    amount = models.DecimalField(max_digits=12, decimal_places=2)
+    currency = models.CharField(max_length=3, default="INR")
+    provider = models.CharField(
+        max_length=20,
+        choices=Provider.choices,
+        default=Provider.RAZORPAY,
+    )
+    provider_order_id = models.CharField(
+        max_length=100,
+        null=True,
+        blank=True,
+        unique=True,
+    )
+    provider_payment_id = models.CharField(
+        max_length=100,
+        null=True,
+        blank=True,
+        unique=True,
+    )
+    status = models.CharField(
+        max_length=20,
+        choices=Status.choices,
+        default=Status.CREATED,
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    captured_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ["-created_at", "-pk"]
+
+    def __str__(self):
+        return f"{self.provider} payment for milestone #{self.milestone_id}"
+
+
+class PaymentWebhookEvent(models.Model):
+    class ProcessingStatus(models.TextChoices):
+        PENDING = "PENDING", "Pending"
+        PROCESSED = "PROCESSED", "Processed"
+        IGNORED = "IGNORED", "Ignored"
+
+    event_id = models.CharField(max_length=128, unique=True)
+    event_type = models.CharField(max_length=80)
+    status = models.CharField(
+        max_length=20,
+        choices=ProcessingStatus.choices,
+        default=ProcessingStatus.PENDING,
+    )
+    payment_transaction = models.ForeignKey(
+        PaymentTransaction,
+        on_delete=models.SET_NULL,
+        related_name="webhook_events",
+        null=True,
+        blank=True,
+    )
+    received_at = models.DateTimeField(auto_now_add=True)
+    processed_at = models.DateTimeField(null=True, blank=True)
+    processing_note = models.CharField(max_length=160, blank=True)
+
+    class Meta:
+        ordering = ["-received_at", "-pk"]
+
+    def __str__(self):
+        return f"{self.event_type} ({self.event_id})"
 
 
 class Review(models.Model):

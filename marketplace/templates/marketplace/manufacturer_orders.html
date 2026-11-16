@@ -9,7 +9,7 @@
             <div>
                 <p class="order-workspace__eyebrow">Manufacturer workspace</p>
                 <h1>Orders</h1>
-                <p>Review accepted orders, production time, and milestone status. Funding and release states are simulated.</p>
+                <p>Review direct purchases and quotation orders, production time, and milestone status. Razorpay Test Mode payments are sandbox-only; payout and release remain simulated.</p>
             </div>
             <a class="button button-secondary" href="{% url 'manufacturer_dashboard' %}">Dashboard</a>
         </header>
@@ -22,7 +22,7 @@
                         <h2>{{ order.listing.title }}</h2>
                         <p>Buyer: {{ order.buyer.username }}</p>
                     </div>
-                    <span class="status-pill status-{{ order.status|lower }} order-index-record__status">{{ order.get_status_display }}</span>
+                    <span class="status-pill status-{{ order.status|lower }} order-index-record__status">{{ order.status_label }}</span>
                     <dl class="order-index-record__facts">
                         <div><dt>Quantity</dt><dd>{{ order.quantity|indian_number }} units</dd></div>
                         <div><dt>Order total</dt><dd>{{ order.total_amount|inr }}</dd></div>
@@ -37,7 +37,7 @@
             {% empty %}
                 <div class="empty-panel order-index-empty">
                     <h2>No orders yet</h2>
-                    <p>Orders will appear here after a Buyer accepts one of your quotations.</p>
+                        <p>Orders appear here after a Buyer accepts a quotation or confirms a fixed-price purchase.</p>
                 </div>
             {% endfor %}
         </section>

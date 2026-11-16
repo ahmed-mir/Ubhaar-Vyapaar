@@ -165,7 +165,7 @@
                 {% for order in active_orders %}
                     <article class="manufacturer-dashboard__operational-row">
                         <div class="manufacturer-dashboard__item-main">
-                            <span class="manufacturer-dashboard__status manufacturer-dashboard__status--order">{{ order.get_status_display }}</span>
+                            <span class="manufacturer-dashboard__status manufacturer-dashboard__status--order">{{ order.status_label }}</span>
                             <h3>Order #{{ order.pk }}</h3>
                             <p class="manufacturer-dashboard__meta">{{ order.listing.title }} · Buyer: {{ order.buyer.username }}</p>
                         </div>

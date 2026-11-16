@@ -11,7 +11,7 @@
 
         <header class="order-workspace__header">
             <div>
-                <p class="order-workspace__eyebrow">Order #{{ order.pk }} <span aria-hidden="true">&middot;</span> Accepted {{ order.terms_locked_at|date:"d M Y" }}</p>
+                <p class="order-workspace__eyebrow">Order #{{ order.pk }} <span aria-hidden="true">&middot;</span> {{ order_origin_label }} {{ order.terms_locked_at|date:"d M Y" }}</p>
                 <h1>{{ order.listing.title }}</h1>
                 <p class="order-workspace__counterparty">
                     {% if user.role == "BUYER" %}
@@ -21,18 +21,14 @@
                     {% endif %}
                 </p>
             </div>
-            <span class="status-pill status-{{ order.status|lower }} order-workspace__status">{{ order.get_status_display }}</span>
+            <span class="status-pill status-{{ order.status|lower }} order-workspace__status">{{ order_status_label }}</span>
         </header>
 
         <section class="order-next-action" aria-labelledby="next-action-title">
             <div>
                 <p class="order-workspace__eyebrow">Next action</p>
                 <h2 id="next-action-title">{{ next_action.title }}</h2>
-                {% if next_action.url_name == "fund_milestone" %}
-                    <p>Confirm the simulated state so the manufacturer can start production.</p>
-                {% else %}
-                    <p>{{ next_action.body }}</p>
-                {% endif %}
+                <p>{{ next_action.body }}</p>
             </div>
             {% if next_action.url_name %}
                 <a class="button button-primary" href="{% url next_action.url_name next_action.url_arg %}">{{ next_action.button }}</a>
@@ -44,7 +40,7 @@
         <section class="order-commercial" aria-labelledby="order-commercial-title">
             <div class="order-section-heading">
                 <div>
-                    <p class="order-workspace__eyebrow">Agreed quotation</p>
+                    <p class="order-workspace__eyebrow">{% if order.source == "BUY_NOW" %}Direct purchase{% else %}Agreed quotation{% endif %}</p>
                     <h2 id="order-commercial-title">Commercial terms</h2>
                 </div>
             </div>
@@ -55,7 +51,7 @@
                 <div><dt>Production time</dt><dd>{{ order.agreed_production_days }} days</dd></div>
                 <div><dt>Delivery location</dt><dd>{{ order.specifications_snapshot.delivery_location }}</dd></div>
             </dl>
-            {% if order.quotation.message %}
+            {% if order.quotation_id and order.quotation.message %}
                 <div class="order-agreed-message">
                     <h3>Agreed quotation note</h3>
                     <p>{{ order.quotation.message|linebreaksbr }}</p>
@@ -66,17 +62,17 @@
         <section class="order-funding" aria-labelledby="funding-summary-title">
             <div class="order-section-heading">
                 <div>
-                    <p class="order-workspace__eyebrow">Simulated payment state</p>
+                    <p class="order-workspace__eyebrow">{% if payment_test_mode %}Razorpay Test Mode{% else %}Simulated payment state{% endif %}</p>
                     <h2 id="funding-summary-title">Milestone funding status</h2>
                 </div>
-                <span class="order-demo-label">Demo only</span>
+                <span class="order-demo-label">{% if payment_test_mode %}Test Mode only{% else %}Demo only{% endif %}</span>
             </div>
             <dl class="order-funding__facts">
                 <div><dt>Funded, including released</dt><dd>{{ financial_summary.funded|inr }}</dd></div>
                 <div><dt>Marked released</dt><dd>{{ financial_summary.released|inr }}</dd></div>
                 <div><dt>Not yet funded</dt><dd>{{ financial_summary.remaining|inr }}</dd></div>
             </dl>
-            <p class="order-funding__disclaimer">These are workflow simulation states. The platform does not collect payment details or process, hold, or transfer money.</p>
+            <p class="order-funding__disclaimer">{% if payment_test_mode %}Razorpay Test Mode records sandbox test payments only. No live payment is taken; Manufacturer payout and milestone release remain simulated.{% else %}These are workflow simulation states. No live payment is processed, held, or transferred.{% endif %}</p>
         </section>
 
         <section class="order-milestones" aria-labelledby="milestones-title">
@@ -100,7 +96,7 @@
                                 </div>
                                 <div class="order-milestone-card__statuses" aria-label="Milestone status">
                                     <span class="status-pill status-{{ milestone.status|lower }}">{{ milestone.get_status_display }}</span>
-                                    <span class="status-pill status-{{ milestone.funding_status|lower }}">{{ milestone.get_funding_status_display }}</span>
+                                    <span class="status-pill status-{{ milestone.funding_status|lower }}">{{ milestone.funding_status_label }}</span>
                                 </div>
                             </header>
 
@@ -109,7 +105,7 @@
 
                             <dl class="order-milestone-card__facts">
                                 <div><dt>Order share</dt><dd>{{ milestone.percentage }}%</dd></div>
-                                {% if milestone.amount %}<div><dt>Simulated amount</dt><dd>{{ milestone.amount|inr }}</dd></div>{% endif %}
+                                {% if milestone.amount %}<div><dt>{% if payment_test_mode %}Milestone amount{% else %}Simulated amount{% endif %}</dt><dd>{{ milestone.amount|inr }}</dd></div>{% endif %}
                                 {% if milestone.due_date %}<div><dt>Due date</dt><dd>{{ milestone.due_date|date:"d M Y" }}</dd></div>{% endif %}
                                 {% if milestone.funded_at %}<div><dt>Marked funded</dt><dd>{{ milestone.funded_at|date:"d M Y, H:i" }}</dd></div>{% endif %}
                                 {% if milestone.started_at %}<div><dt>Started</dt><dd>{{ milestone.started_at|date:"d M Y, H:i" }}</dd></div>{% endif %}
@@ -117,6 +113,9 @@
                                 {% if milestone.approved_at %}<div><dt>Approved</dt><dd>{{ milestone.approved_at|date:"d M Y, H:i" }}</dd></div>{% endif %}
                                 {% if milestone.released_at %}<div><dt>Marked released</dt><dd>{{ milestone.released_at|date:"d M Y, H:i" }}</dd></div>{% endif %}
                             </dl>
+                            {% for payment in milestone.payment_transactions.all %}
+                                <p class="order-milestone-card__payment">Test payment {{ payment.get_status_display|lower }}{% if payment.captured_at %} on {{ payment.captured_at|date:"d M Y, H:i" }}{% endif %}{% if user.role == "BUYER" and payment.provider_payment_id %} · Reference {{ payment.provider_payment_id }}{% endif %}</p>
+                            {% endfor %}
                             {% if milestone.buyer_feedback %}
                                 <div class="order-milestone-feedback"><strong>Buyer feedback</strong><p>{{ milestone.buyer_feedback|linebreaksbr }}</p></div>
                             {% endif %}
@@ -125,7 +124,7 @@
                                 {% if user.role == "BUYER" %}
                                     {% if milestone.can_fund %}
                                         {% if next_action.url_name != "fund_milestone" or next_action.url_arg != milestone.pk %}
-                                            <a class="button button-primary" href="{% url 'fund_milestone' milestone.pk %}">Fund milestone (demo)</a>
+                                            <a class="button button-primary" href="{% url 'fund_milestone' milestone.pk %}">{% if payment_test_mode %}Pay milestone{% else %}Fund milestone (demo){% endif %}</a>
                                         {% endif %}
                                     {% endif %}
                                     {% if milestone.can_review %}

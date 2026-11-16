@@ -1,35 +1,35 @@
 {% extends "marketplace/base.html" %}
 {% load currency %}
 
-{% block title %}Confirm demo funding | Ubhaar-Vyapaar{% endblock %}
+{% block title %}{% if razorpay_test_mode %}Pay milestone in Test Mode{% else %}Confirm demo funding{% endif %} | Ubhaar-Vyapaar{% endblock %}
 
 {% block content %}
     <div class="order-workspace order-funding-confirmation">
         <a class="back-link order-workspace__back" href="{% url 'order_detail' order.pk %}">&larr; Back to Order #{{ order.pk }}</a>
         <section class="order-funding-confirmation__card" aria-labelledby="funding-title">
             <header>
-                <p class="order-workspace__eyebrow">Simulated payment state · Demo only</p>
-                <h1 id="funding-title">Confirm milestone funding</h1>
-                <p>This updates the order workflow only. No money will be collected, held, or transferred.</p>
+                <p class="order-workspace__eyebrow">{% if razorpay_test_mode %}Razorpay Test Mode{% else %}Simulated payment state · Demo only{% endif %}</p>
+                <h1 id="funding-title">{% if razorpay_test_mode %}Pay milestone{% else %}Confirm milestone funding{% endif %}</h1>
+                <p>{% if razorpay_test_mode %}This opens Razorpay Test Mode for a sandbox payment. It is not a live payment; Manufacturer payout and milestone release remain simulated.{% else %}This updates the order workflow only. No live money will be collected, held, or transferred.{% endif %}</p>
             </header>
 
             <dl class="order-funding-confirmation__facts">
                 <div><dt>Order</dt><dd>#{{ order.pk }} · {{ order.listing.title }}</dd></div>
                 <div><dt>Milestone</dt><dd>{{ milestone.title }}</dd></div>
                 <div><dt>Manufacturer</dt><dd>{{ order.manufacturer.business_name }}</dd></div>
-                <div><dt>Simulated amount</dt><dd>{{ milestone.amount|inr }}</dd></div>
+                <div><dt>{% if razorpay_test_mode %}Test payment amount{% else %}Simulated amount{% endif %}</dt><dd>{{ milestone.amount|inr }}</dd></div>
             </dl>
 
-            <p class="order-funding-confirmation__notice">Do not enter card, UPI, bank, or wallet details. This prototype does not process real payments.</p>
+            <p class="order-funding-confirmation__notice">{% if razorpay_test_mode %}Use Razorpay Test Mode credentials only. Never enter real payment credentials here. No Manufacturer payout is made.{% else %}No payment details are requested. This workflow records a simulated funding state only.{% endif %}</p>
 
             {% if milestone.can_fund %}
                 <form method="post" class="order-funding-confirmation__actions">
                     {% csrf_token %}
-                    <button class="button button-primary" type="submit">Confirm demo funding</button>
+                    <button class="button button-primary" type="submit">{% if razorpay_test_mode %}Continue to Razorpay Test Mode{% else %}Confirm demo funding{% endif %}</button>
                     <a class="button button-secondary" href="{% url 'order_detail' order.pk %}">Cancel</a>
                 </form>
             {% else %}
-                <p class="order-funding-confirmation__blocked">This milestone cannot be demo-funded in its current state.</p>
+                <p class="order-funding-confirmation__blocked">This milestone cannot be funded in its current state.</p>
                 <a class="button button-secondary" href="{% url 'order_detail' order.pk %}">Back to order</a>
             {% endif %}
         </section>

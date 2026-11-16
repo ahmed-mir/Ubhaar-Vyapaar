@@ -98,6 +98,20 @@ DEBUG = os.getenv(
 
 ALLOW_DEMO_SEEDING = _env_bool("ALLOW_DEMO_SEEDING", DEBUG)
 
+RAZORPAY_ENABLED = _env_bool("RAZORPAY_ENABLED", False)
+RAZORPAY_KEY_ID = _env_str("RAZORPAY_KEY_ID", "").strip()
+RAZORPAY_KEY_SECRET = _env_str("RAZORPAY_KEY_SECRET", "").strip()
+RAZORPAY_WEBHOOK_SECRET = _env_str("RAZORPAY_WEBHOOK_SECRET", "").strip()
+if RAZORPAY_ENABLED:
+    if not all((RAZORPAY_KEY_ID, RAZORPAY_KEY_SECRET, RAZORPAY_WEBHOOK_SECRET)):
+        raise ImproperlyConfigured(
+            "Razorpay Test Mode requires its key ID, key secret, and webhook secret."
+        )
+    if not RAZORPAY_KEY_ID.startswith("rzp_test_"):
+        raise ImproperlyConfigured(
+            "Only a Razorpay Test Mode key can be enabled in this application."
+        )
+
 ALLOW_INDEXING = _env_bool("ALLOW_INDEXING", not DEBUG)
 
 ALLOW_GPTBOT = _env_bool("ALLOW_GPTBOT", False)

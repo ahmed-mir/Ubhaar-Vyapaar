@@ -160,7 +160,9 @@ class InformationalPageTests(TestCase):
             self.assertContains(response, label)
         self.assertEqual(response.content.count(b"<details>"), 10)
         self.assertContains(response, "Sample listings are illustrative")
-        self.assertContains(response, "do not represent actual funds")
+        self.assertContains(response, "Razorpay Test Mode only")
+        self.assertContains(response, "not live payments")
+        self.assertContains(response, "payout and milestone release remain simulated")
         self.assertContains(response, "does not calculate or collect platform fees")
         self.assertContains(response, reverse("trust_safety"))
         self.assertContains(response, reverse("for_manufacturers"))
@@ -189,8 +191,8 @@ class InformationalPageTests(TestCase):
     def test_pricing_trust_and_sample_language_stay_factual(self):
         pricing = self.client.get(reverse("pricing_fees"))
         self.assertContains(pricing, "does not calculate or collect platform fees")
-        self.assertContains(pricing, "does not process real payments")
-        self.assertContains(pricing, "money is collected, held, moved, or released")
+        self.assertContains(pricing, "No live payments are available")
+        self.assertContains(pricing, "Manufacturer payout and milestone release remain simulated")
         self.assertNotContains(pricing, "commission")
         self.assertNotContains(pricing, "subscription")
         self.assertNotContains(pricing, "escrow")
@@ -260,16 +262,17 @@ class InformationalPageTests(TestCase):
         self.assertNotContains(cookies, "Marketing</dt>")
         self.assertContains(cookies, reverse("privacy_policy"))
 
-    def test_terms_and_refund_policy_keep_simulated_payment_and_verification_truth(self):
+    def test_terms_and_refund_policy_keep_test_payment_and_verification_truth(self):
         terms = self.client.get(reverse("terms"))
-        self.assertContains(terms, "does not process real payments")
-        self.assertContains(terms, "simulated milestone funding states")
+        self.assertContains(terms, "Razorpay Test Mode only")
+        self.assertContains(terms, "not live payments")
+        self.assertContains(terms, "Manufacturer payout and milestone release remain simulated")
         self.assertContains(terms, "not a certification, endorsement, or product or transaction guarantee")
         self.assertContains(terms, reverse("trust_safety"))
 
         refund = self.client.get(reverse("refund_policy"))
-        self.assertContains(refund, "does not charge, collect, hold, move, or release real payments")
-        self.assertContains(refund, "does not process monetary refunds")
+        self.assertContains(refund, "does not accept live payments")
+        self.assertContains(refund, "does not offer live payment collection or monetary refunds")
         for response in (terms, refund):
             content = response.content.decode().lower()
             self.assertNotIn("secure payments", content)

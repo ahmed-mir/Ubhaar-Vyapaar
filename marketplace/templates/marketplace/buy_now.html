@@ -1,0 +1,47 @@
+{% extends "marketplace/base.html" %}
+{% load currency %}
+
+{% block title %}Buy {{ listing.title }} | Ubhaar-Vyapaar{% endblock %}
+
+{% block content %}
+    <div class="order-workspace order-funding-confirmation">
+        <a class="back-link order-workspace__back" href="{% url 'listing_detail' listing.pk %}">&larr; Back to listing</a>
+        <header class="order-index-heading">
+            <div>
+                <p class="order-workspace__eyebrow">Fixed-price purchase</p>
+                <h1>Review your order</h1>
+                <p>Confirm quantity and delivery location. The order uses the listing’s current fixed price.</p>
+            </div>
+        </header>
+
+        <section class="order-commercial" aria-labelledby="buy-now-listing-title">
+            <p class="order-workspace__eyebrow">{{ listing.manufacturer.business_name }} · {{ listing.manufacturer.city }}{% if listing.manufacturer.city and listing.manufacturer.state %}, {% endif %}{{ listing.manufacturer.state }}</p>
+            <h2 id="buy-now-listing-title">{{ listing.title }}</h2>
+            <dl class="order-commercial__facts">
+                <div><dt>Price per unit</dt><dd>{{ listing.price_per_unit|inr }}</dd></div>
+                <div><dt>Minimum order</dt><dd>{{ listing.minimum_quantity|indian_number }} units</dd></div>
+                <div><dt>Production lead time</dt><dd>{{ listing.production_days }} days</dd></div>
+                {% if listing.available_capacity is not None %}<div><dt>Available capacity</dt><dd>{{ listing.available_capacity|indian_number }}{% if listing.capacity_period %} {{ listing.capacity_period }}{% endif %}</dd></div>{% endif %}
+                <div class="order-commercial__total"><dt>Estimated total</dt><dd>{{ estimated_total|inr }}</dd></div>
+            </dl>
+        </section>
+
+        <form method="post" class="order-message-form" novalidate>
+            {% csrf_token %}
+            <h2>Quantity and delivery</h2>
+            {% with form=form %}{% include "marketplace/includes/accessible_form.html" %}{% endwith %}
+            <section class="order-secondary-details__content" aria-labelledby="milestone-payment-structure">
+                <h3 id="milestone-payment-structure">Milestone structure</h3>
+                <dl class="order-commercial__facts">
+                    <div><dt>Production complete · 80%</dt><dd>{{ first_milestone|inr }}</dd></div>
+                    <div><dt>Ready to ship · 20%</dt><dd>{{ second_milestone|inr }}</dd></div>
+                </dl>
+                <p>Milestone funding options are shown after order creation. Payment availability depends on local Razorpay Test Mode configuration; Manufacturer payout and release remain simulated.</p>
+            </section>
+            <div class="order-funding-confirmation__actions">
+                <button class="button button-primary" type="submit">Confirm Buy Now</button>
+                <a class="button button-secondary" href="{% url 'listing_detail' listing.pk %}">Cancel</a>
+            </div>
+        </form>
+    </div>
+{% endblock %}

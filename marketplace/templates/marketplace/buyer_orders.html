@@ -9,7 +9,7 @@
             <div>
                 <p class="order-workspace__eyebrow">Buyer workspace</p>
                 <h1>My orders</h1>
-                <p>Track orders created from accepted quotations. Funding and release states are simulated; no real payment is processed.</p>
+                <p>Track direct purchases and orders created from accepted quotations. Razorpay Test Mode may be used for milestone tests; Manufacturer payout and release remain simulated.</p>
             </div>
             <a class="button button-secondary" href="{% url 'buyer_dashboard' %}">Dashboard</a>
         </header>
@@ -22,7 +22,7 @@
                         <h2>{{ order.listing.title }}</h2>
                         <p>Manufacturer: {{ order.manufacturer.business_name }}</p>
                     </div>
-                    <span class="status-pill status-{{ order.status|lower }} order-index-record__status">{{ order.get_status_display }}</span>
+                    <span class="status-pill status-{{ order.status|lower }} order-index-record__status">{{ order.status_label }}</span>
                     <dl class="order-index-record__facts">
                         <div><dt>Quantity</dt><dd>{{ order.quantity|indian_number }} units</dd></div>
                         <div><dt>Order total</dt><dd>{{ order.total_amount|inr }}</dd></div>
@@ -36,7 +36,7 @@
             {% empty %}
                 <div class="empty-panel order-index-empty">
                     <h2>No orders yet</h2>
-                    <p>After you accept a quotation, its order and milestones will appear here.</p>
+                        <p>Orders appear here after you accept a quotation or confirm a fixed-price purchase.</p>
                     <a class="button button-primary" href="{% url 'marketplace' %}">Browse capacity</a>
                 </div>
             {% endfor %}

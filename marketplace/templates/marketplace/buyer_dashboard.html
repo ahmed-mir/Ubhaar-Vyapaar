@@ -44,28 +44,28 @@
                         method="post"
                         action="{% url 'respond_to_quotation' quotation.pk %}"
                         class="buyer-dashboard__quote-actions"
-                        data-confirm-accept="Accepting this quotation will create a demo order between you and the manufacturer. No real payment will be processed."
+                        data-confirm-accept="Accepting this quotation creates an order with the manufacturer. No payment is taken at this step."
                     >
                         {% csrf_token %}
                         <button class="button button-primary" type="submit" name="status" value="ACCEPTED" aria-label="Accept quotation and create order for {{ quotation.quote_request.listing.title }}">Accept quotation and create order</button>
                         <button class="button button-subtle-danger" type="submit" name="status" value="DECLINED" aria-label="Decline quotation for {{ quotation.quote_request.listing.title }}">Decline</button>
                     </form>
-                    <p class="buyer-dashboard__fine-print">Accepting creates a demo order. No real payment is processed.</p>
+                    <p class="buyer-dashboard__fine-print">Accepting creates an order. Milestone payment options appear separately on the order.</p>
                 </article>
             {% endfor %}
 
             {% for milestone in funding_milestones %}
                 <article class="buyer-dashboard__action-row">
                     <div class="buyer-dashboard__item-main">
-                        <span class="buyer-dashboard__status buyer-dashboard__status--pending">Demo funding needed</span>
+                        <span class="buyer-dashboard__status buyer-dashboard__status--pending">{% if milestone.payment_enabled %}Milestone payment due · Test Mode{% else %}Demo funding needed{% endif %}</span>
                         <h3>{{ milestone.title }}</h3>
                         <p class="buyer-dashboard__meta">Order #{{ milestone.order.pk }} · {{ milestone.order.manufacturer.business_name }}</p>
                     </div>
                     <div class="buyer-dashboard__action-detail">
-                        <span>Demo amount</span>
+                        <span>{% if milestone.payment_enabled %}Milestone amount{% else %}Demo amount{% endif %}</span>
                         <strong>{{ milestone.amount|inr }}</strong>
                     </div>
-                    <a class="button button-secondary" href="{% url 'fund_milestone' milestone.pk %}">Fund milestone (demo)</a>
+                    <a class="button button-secondary" href="{% url 'fund_milestone' milestone.pk %}">{% if milestone.payment_enabled %}Pay milestone{% else %}Fund milestone (demo){% endif %}</a>
                 </article>
             {% endfor %}
 
@@ -184,7 +184,7 @@
             {% for order in active_orders %}
                 <article class="buyer-dashboard__list-item">
                     <div class="buyer-dashboard__item-main">
-                        <span class="buyer-dashboard__status buyer-dashboard__status--order">{{ order.get_status_display }}</span>
+                        <span class="buyer-dashboard__status buyer-dashboard__status--order">{{ order.status_label }}</span>
                         <h3>Order #{{ order.pk }}</h3>
                         <p class="buyer-dashboard__meta">{{ order.listing.title }} · {{ order.manufacturer.business_name }}</p>
                     </div>

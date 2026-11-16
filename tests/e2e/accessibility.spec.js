@@ -74,7 +74,7 @@ test.describe("accessibility and keyboard UX", () => {
     await paymentSummary.focus();
     await page.keyboard.press("Enter");
     await expect(paymentSummary.locator("xpath=.." )).toHaveAttribute("open", "");
-    await expect(page.getByText(/does not process real payments/i)).toBeVisible();
+    await expect(page.getByText(/Razorpay Test Mode only/i)).toBeVisible();
     await page.keyboard.press("Space");
     await expect(paymentSummary.locator("xpath=.." )).not.toHaveAttribute("open", "");
     expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(360);

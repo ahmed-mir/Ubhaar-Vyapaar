@@ -1,0 +1,73 @@
+{% extends "marketplace/base.html" %}
+{% load currency %}
+
+{% block title %}Razorpay Test Mode | Order #{{ order.pk }}{% endblock %}
+
+{% block content %}
+    <div class="order-workspace order-funding-confirmation">
+        <a class="back-link order-workspace__back" href="{% url 'order_detail' order.pk %}">&larr; Back to Order #{{ order.pk }}</a>
+        <section class="order-funding-confirmation__card" aria-labelledby="razorpay-title">
+            <header>
+                <p class="order-workspace__eyebrow">Razorpay Test Mode · No live payment</p>
+                <h1 id="razorpay-title">Pay {{ milestone.title }}</h1>
+                <p>Order #{{ order.pk }} · {{ order.listing.title }}</p>
+            </header>
+            <dl class="order-funding-confirmation__facts">
+                <div><dt>Test payment amount</dt><dd>{{ payment_transaction.amount|inr }}</dd></div>
+                <div><dt>Manufacturer</dt><dd>{{ order.manufacturer.business_name }}</dd></div>
+            </dl>
+            <p class="order-funding-confirmation__notice">Only Razorpay sandbox credentials are accepted. This test payment does not pay the Manufacturer; payout and release remain simulated.</p>
+            <p id="payment-status" role="status" aria-live="polite"></p>
+            <form id="payment-callback" method="post" action="{{ verify_url }}" hidden>
+                {% csrf_token %}
+                <input type="hidden" name="payment_transaction_id" value="{{ payment_transaction.pk }}">
+                <input type="hidden" name="razorpay_payment_id">
+                <input type="hidden" name="razorpay_order_id">
+                <input type="hidden" name="razorpay_signature">
+            </form>
+            <form id="payment-failure" method="post" action="{{ failure_url }}" hidden>
+                {% csrf_token %}
+                <input type="hidden" name="payment_transaction_id" value="{{ payment_transaction.pk }}">
+                <input type="hidden" name="razorpay_payment_id">
+                <input type="hidden" name="razorpay_order_id" value="{{ razorpay_order_id }}">
+            </form>
+            <button class="button button-primary" id="open-checkout" type="button">Open Razorpay Test Checkout</button>
+            <p><a class="text-action" href="{% url 'fund_milestone' milestone.pk %}">Retry or return to payment options</a></p>
+            {{ checkout_options|json_script:"razorpay-checkout-options" }}
+        </section>
+    </div>
+    <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+    <script>
+        (() => {
+            const options = JSON.parse(document.getElementById("razorpay-checkout-options").textContent);
+            const status = document.getElementById("payment-status");
+            const callbackForm = document.getElementById("payment-callback");
+            const failureForm = document.getElementById("payment-failure");
+            options.handler = (response) => {
+                callbackForm.elements.razorpay_payment_id.value = response.razorpay_payment_id;
+                callbackForm.elements.razorpay_order_id.value = response.razorpay_order_id;
+                callbackForm.elements.razorpay_signature.value = response.razorpay_signature;
+                callbackForm.submit();
+            };
+            options.modal = {
+                ondismiss: () => {
+                    status.textContent = "Payment was not completed. You can try again.";
+                }
+            };
+            const checkout = new Razorpay(options);
+            checkout.on("payment.failed", (response) => {
+                const metadata = response.error && response.error.metadata || {};
+                if (metadata.payment_id) {
+                    failureForm.elements.razorpay_payment_id.value = metadata.payment_id;
+                    if (metadata.order_id) {
+                        failureForm.elements.razorpay_order_id.value = metadata.order_id;
+                    }
+                    failureForm.submit();
+                    return;
+                }
+                status.textContent = "Payment was not completed. You can try again.";
+            });
+            document.getElementById("open-checkout").addEventListener("click", () => checkout.open());
+        })();
+    </script>
+{% endblock %}

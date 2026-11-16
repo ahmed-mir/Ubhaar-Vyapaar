@@ -1,3 +1,5 @@
+from decimal import Decimal
+
 from django import forms
 
 from .models import (
@@ -140,6 +142,53 @@ class QuoteRequestForm(forms.ModelForm):
                 f"Please request at least {minimum} units."
             )
 
+        return quantity
+
+
+class BuyNowForm(forms.Form):
+    quantity = forms.IntegerField(
+        min_value=1,
+        label="Quantity",
+        widget=forms.NumberInput(attrs={"inputmode": "numeric"}),
+    )
+    delivery_location = forms.CharField(
+        max_length=200,
+        label="Delivery location",
+        widget=forms.TextInput(attrs={"autocomplete": "shipping locality"}),
+    )
+
+    def __init__(self, *args, listing, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.listing = listing
+        minimum = max(1, listing.minimum_quantity)
+        self.fields["quantity"].min_value = minimum
+        self.fields["quantity"].widget.attrs.update({"min": minimum, "step": 1})
+        self.fields["quantity"].initial = minimum
+        self.fields["quantity"].help_text = f"Minimum order: {minimum} units."
+        if listing.available_capacity is not None:
+            self.fields["quantity"].max_value = listing.available_capacity
+            self.fields["quantity"].widget.attrs["max"] = listing.available_capacity
+            self.fields["quantity"].help_text += (
+                f" Available in this period: {listing.available_capacity} units."
+            )
+
+    def clean_quantity(self):
+        quantity = self.cleaned_data["quantity"]
+        if quantity < max(1, self.listing.minimum_quantity):
+            raise forms.ValidationError(
+                f"Please order at least {self.listing.minimum_quantity} units."
+            )
+        if (
+            self.listing.available_capacity is not None
+            and quantity > self.listing.available_capacity
+        ):
+            raise forms.ValidationError(
+                "The requested quantity exceeds the listed available capacity."
+            )
+        if self.listing.price_per_unit * quantity > Decimal("9999999999.99"):
+            raise forms.ValidationError(
+                "The calculated order total is above the supported order limit."
+            )
         return quantity
 
 
