@@ -124,6 +124,95 @@ test.describe("production auth and access smoke", () => {
     }
   });
 
+  test("account dropdown keyboard and responsive behavior", async ({ page }) => {
+    test.skip(Boolean(process.env.UBHAAR_BASE_URL), "This browser interaction check runs only on the local Playwright server.");
+    const password = "Phase9Menu-QA-Strong-7041!";
+    const buyer = buildTestUser("account-menu-buyer", uniqueRunId());
+    await registerBuyer(page, buyer, password);
+
+    for (const width of [320, 390, 768, 1024, 1440]) {
+      await page.setViewportSize({ width, height: 900 });
+      await page.goto("/buyer/dashboard/");
+      const navToggle = page.locator(".nav-toggle");
+      if (width <= 940) await navToggle.click();
+
+      const trigger = page.locator("[data-account-menu-trigger]");
+      await expect(trigger).toContainText(buyer.username);
+      await expect(trigger).toContainText("Buyer");
+      await trigger.focus();
+      await page.keyboard.press("Enter");
+      await expect(trigger).toHaveAttribute("aria-expanded", "true");
+      const panel = page.locator("[data-account-menu-panel]");
+      await expect(panel.getByRole("link", { name: "Dashboard" })).toBeVisible();
+      await expect(panel.getByRole("link", { name: "Saved listings" })).toBeVisible();
+      const passwordLink = panel.getByRole("link", { name: "Change password" });
+      await expect(passwordLink).toBeVisible();
+      await expect(panel.getByRole("button", { name: "Log out" })).toBeVisible();
+      const bounds = await panel.boundingBox();
+      expect(bounds.x).toBeGreaterThanOrEqual(0);
+      expect(bounds.x + bounds.width).toBeLessThanOrEqual(width);
+      expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(width);
+
+      await passwordLink.click();
+      await expect(page).toHaveURL(/\/accounts\/password\/change\/$/);
+      await expect(page.getByRole("heading", { name: /change your password/i })).toBeVisible();
+      await expect(page.locator('[data-account-menu-panel] a[aria-current="page"]')).toHaveAttribute(
+        "href",
+        "/accounts/password/change/"
+      );
+      expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(width);
+      if (width <= 940) await expect(page.locator("#site-navigation")).not.toHaveClass(/site-nav-open/);
+
+      await page.goto("/buyer/dashboard/");
+      if (width <= 940) await navToggle.click();
+      await trigger.focus();
+      await page.keyboard.press("Enter");
+
+      await page.keyboard.press("Escape");
+      await expect(trigger).toHaveAttribute("aria-expanded", "false");
+      await expect(trigger).toBeFocused();
+      if (width <= 940) {
+        await page.keyboard.press("Escape");
+        await expect(page.locator("#site-navigation")).not.toHaveClass(/site-nav-open/);
+        await expect(navToggle).toBeFocused();
+      } else {
+        await trigger.click();
+        await page.locator("main").click({ position: { x: 10, y: 10 } });
+        await expect(trigger).toHaveAttribute("aria-expanded", "false");
+      }
+    }
+    await logout(page);
+
+    const runId = uniqueRunId();
+    const manufacturer = buildTestUser("account-menu-manufacturer", runId);
+    await registerManufacturer(page, manufacturer, password, {
+      businessName: `UV Account Menu Works ${runId}`,
+      description: "Local account menu browser test profile.",
+      city: "Pune",
+      state: "Maharashtra"
+    });
+    for (const width of [320, 390, 768, 1024, 1440]) {
+      await page.setViewportSize({ width, height: 900 });
+      await page.goto("/manufacturer/dashboard/");
+      const navToggle = page.locator(".nav-toggle");
+      if (width <= 940) await navToggle.click();
+      const trigger = page.locator("[data-account-menu-trigger]");
+      await expect(trigger).toContainText(manufacturer.username);
+      await expect(trigger).toContainText("Manufacturer");
+      await trigger.click();
+      await expect(page.locator("[data-account-menu-panel]").getByRole("link", { name: "Listings" })).toBeVisible();
+      await expect(page.locator("[data-account-menu-panel]").getByRole("link", { name: "Change password" })).toBeVisible();
+      expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(width);
+      await page.keyboard.press("Escape");
+      await expect(trigger).toHaveAttribute("aria-expanded", "false");
+      if (width <= 940) {
+        await page.keyboard.press("Escape");
+        await expect(page.locator("#site-navigation")).not.toHaveClass(/site-nav-open/);
+      }
+    }
+    await logout(page);
+  });
+
   test("buyer registration, dashboard, login, and logout", async ({ page }) => {
     test.skip(!process.env.TEST_USER_PASSWORD, "TEST_USER_PASSWORD is required for QA account flows");
     const password = requireEnv("TEST_USER_PASSWORD");
@@ -177,7 +266,12 @@ test.describe("production auth and access smoke", () => {
 
     await logout(page);
     await login(page, manufacturer.username, password);
-    await expect(page.getByRole("link", { name: /^Dashboard$/i })).toBeVisible();
+    const accountTrigger = page.locator("[data-account-menu-trigger]");
+    await expect(accountTrigger).toContainText(manufacturer.username);
+    await expect(accountTrigger).toContainText("Manufacturer");
+    await accountTrigger.click();
+    await expect(page.locator("[data-account-menu-panel]").getByRole("link", { name: "Listings" })).toBeVisible();
+    await expect(page.locator("[data-account-menu-panel]").getByRole("link", { name: "Change password" })).toBeVisible();
     await logout(page);
   });
 

@@ -1,7 +1,7 @@
 const { test, expect } = require("@playwright/test");
 
 test.describe("Sample listing media", () => {
-  for (const width of [390, 1440]) {
+  for (const width of [320, 390, 768, 1024, 1440]) {
     test(`uses loaded first-party images at ${width}px`, async ({ page }) => {
       const brokenSampleRequests = [];
       const failedFirstPartyImages = [];
@@ -56,7 +56,10 @@ test.describe("Sample listing media", () => {
       await expect(page.locator(".sample-badge").first()).toBeVisible();
       const detailImage = page.locator(".detail-image[src*='/static/marketplace/images/demo/']");
       await expect.poll(() => detailImage.evaluate((image) => image.naturalWidth)).toBeGreaterThan(0);
+      await expect(detailImage).toHaveAttribute("alt", /manufacturing capacity$/);
+      expect(await detailImage.getAttribute("alt")).not.toMatch(/\b(image|placeholder)\b/i);
       await expect(page.getByRole("link", { name: "Request a quote" })).toHaveCount(0);
+      await expect(page.getByRole("link", { name: /buy now/i })).toHaveCount(0);
 
       const imageFrame = page.locator(".listing-sheet-media");
       const box = await imageFrame.boundingBox();

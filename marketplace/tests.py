@@ -1575,6 +1575,7 @@ class ProductionReadinessTests(TestCase):
 
 
 @override_settings(
+    RAZORPAY_ENABLED=False,
     PASSWORD_HASHERS=[
         "django.contrib.auth.hashers.MD5PasswordHasher",
     ],

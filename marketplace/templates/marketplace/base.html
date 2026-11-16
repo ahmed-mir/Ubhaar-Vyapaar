@@ -214,16 +214,56 @@
                             </a>
                         {% endif %}
 
-                        <a class="nav-link account-link{% if current_url == 'password_change' %} nav-link-active{% endif %}" href="{% url 'password_change' %}">
-                            Account
-                        </a>
-
-                        <form method="post" action="{% url 'logout' %}" class="logout-form">
-                            {% csrf_token %}
-                            <button class="button button-secondary button-compact" type="submit">
-                                Log out
+                        <div class="account-menu" data-account-menu>
+                            <button
+                                id="account-menu-trigger"
+                                class="account-menu-trigger"
+                                type="button"
+                                aria-expanded="false"
+                                aria-controls="account-menu-panel"
+                                data-account-menu-trigger
+                            >
+                                <span class="account-menu-identity">{{ user.first_name|default:user.username|default:user.email }}</span>
+                                <span class="account-menu-separator" aria-hidden="true">·</span>
+                                <span class="account-menu-role">{{ user.get_role_display }}</span>
+                                <span class="account-menu-chevron" aria-hidden="true">⌄</span>
                             </button>
-                        </form>
+                            <div
+                                id="account-menu-panel"
+                                class="account-menu-panel"
+                                aria-labelledby="account-menu-trigger"
+                                data-account-menu-panel
+                                hidden
+                            >
+                                <div class="account-menu-summary">
+                                    <span class="account-menu-summary-name">{{ user.first_name|default:user.username|default:user.email }}</span>
+                                    <span class="account-menu-summary-role">{{ user.get_role_display }}</span>
+                                </div>
+                                <a class="account-menu-item{% if current_url == 'buyer_dashboard' or current_url == 'manufacturer_dashboard' %} account-menu-item-active{% endif %}"
+                                   href="{% if user.role == 'BUYER' %}{% url 'buyer_dashboard' %}{% else %}{% url 'manufacturer_dashboard' %}{% endif %}"
+                                   {% if current_url == 'buyer_dashboard' or current_url == 'manufacturer_dashboard' %}aria-current="page"{% endif %}>
+                                    Dashboard
+                                </a>
+                                {% if user.role == 'BUYER' %}
+                                    <a class="account-menu-item" href="{% url 'saved_listings' %}">Saved listings</a>
+                                {% else %}
+                                    <a class="account-menu-item{% if current_url == 'my_listings' or current_url == 'create_listing' or current_url == 'edit_listing' %} account-menu-item-active{% endif %}"
+                                       href="{% url 'my_listings' %}"
+                                       {% if current_url == 'my_listings' or current_url == 'create_listing' or current_url == 'edit_listing' %}aria-current="page"{% endif %}>
+                                        Listings
+                                    </a>
+                                {% endif %}
+                                <a class="account-menu-item{% if current_url == 'password_change' %} account-menu-item-active{% endif %}"
+                                   href="{% url 'password_change' %}"
+                                   {% if current_url == 'password_change' %}aria-current="page"{% endif %}>
+                                    Change password
+                                </a>
+                                <form method="post" action="{% url 'logout' %}" class="account-menu-logout">
+                                    {% csrf_token %}
+                                    <button class="account-menu-item account-menu-logout-button" type="submit">Log out</button>
+                                </form>
+                            </div>
+                        </div>
 
                     {% else %}
 
@@ -638,6 +678,15 @@
                     } else {
                         nav.inert = false;
                     }
+
+                    if (!isOpen) {
+                        const accountTrigger = nav.querySelector("[data-account-menu-trigger]");
+                        const accountPanel = nav.querySelector("[data-account-menu-panel]");
+                        if (accountTrigger && accountPanel) {
+                            accountTrigger.setAttribute("aria-expanded", "false");
+                            accountPanel.hidden = true;
+                        }
+                    }
                 };
 
                 const syncNavMode = function () {
@@ -670,6 +719,10 @@
                         mobileNavQuery.matches &&
                         nav.classList.contains("site-nav-open")
                     ) {
+                        const accountTrigger = nav.querySelector("[data-account-menu-trigger]");
+                        if (accountTrigger && accountTrigger.getAttribute("aria-expanded") === "true") {
+                            return;
+                        }
                         setNavOpen(false);
                         navToggle.focus();
                     }
@@ -800,6 +853,7 @@
         })();
     </script>
     <script src="{% static 'marketplace/js/account-password-toggle.js' %}" defer></script>
+    <script src="{% static 'marketplace/js/account-menu.js' %}" defer></script>
 
 </body>
 </html>

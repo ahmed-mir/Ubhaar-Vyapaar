@@ -108,6 +108,17 @@ async function login(page, username, password) {
 }
 
 async function logout(page) {
+  const navToggle = page.locator(".nav-toggle");
+  const nav = page.locator("#site-navigation");
+  if (await navToggle.isVisible().catch(() => false) && !(await nav.isVisible())) {
+    await navToggle.click();
+  }
+  const accountTrigger = page.locator("[data-account-menu-trigger]");
+  if (await accountTrigger.isVisible().catch(() => false)) {
+    if ((await accountTrigger.getAttribute("aria-expanded")) !== "true") {
+      await accountTrigger.click();
+    }
+  }
   await page.getByRole("button", { name: /log out/i }).click();
   await expect(page.getByRole("link", { name: /^log in$/i })).toBeVisible();
 }

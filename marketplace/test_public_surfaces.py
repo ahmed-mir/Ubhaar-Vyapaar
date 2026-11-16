@@ -203,7 +203,8 @@ class PublicTradeSurfaceTests(TestCase):
         response = self.client.get(
             reverse("listing_detail", args=[self.sample_listing.pk]),
         )
-        self.assertContains(response, 'alt="CNC turning manufacturing capacity image"')
+        self.assertContains(response, 'alt="CNC turning manufacturing capacity"')
+        self.assertNotContains(response, 'alt="CNC turning manufacturing capacity image"')
         self.assertNotContains(response, 'alt="Sample CNC Capacity')
 
     def test_sample_listing_detail_has_no_quote_action_or_commercial_schema(self):
