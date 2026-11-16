@@ -760,6 +760,11 @@ h1, h2, h3, h4 { letter-spacing: -0.02em; }
     background: var(--surface);
     box-shadow: var(--shadow-overlay);
 }
+.nav-menu-panel a[aria-current="page"] {
+    background: var(--brand-50);
+    color: var(--uv-navy);
+    font-weight: 700;
+}
 .status-pill {
     display: inline-flex;
     min-height: 24px;
@@ -840,6 +845,7 @@ h1, h2, h3, h4 { letter-spacing: -0.02em; }
     padding: 38px 0 72px;
     color: var(--color-text);
 }
+.public-content-page.public-info-page.public-help-page { max-width: 960px; }
 .public-info-page .public-content-heading {
     max-width: 860px;
     margin-bottom: 28px;
@@ -861,6 +867,7 @@ h1, h2, h3, h4 { letter-spacing: -0.02em; }
     line-height: 1.55;
 }
 .public-info-page .public-content-body { max-width: none; }
+.public-content-page.public-info-page.public-help-page .public-content-body { max-width: 800px; }
 .public-info-page h2 {
     margin: 0 0 10px;
     color: var(--color-primary);

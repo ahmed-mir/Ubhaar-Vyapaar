@@ -128,23 +128,29 @@
                     </a>
 
                     {% if not user.is_authenticated %}
-                        <a class="nav-link" href="{% url 'how_it_works' %}">
+                        <a class="nav-link{% if current_url == 'how_it_works' %} nav-link-active{% endif %}" href="{% url 'how_it_works' %}" {% if current_url == 'how_it_works' %}aria-current="page"{% endif %}>
                             How it works
                         </a>
 
-                        <a class="nav-link" href="{% url 'for_manufacturers' %}">
+                        <a class="nav-link{% if current_url == 'for_manufacturers' %} nav-link-active{% endif %}" href="{% url 'for_manufacturers' %}" {% if current_url == 'for_manufacturers' %}aria-current="page"{% endif %}>
                             For manufacturers
                         </a>
                     {% endif %}
 
                     <details class="nav-menu">
-                        <summary class="nav-link">Resources</summary>
+                        <summary class="nav-link{% if current_url == 'about' or current_url == 'contact' or current_url == 'pricing_fees' or current_url == 'faq' or current_url == 'trust_safety' or current_url == 'grievance_redressal' or current_url == 'help_page' or user.is_authenticated and current_url == 'how_it_works' or user.is_authenticated and current_url == 'for_manufacturers' %} nav-link-active{% endif %}">Resources</summary>
                         <div class="nav-menu-panel">
-                            <a href="{% url 'about' %}">About</a>
-                            <a href="{% url 'contact' %}">Contact</a>
-                            <a href="{% url 'pricing_fees' %}">Pricing &amp; Fees</a>
-                            <a href="{% url 'faq' %}">FAQ</a>
-                            <a href="{% url 'trust_safety' %}">Trust &amp; Safety</a>
+                            <a href="{% url 'about' %}" {% if current_url == 'about' %}aria-current="page"{% endif %}>About</a>
+                            {% if user.is_authenticated %}
+                                <a href="{% url 'how_it_works' %}" {% if current_url == 'how_it_works' %}aria-current="page"{% endif %}>How it works</a>
+                                <a href="{% url 'for_manufacturers' %}" {% if current_url == 'for_manufacturers' %}aria-current="page"{% endif %}>For manufacturers</a>
+                            {% endif %}
+                            <a href="{% url 'contact' %}" {% if current_url == 'contact' %}aria-current="page"{% endif %}>Contact</a>
+                            <a href="{% url 'pricing_fees' %}" {% if current_url == 'pricing_fees' %}aria-current="page"{% endif %}>Pricing &amp; Fees</a>
+                            <a href="{% url 'faq' %}" {% if current_url == 'faq' %}aria-current="page"{% endif %}>FAQ</a>
+                            <a href="{% url 'help_page' %}" {% if current_url == 'help_page' %}aria-current="page"{% endif %}>Help</a>
+                            <a href="{% url 'trust_safety' %}" {% if current_url == 'trust_safety' %}aria-current="page"{% endif %}>Trust &amp; Safety</a>
+                            <a href="{% url 'grievance_redressal' %}" {% if current_url == 'grievance_redressal' %}aria-current="page"{% endif %}>Grievance Redressal</a>
                         </div>
                     </details>
 

@@ -2196,6 +2196,13 @@ class PolicyPageTests(TestCase):
                 response = self.client.get(reverse(name))
                 self.assertEqual(response.status_code, 200)
                 self.assertContains(response, "simulated")
+                self.assertContains(response, 'aria-current="page"')
+
+        help_response = self.client.get(reverse("help_page"))
+        self.assertContains(
+            help_response,
+            'class="public-content-page public-info-page public-help-page"',
+        )
 
     @override_settings(LEGAL_CONTACT_EMAIL="")
     def test_help_omits_unconfigured_contact(self):
