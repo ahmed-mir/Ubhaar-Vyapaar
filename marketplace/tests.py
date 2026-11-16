@@ -87,6 +87,111 @@ class MarketplaceDiscoveryTrustTests(TestCase):
             is_active=True,
         )
 
+    def test_buyer_detail_does_not_offer_sample_listing_save(self):
+        buyer = get_user_model().objects.create_user(
+            username="sample-save-detail-buyer",
+            password="password",
+            role="BUYER",
+        )
+        listing = self.create_listing(self.demo, "Sample save guard")
+        self.client.force_login(buyer)
+
+        response = self.client.get(reverse("listing_detail", args=[listing.pk]))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(
+            response,
+            "Sample listings are for demonstration and cannot be saved.",
+        )
+        self.assertNotContains(response, reverse("save_listing", args=[listing.pk]))
+        self.assertNotContains(response, "Save listing")
+
+    def test_direct_sample_save_post_redirects_with_info_without_saving(self):
+        buyer = get_user_model().objects.create_user(
+            username="sample-save-post-buyer",
+            password="password",
+            role="BUYER",
+        )
+        listing = self.create_listing(self.demo, "Sample direct save guard")
+        self.client.force_login(buyer)
+
+        response = self.client.post(
+            reverse("save_listing", args=[listing.pk]),
+            follow=True,
+        )
+
+        self.assertRedirects(response, reverse("listing_detail", args=[listing.pk]))
+        self.assertContains(
+            response,
+            "Sample listings cannot be added to saved listings.",
+        )
+        self.assertFalse(
+            SavedListing.objects.filter(buyer=buyer, listing=listing).exists()
+        )
+
+    def test_real_listing_save_and_duplicate_save_behavior_are_preserved(self):
+        buyer = get_user_model().objects.create_user(
+            username="real-save-buyer",
+            password="password",
+            role="BUYER",
+        )
+        listing = self.create_listing(self.verified, "Real save capacity")
+        self.client.force_login(buyer)
+        save_url = reverse("save_listing", args=[listing.pk])
+        detail_url = reverse("listing_detail", args=[listing.pk])
+
+        first_response = self.client.post(save_url, follow=True)
+        self.assertRedirects(first_response, detail_url)
+        self.assertContains(first_response, "Listing saved.")
+        self.assertTrue(
+            SavedListing.objects.filter(buyer=buyer, listing=listing).exists()
+        )
+
+        duplicate_response = self.client.post(save_url, follow=True)
+        self.assertRedirects(duplicate_response, detail_url)
+        self.assertContains(duplicate_response, "This listing is already saved.")
+        self.assertEqual(
+            SavedListing.objects.filter(buyer=buyer, listing=listing).count(),
+            1,
+        )
+
+    def test_save_post_still_hides_unverified_and_inactive_real_listings(self):
+        buyer = get_user_model().objects.create_user(
+            username="ineligible-save-buyer",
+            password="password",
+            role="BUYER",
+        )
+        unverified_user = get_user_model().objects.create_user(
+            username="unverified-save-maker",
+            password="password",
+            role="MANUFACTURER",
+        )
+        unverified = ManufacturerProfile.objects.create(
+            user=unverified_user,
+            business_name="Unverified Save Works",
+            city="Pune",
+            state="Maharashtra",
+            is_verified=False,
+        )
+        unverified_listing = self.create_listing(unverified, "Unverified capacity")
+        inactive_listing = self.create_listing(self.verified, "Inactive capacity")
+        inactive_listing.is_active = False
+        inactive_listing.save(update_fields=["is_active"])
+        self.client.force_login(buyer)
+
+        for listing in (unverified_listing, inactive_listing):
+            with self.subTest(listing=listing.title):
+                response = self.client.post(
+                    reverse("save_listing", args=[listing.pk]),
+                )
+                self.assertEqual(response.status_code, 404)
+                self.assertFalse(
+                    SavedListing.objects.filter(
+                        buyer=buyer,
+                        listing=listing,
+                    ).exists()
+                )
+
     def test_saved_listing_shortlist_uses_named_controls_and_compact_facts(self):
         buyer = get_user_model().objects.create_user(
             username="shortlist-buyer",
@@ -309,8 +414,9 @@ class MarketplaceDiscoveryTrustTests(TestCase):
         self.assertContains(response, "Saved listings")
         self.assertContains(
             response,
-            'aria-label="Accept quotation for Dashboard packaging capacity"',
+            'aria-label="Accept quotation and create order for Dashboard packaging capacity"',
         )
+        self.assertContains(response, "Accept quotation and create order")
         self.assertContains(
             response,
             'aria-label="Decline quotation for Dashboard packaging capacity"',
@@ -629,6 +735,15 @@ class MarketplaceDiscoveryTrustTests(TestCase):
         self.assertContains(request_page, 'name="requirements"')
         self.assertContains(request_page, 'name="delivery_location"')
         self.assertContains(request_page, "Request quote")
+
+        listing_page = self.client.get(reverse("listing_detail", args=[listing.pk]))
+        self.assertEqual(listing_page.status_code, 200)
+        self.assertContains(listing_page, "Request a quote")
+        self.assertContains(
+            listing_page,
+            "Request pricing and production terms from the manufacturer. "
+            "Accept their quotation to create an order.",
+        )
 
         self.client.force_login(self.verified_user)
         quotation_page = self.client.get(
@@ -1820,7 +1935,15 @@ class OrderMessagingTests(TestCase):
         self.assertContains(review_page, "Quotation · Awaiting your decision")
         self.assertContains(review_page, "2,325")
         self.assertContains(review_page, "Includes the printed insert.")
-        self.assertContains(review_page, "Accept quotation")
+        self.assertContains(review_page, "Accept quotation and create order")
+        self.assertContains(
+            review_page,
+            'aria-label="Accept quotation and create order for Box production"',
+        )
+        self.assertContains(
+            review_page,
+            "Accept a manufacturer's quotation to create an order.",
+        )
         self.assertContains(review_page, "Decline")
 
         response = self.client.post(

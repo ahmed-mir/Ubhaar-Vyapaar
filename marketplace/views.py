@@ -2680,11 +2680,22 @@ def save_listing(request, pk):
         )
 
     listing = get_object_or_404(
-        CapacityListing,
+        CapacityListing.objects.select_related(
+            "manufacturer",
+            "manufacturer__user",
+        ),
+        Q(manufacturer__is_verified=True)
+        | Q(manufacturer__user__username__startswith="demo_mfr_"),
         pk=pk,
         is_active=True,
-        manufacturer__is_verified=True,
     )
+
+    if listing.manufacturer.is_demo:
+        messages.info(
+            request,
+            "Sample listings cannot be added to saved listings.",
+        )
+        return redirect("listing_detail", pk=listing.pk)
 
     saved_item, created = SavedListing.objects.get_or_create(
         buyer=request.user,

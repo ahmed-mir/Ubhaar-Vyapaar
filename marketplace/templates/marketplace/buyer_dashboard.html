@@ -47,7 +47,7 @@
                         data-confirm-accept="Accepting this quotation will create a demo order between you and the manufacturer. No real payment will be processed."
                     >
                         {% csrf_token %}
-                        <button class="button button-primary" type="submit" name="status" value="ACCEPTED" aria-label="Accept quotation for {{ quotation.quote_request.listing.title }}">Accept quotation</button>
+                        <button class="button button-primary" type="submit" name="status" value="ACCEPTED" aria-label="Accept quotation and create order for {{ quotation.quote_request.listing.title }}">Accept quotation and create order</button>
                         <button class="button button-subtle-danger" type="submit" name="status" value="DECLINED" aria-label="Decline quotation for {{ quotation.quote_request.listing.title }}">Decline</button>
                     </form>
                     <p class="buyer-dashboard__fine-print">Accepting creates a demo order. No real payment is processed.</p>
