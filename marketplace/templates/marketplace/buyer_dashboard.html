@@ -204,42 +204,6 @@
     </section>
     {% endif %}
 
-    {% if accepted_quotations %}
-    <section class="buyer-dashboard__section" aria-labelledby="buyer-accepted-title">
-        <div class="buyer-dashboard__section-heading">
-            <div>
-                <p class="buyer-dashboard__eyebrow">Agreed terms</p>
-                <h2 id="buyer-accepted-title">Accepted quotations</h2>
-            </div>
-            <a class="buyer-dashboard__section-link" href="{% url 'buyer_orders' %}">View orders</a>
-        </div>
-        <div class="buyer-dashboard__list">
-            {% for quotation in accepted_quotations %}
-                <article class="buyer-dashboard__list-item">
-                    <div class="buyer-dashboard__item-main">
-                        <span class="buyer-dashboard__status buyer-dashboard__status--accepted">Accepted</span>
-                        <h3>{{ quotation.quote_request.listing.title }}</h3>
-                        <p class="buyer-dashboard__meta">{{ quotation.quote_request.listing.manufacturer.business_name }}</p>
-                    </div>
-                    <dl class="buyer-dashboard__inline-facts">
-                        <div><dt>Quantity</dt><dd>{{ quotation.quantity }} units</dd></div>
-                        <div><dt>Quote total</dt><dd>{{ quotation.subtotal|inr }}</dd></div>
-                        <div><dt>Production time</dt><dd>{{ quotation.production_days }} days</dd></div>
-                    </dl>
-                    {% if quotation.order %}
-                        <a class="button button-secondary" href="{% url 'order_detail' quotation.order.pk %}">View order</a>
-                    {% endif %}
-                </article>
-            {% empty %}
-                <div class="buyer-dashboard__empty buyer-dashboard__empty--compact">
-                    <h3>No accepted quotations yet</h3>
-                    <p>Accepted terms will appear here after you choose a quotation.</p>
-                </div>
-            {% endfor %}
-        </div>
-    </section>
-    {% endif %}
-
     {% if saved_items %}
     <section class="buyer-dashboard__section" aria-labelledby="buyer-saved-title">
         <div class="buyer-dashboard__section-heading">
