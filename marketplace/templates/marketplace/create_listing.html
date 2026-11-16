@@ -3,14 +3,16 @@
 {% block title %}Create listing | Ubhaar-Vyapaar{% endblock %}
 
 {% block content %}
-    <section class="auth-card listing-form-card" aria-labelledby="create-title">
+    <section class="listing-form-page listing-form-card" aria-labelledby="create-title">
         <a class="back-link" href="{% url 'my_listings' %}">
             &larr; My listings
         </a>
 
-        <h1 id="create-title">Create a listing</h1>
-
-        <p class="auth-intro">Add the details buyers need to assess your manufacturing capacity.</p>
+        <header class="listing-form-heading">
+            <p class="eyebrow">Manufacturer workspace</p>
+            <h1 id="create-title">Add manufacturing capacity</h1>
+            <p class="auth-intro">Add the production and commercial details buyers need to assess this capacity.</p>
+        </header>
 
         <form
             method="post"
@@ -27,8 +29,8 @@
                     Cancel
                 </a>
 
-                <button class="button" type="submit">
-                    Save listing
+                <button class="button button-primary" type="submit">
+                    Create listing
                 </button>
             </div>
         </form>

@@ -8,10 +8,10 @@
     <header class="manufacturer-dashboard__header">
         <div>
             <p class="manufacturer-dashboard__eyebrow">Manufacturer workspace</p>
-            <h1 id="manufacturer-dashboard-title">Dashboard</h1>
+            <h1 id="manufacturer-dashboard-title">Manufacturer dashboard</h1>
             <p class="manufacturer-dashboard__intro">Manage buyer requests, capacity and production work.</p>
         </div>
-        <a class="button button-primary" href="{% url 'create_listing' %}">Create listing</a>
+        {% if stats.total_listings %}<a class="button button-primary" href="{% url 'create_listing' %}">Add capacity</a>{% endif %}
     </header>
 
     <section class="manufacturer-dashboard__profile" aria-labelledby="manufacturer-profile-title">
@@ -35,7 +35,7 @@
                 {% endif %}
             </div>
         </div>
-        <a class="button button-secondary" href="{% url 'edit_business_profile' %}">Edit business profile</a>
+        <a class="button button-secondary" href="{% url 'edit_business_profile' %}">Business profile</a>
     </section>
 
     <section class="manufacturer-dashboard__summary" aria-label="Business summary">
@@ -56,15 +56,6 @@
                 <dt>Active listings</dt>
                 <dd>{{ stats.active_listings }}</dd>
             </div>
-        </dl>
-        <dl class="manufacturer-dashboard__more-metrics" aria-label="More activity">
-            <div><dt>Total listings</dt><dd>{{ stats.total_listings }}</dd></div>
-            <div><dt>Public listings</dt><dd>{{ stats.public_listings }}</dd></div>
-            <div><dt>Quotations sent</dt><dd>{{ stats.quotations_sent }}</dd></div>
-            <div><dt>Accepted quotations</dt><dd>{{ stats.quotations_accepted }}</dd></div>
-            <div><dt>Milestones to start</dt><dd>{{ stats.milestones_to_start }}</dd></div>
-            <div><dt>Milestones to submit</dt><dd>{{ stats.milestones_to_submit }}</dd></div>
-            <div><dt>Unread notifications</dt><dd>{{ stats.unread_notifications }}</dd></div>
         </dl>
     </section>
 
@@ -94,10 +85,7 @@
                             <h3>{{ quote.listing.title }}</h3>
                             <p class="manufacturer-dashboard__meta">Request #{{ quote.pk }} · {{ quote.created_at|date:"d M Y, H:i" }}</p>
                         </div>
-                        <div class="manufacturer-dashboard__request-buyer">
-                            <span>Buyer</span>
-                            <strong>{{ quote.buyer.username }}</strong>
-                        </div>
+                        <div class="manufacturer-dashboard__request-buyer"><span>Buyer account</span><strong>{{ quote.buyer.username }}</strong></div>
                     </header>
 
                     <div class="manufacturer-dashboard__request-content">
@@ -113,7 +101,10 @@
                         {% if quote.quotation %}
                             <section class="manufacturer-dashboard__quotation" aria-label="Quotation details">
                                 <div class="manufacturer-dashboard__quotation-heading">
-                                    <h4>Quotation sent</h4>
+                                    <div>
+                                        <h4>Quotation sent</h4>
+                                        <p class="manufacturer-dashboard__meta">{{ quote.quotation.created_at|date:"d M Y" }}</p>
+                                    </div>
                                     {% if quote.quotation.status == "SENT" %}
                                         <span class="manufacturer-dashboard__status manufacturer-dashboard__status--review">{{ quote.quotation.get_status_display }}</span>
                                     {% elif quote.quotation.status == "ACCEPTED" %}
@@ -143,8 +134,8 @@
                     {% if quote.status == "PENDING" %}
                         <form method="post" action="{% url 'update_quote_status' quote.pk %}" class="manufacturer-dashboard__request-actions">
                             {% csrf_token %}
-                            <button class="button button-accept" type="submit" name="status" value="ACCEPTED" aria-label="Accept request for {{ quote.listing.title }}">Accept request</button>
-                            <button class="button button-reject" type="submit" name="status" value="REJECTED" aria-label="Reject request for {{ quote.listing.title }}">Reject request</button>
+                            <button class="button button-secondary" type="submit" name="status" value="ACCEPTED" aria-label="Accept request for {{ quote.listing.title }}">Accept request</button>
+                            <button class="button button-subtle-danger" type="submit" name="status" value="REJECTED" aria-label="Reject request for {{ quote.listing.title }}">Reject request</button>
                         </form>
                     {% else %}
                         <p class="manufacturer-dashboard__processed">This request has been processed.</p>
@@ -236,11 +227,10 @@
         {% if stats.total_listings %}
             <div class="manufacturer-dashboard__listing-summary">
                 <p><strong>{{ stats.active_listings }}</strong> active <span aria-hidden="true">·</span> <strong>{{ stats.public_listings }}</strong> public <span aria-hidden="true">·</span> <strong>{{ stats.total_listings }}</strong> total</p>
-                <a class="button button-secondary" href="{% url 'create_listing' %}">Add capacity</a>
             </div>
         {% else %}
             <div class="manufacturer-dashboard__empty manufacturer-dashboard__empty--listing">
-                <h3>You haven't listed any manufacturing capacity yet</h3>
+                <h3>Publish your manufacturing capacity</h3>
                 <p>Create a listing to share your available capacity and start receiving buyer requests.</p>
                 <a class="button button-primary" href="{% url 'create_listing' %}">Create your first listing</a>
             </div>

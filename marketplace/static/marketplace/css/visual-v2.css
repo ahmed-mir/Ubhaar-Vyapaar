@@ -959,6 +959,272 @@ h1, h2, h3, h4 { letter-spacing: -0.02em; }
     .pricing-fact-row { grid-template-columns: minmax(0, 1fr); gap: 3px; padding: 14px 8px; }
     .trust-limits-section { grid-template-columns: minmax(0, 1fr); gap: 8px; padding: 17px; }
 }
+
+/* Phase 7E: Manufacturer operations use compact summaries and divided records. */
+.manufacturer-dashboard .manufacturer-dashboard__profile {
+    padding: 15px 0;
+    border-width: 1px 0;
+    border-radius: 0;
+    background: transparent;
+}
+
+.manufacturer-dashboard .manufacturer-dashboard__summary {
+    margin-bottom: 26px;
+}
+
+.manufacturer-dashboard .manufacturer-dashboard__key-metrics {
+    gap: 0;
+    border-block: 1px solid var(--color-border);
+}
+
+.manufacturer-dashboard .manufacturer-dashboard__metric,
+.manufacturer-dashboard .manufacturer-dashboard__metric--attention {
+    min-height: 0;
+    padding: 12px 16px;
+    border: 0;
+    border-right: 1px solid var(--color-border);
+    border-radius: 0;
+    background: transparent;
+}
+
+.manufacturer-dashboard .manufacturer-dashboard__metric:last-child {
+    border-right: 0;
+}
+
+.manufacturer-dashboard .manufacturer-dashboard__metric dd,
+.manufacturer-dashboard .manufacturer-dashboard__metric--attention dd {
+    color: var(--color-primary);
+    font-size: 23px;
+}
+
+.manufacturer-dashboard .manufacturer-dashboard__request-list,
+.manufacturer-dashboard .manufacturer-dashboard__operational-list {
+    border-width: 1px 0 0;
+    border-radius: 0;
+    background: transparent;
+}
+
+.manufacturer-dashboard .manufacturer-dashboard__request {
+    padding: 20px 0;
+    border-bottom: 1px solid var(--color-border);
+}
+
+.manufacturer-dashboard .manufacturer-dashboard__request + .manufacturer-dashboard__request {
+    border-top: 0;
+}
+
+.manufacturer-dashboard .manufacturer-dashboard__quotation {
+    padding: 0 0 0 16px;
+    border: 0;
+    border-left: 2px solid #cfe4df;
+    border-radius: 0;
+    background: transparent;
+}
+
+.manufacturer-dashboard .manufacturer-dashboard__quotation-prompt {
+    padding: 0 0 0 16px;
+    border: 0;
+    border-left: 2px solid var(--color-border);
+    border-radius: 0;
+    background: transparent;
+}
+
+.manufacturer-dashboard .manufacturer-dashboard__operational-row {
+    padding: 15px 0;
+    border-bottom: 1px solid var(--color-border);
+}
+
+.manufacturer-dashboard .manufacturer-dashboard__operational-row + .manufacturer-dashboard__operational-row {
+    border-top: 0;
+}
+
+.manufacturer-dashboard .manufacturer-dashboard__listing-summary {
+    padding: 14px 0;
+    border-width: 1px 0;
+    border-radius: 0;
+    background: transparent;
+}
+
+.manufacturer-dashboard .manufacturer-dashboard__empty {
+    min-height: 0;
+    padding: 16px 0;
+    border-width: 1px 0;
+    border-style: solid;
+    border-radius: 0;
+    background: transparent;
+}
+
+.my-listings-page .management-list {
+    gap: 0;
+    border-top: 1px solid var(--color-border);
+}
+
+.my-listings-page .management-row {
+    padding: 22px 0;
+    border: 0;
+    border-bottom: 1px solid var(--color-border);
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+}
+
+.my-listings-page .management-facts {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 12px 24px;
+    margin-top: 16px;
+    padding: 13px 0;
+}
+
+.my-listings-page .management-row__footer {
+    padding-top: 2px;
+}
+
+.listing-form-page {
+    color: var(--color-text);
+}
+
+.listing-form-page.listing-form-card {
+    width: min(100% - 48px, 960px);
+    margin: 32px auto 72px;
+    padding: 0;
+}
+
+.listing-form-heading {
+    max-width: 720px;
+    margin: 18px 0 24px;
+}
+
+.listing-form-heading h1 {
+    margin: 4px 0 8px;
+    color: var(--color-primary);
+    font-size: clamp(29px, 3vw, 38px);
+    line-height: 1.15;
+}
+
+.listing-form-heading .auth-intro {
+    margin: 0;
+    color: var(--color-muted);
+}
+
+.listing-form-notice {
+    margin: 0 0 6px;
+    padding: 13px 15px;
+    border-left: 3px solid #d7a92e;
+    background: #fffaf0;
+    color: var(--color-text);
+    line-height: 1.5;
+}
+
+.listing-form-page .listing-form-section {
+    padding: 24px 0;
+}
+
+.listing-form-page .listing-form-section h2 {
+    font-size: 20px;
+}
+
+.listing-management-form .form-actions {
+    padding-top: 20px;
+    border-top: 1px solid var(--color-border);
+}
+
+.send-quotation-page .quote-workflow-form {
+    padding: 22px 0;
+    border-width: 1px 0;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+}
+
+.send-quotation-page > .quote-workflow-heading {
+    max-width: 560px;
+}
+
+.send-quotation-page .quote-workflow-context {
+    padding: 4px 0 4px 24px;
+    border: 0;
+    border-left: 1px solid var(--color-border);
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+}
+
+.quote-form-submit {
+    display: grid;
+    gap: 12px;
+}
+
+.quote-form-submit p {
+    margin: 0;
+    color: var(--color-muted);
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+@media (max-width: 900px) {
+    .send-quotation-page .quote-workflow-layout--send .quote-workflow-context { grid-row: 1; }
+    .send-quotation-page .quote-workflow-layout--send .quote-workflow-main { grid-row: 2; }
+
+    .send-quotation-page .quote-workflow-context {
+        padding: 20px 0 0;
+        border-left: 0;
+        border-top: 1px solid var(--color-border);
+    }
+}
+
+@media (max-width: 760px) {
+    .manufacturer-dashboard .manufacturer-dashboard__summary {
+        order: 2;
+        margin: 0 0 25px;
+    }
+
+    .manufacturer-dashboard__requests { order: 3; }
+    .manufacturer-dashboard__orders { order: 4; }
+    .manufacturer-dashboard__milestones { order: 5; }
+    .manufacturer-dashboard__listings { order: 6; }
+    .manufacturer-dashboard__reviews { order: 7; }
+
+    .manufacturer-dashboard .manufacturer-dashboard__key-metrics {
+        gap: 0;
+    }
+
+    .manufacturer-dashboard .manufacturer-dashboard__metric,
+    .manufacturer-dashboard .manufacturer-dashboard__metric--attention {
+        min-height: 70px;
+        padding: 10px 12px;
+        border-bottom: 1px solid var(--color-border);
+    }
+
+    .manufacturer-dashboard .manufacturer-dashboard__metric:nth-child(2n) { border-right: 0; }
+    .manufacturer-dashboard .manufacturer-dashboard__metric:nth-last-child(-n + 2) { border-bottom: 0; }
+
+    .manufacturer-dashboard .manufacturer-dashboard__request { padding: 17px 0; }
+    .manufacturer-dashboard .manufacturer-dashboard__quotation,
+    .manufacturer-dashboard .manufacturer-dashboard__quotation-prompt { padding-left: 12px; }
+
+    .my-listings-page .management-row { padding: 18px 0; }
+    .my-listings-page .management-facts {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 10px 16px;
+    }
+
+    .listing-form-page.listing-form-card {
+        width: min(100% - 32px, 960px);
+        margin: 22px auto 48px;
+        padding: 0;
+    }
+
+    .listing-form-heading { margin-top: 16px; }
+    .listing-form-page .listing-form-section { padding: 21px 0; }
+
+    .send-quotation-page .quote-workflow-form { padding: 18px 0; }
+}
+
+@media (max-width: 360px) {
+    .listing-form-page.listing-form-card { width: min(100% - 24px, 960px); padding: 0; }
+    .manufacturer-dashboard .manufacturer-dashboard__request-actions { grid-template-columns: minmax(0, 1fr); }
+}
 @media (max-width: 360px) {
     .public-content-page.public-info-page { width: min(100% - 24px, 1120px); }
     .trust-limits-section { padding: 15px; }

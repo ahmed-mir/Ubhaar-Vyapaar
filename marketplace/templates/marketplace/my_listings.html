@@ -8,10 +8,10 @@
         <header class="page-heading my-listings-page__header">
             <div>
                 <p class="eyebrow">Manufacturer workspace</p>
-                <h1>My listings</h1>
-                <p>Manage the capacity and commercial details buyers see.</p>
+                <h1>Capacity listings</h1>
+                <p>Review availability, commercial terms and the details buyers can see.</p>
             </div>
-            {% if listings %}<a class="button" href="{% url 'create_listing' %}">Create listing</a>{% endif %}
+            {% if listings %}<a class="button button-primary" href="{% url 'create_listing' %}">Add capacity</a>{% endif %}
         </header>
 
         <div class="management-list">
@@ -21,9 +21,7 @@
                         <div>
                             <p class="management-row__eyebrow">{{ listing.get_category_display }}</p>
                             <h2>{{ listing.title }}</h2>
-                            <p class="management-row__location">
-                                {{ listing.manufacturer.city }}, {{ listing.manufacturer.state }}
-                            </p>
+                            {% if listing.machine_type %}<p class="management-row__location">{{ listing.machine_type }}</p>{% endif %}
                         </div>
                         <div class="management-row__status">
                             {% if not listing.is_active %}
@@ -59,7 +57,7 @@
                             {% endif %}
                         </p>
                         <div class="management-row__actions">
-                            <a class="button" href="{% url 'edit_listing' listing.pk %}">Edit listing</a>
+                            <a class="button button-primary" href="{% url 'edit_listing' listing.pk %}">Edit listing</a>
                             {% if listing.is_active and listing.manufacturer.is_verified %}
                                 <a class="button button-secondary" href="{% url 'listing_detail' listing.pk %}">View public page</a>
                             {% endif %}
@@ -68,9 +66,9 @@
                 </article>
             {% empty %}
                 <section class="empty-panel authenticated-empty" aria-labelledby="listings-empty-title">
-                    <h2 id="listings-empty-title">You haven't listed any manufacturing capacity yet.</h2>
+                    <h2 id="listings-empty-title">No capacity listings yet</h2>
                     <p>Add a listing with your minimum order and production time so buyers can review your capacity.</p>
-                    <a class="button" href="{% url 'create_listing' %}">Create your first listing</a>
+                    <a class="button button-primary" href="{% url 'create_listing' %}">Add capacity</a>
                 </section>
             {% endfor %}
         </div>

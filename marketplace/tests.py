@@ -155,6 +155,8 @@ class MarketplaceDiscoveryTrustTests(TestCase):
         self.assertEqual(create_response.status_code, 200)
         create_content = create_response.content.decode()
         self.assertEqual(create_content.count("<h1"), 1)
+        self.assertContains(create_response, "Add manufacturing capacity")
+        self.assertContains(create_response, 'aria-current="page"')
         for heading in (
             "Listing basics",
             "Production capabilities",
@@ -206,6 +208,7 @@ class MarketplaceDiscoveryTrustTests(TestCase):
 
         edit_response = self.client.get(reverse("edit_listing", args=[created.pk]))
         self.assertEqual(edit_response.status_code, 200)
+        self.assertContains(edit_response, "Edit capacity listing")
         self.assertContains(edit_response, 'name="is_active"')
         edit_post = self.client.post(
             reverse("edit_listing", args=[created.pk]),
@@ -425,6 +428,9 @@ class MarketplaceDiscoveryTrustTests(TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertEqual(content.count("<h1"), 1)
+        self.assertContains(response, "Manufacturer dashboard")
+        self.assertContains(response, 'aria-current="page"')
+        self.assertNotContains(response, "manufacturer-dashboard__more-metrics")
         self.assertContains(response, "Verified manufacturer")
         self.assertContains(response, "Pending requests")
         self.assertContains(response, "Dashboard packaging capacity")
@@ -473,8 +479,7 @@ class MarketplaceDiscoveryTrustTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "Under review")
         self.assertContains(response, "Listings become public after verification.")
-        self.assertContains(response, "You haven")
-        self.assertContains(response, "listed any manufacturing capacity yet")
+        self.assertContains(response, "Publish your manufacturing capacity")
         self.assertContains(response, "Create your first listing")
         self.assertNotContains(response, "No production actions right now")
         self.assertNotContains(response, "No active production orders")
@@ -636,6 +641,8 @@ class MarketplaceDiscoveryTrustTests(TestCase):
         self.assertContains(quotation_page, "Pricing")
         self.assertContains(quotation_page, "Production")
         self.assertContains(quotation_page, "Message to buyer")
+        self.assertContains(quotation_page, "Send quotation")
+        self.assertContains(quotation_page, 'aria-current="page"')
         self.assertContains(quotation_page, 'name="price_per_unit"')
         self.assertContains(quotation_page, 'name="production_days"')
         self.assertContains(quotation_page, 'name="message"')

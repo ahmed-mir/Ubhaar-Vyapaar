@@ -3,16 +3,18 @@
 {% block title %}Edit listing | Ubhaar-Vyapaar{% endblock %}
 
 {% block content %}
-    <section class="auth-card listing-form-card" aria-labelledby="edit-title">
+    <section class="listing-form-page listing-form-card" aria-labelledby="edit-title">
         <a class="back-link" href="{% url 'my_listings' %}">
             &larr; My listings
         </a>
 
-        <h1 id="edit-title">Edit listing</h1>
+        <header class="listing-form-heading">
+            <p class="eyebrow">Manufacturer workspace</p>
+            <h1 id="edit-title">Edit capacity listing</h1>
+            <p class="auth-intro">Update the details buyers see for <strong>{{ listing.title }}</strong>.</p>
+        </header>
 
-        <p class="auth-intro">Update the details buyers see for {{ listing.title }}.</p>
-
-        <p class="message">
+        <p class="listing-form-notice" role="note">
             Uncheck "Is active" to hide this listing from buyers.
             Existing quote requests will remain saved.
         </p>
@@ -33,7 +35,7 @@
                     Cancel
                 </a>
 
-                <button class="button" type="submit">
+                <button class="button button-primary" type="submit">
                     Save changes
                 </button>
             </div>

@@ -172,15 +172,15 @@
 
                         {% elif user.role == "MANUFACTURER" %}
 
-                            <a class="nav-link nav-link-strong{% if current_url == 'manufacturer_dashboard' %} nav-link-active{% endif %}" href="{% url 'manufacturer_dashboard' %}">
+                            <a class="nav-link nav-link-strong{% if current_url == 'manufacturer_dashboard' or current_url == 'send_quotation' %} nav-link-active{% endif %}" href="{% url 'manufacturer_dashboard' %}" {% if current_url == 'manufacturer_dashboard' or current_url == 'send_quotation' %}aria-current="page"{% endif %}>
                                 Dashboard
                             </a>
 
-                            <a class="nav-link{% if current_url == 'my_listings' %} nav-link-active{% endif %}" href="{% url 'my_listings' %}">
+                            <a class="nav-link{% if current_url == 'my_listings' or current_url == 'create_listing' or current_url == 'edit_listing' %} nav-link-active{% endif %}" href="{% url 'my_listings' %}" {% if current_url == 'my_listings' or current_url == 'create_listing' or current_url == 'edit_listing' %}aria-current="page"{% endif %}>
                                 Listings
                             </a>
 
-                            <a class="nav-link{% if current_url == 'manufacturer_orders' %} nav-link-active{% endif %}" href="{% url 'manufacturer_orders' %}">
+                            <a class="nav-link{% if current_url == 'manufacturer_orders' %} nav-link-active{% endif %}" href="{% url 'manufacturer_orders' %}" {% if current_url == 'manufacturer_orders' %}aria-current="page"{% endif %}>
                                 Orders
                             </a>
 
