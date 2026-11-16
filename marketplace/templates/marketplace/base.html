@@ -161,7 +161,7 @@
                                 Requests
                             </a>
 
-                            <a class="nav-link{% if current_url == 'buyer_orders' %} nav-link-active{% endif %}" href="{% url 'buyer_orders' %}" {% if current_url == 'buyer_orders' %}aria-current="page"{% endif %}>
+                            <a class="nav-link{% if current_url == 'buyer_orders' or current_url == 'order_detail' or current_url == 'fund_milestone' or current_url == 'review_order' %} nav-link-active{% endif %}" href="{% url 'buyer_orders' %}" {% if current_url == 'buyer_orders' or current_url == 'order_detail' or current_url == 'fund_milestone' or current_url == 'review_order' %}aria-current="page"{% endif %}>
                                 Orders
                             </a>
 
@@ -180,7 +180,7 @@
                                 Listings
                             </a>
 
-                            <a class="nav-link{% if current_url == 'manufacturer_orders' %} nav-link-active{% endif %}" href="{% url 'manufacturer_orders' %}" {% if current_url == 'manufacturer_orders' %}aria-current="page"{% endif %}>
+                            <a class="nav-link{% if current_url == 'manufacturer_orders' or current_url == 'order_detail' %} nav-link-active{% endif %}" href="{% url 'manufacturer_orders' %}" {% if current_url == 'manufacturer_orders' or current_url == 'order_detail' %}aria-current="page"{% endif %}>
                                 Orders
                             </a>
 

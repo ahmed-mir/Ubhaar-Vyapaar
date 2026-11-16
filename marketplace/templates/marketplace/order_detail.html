@@ -181,7 +181,7 @@
             </div>
 
             <div class="order-conversation__layout">
-                <div class="order-conversation__thread" aria-label="Order messages">
+                <section class="order-conversation__thread" aria-label="Order messages">
                     {% for order_message in order.messages.all %}
                         <article class="order-message{% if order_message.sender == user %} order-message--own{% endif %}">
                             <header>
@@ -198,7 +198,7 @@
                             <p>Use this thread for order-specific updates and questions.</p>
                         </div>
                     {% endfor %}
-                </div>
+                </section>
 
                 <aside class="order-conversation__sidebar">
                     <form method="post" action="{% url 'send_order_message' order.pk %}" class="order-message-form" novalidate>

@@ -16,18 +16,23 @@
 
         <section class="order-index-list" aria-label="Manufacturer orders">
             {% for order in orders %}
-                <article class="order-index-card">
-                    <header>
-                        <span class="status-pill status-{{ order.status|lower }}">{{ order.get_status_display }}</span>
-                        <h2>Order #{{ order.pk }}</h2>
-                        <p>{{ order.listing.title }} <span aria-hidden="true">&middot;</span> Buyer: {{ order.buyer.username }}</p>
-                    </header>
-                    <dl>
+                <article class="order-index-record">
+                    <div class="order-index-record__identity">
+                        <p class="order-workspace__eyebrow">Order #{{ order.pk }}</p>
+                        <h2>{{ order.listing.title }}</h2>
+                        <p>Buyer: {{ order.buyer.username }}</p>
+                    </div>
+                    <span class="status-pill status-{{ order.status|lower }} order-index-record__status">{{ order.get_status_display }}</span>
+                    <dl class="order-index-record__facts">
                         <div><dt>Quantity</dt><dd>{{ order.quantity|indian_number }} units</dd></div>
                         <div><dt>Order total</dt><dd>{{ order.total_amount|inr }}</dd></div>
                         <div><dt>Production time</dt><dd>{{ order.agreed_production_days }} days</dd></div>
+                        <div><dt>Terms locked</dt><dd>{{ order.terms_locked_at|date:"d M Y, H:i" }}</dd></div>
+                        {% with milestone_count=order.milestones.all|length %}
+                            {% if milestone_count %}<div><dt>Production checkpoints</dt><dd>{{ milestone_count }}</dd></div>{% endif %}
+                        {% endwith %}
                     </dl>
-                    <a class="button button-primary" href="{% url 'order_detail' order.pk %}">Manage order</a>
+                    <a class="button button-secondary order-index-record__action" href="{% url 'order_detail' order.pk %}">Manage order</a>
                 </article>
             {% empty %}
                 <div class="empty-panel order-index-empty">

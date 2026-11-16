@@ -1571,6 +1571,46 @@ class OrderMessagingTests(TestCase):
         self.client.force_login(self.other_manufacturer_user)
         self.assertEqual(self.client.get(url).status_code, 404)
 
+    def test_order_lists_use_compact_records_and_order_navigation_is_active(self):
+        self.client.force_login(self.buyer)
+        buyer_orders_response = self.client.get(reverse("buyer_orders"))
+        self.assertEqual(buyer_orders_response.status_code, 200)
+        self.assertContains(buyer_orders_response, 'class="order-index-record"')
+        self.assertContains(buyer_orders_response, self.listing.title)
+        self.assertContains(buyer_orders_response, self.manufacturer.business_name)
+        self.assertContains(buyer_orders_response, "Order total")
+        self.assertContains(buyer_orders_response, "Production checkpoints")
+
+        buyer_detail_response = self.client.get(
+            reverse("order_detail", args=[self.order.pk]),
+        )
+        self.assertContains(
+            buyer_detail_response,
+            f'href="{reverse("buyer_orders")}" aria-current="page"',
+        )
+
+        self.client.force_login(self.manufacturer_user)
+        manufacturer_orders_response = self.client.get(
+            reverse("manufacturer_orders"),
+        )
+        self.assertEqual(manufacturer_orders_response.status_code, 200)
+        self.assertContains(
+            manufacturer_orders_response,
+            'class="order-index-record"',
+        )
+        self.assertContains(manufacturer_orders_response, self.listing.title)
+        self.assertContains(manufacturer_orders_response, self.buyer.username)
+        self.assertContains(manufacturer_orders_response, "Production time")
+        self.assertContains(manufacturer_orders_response, "Terms locked")
+
+        manufacturer_detail_response = self.client.get(
+            reverse("order_detail", args=[self.order.pk]),
+        )
+        self.assertContains(
+            manufacturer_detail_response,
+            f'href="{reverse("manufacturer_orders")}" aria-current="page"',
+        )
+
     def test_order_detail_prioritizes_terms_milestones_and_role_specific_actions(self):
         self.client.force_login(self.buyer)
         buyer_response = self.client.get(
