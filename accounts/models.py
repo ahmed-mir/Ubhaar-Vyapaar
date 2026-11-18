@@ -1,5 +1,7 @@
 from django.contrib.auth.models import AbstractUser
 from django.db import models
+from django.db.models import Q
+from django.db.models.functions import Lower, Trim
 
 
 class User(AbstractUser):
@@ -19,3 +21,18 @@ class User(AbstractUser):
     privacy_acknowledged_at = models.DateTimeField(null=True, blank=True)
     terms_version = models.CharField(max_length=40, blank=True)
     privacy_policy_version = models.CharField(max_length=40, blank=True)
+
+    class Meta(AbstractUser.Meta):
+        abstract = False
+        constraints = [
+            models.UniqueConstraint(
+                Lower(Trim("email")),
+                condition=~Q(email=""),
+                name="accounts_user_email_ci_uniq",
+            ),
+        ]
+
+    def save(self, *args, **kwargs):
+        if self.email is not None:
+            self.email = self.email.strip().lower()
+        return super().save(*args, **kwargs)

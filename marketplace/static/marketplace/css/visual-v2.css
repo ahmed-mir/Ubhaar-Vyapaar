@@ -5341,3 +5341,55 @@ h1, h2, h3, h4 { letter-spacing: -0.02em; }
     .password-requirements-list li { grid-template-columns: 20px minmax(0, 1fr); }
     .password-requirement-server-note { grid-column: 2; }
 }
+
+/* India-only national phone input and always-visible signup guidance. */
+.auth-form .phone-input-group {
+    display: flex;
+    width: 100%;
+    min-width: 0;
+}
+.auth-form .phone-country-prefix {
+    display: inline-flex;
+    min-width: 64px;
+    min-height: 48px;
+    align-items: center;
+    justify-content: center;
+    padding: 0 12px;
+    border: 1px solid var(--color-border);
+    border-right: 0;
+    border-radius: var(--radius-control) 0 0 var(--radius-control);
+    background: var(--color-surface);
+    color: var(--color-primary);
+    font-weight: 650;
+}
+.auth-form .phone-input-group input {
+    flex: 1 1 auto;
+    width: 1%;
+    min-width: 0;
+    border-radius: 0 var(--radius-control) var(--radius-control) 0;
+}
+.auth-form .password-requirements {
+    display: grid;
+    gap: 8px;
+    margin-top: 8px;
+    padding: 12px;
+    border: 1px solid #d7e0e3;
+    border-radius: 8px;
+    background: #f7f9f9;
+    color: #334a50;
+    font-size: 14px;
+    line-height: 1.45;
+}
+.auth-form .password-requirements-heading {
+    margin: 0;
+    color: #145e55;
+    font-weight: 700;
+}
+.auth-form .password-requirements-note {
+    margin: 0;
+    color: #68777b;
+    font-size: 12px;
+}
+.password-requirements-list li[data-state="error"] .password-requirement-indicator {
+    color: #8c2e2b;
+}

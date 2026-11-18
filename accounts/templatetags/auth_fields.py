@@ -11,7 +11,7 @@ def render_auth_field(field):
     autocomplete = {
         "username": "username",
         "email": "email",
-        "phone": "tel",
+        "phone": "tel-national",
         "business_name": "organization",
         "city": "address-level2",
         "state": "address-level1",

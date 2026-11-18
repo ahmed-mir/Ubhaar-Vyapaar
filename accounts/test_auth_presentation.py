@@ -11,18 +11,28 @@ class AuthPresentationTests(TestCase):
                 self.assertContains(response, 'autocomplete="username"')
                 self.assertContains(response, 'autocomplete="email"')
                 self.assertContains(response, 'type="tel"')
-                self.assertContains(response, 'inputmode="tel"')
-                self.assertContains(response, 'autocomplete="tel"')
+                self.assertContains(response, 'inputmode="numeric"')
+                self.assertContains(response, 'autocomplete="tel-national"')
+                self.assertContains(response, 'maxlength="10"')
+                self.assertContains(response, 'pattern="[0-9]{10}"')
+                self.assertContains(response, 'class="phone-country-prefix"')
+                self.assertContains(response, "+91")
+                self.assertContains(response, 'aria-describedby="id_phone_helptext"')
                 self.assertContains(
                     response,
-                    "Optional. Enter a valid phone number, for example +91 98765 43210.",
+                    "Optional. Enter your 10-digit mobile number. The +91 country code is supplied.",
                 )
                 self.assertContains(response, 'autocomplete="new-password"')
                 self.assertContains(response, "At least 8 characters")
+                self.assertContains(response, "At least 1 symbol (e.g. @ # $ &amp; !)")
                 self.assertContains(response, "Not entirely numeric")
-                self.assertContains(response, "Must not be too common")
-                self.assertContains(response, "Must not be too similar to your details")
-                self.assertContains(response, "Checked when you submit")
+                self.assertContains(
+                    response,
+                    "Must not be similar to your email address or username",
+                )
+                self.assertContains(response, "Final password validation happens when you submit.")
+                self.assertNotContains(response, "Must not be too common")
+                self.assertContains(response, 'data-password-requirements')
                 self.assertContains(response, 'data-password-match')
                 self.assertContains(
                     response,
@@ -38,8 +48,17 @@ class AuthPresentationTests(TestCase):
     def test_login_has_current_password_autocomplete(self):
         response = self.client.get(reverse("login"))
 
+        self.assertContains(response, 'class="styled-form auth-form login-form"')
         self.assertContains(response, 'autocomplete="username"')
         self.assertContains(response, 'autocomplete="current-password"')
+        self.assertContains(response, 'class="password-input-shell"')
+        self.assertNotContains(response, 'data-password-requirements')
+
+        response = self.client.post(
+            reverse("login"),
+            {"username": "unknown-user", "password": "wrong-password"},
+        )
+        self.assertContains(response, 'class="form-error-summary" role="alert"')
 
     def test_password_change_requires_login(self):
         response = self.client.get(reverse("password_change"))

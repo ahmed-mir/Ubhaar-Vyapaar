@@ -23,3 +23,7 @@ class EmailOrUsernameAuthenticationForm(AuthenticationForm):
             "Please enter a correct email or username and password."
         ),
     }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["password"].widget.attrs["autocomplete"] = "current-password"

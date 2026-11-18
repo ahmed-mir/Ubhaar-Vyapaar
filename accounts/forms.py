@@ -1,67 +1,40 @@
 import logging
-import re
 
 from django import forms
 from django.conf import settings
 from django.contrib.auth.forms import PasswordResetForm
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.password_validation import (
-    CommonPasswordValidator,
     MinimumLengthValidator,
     NumericPasswordValidator,
     UserAttributeSimilarityValidator,
     get_password_validators,
 )
 from django.core.exceptions import ValidationError
+from django.db.models.functions import Lower, Trim
 from django.core.mail import send_mail
 from django.template.loader import render_to_string
 from django.utils import timezone
 from django.utils.html import strip_tags
 
+from .password_validators import SymbolPasswordValidator
 from .models import User
 
 logger = logging.getLogger(__name__)
 
-_PHONE_CHARACTERS = re.compile(r"\+?[0-9 ()\-]+\Z")
-
-
 def validate_phone_number(value):
-    """Validate an optional international-style phone number."""
-    phone = (value or "").strip()
+    """Validate an optional Indian national mobile number and add +91."""
+    phone = value or ""
     if not phone:
         return ""
 
-    if not _PHONE_CHARACTERS.fullmatch(phone):
+    if len(phone) != 10 or not phone.isascii() or not phone.isdigit():
         raise ValidationError(
-            "Enter a valid phone number containing 8–15 digits.",
+            "Enter a valid 10-digit mobile number.",
             code="invalid_phone",
         )
 
-    depth = 0
-    for character in phone:
-        if character == "(":
-            depth += 1
-            if depth > 1:
-                raise ValidationError(
-                    "Enter a valid phone number containing 8–15 digits.",
-                    code="invalid_phone",
-                )
-        elif character == ")":
-            depth -= 1
-            if depth < 0:
-                raise ValidationError(
-                    "Enter a valid phone number containing 8–15 digits.",
-                    code="invalid_phone",
-                )
-
-    digits = sum("0" <= character <= "9" for character in phone)
-    if depth or not 8 <= digits <= 15:
-        raise ValidationError(
-            "Enter a valid phone number containing 8–15 digits.",
-            code="invalid_phone",
-        )
-
-    return phone
+    return f"+91{phone}"
 
 
 def configured_password_requirements():
@@ -69,8 +42,8 @@ def configured_password_requirements():
     requirements = []
     priority = {
         "minimum_length": 0,
-        "not_numeric": 1,
-        "common_password": 2,
+        "symbol": 1,
+        "not_numeric": 2,
         "similarity": 3,
     }
 
@@ -84,23 +57,30 @@ def configured_password_requirements():
                 "live": True,
                 "minimum": validator.min_length,
             }
+        elif isinstance(validator, SymbolPasswordValidator):
+            requirement = {
+                "key": "symbol",
+                "text": "At least 1 symbol (e.g. @ # $ & !)",
+                "live": True,
+            }
         elif isinstance(validator, NumericPasswordValidator):
             requirement = {
                 "key": "not_numeric",
                 "text": "Not entirely numeric",
                 "live": True,
             }
-        elif isinstance(validator, CommonPasswordValidator):
-            requirement = {
-                "key": "common_password",
-                "text": "Must not be too common",
-                "live": False,
-            }
         elif isinstance(validator, UserAttributeSimilarityValidator):
+            attributes = tuple(validator.user_attributes)
             requirement = {
                 "key": "similarity",
-                "text": "Must not be too similar to your details",
-                "live": False,
+                "text": (
+                    "Must not be similar to your email address or username"
+                    if set(attributes) == {"username", "email"}
+                    else strip_tags(str(validator.get_help_text())).strip()
+                ),
+                "live": set(attributes) == {"username", "email"},
+                "attributes": ",".join(attributes),
+                "max_similarity": validator.max_similarity,
             }
         else:
             help_text = strip_tags(str(validator.get_help_text())).strip()
@@ -176,17 +156,21 @@ class RegistrationConsentMixin(forms.Form):
 
         phone = self.fields.get("phone")
         if phone:
+            phone.label = "Mobile number"
+            phone.strip = False
             phone.widget.input_type = "tel"
             phone.widget.attrs.update(
                 {
-                    "inputmode": "tel",
-                    "autocomplete": "tel",
-                    "placeholder": "+91 98765 43210",
+                    "inputmode": "numeric",
+                    "autocomplete": "tel-national",
+                    "maxlength": "10",
+                    "pattern": "[0-9]{10}",
+                    "placeholder": "9876543210",
                 }
             )
             phone.help_text = (
-                "Optional. Enter a valid phone number, for example "
-                "+91 98765 43210."
+                "Optional. Enter your 10-digit mobile number. "
+                "The +91 country code is supplied."
             )
 
         if "password1" in self.fields:
@@ -200,6 +184,20 @@ class RegistrationConsentMixin(forms.Form):
 
     def clean_phone(self):
         return validate_phone_number(self.cleaned_data.get("phone", ""))
+
+    def clean_email(self):
+        email = self.cleaned_data["email"].strip().lower()
+        duplicates = User.objects.annotate(
+            _normalized_email=Lower(Trim("email")),
+        ).filter(_normalized_email=email)
+        if self.instance.pk:
+            duplicates = duplicates.exclude(pk=self.instance.pk)
+        if duplicates.exists():
+            raise ValidationError(
+                "An account with this email address already exists.",
+                code="duplicate_email",
+            )
+        return email
 
     def _record_legal_acknowledgement(self, user):
         accepted_at = timezone.now()

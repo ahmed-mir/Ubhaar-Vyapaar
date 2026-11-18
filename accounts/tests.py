@@ -488,42 +488,16 @@ class EmailOrUsernameAuthenticationTests(TestCase):
                 )
             )
 
-    def test_duplicate_email_fails_generically_but_each_username_still_works(self):
-        first = self.create_user("duplicate-email-one", "shared@example.test")
-        second = self.create_user("duplicate-email-two", "SHARED@example.test")
+    def test_email_login_is_deterministic_after_case_insensitive_uniqueness(self):
+        user = self.create_user("unique-email-login", "user@example.test")
 
-        duplicate_response = self.client.post(
-            reverse("login"),
-            {"username": "shared@example.test", "password": "StrongPass123!"},
-        )
-        self.assertEqual(duplicate_response.status_code, 200)
-        self.assertContains(
-            duplicate_response,
-            "Please enter a correct email or username and password.",
-        )
-        self.assertNotIn("_auth_user_id", self.client.session)
-
-        wrong_response = self.client.post(
-            reverse("login"),
-            {"username": "unknown@example.test", "password": "WrongPassword123!"},
-        )
-        self.assertContains(
-            wrong_response,
-            "Please enter a correct email or username and password.",
-        )
-
-        for user in (first, second):
-            self.assertTrue(
-                self.client.login(
-                    username=user.username,
-                    password="StrongPass123!",
-                )
+        self.assertTrue(
+            self.client.login(
+                username="USER@EXAMPLE.TEST",
+                password="StrongPass123!",
             )
-            self.assertEqual(
-                str(self.client.session["_auth_user_id"]),
-                str(user.pk),
-            )
-            self.client.logout()
+        )
+        self.assertEqual(str(self.client.session["_auth_user_id"]), str(user.pk))
 
     def test_staff_and_superuser_can_authenticate_with_username_in_admin(self):
         staff = self.create_user(

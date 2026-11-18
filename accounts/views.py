@@ -1,6 +1,7 @@
 from django.contrib import messages
 from django.contrib.auth import get_user_model, login
 from django.db import IntegrityError, transaction
+from django.db.models.functions import Lower, Trim
 from django.shortcuts import redirect, render
 
 from marketplace.models import ManufacturerProfile
@@ -11,10 +12,22 @@ from .forms import (
 )
 
 
-def _add_duplicate_username_error(form):
+def _add_registration_constraint_error(form):
+    email = form.cleaned_data.get("email", "").strip().lower()
+    if email:
+        duplicate_email = get_user_model().objects.annotate(
+            _normalized_email=Lower(Trim("email")),
+        ).filter(_normalized_email=email)
+        if duplicate_email.exists():
+            form.add_error(
+                "email",
+                "An account with this email address already exists.",
+            )
+            return True
+
     username = form.cleaned_data.get("username")
     if username and get_user_model().objects.filter(username=username).exists():
-        form.add_error("username", "That username is already in use.")
+        form.add_error("username", "A user with that username already exists.")
         return True
     return False
 
@@ -37,7 +50,7 @@ def register(request):
                 with transaction.atomic():
                     user = form.save()
             except IntegrityError:
-                if not _add_duplicate_username_error(form):
+                if not _add_registration_constraint_error(form):
                     raise
             else:
                 login(request, user)
@@ -77,7 +90,7 @@ def register_manufacturer(request):
                         kyc_status=ManufacturerProfile.KycStatus.UNDER_REVIEW,
                     )
             except IntegrityError:
-                if not _add_duplicate_username_error(form):
+                if not _add_registration_constraint_error(form):
                     raise
             else:
                 login(request, user)
