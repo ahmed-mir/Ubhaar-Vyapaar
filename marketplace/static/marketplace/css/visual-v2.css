@@ -5393,3 +5393,123 @@ h1, h2, h3, h4 { letter-spacing: -0.02em; }
 .password-requirements-list li[data-state="error"] .password-requirement-indicator {
     color: #8c2e2b;
 }
+
+/* Restrained interaction polish on the shared UI foundation. */
+a {
+    transition: color 180ms ease, text-decoration-color 180ms ease;
+}
+
+button,
+input[type="submit"],
+input[type="button"],
+input[type="reset"] {
+    transition: color 180ms ease, background-color 180ms ease, border-color 180ms ease, box-shadow 180ms ease;
+}
+
+.button {
+    transition: color 180ms ease, background-color 180ms ease, border-color 180ms ease, box-shadow 180ms ease, transform 180ms ease;
+}
+
+@media (hover: hover) {
+    .button:not(:disabled):not([aria-disabled="true"]):hover {
+        transform: translateY(-1px);
+    }
+}
+
+.button:not(:disabled):not([aria-disabled="true"]):active {
+    transform: translateY(0);
+}
+
+.button:disabled,
+.button[aria-disabled="true"] {
+    transform: none;
+    box-shadow: none;
+    cursor: not-allowed;
+}
+
+input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([type="submit"]):not([type="button"]):not([type="reset"]):not([type="hidden"]),
+select,
+textarea {
+    transition: border-color 180ms ease, box-shadow 180ms ease, background-color 180ms ease;
+}
+
+.nav-link,
+.account-menu-trigger,
+.account-menu-item {
+    transition: color 180ms ease, background-color 180ms ease, border-color 180ms ease, box-shadow 180ms ease;
+}
+
+.account-menu-panel {
+    opacity: 1;
+    transform: translateY(0);
+    transition: opacity 160ms ease, transform 160ms ease;
+    transition: opacity 160ms ease, transform 160ms ease, display 160ms allow-discrete;
+    transition-behavior: allow-discrete;
+}
+
+.account-menu-panel[hidden] {
+    display: none;
+    opacity: 0;
+    transform: translateY(-4px);
+}
+
+@starting-style {
+    .account-menu-panel:not([hidden]) {
+        opacity: 0;
+        transform: translateY(-4px);
+    }
+}
+
+.landing-listing-card,
+.listing-spec-row,
+.quote-flow-card,
+.saved-listing-row,
+.management-row,
+.record-card {
+    transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease;
+}
+
+@media (hover: hover) {
+    .landing-listing-card:has(a:hover),
+    .listing-spec-row:has(h3 a:hover),
+    .quote-flow-card:has(a:hover, button:hover),
+    .saved-listing-row:has(a:hover, button:hover),
+    .management-row:has(a:hover, button:hover),
+    .record-card:has(a:hover, button:hover) {
+        transform: translateY(-1px);
+        border-color: var(--border-strong);
+        box-shadow: var(--shadow-soft);
+    }
+}
+
+.messages .message,
+.alert {
+    animation: ui-message-enter 180ms ease-out both;
+}
+
+.cookie-consent-panel {
+    animation: ui-dialog-enter 180ms ease-out both;
+}
+
+@keyframes ui-message-enter {
+    from { opacity: 0; transform: translateY(3px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes ui-dialog-enter {
+    from { opacity: 0; transform: translateY(5px) scale(.99); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; }
+
+    *,
+    *::before,
+    *::after {
+        scroll-behavior: auto !important;
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+}
