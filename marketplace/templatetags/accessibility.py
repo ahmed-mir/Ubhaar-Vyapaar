@@ -13,6 +13,9 @@ def _describedby_ids(bound_field):
     if bound_field.help_text:
         ids.append(f"{bound_field.auto_id}_helptext")
 
+    if bound_field.name == "password2":
+        ids.append(f"{bound_field.auto_id}_match")
+
     return " ".join(ids)
 
 

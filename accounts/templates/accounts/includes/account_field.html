@@ -5,18 +5,51 @@
         <div>{{ field.label_tag }}</div>
     {% else %}
         {{ field.label_tag }}
-        {{ field|render_auth_field }}
+        {% if field.field.widget.input_type == 'password' %}
+            <div class="password-input-shell" data-password-input-wrapper>
+                {{ field|render_auth_field }}
+            </div>
+        {% else %}
+            {{ field|render_auth_field }}
+        {% endif %}
     {% endif %}
 
     {% if field.help_text %}
-        {% if field.name == 'password1' or field.name == 'new_password1' %}
-            <details class="password-requirements">
+        {% if field.name == 'password1' %}
+            <details class="password-requirements" data-password-requirements>
                 <summary>Password requirements</summary>
-                <div id="{{ field.auto_id }}_helptext" class="helptext">{{ field.help_text }}</div>
+                <div id="{{ field.auto_id }}_helptext" class="helptext">
+                    <p>{{ field.help_text }}</p>
+                    <ul class="password-requirements-list">
+                        {% for requirement in field.form.password_requirements %}
+                            <li data-password-rule="{{ requirement.key }}"
+                                data-live-check="{{ requirement.live|yesno:'true,false' }}"
+                                {% if requirement.minimum != None %}data-minimum-length="{{ requirement.minimum }}"{% endif %}
+                                data-state="pending">
+                                <span class="password-requirement-indicator" aria-hidden="true" data-password-indicator>&#9675;</span>
+                                <span>{{ requirement.text }}</span>
+                                {% if not requirement.live %}<span class="password-requirement-server-note">Checked when you submit</span>{% endif %}
+                                <span class="visually-hidden" data-password-status-text>{% if requirement.live %}Not yet checked{% else %}Checked by Django when you submit{% endif %}</span>
+                            </li>
+                        {% endfor %}
+                    </ul>
+                    <p class="visually-hidden" role="status" aria-live="polite" aria-atomic="true" data-password-live-status>
+                        Enter a password to check the live requirements.
+                    </p>
+                </div>
             </details>
         {% else %}
             <p id="{{ field.auto_id }}_helptext" class="helptext">{{ field.help_text }}</p>
         {% endif %}
+    {% endif %}
+
+    {% if field.name == 'password2' %}
+        <p id="{{ field.auto_id }}_match" class="password-match-feedback" data-password-match
+           data-state="pending" role="status" aria-live="polite" aria-atomic="true">
+            <span class="password-match-indicator" aria-hidden="true" data-password-match-indicator>&#9675;</span>
+            <span data-password-match-message>Enter both passwords to check that they match.</span>
+            <span class="visually-hidden" data-password-match-status>Enter the confirmation password to check.</span>
+        </p>
     {% endif %}
 
     {% if field.errors %}

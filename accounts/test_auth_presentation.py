@@ -10,10 +10,36 @@ class AuthPresentationTests(TestCase):
                 response = self.client.get(reverse(route))
                 self.assertContains(response, 'autocomplete="username"')
                 self.assertContains(response, 'autocomplete="email"')
+                self.assertContains(response, 'type="tel"')
+                self.assertContains(response, 'inputmode="tel"')
                 self.assertContains(response, 'autocomplete="tel"')
+                self.assertContains(
+                    response,
+                    "Optional. Enter a valid phone number, for example +91 98765 43210.",
+                )
                 self.assertContains(response, 'autocomplete="new-password"')
+                self.assertContains(response, "At least 8 characters")
+                self.assertContains(response, "Not entirely numeric")
+                self.assertContains(response, "Must not be too common")
+                self.assertContains(response, "Must not be too similar to your details")
+                self.assertContains(response, "Checked when you submit")
+                self.assertContains(response, 'data-password-match')
+                self.assertContains(
+                    response,
+                    "Enter both passwords to check that they match.",
+                )
+                self.assertContains(
+                    response,
+                    'aria-describedby="id_password2_helptext id_password2_match"',
+                )
                 self.assertContains(response, 'name="legal_acknowledgement"')
                 self.assertNotContains(response, 'name="legal_acknowledgement" checked')
+
+    def test_login_has_current_password_autocomplete(self):
+        response = self.client.get(reverse("login"))
+
+        self.assertContains(response, 'autocomplete="username"')
+        self.assertContains(response, 'autocomplete="current-password"')
 
     def test_password_change_requires_login(self):
         response = self.client.get(reverse("password_change"))

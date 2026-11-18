@@ -1,16 +1,119 @@
 import logging
+import re
 
 from django import forms
 from django.conf import settings
 from django.contrib.auth.forms import PasswordResetForm
 from django.contrib.auth.forms import UserCreationForm
+from django.contrib.auth.password_validation import (
+    CommonPasswordValidator,
+    MinimumLengthValidator,
+    NumericPasswordValidator,
+    UserAttributeSimilarityValidator,
+    get_password_validators,
+)
+from django.core.exceptions import ValidationError
 from django.core.mail import send_mail
 from django.template.loader import render_to_string
 from django.utils import timezone
+from django.utils.html import strip_tags
 
 from .models import User
 
 logger = logging.getLogger(__name__)
+
+_PHONE_CHARACTERS = re.compile(r"\+?[0-9 ()\-]+\Z")
+
+
+def validate_phone_number(value):
+    """Validate an optional international-style phone number."""
+    phone = (value or "").strip()
+    if not phone:
+        return ""
+
+    if not _PHONE_CHARACTERS.fullmatch(phone):
+        raise ValidationError(
+            "Enter a valid phone number containing 8–15 digits.",
+            code="invalid_phone",
+        )
+
+    depth = 0
+    for character in phone:
+        if character == "(":
+            depth += 1
+            if depth > 1:
+                raise ValidationError(
+                    "Enter a valid phone number containing 8–15 digits.",
+                    code="invalid_phone",
+                )
+        elif character == ")":
+            depth -= 1
+            if depth < 0:
+                raise ValidationError(
+                    "Enter a valid phone number containing 8–15 digits.",
+                    code="invalid_phone",
+                )
+
+    digits = sum("0" <= character <= "9" for character in phone)
+    if depth or not 8 <= digits <= 15:
+        raise ValidationError(
+            "Enter a valid phone number containing 8–15 digits.",
+            code="invalid_phone",
+        )
+
+    return phone
+
+
+def configured_password_requirements():
+    """Describe the active Django password validators for signup UX."""
+    requirements = []
+    priority = {
+        "minimum_length": 0,
+        "not_numeric": 1,
+        "common_password": 2,
+        "similarity": 3,
+    }
+
+    for index, validator in enumerate(
+        get_password_validators(settings.AUTH_PASSWORD_VALIDATORS)
+    ):
+        if isinstance(validator, MinimumLengthValidator):
+            requirement = {
+                "key": "minimum_length",
+                "text": f"At least {validator.min_length} characters",
+                "live": True,
+                "minimum": validator.min_length,
+            }
+        elif isinstance(validator, NumericPasswordValidator):
+            requirement = {
+                "key": "not_numeric",
+                "text": "Not entirely numeric",
+                "live": True,
+            }
+        elif isinstance(validator, CommonPasswordValidator):
+            requirement = {
+                "key": "common_password",
+                "text": "Must not be too common",
+                "live": False,
+            }
+        elif isinstance(validator, UserAttributeSimilarityValidator):
+            requirement = {
+                "key": "similarity",
+                "text": "Must not be too similar to your details",
+                "live": False,
+            }
+        else:
+            help_text = strip_tags(str(validator.get_help_text())).strip()
+            requirement = {
+                "key": f"configured_rule_{index}",
+                "text": help_text or "Must meet the configured password rule",
+                "live": False,
+            }
+
+        requirement["priority"] = priority.get(requirement["key"], 10 + index)
+        requirements.append(requirement)
+
+    return sorted(requirements, key=lambda requirement: requirement["priority"])
 
 
 class ReliablePasswordResetForm(PasswordResetForm):
@@ -68,6 +171,36 @@ class RegistrationConsentMixin(forms.Form):
         },
     )
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        phone = self.fields.get("phone")
+        if phone:
+            phone.widget.input_type = "tel"
+            phone.widget.attrs.update(
+                {
+                    "inputmode": "tel",
+                    "autocomplete": "tel",
+                    "placeholder": "+91 98765 43210",
+                }
+            )
+            phone.help_text = (
+                "Optional. Enter a valid phone number, for example "
+                "+91 98765 43210."
+            )
+
+        if "password1" in self.fields:
+            self.password_requirements = configured_password_requirements()
+            self.fields["password1"].help_text = (
+                "Your password is checked against the requirements below."
+            )
+            self.fields["password2"].help_text = (
+                "Re-enter the same password to confirm it."
+            )
+
+    def clean_phone(self):
+        return validate_phone_number(self.cleaned_data.get("phone", ""))
+
     def _record_legal_acknowledgement(self, user):
         accepted_at = timezone.now()
         user.terms_accepted_at = accepted_at
@@ -90,7 +223,6 @@ class BuyerRegistrationForm(RegistrationConsentMixin, UserCreationForm):
         )
         self.fields["email"].required = True
         self.fields["phone"].required = False
-        self.fields["phone"].help_text = "Optional. Used only for account or workflow contact if provided."
 
     def save(self, commit=True):
         user = super().save(commit=False)
@@ -130,7 +262,6 @@ class ManufacturerRegistrationForm(RegistrationConsentMixin, UserCreationForm):
         )
         self.fields["email"].required = True
         self.fields["phone"].required = False
-        self.fields["phone"].help_text = "Optional. Used only for account or workflow contact if provided."
 
     def save(self, commit=True):
         user = super().save(commit=False)

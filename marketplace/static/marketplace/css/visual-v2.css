@@ -5232,3 +5232,112 @@ h1, h2, h3, h4 { letter-spacing: -0.02em; }
     .account-menu-identity { max-width: min(58vw, 230px); }
     .account-menu-panel { position: static; width: 100%; margin-top: 4px; box-shadow: none; }
 }
+
+/* Signup password guidance and compact inline visibility controls. */
+.auth-form .password-input-shell {
+    position: relative;
+    width: 100%;
+    min-width: 0;
+}
+.auth-form .password-input-shell input {
+    width: 100%;
+    padding-right: 72px;
+}
+.auth-form .password-input-shell .password-visibility-toggle {
+    position: absolute;
+    top: 50%;
+    right: 6px;
+    min-width: 52px;
+    min-height: 34px;
+    margin: 0;
+    padding: 5px 8px;
+    transform: translateY(-50%);
+    border: 1px solid transparent;
+    border-radius: 6px;
+    background: transparent;
+    color: #145e55;
+    font: inherit;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+}
+.auth-form .password-input-shell .password-visibility-toggle:hover {
+    border-color: #cbd9d8;
+    background: #f4f8f7;
+}
+.auth-form .password-input-shell .password-visibility-toggle:focus-visible {
+    outline: 3px solid var(--color-warning);
+    outline-offset: 2px;
+}
+.auth-form .password-requirements {
+    margin-top: 8px;
+    padding: 8px 12px;
+    border: 1px solid #d7e0e3;
+    border-radius: 8px;
+    background: #f7f9f9;
+    color: #334a50;
+    font-size: 14px;
+    line-height: 1.45;
+}
+.auth-form .password-requirements summary {
+    display: flex;
+    min-height: 38px;
+    align-items: center;
+    color: #145e55;
+    font-weight: 700;
+    text-decoration: none;
+    text-underline-offset: 3px;
+    cursor: pointer;
+}
+.auth-form .password-requirements summary:focus-visible {
+    outline: 3px solid var(--color-warning);
+    outline-offset: 2px;
+}
+.password-requirements-list {
+    display: grid;
+    gap: 6px;
+    margin: 4px 0 0;
+    padding: 0;
+    list-style: none;
+}
+.password-requirements-list li {
+    display: grid;
+    grid-template-columns: 20px minmax(0, 1fr) auto;
+    align-items: baseline;
+    gap: 6px;
+    min-width: 0;
+}
+.password-requirement-indicator,
+.password-match-indicator {
+    color: #5b6a6d;
+    font-weight: 700;
+    text-align: center;
+}
+.password-requirements-list li[data-state="met"] .password-requirement-indicator,
+.password-match-feedback[data-state="met"] .password-match-indicator {
+    color: #236b4a;
+}
+.password-requirement-server-note {
+    color: #68777b;
+    font-size: 12px;
+}
+.password-requirements-status,
+.auth-form .password-requirements .helptext > p:first-child {
+    margin-top: 0;
+}
+.password-match-feedback {
+    display: flex;
+    align-items: baseline;
+    gap: 7px;
+    margin: 6px 0 0;
+    color: #42585d;
+    font-size: 14px;
+    line-height: 1.45;
+}
+.password-match-feedback[data-state="met"] { color: #236b4a; }
+.password-match-feedback[data-state="error"] { color: #8c2e2b; }
+
+@media (max-width: 480px) {
+    .password-requirements-list li { grid-template-columns: 20px minmax(0, 1fr); }
+    .password-requirement-server-note { grid-column: 2; }
+}
