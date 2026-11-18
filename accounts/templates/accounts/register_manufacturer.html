@@ -38,10 +38,7 @@
                 </div>
             </fieldset>
 
-            <fieldset class="account-form-group">
-                <legend>Contact</legend>
-                {% include "accounts/includes/account_field.html" with field=form.phone %}
-            </fieldset>
+            {% include "accounts/includes/account_field.html" with field=form.phone %}
 
             <fieldset class="account-form-group manufacturer-agreements">
                 <legend>Agreements</legend>

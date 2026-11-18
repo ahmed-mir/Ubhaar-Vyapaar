@@ -23,10 +23,7 @@
                 {% include "accounts/includes/account_field.html" with field=form.password2 %}
             </fieldset>
 
-            <fieldset class="account-form-group">
-                <legend>Contact details</legend>
-                {% include "accounts/includes/account_field.html" with field=form.phone %}
-            </fieldset>
+            {% include "accounts/includes/account_field.html" with field=form.phone %}
 
             <fieldset class="account-form-group buyer-agreements">
                 <legend>Agreements</legend>

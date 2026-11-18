@@ -17,11 +17,9 @@ class AuthPresentationTests(TestCase):
                 self.assertContains(response, 'pattern="[0-9]{10}"')
                 self.assertContains(response, 'class="phone-country-prefix"')
                 self.assertContains(response, "+91")
-                self.assertContains(response, 'aria-describedby="id_phone_helptext"')
-                self.assertContains(
-                    response,
-                    "Optional. Enter your 10-digit mobile number. The +91 country code is supplied.",
-                )
+                self.assertNotContains(response, "Contact details")
+                self.assertNotContains(response, "<legend>Contact</legend>")
+                self.assertNotContains(response, "Optional. Enter your 10-digit mobile number.")
                 self.assertContains(response, 'autocomplete="new-password"')
                 self.assertContains(response, "At least 8 characters")
                 self.assertContains(response, "At least 1 symbol (e.g. @ # $ &amp; !)")

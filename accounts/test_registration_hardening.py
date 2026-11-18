@@ -130,7 +130,7 @@ class SignupPhoneValidationTests(TestCase):
         user = get_user_model().objects.get(username=data["username"])
         self.assertEqual(user.phone, "+919876543210")
 
-    def test_form_phone_attributes_and_prefix_guidance_match_the_national_number_rule(self):
+    def test_form_phone_attributes_match_the_national_number_rule_without_helper_text(self):
         for form_class in (BuyerRegistrationForm, ManufacturerRegistrationForm):
             with self.subTest(form=form_class.__name__):
                 form = form_class()
@@ -141,7 +141,7 @@ class SignupPhoneValidationTests(TestCase):
                 self.assertEqual(phone.field.widget.attrs["autocomplete"], "tel-national")
                 self.assertEqual(phone.field.widget.attrs["maxlength"], "10")
                 self.assertEqual(phone.field.widget.attrs["pattern"], "[0-9]{10}")
-                self.assertIn("+91 country code is supplied", phone.help_text)
+                self.assertEqual(phone.help_text, "")
 
 
 @override_settings(PASSWORD_HASHERS=[FAST_HASHER])

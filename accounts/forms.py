@@ -168,10 +168,7 @@ class RegistrationConsentMixin(forms.Form):
                     "placeholder": "9876543210",
                 }
             )
-            phone.help_text = (
-                "Optional. Enter your 10-digit mobile number. "
-                "The +91 country code is supplied."
-            )
+            phone.help_text = ""
 
         if "password1" in self.fields:
             self.password_requirements = configured_password_requirements()
