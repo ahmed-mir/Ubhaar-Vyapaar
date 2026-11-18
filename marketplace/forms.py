@@ -12,6 +12,12 @@ from .models import (
     Review,
     WaitlistEntry,
 )
+from .locations import (
+    INDIA_PINCODE_HTML_PATTERN,
+    INDIA_STATE_UT_CHOICES,
+    INDIA_STATE_UT_PLACEHOLDER,
+    validate_indian_pincode,
+)
 
 
 class ContactSubmissionForm(forms.ModelForm):
@@ -325,6 +331,29 @@ class QuotationForm(forms.ModelForm):
         }        
 
 class ManufacturerProfileForm(forms.ModelForm):
+    state = forms.ChoiceField(
+        label="State",
+        choices=(
+            ("", INDIA_STATE_UT_PLACEHOLDER),
+            *INDIA_STATE_UT_CHOICES,
+        ),
+    )
+    pincode = forms.CharField(
+        label="PIN code",
+        required=False,
+        strip=False,
+        validators=[validate_indian_pincode],
+        widget=forms.TextInput(
+            attrs={
+                "type": "text",
+                "inputmode": "numeric",
+                "maxlength": "6",
+                "autocomplete": "postal-code",
+                "pattern": INDIA_PINCODE_HTML_PATTERN,
+            }
+        ),
+    )
+
     class Meta:
         model = ManufacturerProfile
         fields = (
@@ -332,6 +361,7 @@ class ManufacturerProfileForm(forms.ModelForm):
             "description",
             "city",
             "state",
+            "pincode",
         )
         widgets = {
             "description": forms.Textarea(
@@ -344,7 +374,6 @@ class ManufacturerProfileForm(forms.ModelForm):
                 }
             ),
         }
-
 
 class ReviewForm(forms.ModelForm):
     class Meta:

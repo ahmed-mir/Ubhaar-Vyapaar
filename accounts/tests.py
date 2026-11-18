@@ -336,6 +336,7 @@ class RegistrationConsentTests(TestCase):
                 "description": "Capacity for small batches.",
                 "city": "Pune",
                 "state": "Maharashtra",
+                "pincode": "400001",
                 "password1": "StrongPass123!",
                 "password2": "StrongPass123!",
                 "legal_acknowledgement": "on",
@@ -350,6 +351,9 @@ class RegistrationConsentTests(TestCase):
         profile = user.manufacturer_profile
         self.assertEqual(user.role, get_user_model().Role.MANUFACTURER)
         self.assertFalse(profile.is_verified)
+        self.assertEqual(profile.city, "Pune")
+        self.assertEqual(profile.state, "Maharashtra")
+        self.assertEqual(profile.pincode, "400001")
         self.assertEqual(profile.kyc_status, "UNDER_REVIEW")
         self.assertContains(response, "Your manufacturer account is ready")
 

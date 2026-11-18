@@ -86,6 +86,7 @@ def register_manufacturer(request):
                         description=form.cleaned_data["description"],
                         city=form.cleaned_data["city"],
                         state=form.cleaned_data["state"],
+                        pincode=form.cleaned_data["pincode"],
                         is_verified=False,
                         kyc_status=ManufacturerProfile.KycStatus.UNDER_REVIEW,
                     )

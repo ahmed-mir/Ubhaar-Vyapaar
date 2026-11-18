@@ -48,11 +48,12 @@ class ManufacturerProfileAdmin(admin.ModelAdmin):
         "business_name",
         "user",
         "city",
+        "pincode",
         "is_verified",
         "kyc_status",
     )
     list_filter = ("is_verified", "kyc_status", "state")
-    search_fields = ("business_name", "city")
+    search_fields = ("business_name", "city", "pincode")
 
 
 @admin.register(CapacityListing)

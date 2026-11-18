@@ -19,6 +19,12 @@ from django.utils.html import strip_tags
 
 from .password_validators import SymbolPasswordValidator
 from .models import User
+from marketplace.locations import (
+    INDIA_PINCODE_HTML_PATTERN,
+    INDIA_STATE_UT_CHOICES,
+    INDIA_STATE_UT_PLACEHOLDER,
+    validate_indian_pincode,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -235,7 +241,27 @@ class ManufacturerRegistrationForm(RegistrationConsentMixin, UserCreationForm):
         widget=forms.Textarea(attrs={"rows": 4}),
     )
     city = forms.CharField(max_length=100)
-    state = forms.CharField(max_length=100)
+    state = forms.ChoiceField(
+        label="State",
+        choices=(
+            ("", INDIA_STATE_UT_PLACEHOLDER),
+            *INDIA_STATE_UT_CHOICES,
+        ),
+    )
+    pincode = forms.CharField(
+        label="PIN code",
+        strip=False,
+        validators=[validate_indian_pincode],
+        widget=forms.TextInput(
+            attrs={
+                "type": "text",
+                "inputmode": "numeric",
+                "maxlength": "6",
+                "autocomplete": "postal-code",
+                "pattern": INDIA_PINCODE_HTML_PATTERN,
+            }
+        ),
+    )
 
     class Meta:
         model = User
@@ -247,6 +273,7 @@ class ManufacturerRegistrationForm(RegistrationConsentMixin, UserCreationForm):
             "description",
             "city",
             "state",
+            "pincode",
         )
 
     def __init__(self, *args, **kwargs):

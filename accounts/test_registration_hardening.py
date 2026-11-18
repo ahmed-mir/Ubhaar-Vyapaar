@@ -45,6 +45,7 @@ def registration_data(form_class, suffix, phone=""):
                 "description": "Small batch manufacturing capacity.",
                 "city": "Pune",
                 "state": "Maharashtra",
+                "pincode": "400001",
             }
         )
     return data
@@ -172,6 +173,95 @@ class SignupValidationAndRoleTests(TestCase):
         self.assertTrue(user.check_password(VALID_PASSWORD))
         self.assertFalse(profile.is_verified)
         self.assertEqual(profile.kyc_status, ManufacturerProfile.KycStatus.UNDER_REVIEW)
+
+    def test_manufacturer_signup_state_choices_and_pincode_are_saved(self):
+        for index, (state, pincode) in enumerate(
+            (
+                ("Maharashtra", "400001"),
+                ("Delhi", "110001"),
+                ("Jammu and Kashmir", "560001"),
+                ("Puducherry", "700001"),
+            )
+        ):
+            with self.subTest(state=state):
+                data = registration_data(
+                    ManufacturerRegistrationForm,
+                    f"location-valid-{index}",
+                )
+                data["state"] = state
+                data["pincode"] = pincode
+                response = self.client.post(reverse("register_manufacturer"), data)
+
+                self.assertRedirects(response, reverse("manufacturer_dashboard"))
+                profile = ManufacturerProfile.objects.get(
+                    user__username=data["username"]
+                )
+                self.assertEqual(profile.city, "Pune")
+                self.assertEqual(profile.state, state)
+                self.assertEqual(profile.pincode, pincode)
+                self.assertFalse(profile.is_verified)
+                self.client.logout()
+
+    def test_manufacturer_signup_rejects_forged_state_values(self):
+        for index, state in enumerate(("", "California", "xyz")):
+            with self.subTest(state=state):
+                data = registration_data(
+                    ManufacturerRegistrationForm,
+                    f"location-invalid-state-{index}",
+                )
+                data["state"] = state
+                response = self.client.post(reverse("register_manufacturer"), data)
+
+                self.assertEqual(response.status_code, 200)
+                self.assertIn("state", response.context["form"].errors)
+                self.assertFalse(
+                    get_user_model().objects.filter(username=data["username"]).exists()
+                )
+
+    def test_manufacturer_signup_requires_valid_indian_pincode_on_direct_post(self):
+        invalid_pincodes = (
+            "",
+            "12345",
+            "1234567",
+            "ABC123",
+            "400 001",
+            "400-001",
+            "000001",
+            "400001\n",
+        )
+        for index, pincode in enumerate(invalid_pincodes):
+            with self.subTest(pincode=pincode):
+                data = registration_data(
+                    ManufacturerRegistrationForm,
+                    f"location-invalid-pin-{index}",
+                )
+                data["pincode"] = pincode
+                response = self.client.post(reverse("register_manufacturer"), data)
+
+                self.assertEqual(response.status_code, 200)
+                expected_error = (
+                    "This field is required."
+                    if not pincode
+                    else "Enter a valid 6-digit Indian PIN code."
+                )
+                self.assertEqual(response.context["form"].errors["pincode"], [expected_error])
+                self.assertFalse(
+                    get_user_model().objects.filter(username=data["username"]).exists()
+                )
+
+    def test_manufacturer_location_form_has_one_combined_state_dropdown(self):
+        from marketplace.locations import INDIA_STATE_UT_CHOICES
+
+        response = self.client.get(reverse("register_manufacturer"))
+        content = response.content.decode()
+
+        self.assertEqual(content.count('name="state"'), 1)
+        self.assertNotIn('name="union_territory"', content)
+        self.assertContains(response, "Select State / Union Territory")
+        self.assertContains(response, "Maharashtra")
+        self.assertContains(response, "Delhi")
+        self.assertContains(response, "Puducherry")
+        self.assertEqual(len(INDIA_STATE_UT_CHOICES), 36)
 
     def test_failed_manufacturer_profile_creation_rolls_back_user_creation(self):
         data = registration_data(ManufacturerRegistrationForm, "atomic-manufacturer")

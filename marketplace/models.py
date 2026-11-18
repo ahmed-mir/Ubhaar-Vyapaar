@@ -5,6 +5,8 @@ from django.utils import timezone
 from django.db.models.functions import Lower
 from decimal import Decimal
 
+from .locations import validate_indian_pincode
+
 
 class ManufacturerProfile(models.Model):
     class KycStatus(models.TextChoices):
@@ -24,6 +26,12 @@ class ManufacturerProfile(models.Model):
     description = models.TextField(blank=True)
     city = models.CharField(max_length=100)
     state = models.CharField(max_length=100)
+    pincode = models.CharField(
+        max_length=6,
+        blank=True,
+        default="",
+        validators=[validate_indian_pincode],
+    )
     is_verified = models.BooleanField(default=False)
     kyc_status = models.CharField(
         max_length=20,

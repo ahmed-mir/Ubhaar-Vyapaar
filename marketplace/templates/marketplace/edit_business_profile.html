@@ -1,4 +1,5 @@
 {% extends "marketplace/base.html" %}
+{% load accessibility %}
 
 {% block title %}Edit business profile | Ubhaar-Vyapaar{% endblock %}
 
@@ -43,7 +44,23 @@
             <section class="profile-edit-fields" aria-labelledby="profile-edit-fields-title">
                 <h2 id="profile-edit-fields-title">Business details</h2>
                 <p>Business name, description, and location.</p>
-                {% include "marketplace/includes/accessible_form.html" %}
+                {% if form.non_field_errors %}
+                    <div class="form-error-summary" role="alert" tabindex="-1">
+                        <p>Please review the form errors below.</p>
+                        {{ form.non_field_errors }}
+                    </div>
+                {% endif %}
+                {% for field in form %}
+                    {% if field.name == "city" %}
+                        <div class="manufacturer-location-grid profile-location-grid">
+                            {% include "marketplace/includes/manufacturer_profile_form_field.html" with field=form.city %}
+                            {% include "marketplace/includes/manufacturer_profile_form_field.html" with field=form.state %}
+                        </div>
+                    {% elif field.name == "state" %}
+                    {% else %}
+                        {% include "marketplace/includes/manufacturer_profile_form_field.html" with field=field %}
+                    {% endif %}
+                {% endfor %}
             </section>
 
             <button class="button form-submit" type="submit">

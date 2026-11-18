@@ -68,7 +68,8 @@ async function registerManufacturer(page, user, password, profile) {
   await page.locator('[name="business_name"]').fill(profile.businessName);
   await page.locator('textarea[name="description"]').fill(profile.description);
   await page.locator('[name="city"]').fill(profile.city);
-  await page.locator('[name="state"]').fill(profile.state);
+  await page.locator('[name="state"]').selectOption(profile.state);
+  await page.locator('[name="pincode"]').fill(profile.pincode || "400001");
   await page.getByLabel(/terms.*privacy/i).check();
   await page
     .getByRole("button", { name: /create manufacturer account/i })

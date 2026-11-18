@@ -23,7 +23,8 @@ async function fillRegistration(page, { manufacturer = false, email, username } 
   if (manufacturer) {
     await page.locator('[name="business_name"]').fill(`Hardening Works ${suffix}`);
     await page.locator('[name="city"]').fill("Pune");
-    await page.locator('[name="state"]').fill("Maharashtra");
+    await page.locator('[name="state"]').selectOption("Maharashtra");
+    await page.locator('[name="pincode"]').fill("400001");
   }
   await page.getByLabel(/terms.*privacy/i).check();
 }
@@ -161,5 +162,43 @@ test.describe("signup and login hardening", () => {
     );
     await expect(manufacturerPage).toHaveURL(/register\/manufacturer\/$/);
     await secondContext.close();
+  });
+
+  test("Manufacturer location uses one State/UT dropdown and validates PIN at 320px", async ({ page }) => {
+    await page.setViewportSize({ width: 320, height: 900 });
+    await page.goto("/accounts/register/manufacturer/");
+    await dismissCookieBanner(page);
+
+    const state = page.locator('[name="state"]');
+    const pincode = page.locator('[name="pincode"]');
+    await expect(state).toHaveCount(1);
+    await expect(page.locator('[name="union_territory"]')).toHaveCount(0);
+    await expect(state.locator("option")).toHaveCount(37);
+    await expect(state.locator("option").first()).toHaveText("Select State / Union Territory");
+    for (const value of ["Maharashtra", "Delhi", "Puducherry"]) {
+      await state.selectOption(value);
+      await expect(state).toHaveValue(value);
+    }
+
+    await expect(pincode).toHaveAttribute("type", "text");
+    await expect(pincode).toHaveAttribute("inputmode", "numeric");
+    await expect(pincode).toHaveAttribute("maxlength", "6");
+    await expect(pincode).toHaveAttribute("autocomplete", "postal-code");
+    await expect(pincode).toHaveAttribute("pattern", "[1-9][0-9]{5}");
+    expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(320);
+
+    await fillRegistration(page, { manufacturer: true });
+    await pincode.fill("000001");
+    await page.getByRole("button", { name: "Create manufacturer account" }).click();
+    await expect(page.locator("#id_pincode_error")).toContainText(
+      "Enter a valid 6-digit Indian PIN code."
+    );
+    await expect(page).toHaveURL(/register\/manufacturer\/$/);
+
+    await fillRegistration(page, { manufacturer: true });
+    await pincode.fill("560001");
+    await page.getByRole("button", { name: "Create manufacturer account" }).click();
+    await expect(page).toHaveURL(/manufacturer\/dashboard\/$/);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(320);
   });
 });

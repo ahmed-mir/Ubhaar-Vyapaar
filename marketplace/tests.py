@@ -346,8 +346,10 @@ class MarketplaceDiscoveryTrustTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(content.count("<h1"), 1)
         self.assertContains(response, "Business details")
-        for field in ("business_name", "description", "city", "state"):
+        for field in ("business_name", "description", "city", "state", "pincode"):
             self.assertIn(f'name="{field}"', content)
+        self.assertContains(response, "Select State / Union Territory")
+        self.assertNotContains(response, 'name="union_territory"')
 
         response = self.client.post(
             reverse("edit_business_profile"),
@@ -356,6 +358,7 @@ class MarketplaceDiscoveryTrustTests(TestCase):
                 "description": "Updated production capability summary.",
                 "city": self.verified.city,
                 "state": self.verified.state,
+                "pincode": "560001",
             },
         )
         self.assertRedirects(response, reverse("edit_business_profile"))
@@ -364,7 +367,31 @@ class MarketplaceDiscoveryTrustTests(TestCase):
             self.verified.description,
             "Updated production capability summary.",
         )
+        self.assertEqual(self.verified.pincode, "560001")
         self.assertTrue(self.verified.is_verified)
+
+        public_response = self.client.get(
+            reverse("manufacturer_profile", args=[self.verified.pk])
+        )
+        self.assertNotContains(public_response, "560001")
+
+    def test_business_profile_editor_rejects_forged_state_values(self):
+        self.client.force_login(self.verified_user)
+        response = self.client.post(
+            reverse("edit_business_profile"),
+            {
+                "business_name": self.verified.business_name,
+                "description": self.verified.description,
+                "city": self.verified.city,
+                "state": "California",
+                "pincode": "400001",
+            },
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("state", response.context["form"].errors)
+        self.verified.refresh_from_db()
+        self.assertEqual(self.verified.state, "Maharashtra")
 
     def test_buyer_dashboard_renders_compact_summary_and_accessible_quote_decision(self):
         buyer = get_user_model().objects.create_user(
