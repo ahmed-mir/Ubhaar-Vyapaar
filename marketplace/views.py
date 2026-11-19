@@ -1170,7 +1170,19 @@ def home(request):
         if category_counts.get(value, 0)
     ]
     featured_listings = list(
-        discovery_listings.select_related("manufacturer").order_by("-pk")[:6]
+        CapacityListing.objects.filter(
+            is_featured=True,
+            is_active=True,
+            availability_status__in=[
+                CapacityListing.AvailabilityStatus.AVAILABLE,
+                CapacityListing.AvailabilityStatus.LIMITED,
+            ],
+            manufacturer__is_verified=True,
+        )
+        .exclude(manufacturer__user__username__startswith="demo_mfr_")
+        .exclude(image="")
+        .select_related("manufacturer")
+        .order_by("-pk")[:6]
     )
 
     if request.user.is_authenticated and request.user.role == "MANUFACTURER":
@@ -1189,7 +1201,6 @@ def home(request):
             "website_schema": website_schema,
             "categories": categories,
             "featured_listings": featured_listings,
-            "has_featured_capacity": len(featured_listings) >= 3,
             "manufacturer_cta_url": manufacturer_cta_url,
             "faq_items": LANDING_FAQ_ITEMS,
             "waitlist_form": waitlist_form,

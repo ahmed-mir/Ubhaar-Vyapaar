@@ -14,6 +14,11 @@ test("landing search is the primary action and fits supported viewports", async 
     const searchButton = page.getByRole("button", { name: "Search capacity" });
     await expect(searchButton).toBeVisible();
     await expect(page.locator(".landing-hero-copy").getByRole("link", { name: "I'm a manufacturer" })).toBeVisible();
+    if ((await page.locator(".landing-featured").count()) === 0) {
+      const emptyPreview = page.locator(".landing-preview-empty");
+      await expect(emptyPreview).toBeVisible();
+      await expect(emptyPreview.getByRole("link", { name: "Browse capacity" })).toBeVisible();
+    }
 
     expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(width);
     if (width === 1366) {

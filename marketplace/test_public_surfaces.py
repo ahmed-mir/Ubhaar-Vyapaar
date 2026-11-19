@@ -149,8 +149,13 @@ class PublicTradeSurfaceTests(TestCase):
         )
         expected_image = "/static/marketplace/images/demo/printed-labels.webp"
 
+        home = self.client.get(reverse("home"))
+        self.assertEqual(home.status_code, 200)
+        self.assertNotContains(home, expected_image)
+        self.assertNotContains(home, "Homepage Sample Media")
+        self.assertNotContains(home, "res.cloudinary.com")
+
         for url in (
-            reverse("home"),
             reverse("marketplace"),
             reverse("listing_detail", args=[self.sample_listing.pk]),
             reverse("manufacturer_profile", args=[self.sample_manufacturer.pk]),

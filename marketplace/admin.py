@@ -67,8 +67,9 @@ class CapacityListingAdmin(admin.ModelAdmin):
         "production_days",
         "availability_status",
         "is_active",
+        "is_featured",
     )
-    list_filter = ("is_active", "availability_status", "category")
+    list_filter = ("is_active", "is_featured", "availability_status", "category")
     search_fields = (
         "title",
         "manufacturer__business_name",

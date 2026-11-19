@@ -1,4 +1,4 @@
-{% load currency listing_media %}
+{% load currency listing_media public_display %}
 {% listing_image_url listing as resolved_image_url %}
 <nav class="trade-breadcrumbs" aria-label="Breadcrumb">
     <a href="{% url 'marketplace' %}">Marketplace</a><span aria-hidden="true">/</span><span aria-current="page">{{ listing.title }}</span>
@@ -11,7 +11,7 @@
         {% if listing.availability_status %}<span class="listing-availability status-{{ listing.availability_status|lower }}">{{ listing.get_availability_status_display }}</span>{% endif %}
     </div>
     <h1>{{ listing.title }}</h1>
-    <p class="detail-manufacturer-line"><a href="{% url 'manufacturer_profile' listing.manufacturer.pk %}">{{ listing.manufacturer.business_name }}</a>{% if listing.manufacturer.city or listing.manufacturer.state %}<span>{{ listing.manufacturer.city }}{% if listing.manufacturer.city and listing.manufacturer.state %}, {% endif %}{{ listing.manufacturer.state }}</span>{% endif %}</p>
+    <p class="detail-manufacturer-line"><a href="{% url 'manufacturer_profile' listing.manufacturer.pk %}">{{ listing.manufacturer.business_name }}</a>{% if listing.manufacturer.city or listing.manufacturer.state %}<span>{{ listing.manufacturer.city }}{% if listing.manufacturer.city and listing.manufacturer.state %}, {% endif %}{{ listing.manufacturer.state|state_label }}</span>{% endif %}</p>
 </header>
 
 <div class="listing-sheet-overview">
@@ -23,11 +23,11 @@
         <h2 id="commercial-terms-title">Commercial terms</h2>
         <dl class="detail-facts">
             {% if listing.price_per_unit is not None %}<div><dt>Price</dt><dd>{{ listing.price_per_unit|inr }} / unit</dd></div>{% endif %}
-            {% if listing.minimum_quantity %}<div><dt>MOQ</dt><dd>{{ listing.minimum_quantity|indian_number }} units</dd></div>{% endif %}
-            {% if listing.production_days %}<div><dt>Lead time</dt><dd>{{ listing.production_days|indian_number }} days</dd></div>{% endif %}
+            {% if listing.minimum_quantity %}<div><dt>MOQ</dt><dd>{{ listing.minimum_quantity|indian_number }} unit{{ listing.minimum_quantity|pluralize }}</dd></div>{% endif %}
+            {% if listing.production_days %}<div><dt>Lead time</dt><dd>{{ listing.production_days|indian_number }} day{{ listing.production_days|pluralize }}</dd></div>{% endif %}
             {% if listing.batch_price %}<div><dt>Batch price</dt><dd>{{ listing.batch_price|inr }}</dd></div>{% endif %}
-            {% if listing.available_capacity %}<div><dt>Capacity</dt><dd>{{ listing.available_capacity|indian_number }} units{% if listing.capacity_period %}/{{ listing.capacity_period|cut:"per " }}{% endif %}</dd></div>{% endif %}
-            {% if listing.manufacturer.city or listing.manufacturer.state %}<div><dt>Location</dt><dd>{{ listing.manufacturer.city }}{% if listing.manufacturer.city and listing.manufacturer.state %}, {% endif %}{{ listing.manufacturer.state }}</dd></div>{% endif %}
+            {% if listing.available_capacity %}<div><dt>Capacity</dt><dd>{{ listing.available_capacity|indian_number }} unit{{ listing.available_capacity|pluralize }}{% if listing.capacity_period %}/{{ listing.capacity_period|cut:"per " }}{% endif %}</dd></div>{% endif %}
+            {% if listing.manufacturer.city or listing.manufacturer.state %}<div><dt>Location</dt><dd>{{ listing.manufacturer.city }}{% if listing.manufacturer.city and listing.manufacturer.state %}, {% endif %}{{ listing.manufacturer.state|state_label }}</dd></div>{% endif %}
             {% if listing.availability_status %}<div><dt>Availability</dt><dd>{{ listing.get_availability_status_display }}</dd></div>{% endif %}
         </dl>
         {% if user.is_authenticated and user.role == "BUYER" %}
@@ -69,7 +69,7 @@
     <aside class="manufacturer-trust-panel" aria-labelledby="manufacturer-title">
         <p class="eyebrow">{% if listing.manufacturer.is_demo %}Sample manufacturer profile{% else %}Manufacturer profile{% endif %}</p>
         <h2 id="manufacturer-title"><a href="{% url 'manufacturer_profile' listing.manufacturer.pk %}">{{ listing.manufacturer.business_name }}</a></h2>
-        {% if listing.manufacturer.city or listing.manufacturer.state %}<p class="record-meta">{{ listing.manufacturer.city }}{% if listing.manufacturer.city and listing.manufacturer.state %}, {% endif %}{{ listing.manufacturer.state }}</p>{% endif %}
+        {% if listing.manufacturer.city or listing.manufacturer.state %}<p class="record-meta">{{ listing.manufacturer.city }}{% if listing.manufacturer.city and listing.manufacturer.state %}, {% endif %}{{ listing.manufacturer.state|state_label }}</p>{% endif %}
         <p class="verification-status">Verification status: {% if listing.manufacturer.is_demo %}Sample{% elif listing.manufacturer.is_publicly_verified %}Verified{% else %}Not verified{% endif %}</p>
         {% if listing.manufacturer.description %}<p>{{ listing.manufacturer.description|truncatewords:35 }}</p>{% endif %}
         <a class="text-action" href="{% url 'manufacturer_profile' listing.manufacturer.pk %}">View manufacturer profile</a>

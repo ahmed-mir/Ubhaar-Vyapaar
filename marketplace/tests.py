@@ -8,6 +8,7 @@ import tempfile
 from pathlib import Path
 from unittest.mock import PropertyMock, patch
 
+from django.contrib import admin
 from django.contrib.auth import get_user_model
 from django.core.management import call_command
 from django.core.management.base import CommandError
@@ -31,6 +32,8 @@ from .models import (
     Review,
     SavedListing,
 )
+from .forms import CapacityListingEditForm, CapacityListingForm
+from .templatetags.public_display import state_label
 from .views import build_order_financial_summary, build_order_timeline
 
 
@@ -3136,7 +3139,19 @@ class LandingPageTests(TestCase):
         self.assertContains(marketplace_response, 'class="marketplace-discovery"')
         self.assertNotContains(marketplace_response, "Source manufacturing. Faster.")
 
-    def make_listing(self, index, *, sample=False, active=True, category=CapacityListing.Category.METAL):
+    def make_listing(
+        self,
+        index,
+        *,
+        sample=False,
+        active=True,
+        featured=False,
+        verified=None,
+        image="",
+        state="Maharashtra",
+        availability_status=CapacityListing.AvailabilityStatus.AVAILABLE,
+        category=CapacityListing.Category.METAL,
+    ):
         User = get_user_model()
         username = f"{'demo_mfr_' if sample else 'landing_maker_'}{index}"
         user = User.objects.create_user(username=username, password="password", role="MANUFACTURER")
@@ -3144,8 +3159,8 @@ class LandingPageTests(TestCase):
             user=user,
             business_name=f"Capacity Maker {index}",
             city="Pune",
-            state="Maharashtra",
-            is_verified=not sample,
+            state=state,
+            is_verified=(not sample if verified is None else verified),
         )
         return CapacityListing.objects.create(
             manufacturer=profile,
@@ -3155,8 +3170,10 @@ class LandingPageTests(TestCase):
             price_per_unit=Decimal("12.50"),
             minimum_quantity=25,
             production_days=7,
-            availability_status=CapacityListing.AvailabilityStatus.AVAILABLE,
+            availability_status=availability_status,
             is_active=active,
+            is_featured=featured,
+            image=image,
         )
 
     def test_homepage_has_one_h1_search_and_marketplace_ctas(self):
@@ -3178,25 +3195,82 @@ class LandingPageTests(TestCase):
         self.assertNotContains(response, "0 listings")
         self.assertNotContains(response, "+ manufacturers")
 
-    def test_featured_capacity_is_hidden_below_three_qualifying_listings(self):
-        self.make_listing(1)
-        self.make_listing(2)
+    def test_unfeatured_listings_are_never_used_as_a_homepage_fallback(self):
+        first = self.make_listing(1, image="listings/recent-one.jpg")
+        second = self.make_listing(2, image="listings/recent-two.jpg")
+        third = self.make_listing(3, image="listings/recent-three.jpg")
         response = self.client.get(reverse("home"))
         self.assertNotContains(response, 'id="featured-title"')
+        self.assertNotContains(response, first.title)
+        self.assertNotContains(response, second.title)
+        self.assertNotContains(response, third.title)
+        self.assertContains(response, "Explore manufacturing capacity")
+        self.assertContains(response, 'href="/marketplace/">Browse capacity</a>')
 
-    def test_featured_capacity_shows_three_and_sample_has_no_quote_cta(self):
-        self.make_listing(1)
-        self.make_listing(2)
-        sample = self.make_listing(3, sample=True)
+    def test_homepage_shows_only_explicitly_featured_eligible_listings(self):
+        eligible = self.make_listing(1, featured=True, image="listings/eligible.jpg")
+        unfeatured = self.make_listing(2, image="listings/unfeatured.jpg")
+        unverified = self.make_listing(
+            3, featured=True, verified=False, image="listings/unverified.jpg"
+        )
+        sample = self.make_listing(
+            4, sample=True, featured=True, verified=True, image="listings/sample.jpg"
+        )
+        inactive = self.make_listing(
+            5, featured=True, active=False, image="listings/inactive.jpg"
+        )
+        paused = self.make_listing(
+            6,
+            featured=True,
+            image="listings/paused.jpg",
+            availability_status=CapacityListing.AvailabilityStatus.PAUSED,
+        )
+        missing_image = self.make_listing(7, featured=True)
+
         response = self.client.get(reverse("home"))
         content = response.content.decode()
         self.assertContains(response, 'id="featured-title"')
-        sample_start = content.index(f'data-sample-listing="true"')
-        sample_end = content.index("</article>", sample_start)
-        sample_card = content[sample_start:sample_end]
-        self.assertNotIn("Request a quote", sample_card)
-        self.assertNotIn("request-quote", sample_card)
-        self.assertIn(str(sample.title), sample_card)
+        self.assertContains(response, eligible.title)
+        self.assertContains(response, 'href="/marketplace/">View all capacity')
+        for listing in (unfeatured, unverified, sample, inactive, paused, missing_image):
+            self.assertNotIn(listing.title, content)
+
+    def test_featured_flag_is_admin_controlled_not_in_manufacturer_forms(self):
+        listing_admin = admin.site._registry[CapacityListing]
+        self.assertIn("is_featured", listing_admin.list_display)
+        self.assertIn("is_featured", listing_admin.list_filter)
+        self.assertNotIn("is_featured", CapacityListingForm.Meta.fields)
+        self.assertNotIn("is_featured", CapacityListingEditForm.Meta.fields)
+
+    def test_public_state_and_commercial_values_are_formatted(self):
+        listing = self.make_listing(
+            8,
+            state="maharashtra",
+        )
+        listing.minimum_quantity = 1
+        listing.production_days = 1
+        listing.available_capacity = 1
+        listing.save(update_fields=["minimum_quantity", "production_days", "available_capacity"])
+
+        marketplace_response = self.client.get(reverse("marketplace"))
+        self.assertContains(marketplace_response, "Pune, Maharashtra")
+        self.assertContains(marketplace_response, "1 unit")
+        self.assertContains(marketplace_response, "1 day")
+        self.assertNotContains(marketplace_response, "1 units")
+        self.assertNotContains(marketplace_response, "1 days")
+
+        detail_response = self.client.get(reverse("listing_detail", args=[listing.pk]))
+        self.assertContains(detail_response, "Pune, Maharashtra")
+        self.assertContains(detail_response, "1 unit")
+        self.assertContains(detail_response, "1 day")
+
+    def test_state_label_uses_canonical_indian_names_without_title_casing_arbitrary_values(self):
+        self.assertEqual(state_label("maharashtra"), "Maharashtra")
+        self.assertEqual(
+            state_label("dAdRa aNd NaGaR hAvElI aNd DaMaN aNd DiU"),
+            "Dadra and Nagar Haveli and Daman and Diu",
+        )
+        self.assertEqual(state_label("London"), "London")
 
     def test_no_listings_means_no_empty_optional_sections_or_fake_counts(self):
         response = self.client.get(reverse("home"))

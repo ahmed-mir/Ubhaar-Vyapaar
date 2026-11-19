@@ -180,6 +180,7 @@ class CapacityListing(models.Model):
         default=AvailabilityStatus.AVAILABLE,
     )
     is_active = models.BooleanField(default=True)
+    is_featured = models.BooleanField(default=False)
 
     image = models.ImageField(
         upload_to="listings/",

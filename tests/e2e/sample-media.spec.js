@@ -38,11 +38,7 @@ test.describe("Sample listing media", () => {
       await page.setViewportSize({ width, height: 900 });
 
       await page.goto("/");
-      const homeSampleImage = page
-        .locator('[data-sample-listing="true"] img[src*="/static/marketplace/images/demo/"]')
-        .first();
-      await expect(homeSampleImage).toBeVisible();
-      await expect.poll(() => homeSampleImage.evaluate((image) => image.naturalWidth)).toBeGreaterThan(0);
+      await expect(page.locator(".landing-featured [data-sample-listing='true']")).toHaveCount(0);
 
       await page.goto("/marketplace/");
       const sampleCard = page.locator('[data-sample-listing="true"]').first();

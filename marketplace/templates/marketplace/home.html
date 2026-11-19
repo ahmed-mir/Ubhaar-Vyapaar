@@ -1,5 +1,5 @@
 {% extends "marketplace/base.html" %}
-{% load currency structured_data static %}
+{% load currency structured_data static public_display %}
 
 {% block extra_css %}<link rel="stylesheet" href="{% static 'marketplace/css/trade-ledger-public.css' %}">{% endblock %}
 
@@ -409,9 +409,9 @@
                                 <a href="{% url 'manufacturer_profile' listing.manufacturer.pk %}">
                                     {{ listing.manufacturer.business_name }}
                                 </a>
-                                <span>
+                            <span>
                                     {{ listing.manufacturer.city }},
-                                    {{ listing.manufacturer.state }}
+                                    {{ listing.manufacturer.state|state_label }}
                                 </span>
                             </p>
 
@@ -452,11 +452,11 @@
                             </div>
                             <div>
                                 <dt>MOQ</dt>
-                                <dd>{{ listing.minimum_quantity }} units</dd>
+                                <dd>{{ listing.minimum_quantity }} unit{{ listing.minimum_quantity|pluralize }}</dd>
                             </div>
                             <div>
                                 <dt>Lead time</dt>
-                                <dd>{{ listing.production_days }} days</dd>
+                                <dd>{{ listing.production_days }} day{{ listing.production_days|pluralize }}</dd>
                             </div>
                             <div>
                                 <dt>Availability</dt>
@@ -466,7 +466,7 @@
                                 <div>
                                     <dt>Capacity</dt>
                                     <dd>
-                                        {{ listing.available_capacity }} units
+                                        {{ listing.available_capacity }} unit{{ listing.available_capacity|pluralize }}
                                         {% if listing.capacity_period %}
                                             {{ listing.capacity_period }}
                                         {% endif %}
