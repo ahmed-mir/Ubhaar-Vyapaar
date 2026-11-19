@@ -7,6 +7,7 @@ import re
 import tempfile
 from pathlib import Path
 from unittest.mock import PropertyMock, patch
+from urllib.parse import parse_qs, urlsplit
 
 from django.contrib import admin
 from django.contrib.auth import get_user_model
@@ -914,6 +915,116 @@ class MarketplaceDiscoveryTrustTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(list(response.context["listings"].object_list), [matching])
         self.assertNotIn(demo_match, response.context["listings"].object_list)
+
+    def test_filter_chip_removes_only_its_parameter_and_canonicalizes_state(self):
+        self.create_listing(self.verified, "Canonical location filter")
+        response = self.client.get(
+            reverse("marketplace"),
+            {
+                "q": "Canonical",
+                "location": "maharashtra",
+                "moq": "10",
+                "verification": "verified",
+                "sort": "price",
+                "page": "4",
+            },
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Location: Maharashtra")
+        chip = next(
+            item for item in response.context["active_filters"]
+            if item["label"] == "Verified only"
+        )
+        remaining = parse_qs(urlsplit(chip["remove_url"]).query)
+        self.assertEqual(remaining["q"], ["Canonical"])
+        self.assertEqual(remaining["location"], ["maharashtra"])
+        self.assertEqual(remaining["moq"], ["10"])
+        self.assertEqual(remaining["sort"], ["price"])
+        self.assertNotIn("verification", remaining)
+        self.assertNotIn("page", remaining)
+
+    def test_clear_all_removes_filters_but_preserves_selected_sort(self):
+        response = self.client.get(
+            reverse("marketplace"),
+            {
+                "q": "steel",
+                "category": "METAL",
+                "location": "Pune",
+                "moq": "10",
+                "max_price": "50",
+                "lead_time": "10",
+                "verification": "verified",
+                "sort": "price",
+                "page": "3",
+            },
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.context["clear_filters_url"], "/marketplace/?sort=price")
+        self.assertEqual(response.context["active_filter_count"], 7)
+        cleared = self.client.get(response.context["clear_filters_url"])
+        self.assertEqual(cleared.status_code, 200)
+        self.assertEqual(cleared.context["sort"], "price")
+        self.assertFalse(cleared.context["has_active_filters"])
+        self.assertEqual(cleared.context["page_obj"].number, 1)
+
+    def test_sort_and_pagination_keep_all_active_filters(self):
+        for index in range(7):
+            self.create_listing(self.verified, f"Pune filter page {index}")
+
+        params = {
+            "q": "Pune filter",
+            "category": "METAL",
+            "location": "Pune",
+            "moq": "10",
+            "max_price": "10",
+            "lead_time": "5",
+            "verification": "verified",
+            "sort": "price",
+        }
+        response = self.client.get(reverse("marketplace"), params)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.context["page_obj"].paginator.count, 7)
+        preserved = parse_qs(response.context["pagination_query"])
+        for key, value in params.items():
+            self.assertEqual(preserved[key], [value])
+        self.assertNotIn("page", preserved)
+        self.assertContains(response, 'name="sort"')
+        self.assertContains(response, 'value="price" selected')
+        self.assertContains(response, "page=2")
+
+    def test_marketplace_results_summary_and_zero_results_actions(self):
+        self.create_listing(self.verified, "Unique machining capacity")
+        query_results = self.client.get(
+            reverse("marketplace"), {"q": "Unique machining"}
+        )
+        self.assertContains(query_results, "1 listing found")
+        self.assertContains(query_results, "Results for “Unique machining”")
+        single = self.client.get(reverse("marketplace"), {"location": "Pune"})
+        self.assertContains(single, "1 listing found")
+
+        empty = self.client.get(
+            reverse("marketplace"),
+            {"q": "no-capacity-with-this-search", "sort": "price"},
+        )
+        self.assertEqual(empty.status_code, 200)
+        self.assertContains(empty, "No matching manufacturing capacity found.")
+        self.assertContains(empty, "Try removing a filter or broadening your search.")
+        self.assertContains(empty, 'href="/marketplace/?sort=price">Clear filters</a>')
+        self.assertContains(empty, 'href="/marketplace/">Browse all listings</a>')
+
+    def test_mobile_filter_summary_counts_filters_not_sort_preferences(self):
+        response = self.client.get(
+            reverse("marketplace"),
+            {"location": "Pune", "verification": "verified", "sort": "price"},
+        )
+
+        self.assertContains(response, "Filters (2)")
+        self.assertContains(response, "Verified only")
+        self.assertContains(response, "MOQ up to (units)")
+        self.assertNotContains(response, "Maximum order quantity (MOQ)")
 
     def test_marketplace_page_two_remains_available_and_self_canonical(self):
         for index in range(7):

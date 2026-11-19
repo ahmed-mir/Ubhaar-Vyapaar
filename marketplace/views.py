@@ -50,6 +50,7 @@ from .models import (
     SavedListing,
     WaitlistEntry,
 )
+from .locations import canonical_india_state_ut_name
 from .payments import (
     amount_to_paise,
     checkout_signature_is_valid,
@@ -1335,6 +1336,9 @@ def marketplace(request):
     has_marketplace_filters = any(
         (query, selected_category, location, moq, max_price, lead_time, verification)
     ) or sort != "newest"
+    has_active_filters = any(
+        (query, selected_category, location, moq, max_price, lead_time, verification)
+    )
     canonical_url = f"{settings.SITE_ORIGIN}{request.path}"
     if page_obj.number > 1 and not has_marketplace_filters:
         canonical_url = f"{canonical_url}?page={page_obj.number}"
@@ -1355,16 +1359,20 @@ def marketplace(request):
     }
     pagination_query = urlencode(pagination_params)
 
+    clear_filter_params = {"sort": sort} if sort != "newest" else {}
+    clear_filters_url = reverse("marketplace")
+    if clear_filter_params:
+        clear_filters_url = f"{clear_filters_url}?{urlencode(clear_filter_params)}"
+
     category_labels = dict(available_categories)
     active_filter_specs = [
         ("q", query, f'Search: {query}'),
         ("category", selected_category, f'Category: {category_labels.get(selected_category, selected_category)}'),
-        ("location", location, f"Location: {location}"),
-        ("moq", moq, f"MOQ up to {moq}"),
-        ("max_price", max_price, f"Price up to ₹{max_price}"),
-        ("lead_time", lead_time, f"Lead time up to {lead_time} days"),
+        ("location", location, f"Location: {canonical_india_state_ut_name(location)}"),
+        ("moq", moq, f"MOQ ≤ {moq}"),
+        ("max_price", max_price, f"Unit price ≤ ₹{max_price}"),
+        ("lead_time", lead_time, f"Lead time ≤ {lead_time} days"),
         ("verification", verification, "Verified only" if verification else ""),
-        ("sort", sort if sort != "newest" else "", f"Sort: {sort.replace('_', ' ').title()}"),
     ]
     active_filters = []
     for filter_name, filter_value, label in active_filter_specs:
@@ -1423,9 +1431,12 @@ def marketplace(request):
             "verification": verification,
             "sort": sort,
             "has_marketplace_filters": has_marketplace_filters,
+            "has_active_filters": has_active_filters,
             "canonical_url": canonical_url,
             "pagination_query": pagination_query,
             "active_filters": active_filters,
+            "active_filter_count": len(active_filters),
+            "clear_filters_url": clear_filters_url,
             "has_sample_listings": has_sample_listings,
             "organization_schema": organization_schema,
             "website_schema": website_schema,

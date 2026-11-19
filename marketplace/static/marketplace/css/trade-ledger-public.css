@@ -183,9 +183,20 @@
     text-align: right;
 }
 
+.marketplace-results-context {
+    max-width: 58ch;
+    margin: 5px 0 0;
+    color: var(--text-muted);
+    font-size: 13px;
+    line-height: 1.45;
+    overflow-wrap: anywhere;
+}
+
 .marketplace-filter-chips {
     display: flex;
     flex-wrap: wrap;
+    flex: 1 1 280px;
+    min-width: 0;
     gap: 7px;
     margin: 12px 0;
     padding: 0;
@@ -196,6 +207,7 @@
     display: inline-flex;
     align-items: center;
     gap: 5px;
+    max-width: 100%;
     min-height: 36px;
     padding: 3px 5px 3px 10px;
     border: 1px solid var(--border);
@@ -203,6 +215,11 @@
     background: var(--surface);
     color: var(--text);
     font-size: 12px;
+}
+
+.marketplace-filter-chips li span {
+    min-width: 0;
+    overflow-wrap: anywhere;
 }
 
 .marketplace-filter-chips a {
@@ -214,6 +231,23 @@
     color: var(--brand-900);
     font-size: 20px;
     line-height: 1;
+}
+
+.marketplace-active-filter-summary {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 4px 12px;
+    min-width: 0;
+}
+
+.marketplace-filter-clear-all {
+    display: inline-flex;
+    min-height: 44px;
+    align-items: center;
+    color: var(--brand-900);
+    font-size: 13px;
+    font-weight: 650;
 }
 
 .sample-listings-notice {
@@ -381,6 +415,13 @@
 
 .marketplace-empty-state .button {
     min-height: 44px;
+}
+
+.marketplace-empty-actions {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px 14px;
 }
 
 .marketplace-pagination {

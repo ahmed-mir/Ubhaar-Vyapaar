@@ -1400,6 +1400,10 @@ h1, h2, h3, h4 { letter-spacing: -0.02em; }
     .detail-commercial-panel .detail-facts dd { text-align: left; overflow-wrap: anywhere; }
     .quote-process ol { grid-template-columns: minmax(0, 1fr); }
 }
+@media (max-width: 420px) {
+    .marketplace-results-heading { align-items: stretch; flex-direction: column; }
+    .marketplace-results-tools { justify-content: space-between; }
+}
 @media (max-width: 380px) {
     .marketplace-heading, .marketplace-discovery, .trade-breadcrumbs, .listing-sheet-heading, .listing-sheet-overview, .listing-detail-content, .quote-process, .similar-listings, .manufacturer-sheet-heading, .manufacturer-about, .manufacturer-reviews, .manufacturer-listings { width: min(100% - 32px, 1200px); }
     .marketplace-results-tools { width: 100%; align-items: stretch; flex-direction: column; gap: 6px; }

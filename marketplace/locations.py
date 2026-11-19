@@ -43,6 +43,17 @@ INDIA_STATE_UT_NAMES = (
 INDIA_STATE_UT_CHOICES = tuple((name, name) for name in INDIA_STATE_UT_NAMES)
 INDIA_STATE_UT_PLACEHOLDER = "Select State / Union Territory"
 
+_INDIA_STATE_UT_CANONICAL = {name.casefold(): name for name in INDIA_STATE_UT_NAMES}
+
+
+def canonical_india_state_ut_name(value):
+    """Return the canonical display label for a known State/UT value."""
+    if value in (None, ""):
+        return ""
+
+    value = str(value).strip()
+    return _INDIA_STATE_UT_CANONICAL.get(value.casefold(), value)
+
 INDIA_PINCODE_REGEX = r"\A[1-9][0-9]{5}\Z"
 INDIA_PINCODE_HTML_PATTERN = "[1-9][0-9]{5}"
 validate_indian_pincode = RegexValidator(
