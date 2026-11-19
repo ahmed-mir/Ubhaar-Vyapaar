@@ -770,8 +770,8 @@ class MarketplaceDiscoveryTrustTests(TestCase):
         self.assertContains(listing_page, "Request a quote")
         self.assertContains(
             listing_page,
-            "Request pricing and production terms from the manufacturer. "
-            "Accept their quotation to create an order.",
+            "Request pricing or production terms. "
+            "Accept a quotation to create an order.",
         )
 
         self.client.force_login(self.verified_user)
@@ -809,9 +809,13 @@ class MarketplaceDiscoveryTrustTests(TestCase):
         )
         self.assertContains(
             detail_response,
-            "Quote requests are disabled for sample data.",
+            "Sample listing: quoting and purchasing are disabled.",
         )
         self.assertNotContains(detail_response, f'href="{quote_url}"')
+        self.assertNotContains(
+            detail_response,
+            reverse("buy_now", args=[listing.pk]),
+        )
 
     def test_sample_profile_hides_reviews_and_real_profile_reviews_remain_visible(self):
         self.create_review(
@@ -2715,7 +2719,7 @@ class PlatformReadinessTests(TestCase):
         content = response.content.decode()
 
         self.assertIn("User-agent: OAI-SearchBot", content)
-        self.assertIn("User-agent: GPTBot\nDisallow: /", content)
+        self.assertRegex(content, r"User-agent: GPTBot\r?\nDisallow: /")
 
     @override_settings(ALLOW_INDEXING=True, ALLOW_GPTBOT=True)
     def test_robots_allows_gptbot_without_overriding_private_disallows(self):

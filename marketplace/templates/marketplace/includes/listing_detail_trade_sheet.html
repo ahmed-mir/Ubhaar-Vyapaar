@@ -1,17 +1,21 @@
 {% load currency listing_media public_display %}
 {% listing_image_url listing as resolved_image_url %}
 <nav class="trade-breadcrumbs" aria-label="Breadcrumb">
-    <a href="{% url 'marketplace' %}">Marketplace</a><span aria-hidden="true">/</span><span aria-current="page">{{ listing.title }}</span>
+    <a href="{% url 'marketplace' %}">Marketplace</a>
+    <span aria-hidden="true">›</span>
+    <span aria-current="page">{{ listing.title }}</span>
 </nav>
 
 <header class="listing-sheet-heading">
-    <p class="eyebrow">{{ listing.get_category_display }}{% if listing.machine_type %} / {{ listing.machine_type }}{% endif %}</p>
+    <p class="eyebrow">{{ listing.get_category_display }}{% if listing.machine_type %} · {{ listing.machine_type }}{% endif %}</p>
     <div class="listing-spec-flags">
-        {% if listing.manufacturer.is_demo %}<span class="sample-badge">Sample</span>{% elif listing.manufacturer.is_publicly_verified %}<span class="trust-badge">Verified</span>{% endif %}
-        {% if listing.availability_status %}<span class="listing-availability status-{{ listing.availability_status|lower }}">{{ listing.get_availability_status_display }}</span>{% endif %}
+        {% if listing.manufacturer.is_demo %}<span class="sample-badge">Sample listing</span>{% elif listing.manufacturer.is_publicly_verified %}<span class="trust-badge">Verified Manufacturer</span>{% endif %}
     </div>
     <h1>{{ listing.title }}</h1>
-    <p class="detail-manufacturer-line"><a href="{% url 'manufacturer_profile' listing.manufacturer.pk %}">{{ listing.manufacturer.business_name }}</a>{% if listing.manufacturer.city or listing.manufacturer.state %}<span>{{ listing.manufacturer.city }}{% if listing.manufacturer.city and listing.manufacturer.state %}, {% endif %}{{ listing.manufacturer.state|state_label }}</span>{% endif %}</p>
+    <p class="detail-manufacturer-line">
+        <a href="{% url 'manufacturer_profile' listing.manufacturer.pk %}">{{ listing.manufacturer.business_name }}</a>
+        {% if listing.manufacturer.city or listing.manufacturer.state %}<span><span class="visually-hidden">Location: </span>{{ listing.manufacturer.city }}{% if listing.manufacturer.city and listing.manufacturer.state %}, {% endif %}{{ listing.manufacturer.state|state_label }}</span>{% endif %}
+    </p>
 </header>
 
 <div class="listing-sheet-overview">
@@ -22,12 +26,11 @@
         <p class="eyebrow">Commercial summary</p>
         <h2 id="commercial-terms-title">Commercial terms</h2>
         <dl class="detail-facts">
-            {% if listing.price_per_unit is not None %}<div><dt>Price</dt><dd>{{ listing.price_per_unit|inr }} / unit</dd></div>{% endif %}
-            {% if listing.minimum_quantity %}<div><dt>MOQ</dt><dd>{{ listing.minimum_quantity|indian_number }} unit{{ listing.minimum_quantity|pluralize }}</dd></div>{% endif %}
+            {% if listing.price_per_unit is not None %}<div><dt>Price per unit</dt><dd class="detail-commercial-price">{{ listing.price_per_unit|inr }} <span>/ unit</span></dd></div>{% endif %}
+            {% if listing.minimum_quantity %}<div><dt>Minimum order (MOQ)</dt><dd>{{ listing.minimum_quantity|indian_number }} unit{{ listing.minimum_quantity|pluralize }}</dd></div>{% endif %}
             {% if listing.production_days %}<div><dt>Lead time</dt><dd>{{ listing.production_days|indian_number }} day{{ listing.production_days|pluralize }}</dd></div>{% endif %}
             {% if listing.batch_price %}<div><dt>Batch price</dt><dd>{{ listing.batch_price|inr }}</dd></div>{% endif %}
-            {% if listing.available_capacity %}<div><dt>Capacity</dt><dd>{{ listing.available_capacity|indian_number }} unit{{ listing.available_capacity|pluralize }}{% if listing.capacity_period %}/{{ listing.capacity_period|cut:"per " }}{% endif %}</dd></div>{% endif %}
-            {% if listing.manufacturer.city or listing.manufacturer.state %}<div><dt>Location</dt><dd>{{ listing.manufacturer.city }}{% if listing.manufacturer.city and listing.manufacturer.state %}, {% endif %}{{ listing.manufacturer.state|state_label }}</dd></div>{% endif %}
+            {% if listing.available_capacity %}<div><dt>Available capacity</dt><dd>{{ listing.available_capacity|indian_number }} unit{{ listing.available_capacity|pluralize }}{% if listing.capacity_period %}/{{ listing.capacity_period|cut:"per " }}{% endif %}</dd></div>{% endif %}
             {% if listing.availability_status %}<div><dt>Availability</dt><dd>{{ listing.get_availability_status_display }}</dd></div>{% endif %}
         </dl>
         {% if user.is_authenticated and user.role == "BUYER" %}
@@ -35,26 +38,37 @@
             {% else %}<form method="post" action="{% url 'save_listing' listing.pk %}">{% csrf_token %}<button class="button button-secondary full-width" type="submit">Save listing</button></form>{% endif %}
         {% endif %}
         {% if listing.manufacturer.is_demo %}
-            <p class="sample-quote-explanation">This is a sample listing used to demonstrate the marketplace. Quote requests are disabled for sample data.</p>
+            <p class="sample-quote-explanation">Sample listing: quoting and purchasing are disabled.</p>
             <a class="button button-secondary full-width" href="{% url 'marketplace' %}">View marketplace</a>
         {% elif listing.availability_status == "PAUSED" %}
             <p class="message">This capacity is temporarily paused and is not accepting new quote requests.</p>
         {% elif user.is_authenticated and user.role == "BUYER" %}
-            {% if can_buy_now %}<a class="button button-primary full-width" href="{% url 'buy_now' listing.pk %}">Buy now</a><p class="quote-note">Purchase at the listed fixed terms, or request a quote for custom requirements.</p>{% endif %}
-            <a class="button {% if can_buy_now %}button-secondary{% else %}button-primary{% endif %} full-width" href="{% url 'request_quote' listing.pk %}">Request a quote</a>
-            <p class="quote-note">Request pricing and production terms from the manufacturer. Accept their quotation to create an order.</p>
+            {% if can_buy_now %}
+                <div class="detail-cta-option detail-cta-option-primary">
+                    <a class="button button-primary full-width" href="{% url 'buy_now' listing.pk %}">Buy now</a>
+                    <p class="quote-note">Purchase at the displayed fixed price and terms.</p>
+                </div>
+            {% endif %}
+            <div class="detail-cta-option{% if not can_buy_now %} detail-cta-option-primary{% endif %}">
+                <a class="button {% if can_buy_now %}button-secondary{% else %}button-primary{% endif %} full-width" href="{% url 'request_quote' listing.pk %}">Request a quote</a>
+                <p class="quote-note">Request pricing or production terms. Accept a quotation to create an order.</p>
+            </div>
         {% elif user.is_authenticated %}
             <p class="quote-note">Quote requests are available to buyer accounts.</p>
         {% else %}
             <a class="button button-primary full-width" href="{% url 'request_quote' listing.pk %}">Log in to request a quote</a>
-            <p class="quote-note">Request pricing and production terms from the manufacturer. Accept their quotation to create an order. New here? <a href="{% url 'register' %}">Create a buyer account</a>.</p>
+            <p class="quote-note">Request pricing or production terms. Accept a quotation to create an order. New here? <a href="{% url 'register' %}">Create a buyer account</a>.</p>
         {% endif %}
     </aside>
 </div>
 
 <div class="listing-detail-content">
     <article class="detail-flow">
-        {% if listing.description %}<section class="detail-section" aria-labelledby="listing-description-title"><p class="eyebrow">Description</p><h2 id="listing-description-title">Production overview</h2><div class="description-content">{{ listing.description|linebreaks }}</div></section>{% endif %}
+        <section class="detail-section" aria-labelledby="listing-description-title">
+            <p class="eyebrow">Listing details</p>
+            <h2 id="listing-description-title">Description</h2>
+            {% if listing.description %}<div class="description-content">{{ listing.description|linebreaks }}</div>{% else %}<p class="muted">No description has been added for this listing.</p>{% endif %}
+        </section>
         {% if listing.machine_type or listing.materials or listing.technical_capabilities or listing.cluster %}
         <section class="detail-section" aria-labelledby="technical-fit-title"><p class="eyebrow">Manufacturing details</p><h2 id="technical-fit-title">Technical fit</h2><dl class="detail-capability-grid">
             {% if listing.machine_type %}<div><dt>Machine type</dt><dd>{{ listing.machine_type }}</dd></div>{% endif %}
@@ -67,12 +81,12 @@
         {% if not listing.manufacturer.is_demo and listing.manufacturer.review_count %}<section class="detail-section"><h2>Buyer feedback</h2><p>Average rating: {{ listing.manufacturer.average_rating|floatformat:1 }}/5 from {{ listing.manufacturer.review_count }} completed order reviews.</p></section>{% endif %}
     </article>
     <aside class="manufacturer-trust-panel" aria-labelledby="manufacturer-title">
-        <p class="eyebrow">{% if listing.manufacturer.is_demo %}Sample manufacturer profile{% else %}Manufacturer profile{% endif %}</p>
-        <h2 id="manufacturer-title"><a href="{% url 'manufacturer_profile' listing.manufacturer.pk %}">{{ listing.manufacturer.business_name }}</a></h2>
+        <p class="eyebrow">{% if listing.manufacturer.is_demo %}Sample manufacturer{% else %}Manufacturer summary{% endif %}</p>
+        <h2 id="manufacturer-title">{{ listing.manufacturer.business_name }}</h2>
         {% if listing.manufacturer.city or listing.manufacturer.state %}<p class="record-meta">{{ listing.manufacturer.city }}{% if listing.manufacturer.city and listing.manufacturer.state %}, {% endif %}{{ listing.manufacturer.state|state_label }}</p>{% endif %}
-        <p class="verification-status">Verification status: {% if listing.manufacturer.is_demo %}Sample{% elif listing.manufacturer.is_publicly_verified %}Verified{% else %}Not verified{% endif %}</p>
+        <p class="verification-status">{% if listing.manufacturer.is_demo %}Sample profile for demonstration{% elif listing.manufacturer.is_publicly_verified %}Verified Manufacturer{% else %}Not verified{% endif %}</p>
         {% if listing.manufacturer.description %}<p>{{ listing.manufacturer.description|truncatewords:35 }}</p>{% endif %}
-        <a class="text-action" href="{% url 'manufacturer_profile' listing.manufacturer.pk %}">View manufacturer profile</a>
+        <a class="text-action" href="{% url 'manufacturer_profile' listing.manufacturer.pk %}">View Manufacturer profile</a>
     </aside>
 </div>
 

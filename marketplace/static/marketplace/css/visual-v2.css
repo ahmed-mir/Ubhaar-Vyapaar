@@ -1326,7 +1326,13 @@ h1, h2, h3, h4 { letter-spacing: -0.02em; }
 .listing-sheet-heading .eyebrow { color: var(--color-muted); font-family: inherit; font-size: 14px; font-weight: 600; letter-spacing: 0; }
 .listing-sheet-overview { grid-template-columns: minmax(0, 1.2fr) minmax(330px, .8fr); gap: 24px; align-items: start; }
 .listing-sheet-media { aspect-ratio: 16 / 10; max-height: 520px; border-color: var(--color-border); border-radius: var(--radius-card); background: #edf3f4; }
-.listing-sheet-media > img, .listing-sheet-media > .detail-image-placeholder { object-fit: contain; }
+.listing-sheet-media > img, .listing-sheet-media > .detail-image-placeholder {
+    width: 100%;
+    height: 100%;
+    max-height: none;
+    aspect-ratio: auto;
+    object-fit: contain;
+}
 .detail-commercial-panel { position: sticky; top: 20px; padding: 22px; }
 .detail-commercial-panel .eyebrow, .detail-flow .eyebrow, .quote-process .eyebrow, .similar-listings > .eyebrow, .manufacturer-about .eyebrow, .manufacturer-reviews .eyebrow, .manufacturer-listings .eyebrow { color: var(--color-muted); font-family: inherit; font-size: 12px; font-weight: 650; line-height: 1.4; letter-spacing: .04em; text-transform: none; }
 .detail-commercial-panel h2 { margin-bottom: 10px; color: var(--color-primary); font-size: 21px; }
@@ -5699,5 +5705,87 @@ textarea {
 
     .manufacturer-section-heading h2 {
         font-size: 19px;
+    }
+}
+
+/* Listing detail: keep purchase terms and valid actions easy to scan. */
+.listing-sheet-heading .listing-spec-flags {
+    margin-top: 8px;
+}
+
+.listing-sheet-heading h1 {
+    margin-block: 8px 10px;
+}
+
+.listing-sheet-heading .detail-manufacturer-line {
+    align-items: baseline;
+    gap: 4px 14px;
+    font-size: 14px;
+}
+
+.listing-sheet-heading .detail-manufacturer-line a {
+    color: var(--brand-900);
+    font-weight: 700;
+    text-underline-offset: 3px;
+}
+
+.listing-sheet-heading .detail-manufacturer-line > span {
+    overflow-wrap: anywhere;
+}
+
+.detail-commercial-panel .detail-commercial-price {
+    color: var(--brand-900);
+    font-family: var(--font-sans);
+    font-size: 19px;
+    font-variant-numeric: tabular-nums;
+    font-weight: 750;
+}
+
+.detail-commercial-panel .detail-commercial-price span {
+    color: var(--text-muted);
+    font-size: 13px;
+    font-weight: 500;
+}
+
+.detail-commercial-panel .detail-cta-option + .detail-cta-option {
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px solid var(--border);
+}
+
+.detail-commercial-panel .detail-cta-option .button {
+    margin-top: 0;
+}
+
+.detail-commercial-panel .detail-cta-option .quote-note {
+    max-width: 42ch;
+    margin: 7px 0 0;
+    line-height: 1.5;
+    overflow-wrap: anywhere;
+}
+
+.detail-commercial-panel .detail-cta-option .button-secondary {
+    min-height: 46px;
+}
+
+.manufacturer-trust-panel .verification-status {
+    line-height: 1.5;
+}
+
+.manufacturer-trust-panel .text-action {
+    display: inline-flex;
+    min-height: 44px;
+    align-items: center;
+}
+
+@media (max-width: 420px) {
+    .listing-sheet-heading h1 {
+        font-size: clamp(26px, 8vw, 32px);
+    }
+}
+
+@media (max-width: 360px) {
+    .detail-commercial-panel .detail-facts {
+        grid-template-columns: minmax(0, 1fr);
     }
 }

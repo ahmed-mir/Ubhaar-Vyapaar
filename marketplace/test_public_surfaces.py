@@ -219,9 +219,11 @@ class PublicTradeSurfaceTests(TestCase):
         content = response.content.decode()
 
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, "Quote requests are disabled for sample data.")
+        self.assertContains(response, "Sample listing: quoting and purchasing are disabled.")
+        self.assertContains(response, "Sample listing")
         self.assertNotContains(response, "Request a quote")
         self.assertNotContains(response, "Log in to request a quote")
+        self.assertNotContains(response, "Buy now")
         self.assertContains(response, "Sample manufacturer")
         self.assertContains(response, reverse("manufacturer_profile", args=[self.sample_manufacturer.pk]))
         self.assertNotContains(response, "listing-service-jsonld")
@@ -235,9 +237,188 @@ class PublicTradeSurfaceTests(TestCase):
         self.assertContains(response, "Log in to request a quote")
         self.assertContains(response, "listing-service-jsonld")
         self.assertNotContains(response, "Batch price")
-        self.assertContains(response, "Capacity</dt>")
+        self.assertContains(response, "Available capacity</dt>")
         self.assertContains(response, "1,000 units")
         self.assertContains(response, "60,000 units/month")
+
+    def test_buyer_detail_prioritizes_commercial_terms_and_keeps_contact_data_private(self):
+        self.real_manufacturer.state = "maharashtra"
+        self.real_manufacturer.pincode = "400001"
+        self.real_manufacturer.save(update_fields=["state", "pincode"])
+        self.real_user.email = "private-listing-contact@example.test"
+        self.real_user.phone = "9876543210"
+        self.real_user.save(update_fields=["email", "phone"])
+        self.real_listing.machine_type = "CNC milling"
+        self.real_listing.materials = "Aluminium"
+        self.real_listing.batch_price = Decimal("90000.00")
+        self.real_listing.save(
+            update_fields=["machine_type", "materials", "batch_price"],
+        )
+        buyer = get_user_model().objects.create_user(
+            username="listing_detail_buyer",
+            email="listing-detail-buyer@example.test",
+            password="password",
+            role="BUYER",
+        )
+        self.client.force_login(buyer)
+
+        response = self.client.get(
+            reverse("listing_detail", args=[self.real_listing.pk]),
+        )
+        content = response.content.decode()
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(content.count("<h1"), 1)
+        self.assertContains(response, "Real Metal Capacity")
+        self.assertContains(response, "Public Works")
+        self.assertContains(response, "Verified Manufacturer")
+        self.assertContains(response, "Ahmedabad, Maharashtra")
+        self.assertContains(response, "Price per unit")
+        self.assertContains(response, "1,25,000")
+        self.assertContains(response, "Minimum order (MOQ)")
+        self.assertContains(response, "1,000 units")
+        self.assertContains(response, "14 days")
+        self.assertContains(response, "60,000 units/month")
+        self.assertContains(response, "Available</dd>")
+        self.assertContains(response, "Buy now")
+        self.assertContains(response, reverse("buy_now", args=[self.real_listing.pk]))
+        self.assertContains(response, "Request a quote")
+        self.assertContains(response, reverse("request_quote", args=[self.real_listing.pk]))
+        self.assertContains(response, "Purchase at the displayed fixed price and terms.")
+        self.assertContains(
+            response,
+            "Request pricing or production terms. Accept a quotation to create an order.",
+        )
+        self.assertContains(response, "Description</h2>")
+        self.assertContains(response, "Technical fit")
+        self.assertContains(response, "View Manufacturer profile")
+        self.assertNotContains(response, "private-listing-contact@example.test")
+        self.assertNotContains(response, "9876543210")
+        self.assertNotContains(response, "400001")
+        self.assertNotContains(response, "<dt>Location</dt>")
+
+        self.real_manufacturer.refresh_from_db()
+        self.assertEqual(self.real_manufacturer.state, "maharashtra")
+
+    def test_detail_omits_missing_optional_facts_and_pluralizes_commercial_values(self):
+        self.real_listing.minimum_quantity = 1
+        self.real_listing.production_days = 1
+        self.real_listing.available_capacity = 1
+        self.real_listing.capacity_period = ""
+        self.real_listing.batch_price = None
+        self.real_listing.save(
+            update_fields=[
+                "minimum_quantity",
+                "production_days",
+                "available_capacity",
+                "capacity_period",
+                "batch_price",
+            ],
+        )
+
+        singular_response = self.client.get(
+            reverse("listing_detail", args=[self.real_listing.pk]),
+        )
+        self.assertEqual(singular_response.status_code, 200)
+        self.assertContains(singular_response, "1 unit")
+        self.assertContains(singular_response, "1 day")
+        singular_html = singular_response.content.decode()
+        self.assertNotIn(">1 units<", singular_html)
+        self.assertNotIn(">1 days<", singular_html)
+        self.assertNotContains(singular_response, "Batch price")
+
+        self.real_listing.minimum_quantity = 2
+        self.real_listing.production_days = 2
+        self.real_listing.available_capacity = 2
+        self.real_listing.save(
+            update_fields=[
+                "minimum_quantity",
+                "production_days",
+                "available_capacity",
+            ],
+        )
+        plural_response = self.client.get(
+            reverse("listing_detail", args=[self.real_listing.pk]),
+        )
+        self.assertContains(plural_response, "2 units")
+        self.assertContains(plural_response, "2 days")
+
+        self.real_listing.minimum_quantity = 0
+        self.real_listing.production_days = 0
+        self.real_listing.available_capacity = None
+        self.real_listing.save(
+            update_fields=[
+                "minimum_quantity",
+                "production_days",
+                "available_capacity",
+            ],
+        )
+        incomplete_response = self.client.get(
+            reverse("listing_detail", args=[self.real_listing.pk]),
+        )
+        self.assertEqual(incomplete_response.status_code, 200)
+        commercial_facts = (
+            incomplete_response.content.decode()
+            .split('<dl class="detail-facts">', 1)[1]
+            .split("</dl>", 1)[0]
+        )
+        self.assertNotIn("Minimum order (MOQ)", commercial_facts)
+        self.assertNotIn("Lead time", commercial_facts)
+        self.assertNotIn("Available capacity", commercial_facts)
+        self.assertNotIn("None", commercial_facts)
+
+    def test_listing_description_is_escaped_on_public_detail(self):
+        malicious_description = "<script>alert('detail-xss-marker')</script>"
+        self.real_listing.description = malicious_description
+        self.real_listing.save(update_fields=["description"])
+
+        response = self.client.get(
+            reverse("listing_detail", args=[self.real_listing.pk]),
+        )
+        content = response.content.decode()
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(
+            response,
+            "&lt;script&gt;alert(&#x27;detail-xss-marker&#x27;)&lt;/script&gt;",
+        )
+        self.assertNotIn(malicious_description, content)
+
+    def test_manufacturer_detail_has_no_buyer_purchase_or_quote_actions(self):
+        self.client.force_login(self.real_user)
+
+        response = self.client.get(
+            reverse("listing_detail", args=[self.real_listing.pk]),
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Quote requests are available to buyer accounts.")
+        self.assertNotContains(response, reverse("buy_now", args=[self.real_listing.pk]))
+        self.assertNotContains(response, reverse("request_quote", args=[self.real_listing.pk]))
+        self.assertNotContains(response, "Buy now")
+        self.assertNotContains(response, "Request a quote")
+
+    def test_paused_listing_detail_has_no_purchase_or_quote_action(self):
+        self.real_listing.availability_status = CapacityListing.AvailabilityStatus.PAUSED
+        self.real_listing.save(update_fields=["availability_status"])
+        buyer = get_user_model().objects.create_user(
+            username="paused_listing_buyer",
+            email="paused-listing-buyer@example.test",
+            password="password",
+            role="BUYER",
+        )
+        self.client.force_login(buyer)
+
+        response = self.client.get(
+            reverse("listing_detail", args=[self.real_listing.pk]),
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "This capacity is temporarily paused")
+        self.assertNotContains(response, reverse("buy_now", args=[self.real_listing.pk]))
+        self.assertNotContains(response, reverse("request_quote", args=[self.real_listing.pk]))
+        self.assertNotContains(response, "Buy now")
+        self.assertNotContains(response, "Request a quote")
 
     def test_similar_listings_are_hidden_when_no_category_match(self):
         self.sample_listing.category = CapacityListing.Category.WOOD
