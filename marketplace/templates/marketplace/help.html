@@ -1,11 +1,11 @@
 {% extends "marketplace/public_content_page.html" %}
 
 {% block title %}Help | Ubhaar-Vyapaar{% endblock %}
-{% block meta_description %}Find guidance on listings, quotation requests, manufacturer verification, and simulated order funding.{% endblock %}
+{% block meta_description %}Find guidance on Buy Now, Request Quote, Manufacturer verification, Sample listings, and Razorpay Test Mode.{% endblock %}
 {% block social_title %}Help | Ubhaar-Vyapaar{% endblock %}
-{% block social_description %}Find guidance on listings, quotation requests, manufacturer verification, and simulated order funding.{% endblock %}
+{% block social_description %}Find guidance on Buy Now, Request Quote, Manufacturer verification, Sample listings, and Razorpay Test Mode.{% endblock %}
 {% block twitter_title %}Help | Ubhaar-Vyapaar{% endblock %}
-{% block twitter_description %}Find guidance on listings, quotation requests, manufacturer verification, and simulated order funding.{% endblock %}
+{% block twitter_description %}Find guidance on Buy Now, Request Quote, Manufacturer verification, Sample listings, and Razorpay Test Mode.{% endblock %}
 
 {% block public_page_class %} public-info-page public-help-page{% endblock %}
 {% block page_eyebrow %}Help{% endblock %}
@@ -14,9 +14,10 @@
 
 {% block page_body %}
 <div class="public-content-sections">
-    <section class="public-content-section" aria-labelledby="help-quote-title">
-        <h2 id="help-quote-title">How do I request a quote?</h2>
-        <p>Open a listing and select Request quote. Buyer account sign-in is required to send your requirements.</p>
+    <section class="public-content-section" aria-labelledby="help-routes-title">
+        <h2 id="help-routes-title">How can I purchase manufacturing capacity?</h2>
+        <p>Use Buy Now on an eligible fixed-price listing, or select Request Quote for custom quantities or terms. Accepting a Manufacturer quotation creates an order.</p>
+        <p><a href="{% url 'how_it_works' %}">See both Buyer and Manufacturer journeys</a>.</p>
     </section>
 
     <section class="public-content-section" aria-labelledby="help-verified-title">
@@ -24,14 +25,19 @@
         <p>The badge appears only for non-sample manufacturer accounts whose verification flag is approved. Check each profile individually; listings without a badge should not be assumed verified.</p>
     </section>
 
+    <section class="public-content-section" aria-labelledby="help-sample-title">
+        <h2 id="help-sample-title">What are Sample listings?</h2>
+        <p>Sample listings demonstrate the marketplace and cannot be purchased or quoted. Buyers may save them while keeping their Sample label.</p>
+    </section>
+
     <section class="public-content-section" aria-labelledby="help-payment-title">
-        <h2 id="help-payment-title">Can I pay through the platform?</h2>
-        <p>When enabled, milestone checkout uses Razorpay Test Mode only. These are sandbox test transactions, not live payments. Manufacturer payout and milestone release remain simulated; the platform does not provide escrow or settlement.</p>
+        <h2 id="help-payment-title">Are payments real?</h2>
+        {% include "marketplace/includes/pilot_payment_notice.html" %}
     </section>
 
     {% if legal_contact_email %}
     <section class="public-content-section" aria-labelledby="help-contact-title">
-        <h2 id="help-contact-title">Contact</h2>
+        <h2 id="help-contact-title">Contact support</h2>
         <p>For platform questions, email <a href="mailto:{{ legal_contact_email }}">{{ legal_contact_email }}</a>.</p>
     </section>
     {% endif %}

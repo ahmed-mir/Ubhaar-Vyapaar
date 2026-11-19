@@ -763,11 +763,11 @@ class MarketplaceDiscoveryTrustTests(TestCase):
         self.assertContains(request_page, 'name="quantity"')
         self.assertContains(request_page, 'name="requirements"')
         self.assertContains(request_page, 'name="delivery_location"')
-        self.assertContains(request_page, "Request quote")
+        self.assertContains(request_page, "Request Quote")
 
         listing_page = self.client.get(reverse("listing_detail", args=[listing.pk]))
         self.assertEqual(listing_page.status_code, 200)
-        self.assertContains(listing_page, "Request a quote")
+        self.assertContains(listing_page, "Request Quote")
         self.assertContains(
             listing_page,
             "Request pricing or production terms. "
@@ -801,7 +801,7 @@ class MarketplaceDiscoveryTrustTests(TestCase):
             home_response,
             "Sample listings are shown for illustration and do not accept quote requests.",
         )
-        self.assertNotContains(home_response, f'href="{quote_url}">Request quote</a>')
+        self.assertNotContains(home_response, f'href="{quote_url}">Request Quote</a>')
         self.assertNotContains(home_response, "Not accepting quote requests")
 
         detail_response = self.client.get(
@@ -1420,23 +1420,25 @@ class PublicWorkflowEducationPageTests(TestCase):
         self.assertContains(response, 'property="og:title" content="How it works | Ubhaar-Vyapaar"')
         self.assertContains(response, "From manufacturing need to order updates")
         for label in (
-            "Browse capacity",
-            "Review the listing",
-            "Request a quotation",
-            "Review the quotation",
-            "Manage accepted orders",
-            "Quote request",
-            "Manufacturer quotation",
-            "Buyer decision",
-            "Early-access pilot",
+            "Browse manufacturing capacity",
+            "Choose Buy Now or Request Quote",
+            "eligible fixed-price listings",
+            "accepting it creates the order",
+            "Track the order and milestones",
+            "Register and complete your business profile",
+            "Wait for profile review",
+            "Buy Now on an eligible fixed-price listing",
+            "Request Quote",
+            "Current pilot",
             "Sample listings",
             "simulated",
             "Razorpay Test Mode",
-            "sandbox milestone payments only",
-            "does not provide escrow or settlement",
+            "No live payments are available",
+            "no real funds are transferred",
         ):
             with self.subTest(label=label):
                 self.assertContains(response, label)
+        self.assertEqual(response.content.count(b'class="pilot-payment-notice"'), 1)
         self.assertContains(response, reverse("marketplace"))
         self.assertContains(response, reverse("register_manufacturer"))
         self.assertNotContains(response, "On this page")
@@ -1453,12 +1455,13 @@ class PublicWorkflowEducationPageTests(TestCase):
             "List spare capacity",
             "Set practical terms upfront",
             "Respond with a quotation",
-            "Follow accepted orders",
-            "Create a manufacturer account",
+            "Manage orders",
+            "Register and complete your business profile",
+            "Wait for business profile review",
             "How verification is shown",
             "A KYC status alone does not display the badge",
             "not a certification, product inspection, or guarantee",
-            "Early-access pilot",
+            "Current pilot",
             "Sample listings",
         ):
             with self.subTest(label=label):
@@ -2460,13 +2463,16 @@ class PolicyPageTests(TestCase):
         self.assertIn(b"Back to marketplace", unavailable.content)
         self.assertIn(b'name="robots" content="noindex"', unavailable.content)
 
-    def test_information_pages_are_public_and_disclose_simulated_funding(self):
+    def test_information_pages_are_public_and_payment_pages_disclose_simulation(self):
         for name in ("about", "how_it_works", "help_page"):
             with self.subTest(name=name):
                 response = self.client.get(reverse(name))
                 self.assertEqual(response.status_code, 200)
-                self.assertContains(response, "simulated")
                 self.assertContains(response, 'aria-current="page"')
+
+        for name in ("how_it_works", "help_page"):
+            with self.subTest(payment_detail=name):
+                self.assertContains(self.client.get(reverse(name)), "simulated")
 
         help_response = self.client.get(reverse("help_page"))
         self.assertContains(
@@ -3320,7 +3326,7 @@ class LandingPageTests(TestCase):
         self.assertNotContains(response, second.title)
         self.assertNotContains(response, third.title)
         self.assertContains(response, "Explore manufacturing capacity")
-        self.assertContains(response, 'href="/marketplace/">Browse capacity</a>')
+        self.assertContains(response, 'href="/marketplace/">Browse marketplace</a>')
 
     def test_homepage_shows_only_explicitly_featured_eligible_listings(self):
         eligible = self.make_listing(1, featured=True, image="listings/eligible.jpg")
@@ -3346,7 +3352,7 @@ class LandingPageTests(TestCase):
         content = response.content.decode()
         self.assertContains(response, 'id="featured-title"')
         self.assertContains(response, eligible.title)
-        self.assertContains(response, 'href="/marketplace/">View all capacity')
+        self.assertContains(response, 'href="/marketplace/">Browse marketplace')
         for listing in (unfeatured, unverified, sample, inactive, paused, missing_image):
             self.assertNotIn(listing.title, content)
 
@@ -3400,8 +3406,13 @@ class LandingPageTests(TestCase):
     def test_landing_faq_and_schema_are_not_duplicated(self):
         response = self.client.get(reverse("home"))
         self.assertEqual(len(parse_json_ld(response)), 2)
-        self.assertContains(response, "Does the platform process payments or escrow?")
-        self.assertContains(response, "Sample listings are shown for illustration.")
+        self.assertContains(response, "What is Buy Now?")
+        self.assertContains(response, "What is Request Quote?")
+        self.assertContains(response, "Are Sample listings transactional?")
+        self.assertContains(
+            response,
+            "Sample listings are illustrative and cannot be purchased or quoted.",
+        )
 
 
 @override_settings(
@@ -3454,9 +3465,9 @@ class BuyNowOrderTests(TestCase):
         self.client.force_login(self.buyer)
         response = self.client.get(reverse("listing_detail", args=[self.listing.pk]))
         self.assertContains(response, reverse("buy_now", args=[self.listing.pk]))
-        self.assertContains(response, "Buy now")
+        self.assertContains(response, "Buy Now")
         self.assertContains(response, reverse("request_quote", args=[self.listing.pk]))
-        self.assertContains(response, "Request a quote")
+        self.assertContains(response, "Request Quote")
 
     def test_buy_now_creates_direct_order_from_server_price_and_two_milestones(self):
         response = self.create_order(

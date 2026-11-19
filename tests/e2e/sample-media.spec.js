@@ -54,7 +54,7 @@ test.describe("Sample listing media", () => {
       await expect.poll(() => detailImage.evaluate((image) => image.naturalWidth)).toBeGreaterThan(0);
       await expect(detailImage).toHaveAttribute("alt", /manufacturing capacity$/);
       expect(await detailImage.getAttribute("alt")).not.toMatch(/\b(image|placeholder)\b/i);
-      await expect(page.getByRole("link", { name: "Request a quote" })).toHaveCount(0);
+      await expect(page.getByRole("link", { name: "Request Quote" })).toHaveCount(0);
       await expect(page.getByRole("link", { name: /buy now/i })).toHaveCount(0);
 
       const imageFrame = page.locator(".listing-sheet-media");

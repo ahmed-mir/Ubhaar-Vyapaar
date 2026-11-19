@@ -4,11 +4,11 @@
 {% block body_attributes %}class="landing-route"{% endblock %}
 
 {% block title %}Ubhaar-Vyapaar: Find manufacturers with spare capacity for small-batch orders{% endblock %}
-{% block meta_description %}Discover manufacturing capacity, compare practical details, request quotations and follow order milestones with Ubhaar-Vyapaar.{% endblock %}
+{% block meta_description %}Discover manufacturing capacity, use eligible fixed-price Buy Now listings, or Request Quote for custom terms on Ubhaar-Vyapaar.{% endblock %}
 {% block social_title %}Ubhaar-Vyapaar: Find manufacturers with spare capacity for small-batch orders{% endblock %}
-{% block social_description %}Discover manufacturing capacity, compare practical details, request quotations and follow order milestones with Ubhaar-Vyapaar.{% endblock %}
+{% block social_description %}Discover manufacturing capacity, use eligible fixed-price Buy Now listings, or Request Quote for custom terms on Ubhaar-Vyapaar.{% endblock %}
 {% block twitter_title %}Ubhaar-Vyapaar: Find manufacturers with spare capacity for small-batch orders{% endblock %}
-{% block twitter_description %}Discover manufacturing capacity, compare practical details, request quotations and follow order milestones with Ubhaar-Vyapaar.{% endblock %}
+{% block twitter_description %}Discover manufacturing capacity, use eligible fixed-price Buy Now listings, or Request Quote for custom terms on Ubhaar-Vyapaar.{% endblock %}
 {% block structured_data %}
     {% json_ld organization_schema "organization-jsonld" %}
     {% json_ld website_schema "website-jsonld" %}
@@ -19,9 +19,9 @@
     <section class="landing-hero" aria-labelledby="landing-title">
         <div class="container landing-hero-grid">
         <div class="landing-hero-copy">
-                <p class="landing-badge"><span aria-hidden="true"></span>Early-access pilot</p>
+                <p class="landing-badge"><span aria-hidden="true"></span>Marketplace pilot</p>
                 <h1 id="landing-title">Find manufacturers with spare capacity for small&#8209;batch orders</h1>
-                <p class="landing-lede">Browse Indian manufacturing capacity, compare practical details and request a quotation.</p>
+                <p class="landing-lede">Browse Indian manufacturing capacity. Buy Now on eligible fixed-price listings, or Request Quote for custom quantities and terms.</p>
                 <form class="landing-search" method="get" action="{% url 'marketplace' %}" role="search">
                     <label for="landing-query">Search by product or process</label>
                     <div class="landing-search-row">
@@ -29,7 +29,7 @@
                         <button class="button button-primary" type="submit" data-analytics="hero_browse">Search capacity</button>
                     </div>
                 </form>
-                <a class="button button-secondary landing-manufacturer-link" href="{{ manufacturer_cta_url }}" data-analytics="hero_list">I'm a manufacturer</a>
+                <a class="button button-secondary landing-manufacturer-link" href="{{ manufacturer_cta_url }}" data-analytics="hero_list">{% if user.is_authenticated and user.role == "MANUFACTURER" %}List capacity{% elif user.is_authenticated %}For manufacturers{% else %}Register as Manufacturer{% endif %}</a>
             </div>
 
             {% if featured_listings %}
@@ -53,13 +53,13 @@
                             {% if preview_listing.manufacturer.is_publicly_verified %}<span class="landing-preview-verified">Verified profile</span>{% endif %}
                         </div>
                     </article>
-                    <div class="landing-preview-flow"><p>Typical workflow</p><ol aria-label="Request to order workflow"><li>Request quote</li><li>Review terms</li><li>Track order</li></ol></div>
+                    <div class="landing-preview-flow"><p>Choose your route</p><ol aria-label="Buy Now or Request Quote workflow"><li>Buy Now when eligible</li><li>Request Quote for custom terms</li><li>Track your order</li></ol></div>
                 </aside>
                 {% endwith %}
             {% else %}
                 <aside class="landing-preview landing-preview-empty" aria-label="Marketplace preview">
                     <div class="landing-preview-heading"><span>Marketplace preview</span><span class="landing-preview-label">Listings</span></div>
-                    <div class="landing-preview-empty-content"><span class="landing-preview-empty-icon" aria-hidden="true">+</span><h2>Explore manufacturing capacity</h2><p>Listings show practical details such as location, minimum order quantity and production lead time when provided.</p><a href="{% url 'marketplace' %}">Browse capacity</a></div>
+                    <div class="landing-preview-empty-content"><span class="landing-preview-empty-icon" aria-hidden="true">+</span><h2>Explore manufacturing capacity</h2><p>Listings show practical details such as location, minimum order quantity and production lead time when provided.</p><a href="{% url 'marketplace' %}">Browse marketplace</a></div>
                 </aside>
             {% endif %}
         </div>
@@ -69,19 +69,19 @@
         <div class="container landing-facts-grid">
             <div><svg aria-hidden="true" viewBox="0 0 24 24" focusable="false"><path d="M4 7h16M4 12h10M4 17h7"/></svg><strong>MOQ upfront</strong><span>Minimum order quantity, when provided.</span></div>
             <div><svg aria-hidden="true" viewBox="0 0 24 24" focusable="false"><circle cx="12" cy="12" r="8"/><path d="M12 7v5l3 2"/></svg><strong>Lead time</strong><span>Compare stated production days.</span></div>
-            <div><svg aria-hidden="true" viewBox="0 0 24 24" focusable="false"><path d="M4 5h16v11H8l-4 4V5Z"/><path d="M8 9h8M8 12h5"/></svg><strong>Quote first</strong><span>Review terms before accepting a quotation.</span></div>
+                <div><svg aria-hidden="true" viewBox="0 0 24 24" focusable="false"><path d="M4 5h16v11H8l-4 4V5Z"/><path d="M8 9h8M8 12h5"/></svg><strong>Two purchase paths</strong><span>Buy Now on eligible fixed-price listings or Request Quote for custom terms.</span></div>
             <div><svg aria-hidden="true" viewBox="0 0 24 24" focusable="false"><path d="M4 18V6m0 12h16M8 15l3-4 3 2 5-6"/></svg><strong>Order milestones</strong><span>Follow progress after acceptance.</span></div>
         </div>
     </section>
 
     <section class="landing-section landing-how" aria-labelledby="landing-how-title">
         <div class="container">
-            <div class="landing-section-heading"><p class="eyebrow">How it works</p><h2 id="landing-how-title">A clear path from search to order</h2></div>
+            <div class="landing-section-heading"><p class="eyebrow">How it works</p><h2 id="landing-how-title">Two routes from capacity to order</h2></div>
             <ol class="landing-steps">
                 <li><span class="landing-step-number">01</span><h3>Browse capacity</h3><p>Search active listings by product, process or category.</p></li>
                 <li><span class="landing-step-number">02</span><h3>Review fit</h3><p>Compare location, minimum quantity and stated lead time.</p></li>
-                <li><span class="landing-step-number">03</span><h3>Request a quote</h3><p>Share your requirements with a listing owner.</p></li>
-                <li><span class="landing-step-number">04</span><h3>Track the order</h3><p>Follow messages and milestones for a direct purchase or accepted quotation.</p></li>
+                <li><span class="landing-step-number">03</span><h3>Choose Buy Now or Request Quote</h3><p>Confirm a direct purchase where fixed terms are available, or accept a Manufacturer quotation to create an order.</p></li>
+                <li><span class="landing-step-number">04</span><h3>Track the order</h3><p>Follow messages and milestones after an order is created.</p></li>
             </ol>
         </div>
     </section>
@@ -119,7 +119,7 @@
     {% if featured_listings %}
     <section class="landing-section landing-featured" aria-labelledby="featured-title">
         <div class="container">
-            <div class="landing-section-heading landing-heading-row"><div><p class="eyebrow">Current listings</p><h2 id="featured-title">Featured capacity</h2></div><a class="text-link" href="{% url 'marketplace' %}">View all capacity <span aria-hidden="true">→</span></a></div>
+            <div class="landing-section-heading landing-heading-row"><div><p class="eyebrow">Current listings</p><h2 id="featured-title">Featured capacity</h2></div><a class="text-link" href="{% url 'marketplace' %}">Browse marketplace <span aria-hidden="true">→</span></a></div>
             <div class="landing-listing-grid">
                 {% for listing in featured_listings|slice:":3" %}
                 {% listing_image_url listing as featured_image_url %}
@@ -135,7 +135,7 @@
                         <p class="landing-listing-location">{{ listing.manufacturer.city }}{% if listing.manufacturer.state %}, {{ listing.manufacturer.state|state_label }}{% endif %}</p>
                         {% if listing.minimum_quantity or listing.production_days or listing.price_per_unit %}<dl class="landing-listing-facts">{% if listing.price_per_unit %}<div><dt>Price</dt><dd>₹{{ listing.price_per_unit }} / unit</dd></div>{% endif %}{% if listing.minimum_quantity %}<div><dt>MOQ</dt><dd>{{ listing.minimum_quantity }}</dd></div>{% endif %}{% if listing.production_days %}<div><dt>Lead time</dt><dd>{{ listing.production_days }} day{{ listing.production_days|pluralize }}</dd></div>{% endif %}</dl>{% endif %}
                         {% if listing.manufacturer.is_publicly_verified %}<span class="landing-verified">Verified profile</span>{% endif %}
-                        {% if not listing.manufacturer.is_demo %}<a class="landing-quote-link" href="{% url 'listing_detail' listing.pk %}#request-quote">View listing and request a quote <span aria-hidden="true">→</span></a>{% endif %}
+                        {% if not listing.manufacturer.is_demo %}<a class="landing-quote-link" href="{% url 'listing_detail' listing.pk %}">View listing <span aria-hidden="true">→</span></a>{% endif %}
                     </div>
                 </article>
                 {% endfor %}
@@ -148,8 +148,8 @@
         <div class="container">
             <div class="landing-section-heading"><p class="eyebrow">For buyers and manufacturers</p><h2 id="paths-title">One marketplace, two ways to use it</h2></div>
             <div class="landing-path-grid">
-                <article class="landing-path-card"><span class="landing-path-icon" aria-hidden="true"><svg viewBox="0 0 24 24" focusable="false"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m15.5 15.5 5 5M7.5 10.5h6M10.5 7.5v6"/></svg></span><p class="eyebrow">For buyers</p><h3>Find a fit for your next order</h3><ul><li>Browse manufacturing capacity</li><li>Compare MOQ and lead time</li><li>Request quotes and track accepted orders</li></ul><a class="button button-primary" href="{% url 'marketplace' %}">Browse capacity</a></article>
-                <article class="landing-path-card landing-path-manufacturer"><span class="landing-path-icon" aria-hidden="true"><svg viewBox="0 0 24 24" focusable="false"><path d="M3 20V9l6 3V8l6 4V5h6v15H3Z"/><path d="M7 16h2m3 0h2m3 0h2"/></svg></span><p class="eyebrow">For manufacturers</p><h3>Share available capacity</h3><ul><li>List available capacity</li><li>Respond to quote requests</li><li>Manage quotations and accepted orders</li></ul><a class="button button-secondary" href="{{ manufacturer_cta_url }}">I'm a manufacturer</a></article>
+                <article class="landing-path-card"><span class="landing-path-icon" aria-hidden="true"><svg viewBox="0 0 24 24" focusable="false"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m15.5 15.5 5 5M7.5 10.5h6M10.5 7.5v6"/></svg></span><p class="eyebrow">For buyers</p><h3>Find a fit for your next order</h3><ul><li>Browse manufacturing capacity</li><li>Buy Now on eligible fixed-price listings</li><li>Request Quote for custom terms</li></ul><a class="button button-primary" href="{% url 'marketplace' %}">Browse marketplace</a></article>
+                <article class="landing-path-card landing-path-manufacturer"><span class="landing-path-icon" aria-hidden="true"><svg viewBox="0 0 24 24" focusable="false"><path d="M3 20V9l6 3V8l6 4V5h6v15H3Z"/><path d="M7 16h2m3 0h2m3 0h2"/></svg></span><p class="eyebrow">For manufacturers</p><h3>Share available capacity</h3><ul><li>Register and complete your business profile</li><li>Wait for profile verification before listings go public</li><li>Respond to quote requests and manage eligible orders</li></ul><a class="button button-secondary" href="{{ manufacturer_cta_url }}">Register as Manufacturer</a></article>
             </div>
         </div>
     </section>
@@ -178,16 +178,16 @@
 
     <section class="landing-section landing-state" aria-labelledby="state-title">
         <div class="container landing-state-inner">
-            <div class="landing-state-copy"><p class="eyebrow">Available in the pilot</p><h2 id="state-title">Built for real manufacturing workflows, currently in early access</h2><p>Marketplace discovery, fixed-price purchases, quote requests, quotations, order milestones and messaging are available today.</p><ul class="landing-state-notes"><li>Sample listings are shown for illustration.</li><li>Razorpay Test Mode may be enabled for sandbox milestone payments only. No live payment or Manufacturer payout is available; milestone release remains simulated.</li></ul></div>
+            <div class="landing-state-copy"><p class="eyebrow">Ubhaar-Vyapaar pilot</p><h2 id="state-title">Create an account to use the marketplace</h2><p>Browse capacity, use Buy Now on eligible fixed-price listings, or Request Quote for custom terms.</p><ul class="landing-state-notes"><li>Sample listings are illustrative and cannot be purchased or quoted.</li></ul>{% include "marketplace/includes/pilot_payment_notice.html" %}</div>
             <section class="landing-waitlist" id="early-access" aria-labelledby="waitlist-title">
-                <p class="eyebrow">Early-access interest</p><h3 id="waitlist-title">Interested in using Ubhaar-Vyapaar?</h3><p>Share your email and whether you're buying or manufacturing.</p>
+                <p class="eyebrow">Optional pilot updates</p><h3 id="waitlist-title">Stay updated about the pilot</h3><p>You can create an account now. If you prefer, share your email to request occasional pilot updates.</p>
                 <form method="post" action="#early-access" class="styled-form waitlist-form" novalidate data-analytics-event="waitlist_submit">
                     {% csrf_token %}
                     {% if waitlist_form.errors %}<div class="form-error-summary" role="alert" tabindex="-1"><p>Please review the form errors below.</p><ul class="errorlist">{% for error in waitlist_form.non_field_errors %}<li>{{ error }}</li>{% endfor %}{% for field in waitlist_form %}{% if field.name != "website" %}{% for error in field.errors %}<li><a href="#{{ field.id_for_label }}">{{ field.label }}: {{ error }}</a></li>{% endfor %}{% endif %}{% endfor %}</ul></div>{% endif %}
                     {% for field in waitlist_form %}{% if field.name != "website" %}<div class="form-field{% if field.errors %} form-field-error{% endif %}"><label for="{{ field.id_for_label }}">{{ field.label }}</label>{{ field }}{% if field.help_text %}<p id="{{ field.auto_id }}_helptext" class="helptext">{{ field.help_text }}</p>{% endif %}{% if field.errors %}<div id="{{ field.auto_id }}_error" class="field-errors" role="alert"><ul class="errorlist">{% for error in field.errors %}<li>{{ error }}</li>{% endfor %}</ul></div>{% endif %}</div>{% endif %}{% endfor %}
                     <div class="contact-honeypot" aria-hidden="true">{{ waitlist_form.website }}</div>
-                    <p class="waitlist-privacy">We use your email to manage early-access interest. We do not add you to a marketing list automatically. See our <a href="{% url 'privacy_policy' %}">Privacy Policy</a>.</p>
-                    <button class="button button-primary form-submit" type="submit">Join early access</button>
+                    <p class="waitlist-privacy">We use your email for requested pilot updates and do not add you to a marketing list automatically. See our <a href="{% url 'privacy_policy' %}">Privacy Policy</a>.</p>
+                    <button class="button button-primary form-submit" type="submit">Get pilot updates</button>
                 </form>
             </section>
         </div>

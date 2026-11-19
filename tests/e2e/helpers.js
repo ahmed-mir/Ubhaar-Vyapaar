@@ -254,7 +254,7 @@ async function openListing(page, listingTitle) {
 
 async function requestQuote(page, listingTitle, quote) {
   await openListing(page, listingTitle);
-  await page.getByRole("link", { name: /request a quote/i }).click();
+  await page.getByRole("link", { name: /request(?: a)? quote/i }).click();
   await page.locator('[name="quantity"]').fill(String(quote.quantity));
   await page.locator('[name="requirements"]').fill(quote.requirements);
   await page.locator('[name="delivery_location"]').fill(quote.deliveryLocation);

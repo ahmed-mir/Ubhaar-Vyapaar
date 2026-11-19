@@ -5,21 +5,21 @@
 {% block content %}
 <section class="auth-page-shell get-started-layout" aria-labelledby="get-started-title">
     <div class="auth-page-main get-started-main">
-        <p class="eyebrow">Get started</p>
+        <p class="eyebrow">Create account</p>
         <h1 id="get-started-title">Choose your account type</h1>
         <p class="auth-intro">Select the role that fits your work.</p>
 
         <div class="role-choice-grid">
             <article class="role-choice-card">
                 <h2>Buyer</h2>
-                <p>Find manufacturing capacity, request quotes and track orders.</p>
-                <a class="button button-primary" href="{% url 'register' %}">Continue as buyer</a>
+                <p>Browse capacity, use Buy Now on eligible fixed-price listings, or Request Quote for custom terms.</p>
+                <a class="button button-primary" href="{% url 'register' %}">Create Buyer account</a>
             </article>
 
             <article class="role-choice-card">
                 <h2>Manufacturer</h2>
-                <p>List spare capacity, respond to enquiries and manage orders.</p>
-                <a class="button button-primary" href="{% url 'register_manufacturer' %}">Continue as manufacturer</a>
+                <p>Complete your business profile for review, then list capacity and manage quote requests and eligible orders.</p>
+                <a class="button button-primary" href="{% url 'register_manufacturer' %}">Register as Manufacturer</a>
             </article>
         </div>
 

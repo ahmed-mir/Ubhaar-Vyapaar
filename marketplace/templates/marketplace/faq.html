@@ -1,16 +1,16 @@
 {% extends "marketplace/public_content_page.html" %}
 
 {% block title %}FAQ | Ubhaar-Vyapaar{% endblock %}
-{% block meta_description %}Answers about marketplace listings, buyer quote requests, manufacturer accounts, quotations, orders, verification, and payments.{% endblock %}
+{% block meta_description %}Answers about Ubhaar-Vyapaar, Buy Now, Request Quote, Manufacturer verification, Sample listings, and pilot payment status.{% endblock %}
 {% block social_title %}FAQ | Ubhaar-Vyapaar{% endblock %}
-{% block social_description %}Answers about marketplace listings, buyer quote requests, manufacturer accounts, quotations, orders, verification, and payments.{% endblock %}
+{% block social_description %}Answers about Ubhaar-Vyapaar, Buy Now, Request Quote, Manufacturer verification, Sample listings, and pilot payment status.{% endblock %}
 {% block twitter_title %}FAQ | Ubhaar-Vyapaar{% endblock %}
-{% block twitter_description %}Answers about marketplace listings, buyer quote requests, manufacturer accounts, quotations, orders, verification, and payments.{% endblock %}
+{% block twitter_description %}Answers about Ubhaar-Vyapaar, Buy Now, Request Quote, Manufacturer verification, Sample listings, and pilot payment status.{% endblock %}
 
 {% block public_page_class %} public-info-page public-faq-page{% endblock %}
 {% block page_eyebrow %}FAQ{% endblock %}
 {% block page_h1 %}Frequently asked questions{% endblock %}
-{% block page_lead %}Short answers about listings, quotations, orders, and the current platform.{% endblock %}
+{% block page_lead %}Short answers about marketplace journeys, listing status, verification, and the current pilot.{% endblock %}
 
 {% block page_body %}
 <div class="public-content-sections">
@@ -21,15 +21,27 @@
                 {% for item in group.items %}
                 <details>
                     <summary>{{ item.question }}</summary>
+                    {% if item.pilot_payment_notice %}
+                    {% include "marketplace/includes/pilot_payment_notice.html" %}
+                    {% else %}
                     <p>{{ item.answer }}</p>
+                    {% endif %}
                     {% if item.question == "What does Verified mean?" %}
                     <p><a href="{% url 'trust_safety' %}">Read how verification works and what it does not mean</a>.</p>
+                    {% elif item.question == "What is Ubhaar-Vyapaar?" %}
+                    <p><a href="{% url 'about' %}">Learn about the marketplace</a>.</p>
+                    {% elif item.question == "How do Buyers purchase?" or item.question == "What is Buy Now?" or item.question == "What is Request Quote?" %}
+                    <p><a href="{% url 'how_it_works' %}">See the Buyer journey</a>.</p>
+                    {% elif item.question == "What are Sample listings?" %}
+                    <p><a href="{% url 'trust_safety' %}">Read how Sample listings are presented</a>.</p>
                     {% elif item.question == "What can a manufacturer manage?" %}
                     <p><a href="{% url 'for_manufacturers' %}">See the Manufacturer workflow</a>.</p>
                     {% elif item.question == "What happens when a buyer accepts or declines a quotation?" %}
                     <p><a href="{% url 'how_it_works' %}">See the quote-to-order workflow</a>.</p>
                     {% elif item.question == "Does the platform collect a fee?" %}
                     <p><a href="{% url 'pricing_fees' %}">Read the current pricing and fee information</a>.</p>
+                    {% elif item.question == "How can I contact support?" %}
+                    <p><a href="{% url 'contact' %}">Contact support</a>.</p>
                     {% endif %}
                 </details>
                 {% endfor %}
@@ -37,5 +49,5 @@
         </section>
         {% endfor %}
 </div>
-<p class="public-faq-contact">Still have a question? <a href="{% url 'contact' %}">Contact us</a>.</p>
+<p class="public-faq-contact">Still have a question? <a href="{% url 'contact' %}">Contact support</a>.</p>
 {% endblock %}

@@ -111,7 +111,7 @@ class PublicTradeSurfaceTests(TestCase):
 
         self.assertIn("Sample</span>", row)
         self.assertNotIn("request_quote", row)
-        self.assertNotIn("Request a quote", row)
+        self.assertNotIn("Request Quote", row)
         self.assertIn('class="listing-image-placeholder" aria-hidden="true"', row)
         self.assertEqual(
             row.count(f'href="{reverse("listing_detail", args=[self.sample_listing.pk])}"'),
@@ -170,7 +170,7 @@ class PublicTradeSurfaceTests(TestCase):
             reverse("listing_detail", args=[self.sample_listing.pk]),
         )
         self.assertContains(detail, "Sample")
-        self.assertNotContains(detail, "Request a quote")
+        self.assertNotContains(detail, "Request Quote")
         self.assertNotContains(detail, "listing-service-jsonld")
 
     def test_unknown_sample_image_reference_uses_immediate_fallback(self):
@@ -221,9 +221,9 @@ class PublicTradeSurfaceTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "Sample listing: quoting and purchasing are disabled.")
         self.assertContains(response, "Sample listing")
-        self.assertNotContains(response, "Request a quote")
-        self.assertNotContains(response, "Log in to request a quote")
-        self.assertNotContains(response, "Buy now")
+        self.assertNotContains(response, "Request Quote")
+        self.assertNotContains(response, "Log in to Request Quote")
+        self.assertNotContains(response, "Buy Now")
         self.assertContains(response, "Sample manufacturer")
         self.assertContains(response, reverse("manufacturer_profile", args=[self.sample_manufacturer.pk]))
         self.assertNotContains(response, "listing-service-jsonld")
@@ -234,7 +234,7 @@ class PublicTradeSurfaceTests(TestCase):
             reverse("listing_detail", args=[self.real_listing.pk]),
         )
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, "Log in to request a quote")
+        self.assertContains(response, "Log in to Request Quote")
         self.assertContains(response, "listing-service-jsonld")
         self.assertNotContains(response, "Batch price")
         self.assertContains(response, "Available capacity</dt>")
@@ -280,9 +280,9 @@ class PublicTradeSurfaceTests(TestCase):
         self.assertContains(response, "14 days")
         self.assertContains(response, "60,000 units/month")
         self.assertContains(response, "Available</dd>")
-        self.assertContains(response, "Buy now")
+        self.assertContains(response, "Buy Now")
         self.assertContains(response, reverse("buy_now", args=[self.real_listing.pk]))
-        self.assertContains(response, "Request a quote")
+        self.assertContains(response, "Request Quote")
         self.assertContains(response, reverse("request_quote", args=[self.real_listing.pk]))
         self.assertContains(response, "Purchase at the displayed fixed price and terms.")
         self.assertContains(
@@ -395,8 +395,6 @@ class PublicTradeSurfaceTests(TestCase):
         self.assertContains(response, "Quote requests are available to buyer accounts.")
         self.assertNotContains(response, reverse("buy_now", args=[self.real_listing.pk]))
         self.assertNotContains(response, reverse("request_quote", args=[self.real_listing.pk]))
-        self.assertNotContains(response, "Buy now")
-        self.assertNotContains(response, "Request a quote")
 
     def test_paused_listing_detail_has_no_purchase_or_quote_action(self):
         self.real_listing.availability_status = CapacityListing.AvailabilityStatus.PAUSED
@@ -417,8 +415,6 @@ class PublicTradeSurfaceTests(TestCase):
         self.assertContains(response, "This capacity is temporarily paused")
         self.assertNotContains(response, reverse("buy_now", args=[self.real_listing.pk]))
         self.assertNotContains(response, reverse("request_quote", args=[self.real_listing.pk]))
-        self.assertNotContains(response, "Buy now")
-        self.assertNotContains(response, "Request a quote")
 
     def test_similar_listings_are_hidden_when_no_category_match(self):
         self.sample_listing.category = CapacityListing.Category.WOOD

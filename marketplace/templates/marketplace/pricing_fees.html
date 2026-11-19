@@ -1,11 +1,11 @@
 {% extends "marketplace/public_content_page.html" %}
 
 {% block title %}Pricing &amp; Fees | Ubhaar-Vyapaar{% endblock %}
-{% block meta_description %}Understand current listing prices, platform fee behavior, and simulated payment states on Ubhaar-Vyapaar.{% endblock %}
+{% block meta_description %}Understand manufacturer-provided listing prices, current platform fees, and Razorpay Test Mode on Ubhaar-Vyapaar.{% endblock %}
 {% block social_title %}Pricing &amp; Fees | Ubhaar-Vyapaar{% endblock %}
-{% block social_description %}Understand current listing prices, platform fee behavior, and simulated payment states on Ubhaar-Vyapaar.{% endblock %}
+{% block social_description %}Understand manufacturer-provided listing prices, current platform fees, and Razorpay Test Mode on Ubhaar-Vyapaar.{% endblock %}
 {% block twitter_title %}Pricing &amp; Fees | Ubhaar-Vyapaar{% endblock %}
-{% block twitter_description %}Understand current listing prices, platform fee behavior, and simulated payment states on Ubhaar-Vyapaar.{% endblock %}
+{% block twitter_description %}Understand manufacturer-provided listing prices, current platform fees, and Razorpay Test Mode on Ubhaar-Vyapaar.{% endblock %}
 
 {% block public_page_class %} public-info-page pricing-information-page{% endblock %}
 {% block page_eyebrow %}Pricing &amp; Fees{% endblock %}
@@ -25,7 +25,7 @@
         </div>
         <div class="pricing-fact-row">
             <h2>Payments</h2>
-            <p>Razorpay Test Mode may be enabled for sandbox milestone payments only. No live payments are available. Manufacturer payout and milestone release remain simulated and do not mean that funds were settled or released.</p>
+            {% include "marketplace/includes/pilot_payment_notice.html" %}
         </div>
     </section>
 
@@ -34,7 +34,7 @@
             <h2>Questions about current pricing?</h2>
             <p>Use the Contact page for questions about the platform. For listing or quotation terms, speak with the other party before accepting.</p>
         </div>
-        <a class="button button-secondary" href="{% url 'contact' %}">Contact Ubhaar-Vyapaar</a>
+        <a class="button button-secondary" href="{% url 'contact' %}">Contact support</a>
     </aside>
 </div>
 {% endblock %}

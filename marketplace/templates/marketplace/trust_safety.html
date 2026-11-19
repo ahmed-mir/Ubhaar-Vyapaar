@@ -74,9 +74,10 @@
     </section>
 
     <aside class="trust-pilot-disclosure" aria-labelledby="trust-pilot-title">
-        <p class="public-section-eyebrow">Early-access pilot</p>
+        <p class="public-section-eyebrow">Current pilot</p>
         <h2 id="trust-pilot-title">Sample listings and payment states</h2>
-        <p>Sample listings are for illustration and do not accept quote requests or purchases, but Buyers may save them as Samples. Sample manufacturers are not shown with the Verified badge, and sample ratings and reviews are hidden. Razorpay Test Mode may be enabled for sandbox milestone payments only. No live payment or Manufacturer payout is available; milestone release remains simulated.</p>
+        <p>Sample listings are for illustration and cannot be purchased or quoted, but Buyers may save them as Samples. Sample manufacturers are not shown with the Verified badge, and sample ratings and reviews are hidden.</p>
+        {% include "marketplace/includes/pilot_payment_notice.html" %}
     </aside>
 </div>
 {% endblock %}

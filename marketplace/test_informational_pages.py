@@ -153,16 +153,22 @@ class InformationalPageTests(TestCase):
         response = self.client.get(reverse("faq"))
         for label in (
             "Getting started",
+            "Buyer purchase paths",
             "Quote requests",
             "Orders and milestones",
             "Verification and payments",
         ):
             self.assertContains(response, label)
-        self.assertEqual(response.content.count(b"<details>"), 10)
-        self.assertContains(response, "Sample listings are illustrative")
+        self.assertEqual(response.content.count(b"<details>"), 16)
+        self.assertContains(response, "Sample listings demonstrate the marketplace")
+        self.assertContains(response, "What is Buy Now?")
+        self.assertContains(response, "What is Request Quote?")
+        self.assertContains(response, "Is Ubhaar-Vyapaar currently using escrow?")
+        self.assertContains(response, "How can I contact support?")
         self.assertContains(response, "Razorpay Test Mode only")
-        self.assertContains(response, "not live payments")
+        self.assertContains(response, "No live payments are available")
         self.assertContains(response, "payout and milestone release remain simulated")
+        self.assertEqual(response.content.count(b"class=\"pilot-payment-notice\""), 1)
         self.assertContains(response, "does not calculate or collect platform fees")
         self.assertContains(response, reverse("trust_safety"))
         self.assertContains(response, reverse("for_manufacturers"))
@@ -170,6 +176,32 @@ class InformationalPageTests(TestCase):
         self.assertContains(response, reverse("pricing_fees"))
         self.assertContains(response, reverse("contact"))
         self.assertNotContains(response, "FAQPage")
+
+    def test_public_journeys_and_account_destinations_match_available_workflows(self):
+        home = self.client.get(reverse("home"))
+        self.assertContains(home, "Buy Now on eligible fixed-price listings")
+        self.assertContains(home, "Request Quote for custom quantities and terms")
+        self.assertContains(home, "Create an account to use the marketplace")
+        self.assertContains(home, "Get pilot updates")
+        self.assertNotContains(home, "Join early access")
+        self.assertContains(home, f'href="{reverse("marketplace")}">Browse marketplace')
+
+        buyer_journey = self.client.get(reverse("how_it_works"))
+        self.assertContains(buyer_journey, "Choose Buy Now or Request Quote")
+        self.assertContains(buyer_journey, "accepting it creates the order")
+        self.assertContains(buyer_journey, "Track the order and milestones")
+
+        account_choices = self.client.get(reverse("get_started"))
+        self.assertContains(account_choices, f'href="{reverse("register")}"')
+        self.assertContains(account_choices, "Create Buyer account")
+        self.assertContains(account_choices, f'href="{reverse("register_manufacturer")}"')
+        self.assertContains(account_choices, "Register as Manufacturer")
+
+        buyer_registration = self.client.get(reverse("register"))
+        self.assertContains(buyer_registration, "Request Quote for custom terms")
+        manufacturer_registration = self.client.get(reverse("register_manufacturer"))
+        self.assertContains(manufacturer_registration, "begins under review")
+        self.assertContains(manufacturer_registration, "Complete your business profile for review")
 
     def test_contact_places_form_before_secondary_guidance_and_hides_missing_details(self):
         response = self.client.get(reverse("contact"))
@@ -209,9 +241,9 @@ class InformationalPageTests(TestCase):
 
         about = self.client.get(reverse("about"))
         self.assertContains(about, "A marketplace for manufacturing capacity")
-        self.assertContains(about, "early-access pilot")
-        self.assertContains(about, "Manufacturers publish capacity listings")
-        self.assertContains(about, "Accepting a quotation creates an order")
+        self.assertContains(about, "A marketplace in pilot")
+        self.assertContains(about, "Manufacturers describe capacity they can offer")
+        self.assertContains(about, "Buy Now on eligible fixed-price listings")
         self.assertNotContains(about, "escrow")
         self.assertNotContains(about, "Our team")
 

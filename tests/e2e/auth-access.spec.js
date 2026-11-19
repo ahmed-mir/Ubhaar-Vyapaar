@@ -63,17 +63,17 @@ test.describe("production auth and access smoke", () => {
       await page.goto("/accounts/get-started/");
 
       await expect(page.getByRole("heading", { name: /choose your account type/i })).toBeVisible();
-      await expect(page.getByRole("link", { name: /continue as buyer/i })).toHaveAttribute(
+      await expect(page.getByRole("link", { name: /create buyer account/i })).toHaveAttribute(
         "href",
         "/accounts/register/"
       );
-      await expect(page.getByRole("link", { name: /continue as manufacturer/i })).toHaveAttribute(
+      await expect(page.getByRole("link", { name: /register as manufacturer/i })).toHaveAttribute(
         "href",
         "/accounts/register/manufacturer/"
       );
       expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(width);
 
-      const buyerLink = page.getByRole("link", { name: /continue as buyer/i });
+      const buyerLink = page.getByRole("link", { name: /create buyer account/i });
       await buyerLink.focus();
       await page.keyboard.press("Enter");
       await expect(page).toHaveURL(/\/accounts\/register\/$/);

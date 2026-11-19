@@ -33,9 +33,9 @@ class WaitlistFormTests(TestCase):
         self.assertNotContains(response, 'name="marketing_consent"')
         self.assertNotContains(response, 'name="newsletter"')
         self.assertContains(response, 'data-analytics-event="waitlist_submit"')
-        self.assertContains(response, "Interested in using Ubhaar-Vyapaar?")
-        self.assertContains(response, "Join early access")
-        self.assertLess(html.index("Available in the pilot"), html.index('id="early-access"'))
+        self.assertContains(response, "Stay updated about the pilot")
+        self.assertContains(response, "Get pilot updates")
+        self.assertContains(response, "You can create an account now.")
         for misleading_claim in ("limited spots", "invite only", "join thousands", "launching soon", "guaranteed access"):
             self.assertNotIn(misleading_claim, html.lower())
 
@@ -160,9 +160,9 @@ class WaitlistSubmissionTests(TestCase):
 class WaitlistPrivacyTests(TestCase):
     def test_privacy_page_covers_waitlist_use_and_no_retention_period(self):
         response = self.client.get(reverse("privacy_policy"))
-        self.assertContains(response, "Early-access interest")
+        self.assertContains(response, "Pilot update request")
         self.assertContains(response, "not added to a marketing list automatically")
-        self.assertContains(response, "Early-access interest records may be retained")
+        self.assertContains(response, "Pilot update request records may be retained")
         self.assertContains(response, "does not set a specific retention period")
 
     def test_waitlist_model_has_no_ip_user_agent_or_marketing_metadata(self):

@@ -83,7 +83,7 @@ print(json.dumps({"suffix": suffix, "maker": user.username, "eligible": eligible
       await expect(section).toBeVisible();
       await expect(section.getByRole("link", { name: fixture.eligible, exact: true })).toBeVisible();
       await expect(section).not.toContainText(fixture.unfeatured);
-      await expect(section.getByRole("link", { name: "View all capacity" })).toBeVisible();
+      await expect(section.getByRole("link", { name: "Browse marketplace" })).toBeVisible();
       expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(width);
     }
   } finally {

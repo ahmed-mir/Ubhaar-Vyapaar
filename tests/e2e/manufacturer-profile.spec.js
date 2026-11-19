@@ -124,7 +124,7 @@ print(json.dumps({
       await page.goto(fixture.emptyProfilePath);
       await expect(page.getByRole("heading", { level: 1, name: "Makers" })).toBeVisible();
       await expect(page.getByText("No manufacturing capacity is currently listed.")).toBeVisible();
-      await expect(page.getByRole("link", { name: "Browse marketplace" })).toHaveAttribute("href", fixture.marketplacePath);
+      await expect(page.locator(".manufacturer-empty-state").getByRole("link", { name: "Browse marketplace" })).toHaveAttribute("href", fixture.marketplacePath);
       expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(320);
     } finally {
       runLocalDjango(`

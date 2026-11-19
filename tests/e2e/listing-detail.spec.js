@@ -114,8 +114,8 @@ print(json.dumps({
       await expect(page.locator(".detail-commercial-panel")).toContainText("8 days");
       await expect(page.locator(".detail-commercial-panel")).toContainText("1,000 units/month");
       await expect(page.locator(".detail-commercial-panel")).toContainText("Available");
-      await expect(page.getByRole("link", { name: "Buy now" })).toBeVisible();
-      await expect(page.getByRole("link", { name: "Request a quote" })).toBeVisible();
+      await expect(page.getByRole("link", { name: "Buy Now" })).toBeVisible();
+      await expect(page.getByRole("link", { name: "Request Quote" })).toBeVisible();
       await expect(page.getByText("Purchase at the displayed fixed price and terms.")).toBeVisible();
       await expect(page.locator(".description-content script")).toHaveCount(0);
       await expect(page.locator(".description-content")).toContainText("CNC machining for custom aluminium components.");
@@ -135,13 +135,13 @@ print(json.dumps({
       await expect(page.getByText("Sample listing", { exact: true })).toBeVisible();
       await expect(page.getByText("Sample listing: quoting and purchasing are disabled.")).toBeVisible();
       await expect(page.getByRole("button", { name: "Save listing" })).toBeVisible();
-      await expect(page.getByRole("link", { name: "Buy now" })).toHaveCount(0);
-      await expect(page.getByRole("link", { name: "Request a quote" })).toHaveCount(0);
+      await expect(page.getByRole("link", { name: "Buy Now" })).toHaveCount(0);
+      await expect(page.getByRole("link", { name: "Request Quote" })).toHaveCount(0);
 
       await page.goto(fixture.pausedPath);
       await expect(page.getByText("This capacity is temporarily paused")).toBeVisible();
-      await expect(page.getByRole("link", { name: "Buy now" })).toHaveCount(0);
-      await expect(page.getByRole("link", { name: "Request a quote" })).toHaveCount(0);
+      await expect(page.getByRole("link", { name: "Buy Now" })).toHaveCount(0);
+      await expect(page.getByRole("link", { name: "Request Quote" })).toHaveCount(0);
 
       const screenshotDir = path.join("test-results", "phase4-listing-detail");
       fs.mkdirSync(screenshotDir, { recursive: true });
@@ -153,8 +153,8 @@ print(json.dumps({
           await page.evaluate(() => document.documentElement.scrollWidth),
           `Listing detail should fit at ${width}px`
         ).toBeLessThanOrEqual(width);
-        await expect(page.getByRole("link", { name: "Buy now" })).toBeVisible();
-        await expect(page.getByRole("link", { name: "Request a quote" })).toBeVisible();
+        await expect(page.getByRole("link", { name: "Buy Now" })).toBeVisible();
+        await expect(page.getByRole("link", { name: "Request Quote" })).toBeVisible();
         const media = await page.locator(".listing-sheet-media").boundingBox();
         expect(media.width).toBeLessThanOrEqual(width);
         const placeholder = page.locator(".listing-sheet-media .detail-image-placeholder");

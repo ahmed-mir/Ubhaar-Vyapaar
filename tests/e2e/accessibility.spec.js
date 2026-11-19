@@ -70,11 +70,11 @@ test.describe("accessibility and keyboard UX", () => {
     await expect(page.getByRole("heading", { level: 2, name: "Verification and payments" })).toBeVisible();
     await expect(page.getByRole("navigation", { name: /on this page/i })).toHaveCount(0);
 
-    const paymentSummary = page.getByText("Does Ubhaar-Vyapaar process payments?", { exact: true });
+    const paymentSummary = page.getByText("Are payments real?", { exact: true });
     await paymentSummary.focus();
     await page.keyboard.press("Enter");
     await expect(paymentSummary.locator("xpath=.." )).toHaveAttribute("open", "");
-    await expect(page.getByText(/Razorpay Test Mode only/i)).toBeVisible();
+    await expect(page.getByText(/Razorpay Test Mode/i)).toBeVisible();
     await page.keyboard.press("Space");
     await expect(paymentSummary.locator("xpath=.." )).not.toHaveAttribute("open", "");
     expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(360);

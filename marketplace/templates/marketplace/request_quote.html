@@ -1,8 +1,8 @@
 {% extends "marketplace/base.html" %}
 {% load accessibility currency %}
 
-{% block title %}Request a quote | Ubhaar-Vyapaar{% endblock %}
-{% block meta_description %}Request a quote for {{ listing.title }} from {{ listing.manufacturer.business_name }} on Ubhaar-Vyapaar.{% endblock %}
+{% block title %}Request Quote | Ubhaar-Vyapaar{% endblock %}
+{% block meta_description %}Request Quote for {{ listing.title }} from {{ listing.manufacturer.business_name }} on Ubhaar-Vyapaar.{% endblock %}
 {% block body_attributes %}data-analytics-page-event="quote_request_started"{% endblock %}
 
 {% block content %}
@@ -14,8 +14,8 @@
         <div class="quote-workflow-layout">
             <section class="quote-workflow-main" aria-labelledby="quote-title">
                 <header class="quote-workflow-heading">
-                    <p class="quote-workflow-eyebrow">Quote request</p>
-                    <h1 id="quote-title">Request a quote</h1>
+                    <p class="quote-workflow-eyebrow">Request Quote</p>
+                    <h1 id="quote-title">Request Quote</h1>
                     <p class="quote-request-identity">For <strong>{{ listing.title }}</strong> · {{ listing.manufacturer.business_name }}</p>
                     <p>Share your quantity, requirements and delivery location. A request does not place an order.</p>
                 </header>
@@ -61,7 +61,7 @@
                     {% if form.non_field_errors %}
                         <div class="form-error-summary" role="alert" tabindex="-1">{{ form.non_field_errors }}</div>
                     {% endif %}
-                    <button class="button button-primary form-submit" type="submit">Request quote</button>
+                    <button class="button button-primary form-submit" type="submit">Request Quote</button>
                 </form>
             </section>
 

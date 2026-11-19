@@ -1,7 +1,7 @@
 const { test, expect } = require("@playwright/test");
 const { dismissCookieBanner } = require("./helpers");
 
-test.describe("early-access waitlist", () => {
+test.describe("optional pilot updates", () => {
   test("fits at 360px, supports keyboard submission, and shows neutral success", async ({ page }) => {
     await page.setViewportSize({ width: 360, height: 900 });
     await page.goto("/");
@@ -11,7 +11,7 @@ test.describe("early-access waitlist", () => {
     const email = page.getByLabel("Email");
     const role = page.getByLabel("I am a...");
     const note = page.getByLabel("Optional note");
-    const submit = page.getByRole("button", { name: "Join early access" });
+    const submit = page.getByRole("button", { name: "Get pilot updates" });
 
     await expect(form).toBeVisible();
     await expect(email).toBeVisible();
@@ -27,7 +27,7 @@ test.describe("early-access waitlist", () => {
     await page.keyboard.press("ArrowDown");
     await page.keyboard.press("Tab");
     await expect(note).toBeFocused();
-    await page.keyboard.type("Interested in early access.");
+    await page.keyboard.type("Interested in pilot updates.");
     await page.keyboard.press("Tab");
     await expect(page.locator("#early-access").getByRole("link", { name: "Privacy Policy" })).toBeFocused();
     await page.keyboard.press("Tab");
@@ -45,7 +45,7 @@ test.describe("early-access waitlist", () => {
     await dismissCookieBanner(page);
     await page.getByLabel("Email").fill("not-an-email");
     await page.getByLabel("I am a...").selectOption("BUYER");
-    await page.getByRole("button", { name: "Join early access" }).click();
+    await page.getByRole("button", { name: "Get pilot updates" }).click();
 
     await expect(page.locator("#id_email_error")).toBeVisible();
     await expect(page.locator("#id_email")).toHaveAttribute("aria-invalid", "true");

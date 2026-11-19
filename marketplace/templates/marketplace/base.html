@@ -36,7 +36,7 @@
     >
 
     <meta property="og:title" content="{% block social_title %}Ubhaar-Vyapaar | Manufacturing Marketplace{% endblock %}">
-    <meta property="og:description" content="{% block social_description %}Connect with manufacturing capacity, compare listings, and request quotations on Ubhaar-Vyapaar.{% endblock %}">
+    <meta property="og:description" content="{% block social_description %}Browse manufacturing capacity, use eligible fixed-price Buy Now listings, or Request Quote for custom terms on Ubhaar-Vyapaar.{% endblock %}">
     <meta property="og:url" content="{{ canonical_url }}">
     <meta property="og:type" content="website">
     <meta property="og:image" content="{% block social_image %}{{ site_origin }}{% static 'marketplace/images/brand/social-share.png' %}{% endblock %}">
@@ -46,7 +46,7 @@
     {% endblock %}
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="{% block twitter_title %}Ubhaar-Vyapaar | Manufacturing Marketplace{% endblock %}">
-    <meta name="twitter:description" content="{% block twitter_description %}Connect with manufacturing capacity, compare listings, and request quotations on Ubhaar-Vyapaar.{% endblock %}">
+    <meta name="twitter:description" content="{% block twitter_description %}Browse manufacturing capacity, use eligible fixed-price Buy Now listings, or Request Quote for custom terms on Ubhaar-Vyapaar.{% endblock %}">
     <meta name="twitter:image" content="{% block twitter_image %}{{ site_origin }}{% static 'marketplace/images/brand/social-share.png' %}{% endblock %}">
     {% block structured_data %}{% endblock %}
 
@@ -145,7 +145,7 @@
                                 <a href="{% url 'how_it_works' %}" {% if current_url == 'how_it_works' %}aria-current="page"{% endif %}>How it works</a>
                                 <a href="{% url 'for_manufacturers' %}" {% if current_url == 'for_manufacturers' %}aria-current="page"{% endif %}>For manufacturers</a>
                             {% endif %}
-                            <a href="{% url 'contact' %}" {% if current_url == 'contact' %}aria-current="page"{% endif %}>Contact</a>
+                            <a href="{% url 'contact' %}" {% if current_url == 'contact' %}aria-current="page"{% endif %}>Contact support</a>
                             <a href="{% url 'pricing_fees' %}" {% if current_url == 'pricing_fees' %}aria-current="page"{% endif %}>Pricing &amp; Fees</a>
                             <a href="{% url 'faq' %}" {% if current_url == 'faq' %}aria-current="page"{% endif %}>FAQ</a>
                             <a href="{% url 'help_page' %}" {% if current_url == 'help_page' %}aria-current="page"{% endif %}>Help</a>
@@ -272,7 +272,7 @@
                         </a>
 
                         <a class="button button-primary nav-cta{% if current_url == 'get_started' %} nav-link-active{% endif %}" href="{% url 'get_started' %}">
-                            Get started
+                            Create account
                         </a>
 
                     {% endif %}
@@ -350,7 +350,7 @@
 
                 <div>
                     <h2>Marketplace</h2>
-                    <a href="{% url 'marketplace' %}">Browse capacity</a>
+                    <a href="{% url 'marketplace' %}">Browse marketplace</a>
                     <a href="{% url 'faq' %}">FAQ</a>
                     <a href="{% url 'pricing_fees' %}">Pricing &amp; Fees</a>
                     {% if user.is_authenticated and user.role == "BUYER" %}
@@ -365,7 +365,7 @@
 
                 <div>
                     <h2>Support</h2>
-                    <a href="{% url 'contact' %}">Contact</a>
+                    <a href="{% url 'contact' %}">Contact support</a>
                     <a href="{% url 'trust_safety' %}">Trust &amp; Safety</a>
                     <a href="{% url 'grievance_redressal' %}">Grievance Redressal</a>
                     {% if legal_contact_email %}

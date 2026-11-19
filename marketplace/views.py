@@ -393,24 +393,34 @@ def faq(request):
             "id": "faq-getting-started",
             "title": "Getting started",
             "items": [
+                {"question": "What is Ubhaar-Vyapaar?", "answer": "Ubhaar-Vyapaar is a B2B marketplace where Buyers can discover manufacturing capacity and Manufacturers can describe available capacity."},
                 {"question": "How do I find manufacturing capacity?", "answer": "Browse active listings or search and filter by the details available in the marketplace."},
+                {"question": "What are Sample listings?", "answer": "Sample listings demonstrate the marketplace. They are clearly labeled, cannot be purchased or quoted, and may be saved as Samples."},
                 {"question": "Can a manufacturer pause a listing?", "answer": "Yes. Paused listings may remain visible, are labeled as paused, and are not prioritized in default discovery."},
-                {"question": "Can I change my password?", "answer": "Yes. Signed-in users can change their password from account settings."},
+            ],
+        },
+        {
+            "id": "faq-buyer-routes",
+            "title": "Buyer purchase paths",
+            "items": [
+                {"question": "How do Buyers purchase?", "answer": "Buy Now is available on eligible fixed-price listings. For custom quantities or terms, submit a Request Quote, review the Manufacturer's quotation, and accept it to create an order."},
+                {"question": "What is Buy Now?", "answer": "Buy Now lets a Buyer confirm the displayed fixed-price terms on an eligible listing and create an order directly. It is not available on every listing."},
+                {"question": "What is Request Quote?", "answer": "Request Quote sends a Buyer's quantity, requirements, and delivery location to a Manufacturer, who can respond with a quotation."},
             ],
         },
         {
             "id": "faq-quotations",
             "title": "Quote requests",
             "items": [
-                {"question": "How do I request a quotation?", "answer": "Open a listing that accepts requests and provide the requested quantity, requirements, and delivery location. Sample listings are illustrative and do not accept quote requests."},
-                {"question": "What can a manufacturer manage?", "answer": "A manufacturer account can create and edit capacity listings, respond to quote requests with quotations, and manage accepted orders and milestones."},
+                {"question": "How do I request a quotation?", "answer": "Open an eligible listing and select Request Quote. Provide the requested quantity, requirements, and delivery location."},
+                {"question": "What can a manufacturer manage?", "answer": "A Manufacturer account can create and edit capacity listings, respond to Buyer quote requests with quotations, and manage orders from accepted quotations or eligible direct purchases, including milestones."},
             ],
         },
         {
             "id": "faq-orders",
             "title": "Orders and milestones",
             "items": [
-                {"question": "What happens when a buyer accepts or declines a quotation?", "answer": "A buyer can accept or decline a quotation. Acceptance creates an order with the accepted terms, messages, and production milestones."},
+                {"question": "What happens when a buyer accepts or declines a quotation?", "answer": "The Buyer may accept or decline. Accepting creates an order with the accepted terms, messages, and production milestones; declining does not create an order."},
                 {"question": "How do order messages, milestones, and reviews work?", "answer": "Order participants can exchange messages and update production milestones. A buyer can leave a review after an order is completed, subject to the existing review rules."},
             ],
         },
@@ -419,8 +429,10 @@ def faq(request):
             "title": "Verification and payments",
             "items": [
                 {"question": "What does Verified mean?", "answer": "The Verified badge appears only on eligible non-Sample manufacturer profiles when the profile's existing verification flag is approved. KYC status by itself does not display the badge. This status is not a product or transaction guarantee."},
-                {"question": "Does Ubhaar-Vyapaar process payments?", "answer": "When enabled, milestone checkout uses Razorpay Test Mode only. Test transactions are not live payments. Manufacturer payout and milestone release remain simulated; the platform does not provide escrow or settlement."},
+                {"question": "Are payments real?", "pilot_payment_notice": True},
+                {"question": "Is Ubhaar-Vyapaar currently using escrow?", "answer": "No. The platform does not provide live escrow, settlement, or Manufacturer payout. Milestone release remains simulated."},
                 {"question": "Does the platform collect a fee?", "answer": "The current application does not calculate or collect platform fees. Any listing or quotation prices are part of the Buyer–Manufacturer commercial discussion."},
+                {"question": "How can I contact support?", "answer": "Use the Contact page for platform questions or concerns."},
             ],
         },
     ]
@@ -1056,8 +1068,8 @@ MARKETPLACE_QUERY_PARAMS = {
 
 LANDING_FAQ_ITEMS = [
     {
-        "question": "How do I find capacity?",
-        "answer": "Browse the marketplace or use search and filters to find active listings that match your needs.",
+        "question": "What is Ubhaar-Vyapaar?",
+        "answer": "A B2B marketplace for discovering manufacturing capacity and starting a Buyer–Manufacturer commercial conversation.",
     },
     {
         "question": "What does Verified mean?",
@@ -1068,16 +1080,16 @@ LANDING_FAQ_ITEMS = [
         "answer": "Yes. Paused listings remain available to their owner for management but are not prioritised in default discovery.",
     },
     {
-        "question": "How do I request a quote?",
-        "answer": "Open a listing that accepts requests and submit your quantity, requirements, and delivery location. Sample listings do not accept quote requests.",
+        "question": "What is Buy Now?",
+        "answer": "Buy Now confirms displayed fixed-price terms on eligible listings. Other listings may support Request Quote for custom terms.",
     },
     {
-        "question": "What happens when a quotation is accepted?",
-        "answer": "Accepting a quotation creates an order with the agreed terms, order messages, and production milestones.",
+        "question": "What is Request Quote?",
+        "answer": "Send your quantity, requirements, and delivery location to the Manufacturer. Accepting the Manufacturer's quotation creates an order.",
     },
     {
-        "question": "Does the platform process payments or escrow?",
-        "answer": "When enabled, milestone checkout uses Razorpay Test Mode only; test transactions are not live payments. Manufacturer payout and release remain simulated, and the platform does not provide escrow or settlement.",
+        "question": "Are Sample listings transactional?",
+        "answer": "No. Sample listings are for illustration and cannot be purchased or quoted. Buyers may save them while keeping their Sample label.",
     },
 ]
 
@@ -1099,7 +1111,7 @@ def home(request):
         if (request.POST.get("website") or "").strip():
             messages.success(
                 request,
-                "Thanks — your interest has been recorded. We’ll use your email only in relation to early access.",
+                "Thanks — your interest has been recorded. We’ll use your email for the pilot updates you requested.",
             )
             return redirect(success_url)
 
@@ -1128,7 +1140,7 @@ def home(request):
                 _record_waitlist_submission(request)
                 messages.success(
                     request,
-                    "Thanks — your interest has been recorded. We’ll use your email only in relation to early access.",
+                    "Thanks — your interest has been recorded. We’ll use your email for the pilot updates you requested.",
                 )
                 return redirect(success_url)
 

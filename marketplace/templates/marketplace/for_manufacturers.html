@@ -10,7 +10,7 @@
 {% block public_page_class %} manufacturer-education-page{% endblock %}
 {% block page_eyebrow %}For manufacturers{% endblock %}
 {% block page_h1 %}List capacity and manage quote requests{% endblock %}
-{% block page_lead %}Describe what you can manufacture, respond to buyer requests with quotations, and follow accepted orders through milestones and messages.{% endblock %}
+{% block page_lead %}Complete your business profile for review, then describe available capacity, respond to Buyer quote requests, and manage eligible orders.{% endblock %}
 
 {% block page_body %}
     <div class="manufacturer-education">
@@ -21,7 +21,7 @@
                 <li><strong>List spare capacity</strong><span>Describe your process, materials, location, and availability.</span></li>
                 <li><strong>Set practical terms upfront</strong><span>Show MOQ, price, lead time, and capacity where available.</span></li>
                 <li><strong>Respond with a quotation</strong><span>Review buyer requirements and send your price and production time.</span></li>
-                <li><strong>Follow accepted orders</strong><span>Update milestones and keep order-specific communication together.</span></li>
+                <li><strong>Manage orders</strong><span>Respond to eligible direct purchases and use milestones and order messages to share progress.</span></li>
             </ul>
         </section>
 
@@ -29,10 +29,11 @@
             <p class="workflow-section-label">Getting started</p>
             <h2 id="manufacturer-start-title">Set up your workspace, then respond</h2>
             <ol class="workflow-steps workflow-steps--compact">
-                <li><span class="workflow-step-number" aria-hidden="true">01</span><div><h3>Create a manufacturer account</h3><p>Enter your account and business details in the existing registration flow.</p></div></li>
-                <li><span class="workflow-step-number" aria-hidden="true">02</span><div><h3>Complete your profile and add capacity</h3><p>Use the listing form to describe the products or services you can provide.</p></div></li>
-                <li><span class="workflow-step-number" aria-hidden="true">03</span><div><h3>Review quote requests</h3><p>Check requested quantities, requirements, and delivery locations before quoting.</p></div></li>
-                <li><span class="workflow-step-number" aria-hidden="true">04</span><div><h3>Quote, then manage accepted orders</h3><p>Send your terms; if a buyer accepts, use the order milestones and message thread to follow work.</p></div></li>
+                <li><span class="workflow-step-number" aria-hidden="true">01</span><div><h3>Register and complete your business profile</h3><p>Enter your account and business details in the existing registration flow.</p></div></li>
+                <li><span class="workflow-step-number" aria-hidden="true">02</span><div><h3>Wait for business profile review</h3><p>Listings become public only after profile verification.</p></div></li>
+                <li><span class="workflow-step-number" aria-hidden="true">03</span><div><h3>List available capacity</h3><p>Use the listing form to describe products or services you can provide.</p></div></li>
+                <li><span class="workflow-step-number" aria-hidden="true">04</span><div><h3>Respond to requests and eligible orders</h3><p>Review Buyer requirements before sending a quotation, and manage orders from eligible direct purchases.</p></div></li>
+                <li><span class="workflow-step-number" aria-hidden="true">05</span><div><h3>Update order milestones</h3><p>Use milestone updates and order messages to share progress.</p></div></li>
             </ol>
         </section>
 
@@ -55,11 +56,12 @@
 
         <section class="workflow-pilot-section" aria-labelledby="manufacturer-pilot-title">
             <div>
-                <p class="workflow-section-label">Early-access pilot</p>
+                <p class="workflow-section-label">Current pilot</p>
                 <h2 id="manufacturer-pilot-title">What to expect from the pilot</h2>
-                <p>Sample listings are included for illustration and do not accept quote requests or purchases. Razorpay Test Mode may be enabled for sandbox milestone payments only. Manufacturer payout and release remain simulated; the platform does not provide escrow or settlement.</p>
+                <p>Sample listings are for illustration and cannot be purchased or quoted.</p>
+                {% include "marketplace/includes/pilot_payment_notice.html" %}
             </div>
-            <a class="button button-primary" href="{% url 'register_manufacturer' %}">Get started as a manufacturer</a>
+            <a class="button button-primary" href="{% url 'register_manufacturer' %}">Register as Manufacturer</a>
         </section>
     </div>
 {% endblock %}

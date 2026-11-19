@@ -10,26 +10,25 @@
 {% block public_page_class %} public-info-page about-product-page{% endblock %}
 {% block page_eyebrow %}About{% endblock %}
 {% block page_h1 %}A marketplace for manufacturing capacity{% endblock %}
-{% block page_lead %}Ubhaar-Vyapaar gives manufacturers a place to describe available capacity and gives Buyers a place to compare listing details and request quotations.{% endblock %}
+{% block page_lead %}Ubhaar-Vyapaar connects Buyers looking for small-batch manufacturing with Manufacturers describing the capacity they can offer.{% endblock %}
 
 {% block page_body %}
 <div class="about-product-content">
     <section class="about-product-section about-product-section--why" aria-labelledby="about-why-title">
         <p class="public-section-eyebrow">Why it exists</p>
         <h2 id="about-why-title">Start with practical manufacturing details</h2>
-        <p>Buyers looking for production capacity need to understand details such as process, minimum order quantity, location, price, and lead time. Manufacturers may have capacity they can describe to prospective Buyers. The marketplace brings listing information and quotation requests into one place.</p>
+        <p>Buyers looking for production capacity need practical information such as process, minimum order quantity, location, price, and lead time. The marketplace brings those listing details together so Buyers can assess available manufacturing options.</p>
     </section>
 
     <section class="about-product-section" aria-labelledby="about-platform-title">
         <p class="public-section-eyebrow">What the platform does</p>
-        <h2 id="about-platform-title">A place to discover, quote, and follow orders</h2>
+        <h2 id="about-platform-title">Discover capacity and start a commercial conversation</h2>
         <ul class="about-capability-list">
-            <li>Manufacturers publish capacity listings with available practical details.</li>
-            <li>Buyers browse listings and send quote requests.</li>
-            <li>Manufacturers respond with quotations for Buyers to review.</li>
-            <li>Accepting a quotation creates an order with milestones and order messages.</li>
+            <li>Manufacturers describe capacity they can offer.</li>
+            <li>Buyers can choose Buy Now on eligible fixed-price listings or Request Quote for custom terms.</li>
+            <li>Orders, messages, and production milestones stay connected in the marketplace.</li>
         </ul>
-        <a class="text-link" href="{% url 'how_it_works' %}">See how the workflow works</a>
+        <a class="text-link" href="{% url 'how_it_works' %}">See the Buyer and Manufacturer journeys</a>
     </section>
 
     <section class="about-product-section" aria-labelledby="about-audiences-title">
@@ -38,11 +37,11 @@
         <div class="about-audience-list">
             <div>
                 <h3>Buyers</h3>
-                <p>Businesses looking for manufacturing capacity can compare available listing details and request quotations.</p>
+                <p>Businesses looking for manufacturing capacity can compare listing details and choose a direct fixed-price purchase where available or request custom terms.</p>
             </div>
             <div>
                 <h3>Manufacturers</h3>
-                <p>Manufacturers can describe capacity, respond to quote requests, and follow accepted orders.</p>
+                <p>Manufacturers can describe their capacity and manage quote requests and eligible orders after their business profile is reviewed.</p>
             </div>
         </div>
     </section>
@@ -50,8 +49,9 @@
     <section class="about-pilot-section" aria-labelledby="about-pilot-title">
         <div>
             <p class="public-section-eyebrow">Current stage</p>
-            <h2 id="about-pilot-title">An early-access pilot</h2>
-            <p>Marketplace discovery, quote requests, quotations, direct purchases, orders, milestones, and order messaging are implemented. Sample listings are shown for illustration and do not accept quote requests or purchases. Razorpay Test Mode may be enabled for sandbox milestone payments; it does not collect live payments. Manufacturer payout and milestone release remain simulated.</p>
+            <h2 id="about-pilot-title">A marketplace in pilot</h2>
+            <p>Account registration is available now. Manufacturer listings become public after profile verification. Sample listings are illustrative and cannot be purchased or quoted.</p>
+            <p><a href="{% url 'pricing_fees' %}">See the current pricing and payment status</a>.</p>
         </div>
         <a class="button button-primary" href="{% url 'marketplace' %}">Browse marketplace</a>
     </section>
