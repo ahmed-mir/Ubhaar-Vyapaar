@@ -1,25 +1,98 @@
-{% load currency public_display %}
-<nav class="trade-breadcrumbs" aria-label="Breadcrumb"><a href="{% url 'marketplace' %}">Marketplace</a><span aria-hidden="true">/</span><span aria-current="page">{{ manufacturer.business_name }}</span></nav>
+{% load public_display %}
+<nav class="trade-breadcrumbs" aria-label="Breadcrumb">
+    <a href="{% url 'marketplace' %}">Marketplace</a>
+    <span aria-hidden="true">/</span>
+    <span aria-current="page">{{ manufacturer_public_name }}</span>
+</nav>
 
-<header class="manufacturer-sheet-heading">
-    <p class="eyebrow">Manufacturer profile</p>
-    {% if manufacturer.is_demo %}<span class="sample-badge">Sample manufacturer</span>{% endif %}
-    <h1>{{ manufacturer.business_name }}</h1>
-    {% if manufacturer.city or manufacturer.state %}<p class="record-meta">{{ manufacturer.city }}{% if manufacturer.city and manufacturer.state %}, {% endif %}{{ manufacturer.state|state_label }}</p>{% endif %}
-    {% if manufacturer.is_demo %}<p class="verification-status">Sample profile for demonstration</p>{% elif manufacturer.is_publicly_verified %}<p class="verification-status">Profile verified</p>{% else %}<p class="verification-status">Not verified</p>{% endif %}
+<header class="manufacturer-sheet-heading" aria-labelledby="manufacturer-profile-title">
+    <div class="manufacturer-profile-heading-main">
+        <p class="eyebrow">Manufacturer profile</p>
+        <h1 id="manufacturer-profile-title">{{ manufacturer_public_name }}</h1>
+        {% if manufacturer.city or manufacturer.state %}
+            <p class="record-meta">
+                <span class="visually-hidden">Business location: </span>
+                {{ manufacturer.city }}{% if manufacturer.city and manufacturer.state %}, {% endif %}{{ manufacturer.state|state_label }}
+            </p>
+        {% endif %}
+    </div>
+    <div class="manufacturer-profile-trust">
+        {% if manufacturer.is_demo %}
+            <span class="sample-badge">Sample manufacturer</span>
+            <p class="verification-status">Sample profile for demonstration.</p>
+        {% elif manufacturer.is_publicly_verified %}
+            <p class="manufacturer-verification manufacturer-verification--verified">
+                <span class="manufacturer-verification-mark" aria-hidden="true">✓</span>
+                <span><strong>Verified Manufacturer</strong><span class="manufacturer-verification-note">Business profile verified by Ubhaar-Vyapaar.</span></span>
+            </p>
+        {% else %}
+            <p class="manufacturer-verification"><strong>Not verified</strong></p>
+        {% endif %}
+        {% if user.is_authenticated and user == manufacturer.user %}
+            <a class="text-action manufacturer-profile-edit" href="{% url 'edit_business_profile' %}">Edit business profile</a>
+        {% endif %}
+    </div>
 </header>
 
-{% if manufacturer.description %}<section class="manufacturer-about" aria-labelledby="manufacturer-about-title"><p class="eyebrow">Business profile</p><h2 id="manufacturer-about-title">About</h2><div>{{ manufacturer.description|linebreaks }}</div></section>{% endif %}
+{% if manufacturer.description %}
+    <section class="manufacturer-about" aria-labelledby="manufacturer-about-title">
+        <p class="eyebrow">Business overview</p>
+        <h2 id="manufacturer-about-title">About the company</h2>
+        <div class="manufacturer-about-copy">{{ manufacturer.description|linebreaks }}</div>
+    </section>
+{% endif %}
 
 {% if not manufacturer.is_demo and manufacturer.review_count %}
-<section class="manufacturer-reviews" aria-labelledby="manufacturer-reviews-title"><div class="manufacturer-section-heading"><div><p class="eyebrow">Completed orders</p><h2 id="manufacturer-reviews-title">Buyer reviews</h2></div><p>Average rating: {{ manufacturer.average_rating|floatformat:1 }}/5 · {{ manufacturer.review_count }} review{{ manufacturer.review_count|pluralize }}</p></div>
-    <div class="manufacturer-review-list">{% for review in manufacturer.reviews.all|slice:":3" %}<article><h3>Overall {{ review.overall_rating }}/5</h3><dl class="review-specs"><div><dt>Quality</dt><dd>{{ review.quality_rating }}/5</dd></div><div><dt>Timeliness</dt><dd>{{ review.timeliness_rating }}/5</dd></div><div><dt>Communication</dt><dd>{{ review.communication_rating }}/5</dd></div></dl>{% if review.comment %}<p>{{ review.comment|linebreaksbr }}</p>{% endif %}<p class="record-meta">{{ review.created_at|date:"d M Y" }}</p></article>{% endfor %}</div>
-</section>
+    <section class="manufacturer-reviews" aria-labelledby="manufacturer-reviews-title">
+        <div class="manufacturer-section-heading">
+            <div>
+                <p class="eyebrow">Completed orders</p>
+                <h2 id="manufacturer-reviews-title">Buyer reviews</h2>
+            </div>
+            <p>Average rating: {{ manufacturer.average_rating|floatformat:1 }}/5 · {{ manufacturer.review_count }} review{{ manufacturer.review_count|pluralize }}</p>
+        </div>
+        <div class="manufacturer-review-list">
+            {% for review in manufacturer.reviews.all|slice:":3" %}
+                <article>
+                    <h3>Overall {{ review.overall_rating }}/5</h3>
+                    <dl class="review-specs">
+                        <div><dt>Quality</dt><dd>{{ review.quality_rating }}/5</dd></div>
+                        <div><dt>Timeliness</dt><dd>{{ review.timeliness_rating }}/5</dd></div>
+                        <div><dt>Communication</dt><dd>{{ review.communication_rating }}/5</dd></div>
+                    </dl>
+                    {% if review.comment %}<p>{{ review.comment|linebreaksbr }}</p>{% endif %}
+                    <p class="record-meta">{{ review.created_at|date:"d M Y" }}</p>
+                </article>
+            {% endfor %}
+        </div>
+    </section>
 {% endif %}
 
 <section class="manufacturer-listings" aria-labelledby="manufacturer-listings-title">
-    <div class="manufacturer-section-heading"><div><p class="eyebrow">Active capacity</p><h2 id="manufacturer-listings-title">Listings</h2></div><p>{{ page_obj.paginator.count }} active listing{{ page_obj.paginator.count|pluralize }}</p></div>
-    {% if page_obj.object_list %}<div class="marketplace-listing-rows">{% for listing in page_obj %}{% include "marketplace/includes/listing_spec_row.html" with listing=listing %}{% endfor %}</div>
-    {% else %}<div class="marketplace-empty-state"><h3>No active listings</h3><p>This manufacturer has no public capacity listings right now.</p><a class="button button-secondary" href="{% url 'marketplace' %}">Browse marketplace</a></div>{% endif %}
-    {% if page_obj.has_other_pages %}<nav class="pagination marketplace-pagination" aria-label="Manufacturer listing pages">{% if page_obj.has_previous %}<a class="button button-secondary" href="?page={{ page_obj.previous_page_number }}">← Previous</a>{% endif %}<span aria-current="page">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>{% if page_obj.has_next %}<a class="button button-secondary" href="?page={{ page_obj.next_page_number }}">Next →</a>{% endif %}</nav>{% endif %}
+    <div class="manufacturer-section-heading">
+        <div>
+            <p class="eyebrow">Active capacity</p>
+            <h2 id="manufacturer-listings-title">Available manufacturing capacity</h2>
+        </div>
+        <p class="manufacturer-listing-count">{{ page_obj.paginator.count }} active listing{{ page_obj.paginator.count|pluralize }}</p>
+    </div>
+    {% if page_obj.object_list %}
+        <div class="marketplace-listing-rows">
+            {% for listing in page_obj %}
+                {% include "marketplace/includes/listing_spec_row.html" with listing=listing %}
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="manufacturer-empty-state">
+            <p>No manufacturing capacity is currently listed.</p>
+            <a class="button button-secondary" href="{% url 'marketplace' %}">Browse marketplace</a>
+        </div>
+    {% endif %}
+    {% if page_obj.has_other_pages %}
+        <nav class="pagination marketplace-pagination" aria-label="Manufacturer listing pages">
+            {% if page_obj.has_previous %}<a class="button button-secondary" href="?page={{ page_obj.previous_page_number }}" aria-label="Previous manufacturer listing page">Previous</a>{% endif %}
+            <span aria-current="page">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+            {% if page_obj.has_next %}<a class="button button-secondary" href="?page={{ page_obj.next_page_number }}" aria-label="Next manufacturer listing page">Next</a>{% endif %}
+        </nav>
+    {% endif %}
 </section>

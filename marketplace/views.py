@@ -90,13 +90,13 @@ def _is_real_configured_email(value):
     )
 
 
-def _manufacturer_schema(manufacturer):
+def _manufacturer_schema(manufacturer, display_name=None):
     profile_url = _absolute_site_url(
         reverse("manufacturer_profile", kwargs={"pk": manufacturer.pk})
     )
     organization = {
         "@type": "Organization",
-        "name": manufacturer.business_name,
+        "name": display_name or manufacturer.business_name or "Manufacturer",
         "url": profile_url,
     }
     if manufacturer.description:
@@ -3349,12 +3349,14 @@ def remove_saved_listing(request, pk):
 def manufacturer_profile(request, pk):
     manufacturer = get_object_or_404(
         ManufacturerProfile.objects.select_related("user").prefetch_related(
-            "reviews", "reviews__buyer", "reviews__order",
+            "reviews",
         ),
         pk=pk,
     )
     if not manufacturer.is_verified and not manufacturer.is_demo:
         raise Http404
+
+    manufacturer_public_name = manufacturer.business_name.strip() or "Manufacturer"
 
     listings = CapacityListing.objects.filter(
         manufacturer=manufacturer,
@@ -3381,7 +3383,7 @@ def manufacturer_profile(request, pk):
             {
                 "@type": "ListItem",
                 "position": 2,
-                "name": manufacturer.business_name,
+                "name": manufacturer_public_name,
                 "item": canonical_url,
             },
         ],
@@ -3389,7 +3391,7 @@ def manufacturer_profile(request, pk):
 
     manufacturer_schema = None if manufacturer.is_demo else {
         "@context": "https://schema.org",
-        **_manufacturer_schema(manufacturer),
+        **_manufacturer_schema(manufacturer, manufacturer_public_name),
     }
 
     return render(
@@ -3397,6 +3399,7 @@ def manufacturer_profile(request, pk):
         "marketplace/manufacturer_profile.html",
         {
             "manufacturer": manufacturer,
+            "manufacturer_public_name": manufacturer_public_name,
             "page_obj": page_obj,
             "canonical_url": canonical_url,
             "manufacturer_schema": manufacturer_schema,

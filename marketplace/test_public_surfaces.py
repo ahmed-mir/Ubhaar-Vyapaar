@@ -283,7 +283,122 @@ class PublicTradeSurfaceTests(TestCase):
             reverse("manufacturer_profile", args=[self.sample_manufacturer.pk]),
         )
         self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Available manufacturing capacity")
+        self.assertContains(response, "1 active listing")
+        self.assertContains(response, "Sample CNC Capacity")
         self.assertContains(response, reverse("listing_detail", args=[self.sample_listing.pk]))
+
+    def test_verified_manufacturer_profile_shows_public_details_and_eligible_listings(self):
+        self.real_manufacturer.state = "maharashtra"
+        self.real_manufacturer.pincode = "400001"
+        self.real_manufacturer.description = (
+            "Metal parts production for small and medium batches."
+        )
+        self.real_manufacturer.save(
+            update_fields=["state", "pincode", "description"],
+        )
+        self.real_user.email = "private-profile-contact@example.test"
+        self.real_user.phone = "9876543210"
+        self.real_user.save(update_fields=["email", "phone"])
+        inactive_listing = CapacityListing.objects.create(
+            manufacturer=self.real_manufacturer,
+            title="Private inactive capacity",
+            category=CapacityListing.Category.METAL,
+            description="Not available publicly.",
+            price_per_unit=Decimal("15.00"),
+            is_active=False,
+        )
+
+        response = self.client.get(
+            reverse("manufacturer_profile", args=[self.real_manufacturer.pk]),
+        )
+        content = response.content.decode()
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Public Works")
+        self.assertContains(response, "Verified Manufacturer")
+        self.assertContains(response, "Business profile verified by Ubhaar-Vyapaar.")
+        self.assertContains(response, "Ahmedabad, Maharashtra")
+        self.assertContains(response, "About the company")
+        self.assertContains(response, "Metal parts production for small and medium batches.")
+        self.assertContains(response, "Available manufacturing capacity")
+        self.assertContains(response, "1 active listing")
+        self.assertContains(
+            response,
+            reverse("listing_detail", args=[self.real_listing.pk]),
+        )
+        self.assertNotContains(response, "Private inactive capacity")
+        self.assertNotContains(response, "private-profile-contact@example.test")
+        self.assertNotContains(response, "9876543210")
+        self.assertNotContains(response, "400001")
+        self.assertContains(
+            response,
+            'class="manufacturer-verification-mark" aria-hidden="true"',
+        )
+
+        self.real_manufacturer.refresh_from_db()
+        self.assertEqual(self.real_manufacturer.state, "maharashtra")
+        self.assertFalse(inactive_listing.is_active)
+
+    def test_manufacturer_profile_omits_empty_description_and_shows_empty_capacity_state(self):
+        self.real_manufacturer.description = ""
+        self.real_manufacturer.save(update_fields=["description"])
+        self.real_listing.is_active = False
+        self.real_listing.save(update_fields=["is_active"])
+
+        response = self.client.get(
+            reverse("manufacturer_profile", args=[self.real_manufacturer.pk]),
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertNotContains(response, "About the company")
+        self.assertContains(response, "0 active listings")
+        self.assertContains(response, "No manufacturing capacity is currently listed.")
+        self.assertContains(response, reverse("marketplace"))
+        self.assertNotContains(response, "Real Metal Capacity")
+
+    def test_legacy_profile_without_business_name_has_a_readable_fallback(self):
+        self.real_manufacturer.business_name = ""
+        self.real_manufacturer.save(update_fields=["business_name"])
+
+        response = self.client.get(
+            reverse("manufacturer_profile", args=[self.real_manufacturer.pk]),
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "<h1 id=\"manufacturer-profile-title\">Manufacturer</h1>")
+        self.assertContains(response, "Manufacturer | Ubhaar-Vyapaar")
+        self.assertContains(response, '"name": "Manufacturer"')
+
+    def test_manufacturer_description_is_escaped_in_public_profile(self):
+        malicious_description = "<script>alert('profile-xss-marker')</script>"
+        self.real_manufacturer.description = malicious_description
+        self.real_manufacturer.save(update_fields=["description"])
+
+        response = self.client.get(
+            reverse("manufacturer_profile", args=[self.real_manufacturer.pk]),
+        )
+        content = response.content.decode()
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(
+            response,
+            "&lt;script&gt;alert(&#x27;profile-xss-marker&#x27;)&lt;/script&gt;",
+        )
+        self.assertNotIn(malicious_description, content)
+
+    def test_business_profile_edit_link_is_only_rendered_for_the_owner(self):
+        profile_url = reverse(
+            "manufacturer_profile",
+            args=[self.real_manufacturer.pk],
+        )
+        anonymous_response = self.client.get(profile_url)
+        self.assertNotContains(anonymous_response, "Edit business profile")
+
+        self.client.force_login(self.real_user)
+        owner_response = self.client.get(profile_url)
+        self.assertContains(owner_response, "Edit business profile")
+        self.assertContains(owner_response, reverse("edit_business_profile"))
 
     def test_sample_manufacturer_is_omitted_from_sitemap(self):
         response = self.client.get(reverse("sitemap_xml"))

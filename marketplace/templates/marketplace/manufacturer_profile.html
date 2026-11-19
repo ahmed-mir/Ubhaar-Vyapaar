@@ -3,8 +3,8 @@
 
 {% block extra_css %}<link rel="stylesheet" href="{% static 'marketplace/css/trade-ledger-public.css' %}">{% endblock %}
 
-{% block title %}{% if manufacturer.is_demo %}Sample manufacturer: {% endif %}{{ manufacturer.business_name }}{% if page_obj.number > 1 %} | Page {{ page_obj.number }}{% endif %} | Ubhaar-Vyapaar{% endblock %}
-{% block meta_description %}{% if manufacturer.is_demo %}Illustrative sample profile for {% else %}Public manufacturer profile for {% endif %}{{ manufacturer.business_name }}{% if manufacturer.city %} in {{ manufacturer.city }}{% endif %}{% if manufacturer.description %}. {{ manufacturer.description|truncatewords:18 }}{% else %}. View location, verification status, and active listings{% endif %}.{% if page_obj.number > 1 %} Page {{ page_obj.number }}.{% endif %}{% endblock %}
+{% block title %}{% if manufacturer.is_demo %}Sample manufacturer: {% endif %}{{ manufacturer_public_name }}{% if page_obj.number > 1 %} | Page {{ page_obj.number }}{% endif %} | Ubhaar-Vyapaar{% endblock %}
+{% block meta_description %}{% if manufacturer.is_demo %}Illustrative sample profile for {% else %}Public manufacturer profile for {% endif %}{{ manufacturer_public_name }}{% if manufacturer.city %} in {{ manufacturer.city }}{% endif %}{% if manufacturer.description %}. {{ manufacturer.description|truncatewords:18 }}{% else %}. View location, verification status, and active listings{% endif %}.{% if page_obj.number > 1 %} Page {{ page_obj.number }}.{% endif %}{% endblock %}
 {% block canonical_url %}{{ canonical_url }}{% endblock %}
 {% block structured_data %}
     {% json_ld breadcrumb_schema "manufacturer-breadcrumb-jsonld" %}
