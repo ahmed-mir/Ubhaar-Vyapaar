@@ -21,6 +21,7 @@
                         <p class="order-workspace__eyebrow">Order #{{ order.pk }}</p>
                         <h2>{{ order.listing.title }}</h2>
                         <p>Manufacturer: {{ order.manufacturer.business_name }}</p>
+                        <p class="order-index-record__source">Order type: {% if order.source == "BUY_NOW" %}Buy Now{% else %}Quotation{% endif %}</p>
                     </div>
                     <span class="status-pill status-{{ order.status|lower }} order-index-record__status">{{ order.status_label }}</span>
                     <dl class="order-index-record__facts">
@@ -37,7 +38,7 @@
                 <div class="empty-panel order-index-empty">
                     <h2>No orders yet</h2>
                         <p>Orders appear here after you accept a quotation or confirm a fixed-price purchase.</p>
-                    <a class="button button-primary" href="{% url 'marketplace' %}">Browse capacity</a>
+                    <a class="button button-primary" href="{% url 'marketplace' %}">Browse marketplace</a>
                 </div>
             {% endfor %}
         </section>

@@ -35,28 +35,7 @@
                 {% endif %}
             </div>
         </div>
-        <a class="button button-secondary" href="{% url 'edit_business_profile' %}">Business profile</a>
-    </section>
-
-    <section class="manufacturer-dashboard__summary" aria-label="Business summary">
-        <dl class="manufacturer-dashboard__key-metrics">
-            <div class="manufacturer-dashboard__metric manufacturer-dashboard__metric--attention">
-                <dt>Pending requests</dt>
-                <dd>{{ stats.pending_requests }}</dd>
-            </div>
-            <div class="manufacturer-dashboard__metric">
-                <dt>Awaiting buyer decision</dt>
-                <dd>{{ stats.quotations_waiting }}</dd>
-            </div>
-            <div class="manufacturer-dashboard__metric">
-                <dt>Active orders</dt>
-                <dd>{{ stats.active_orders }}</dd>
-            </div>
-            <div class="manufacturer-dashboard__metric">
-                <dt>Active listings</dt>
-                <dd>{{ stats.active_listings }}</dd>
-            </div>
-        </dl>
+        <a class="button button-secondary" href="{% url 'edit_business_profile' %}">Edit business profile</a>
     </section>
 
     {% if quotes or stats.total_listings %}
@@ -167,9 +146,10 @@
                         <div class="manufacturer-dashboard__item-main">
                             <span class="manufacturer-dashboard__status manufacturer-dashboard__status--order">{{ order.status_label }}</span>
                             <h3>Order #{{ order.pk }}</h3>
+                            <p class="manufacturer-dashboard__source">Order type: {% if order.source == "BUY_NOW" %}Buy Now{% else %}Quotation{% endif %}</p>
                             <p class="manufacturer-dashboard__meta">{{ order.listing.title }} · Buyer: {{ order.buyer.username }}</p>
                         </div>
-                        <a class="button button-secondary" href="{% url 'order_detail' order.pk %}">Manage order</a>
+                        <a class="button button-secondary" href="{% url 'order_detail' order.pk %}">View order</a>
                     </article>
                 {% endfor %}
             </div>
@@ -189,7 +169,11 @@
                 {% for milestone in milestones_ready_to_start %}
                     <article class="manufacturer-dashboard__operational-row">
                         <div class="manufacturer-dashboard__item-main">
-                            <span class="manufacturer-dashboard__status manufacturer-dashboard__status--review">Demo funded</span>
+                            {% if milestone.payment_test_mode %}
+                                <span class="manufacturer-dashboard__status manufacturer-dashboard__status--review">Test payment recorded · Test Mode</span>
+                            {% else %}
+                                <span class="manufacturer-dashboard__status manufacturer-dashboard__status--review">Demo funding recorded</span>
+                            {% endif %}
                             <h3>{{ milestone.title }}</h3>
                             <p class="manufacturer-dashboard__meta">Order #{{ milestone.order.pk }} · {{ milestone.order.listing.title }}</p>
                         </div>

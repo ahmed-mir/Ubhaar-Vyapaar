@@ -2850,6 +2850,16 @@ h1, h2, h3, h4 { letter-spacing: -0.02em; }
     overflow-wrap: anywhere;
 }
 
+.buyer-dashboard__source,
+.manufacturer-dashboard__source,
+.order-index-record__source {
+    margin: 4px 0 0;
+    color: var(--color-muted);
+    font-size: 13px;
+    line-height: 1.4;
+    overflow-wrap: anywhere;
+}
+
 .buyer-dashboard__status {
     display: inline-flex;
     align-items: center;

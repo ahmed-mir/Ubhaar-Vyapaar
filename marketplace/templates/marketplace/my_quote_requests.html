@@ -11,7 +11,7 @@
                 <h1>Quote requests</h1>
                 <p>Review manufacturer responses. Accept a manufacturer's quotation to create an order.</p>
             </div>
-            <a class="button button-secondary" href="{% url 'marketplace' %}">Browse capacity</a>
+            <a class="button button-secondary" href="{% url 'marketplace' %}">Browse marketplace</a>
         </header>
 
         <dl class="quote-request-summary" aria-label="Quote request summary">
@@ -123,7 +123,7 @@
                 <div class="empty-panel quote-requests-empty">
                     <h2>You haven't requested a quote yet</h2>
                     <p>Find manufacturing capacity and share your order requirements with a manufacturer.</p>
-                    <a class="button button-primary" href="{% url 'marketplace' %}">Browse capacity</a>
+                    <a class="button button-primary" href="{% url 'marketplace' %}">Browse marketplace</a>
                 </div>
             {% endfor %}
         </section>

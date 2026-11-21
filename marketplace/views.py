@@ -7,7 +7,7 @@ from django.core.exceptions import PermissionDenied, ValidationError
 from django.core.mail import EmailMessage
 from django.core.validators import validate_email
 from django.core.paginator import Paginator
-from django.db.models import Case, Count, IntegerField, Q, When
+from django.db.models import Case, Count, IntegerField, Prefetch, Q, When
 from django.db import IntegrityError, transaction
 from django.views.decorators.csrf import csrf_exempt
 from django.utils import timezone
@@ -1925,36 +1925,10 @@ def buyer_dashboard(request):
         funding_status=Milestone.FundingStatus.FUNDED,
     ).select_related("order", "order__manufacturer", "order__listing")
 
-    stats = {
-        "active_requests": quote_requests.filter(
-            status__in=[
-                QuoteRequest.Status.PENDING,
-                QuoteRequest.Status.ACCEPTED,
-            ],
-        ).count(),
-        "quotations_received": quotations.count(),
-        "pending_actions": pending_quotations.count(),
-        "accepted_quotations": quotations.filter(
-            status=Quotation.Status.ACCEPTED,
-        ).count(),
-        "saved_listings": SavedListing.objects.filter(
-            buyer=request.user,
-        ).count(),
-        "unread_notifications": Notification.objects.filter(
-            recipient=request.user,
-            is_read=False,
-        ).count(),
-        "active_orders": active_order_queryset.count(),
-        "milestones_to_fund": len(funding_milestones),
-        "milestones_to_review": review_milestones.count(),
-        "demo_releases_due": release_milestones.count(),
-    }
-
     return render(
         request,
         "marketplace/buyer_dashboard.html",
         {
-            "stats": stats,
             "active_requests": active_requests,
             "pending_quotations": pending_quotations[:6],
             "accepted_quotations": accepted_quotations[:4],
@@ -2905,7 +2879,21 @@ def manufacturer_dashboard(request):
             Milestone.Status.REJECTED,
         ],
         funding_status=Milestone.FundingStatus.FUNDED,
-    ).select_related("order", "order__buyer", "order__listing")
+    ).select_related("order", "order__buyer", "order__listing").prefetch_related(
+        Prefetch(
+            "payment_transactions",
+            queryset=PaymentTransaction.objects.filter(
+                status=PaymentTransaction.Status.CAPTURED,
+            ),
+        ),
+    )
+
+    # Only call a funding record a test payment when a captured gateway
+    # transaction exists; older demo-funded milestones remain labelled as demo.
+    for milestone in milestones_ready_to_start:
+        milestone.payment_test_mode = bool(
+            milestone.payment_transactions.all()
+        )
 
     milestones_ready_to_submit = Milestone.objects.filter(
         order__manufacturer__user=request.user,
@@ -2916,11 +2904,6 @@ def manufacturer_dashboard(request):
         status=Milestone.Status.IN_PROGRESS,
         funding_status=Milestone.FundingStatus.FUNDED,
     ).select_related("order", "order__buyer", "order__listing")
-
-    quotations_waiting = Quotation.objects.filter(
-        quote_request__listing__manufacturer__user=request.user,
-        status=Quotation.Status.SENT,
-    )
 
     stats = {
         "total_listings": listings.count(),
@@ -2934,21 +2917,6 @@ def manufacturer_dashboard(request):
         "pending_requests": quotes.filter(
             status=QuoteRequest.Status.PENDING,
         ).count(),
-        "quotations_sent": Quotation.objects.filter(
-            quote_request__listing__manufacturer__user=request.user,
-        ).count(),
-        "quotations_waiting": quotations_waiting.count(),
-        "quotations_accepted": Quotation.objects.filter(
-            quote_request__listing__manufacturer__user=request.user,
-            status=Quotation.Status.ACCEPTED,
-        ).count(),
-        "unread_notifications": Notification.objects.filter(
-            recipient=request.user,
-            is_read=False,
-        ).count(),
-        "active_orders": active_orders.count(),
-        "milestones_to_start": milestones_ready_to_start.count(),
-        "milestones_to_submit": milestones_ready_to_submit.count(),
     }
 
     manufacturer = get_object_or_404(

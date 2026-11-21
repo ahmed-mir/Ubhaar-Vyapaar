@@ -107,27 +107,6 @@
         </div>
     </section>
 
-    <section class="buyer-dashboard__summary" aria-label="Buyer summary">
-        <dl class="buyer-dashboard__key-metrics">
-            <div class="buyer-dashboard__metric">
-                <dt>Active requests</dt>
-                <dd>{{ stats.active_requests }}</dd>
-            </div>
-            <div class="buyer-dashboard__metric buyer-dashboard__metric--attention">
-                <dt>Awaiting your decision</dt>
-                <dd>{{ stats.pending_actions }}</dd>
-            </div>
-            <div class="buyer-dashboard__metric">
-                <dt>Active orders</dt>
-                <dd>{{ stats.active_orders }}</dd>
-            </div>
-            <div class="buyer-dashboard__metric">
-                <dt>Saved listings</dt>
-                <dd>{{ stats.saved_listings }}</dd>
-            </div>
-        </dl>
-    </section>
-
     {% if active_requests %}
     <section class="buyer-dashboard__section" aria-labelledby="buyer-requests-title">
         <div class="buyer-dashboard__section-heading">
@@ -154,7 +133,7 @@
                         <div><dt>Delivery location</dt><dd>{{ quote.delivery_location }}</dd></div>
                     </dl>
                     {% if quote.quotation %}
-                        <a class="button button-secondary" href="{% url 'my_quote_requests' %}">View request</a>
+                        <a class="button button-secondary" href="{% url 'my_quote_requests' %}">View quotation</a>
                     {% elif quote.listing.is_active and quote.listing.manufacturer.is_verified %}
                         <a class="button button-secondary" href="{% url 'manufacturer_profile' quote.listing.manufacturer.pk %}">View manufacturer</a>
                     {% endif %}
@@ -163,7 +142,7 @@
                 <div class="buyer-dashboard__empty">
                     <h3>No quote requests yet</h3>
                     <p>Browse manufacturing capacity and send a request when you find a fit.</p>
-                    <a class="button button-secondary" href="{% url 'marketplace' %}">Browse capacity</a>
+                    <a class="button button-secondary" href="{% url 'marketplace' %}">Browse marketplace</a>
                 </div>
             {% endfor %}
         </div>
@@ -186,13 +165,14 @@
                     <div class="buyer-dashboard__item-main">
                         <span class="buyer-dashboard__status buyer-dashboard__status--order">{{ order.status_label }}</span>
                         <h3>Order #{{ order.pk }}</h3>
+                        <p class="buyer-dashboard__source">Order type: {% if order.source == "BUY_NOW" %}Buy Now{% else %}Quotation{% endif %}</p>
                         <p class="buyer-dashboard__meta">{{ order.listing.title }} · {{ order.manufacturer.business_name }}</p>
                     </div>
                     <dl class="buyer-dashboard__inline-facts">
                         <div><dt>Total amount</dt><dd>{{ order.total_amount|inr }}</dd></div>
                         <div><dt>Production time</dt><dd>{{ order.agreed_production_days }} days</dd></div>
                     </dl>
-                    <a class="button button-secondary" href="{% url 'order_detail' order.pk %}">Track order</a>
+                    <a class="button button-secondary" href="{% url 'order_detail' order.pk %}">View order</a>
                 </article>
             {% empty %}
                 <div class="buyer-dashboard__empty">
@@ -234,7 +214,7 @@
                 <div class="buyer-dashboard__empty">
                     <h3>No saved listings yet</h3>
                     <p>Save listings you are considering and they will be ready here for comparison.</p>
-                    <a class="button button-secondary" href="{% url 'marketplace' %}">Browse capacity</a>
+                    <a class="button button-secondary" href="{% url 'marketplace' %}">Browse marketplace</a>
                 </div>
             {% endfor %}
         </div>

@@ -438,7 +438,7 @@ class MarketplaceDiscoveryTrustTests(TestCase):
         self.assertEqual(content.count("<h1"), 1)
         self.assertContains(response, "Needs your attention")
         self.assertContains(response, "Dashboard packaging capacity")
-        self.assertContains(response, "Awaiting your decision")
+        self.assertNotContains(response, "buyer-dashboard__summary")
         self.assertContains(response, "Pending")
         self.assertContains(response, "Saved listings")
         self.assertContains(
@@ -565,9 +565,10 @@ class MarketplaceDiscoveryTrustTests(TestCase):
         self.assertEqual(content.count("<h1"), 1)
         self.assertContains(response, "Manufacturer dashboard")
         self.assertContains(response, 'aria-current="page"')
+        self.assertNotContains(response, "manufacturer-dashboard__summary")
         self.assertNotContains(response, "manufacturer-dashboard__more-metrics")
         self.assertContains(response, "Verified manufacturer")
-        self.assertContains(response, "Pending requests")
+        self.assertContains(response, "Quote requests")
         self.assertContains(response, "Dashboard packaging capacity")
         self.assertContains(response, "Printed cartons in two sizes.")
         self.assertContains(
@@ -1844,6 +1845,7 @@ class OrderMessagingTests(TestCase):
         self.assertContains(buyer_orders_response, self.manufacturer.business_name)
         self.assertContains(buyer_orders_response, "Order total")
         self.assertContains(buyer_orders_response, "Production checkpoints")
+        self.assertContains(buyer_orders_response, "Order type: Quotation")
 
         buyer_detail_response = self.client.get(
             reverse("order_detail", args=[self.order.pk]),
@@ -1866,6 +1868,7 @@ class OrderMessagingTests(TestCase):
         self.assertContains(manufacturer_orders_response, self.buyer.username)
         self.assertContains(manufacturer_orders_response, "Production time")
         self.assertContains(manufacturer_orders_response, "Terms locked")
+        self.assertContains(manufacturer_orders_response, "Order type: Quotation")
 
         manufacturer_detail_response = self.client.get(
             reverse("order_detail", args=[self.order.pk]),
@@ -3552,8 +3555,10 @@ class BuyNowOrderTests(TestCase):
         order = Order.objects.get(source=Order.Source.BUY_NOW)
         self.assertContains(self.client.get(reverse("order_detail", args=[order.pk])), "Direct purchase confirmed")
         self.assertContains(self.client.get(reverse("buyer_orders")), "Custom cartons")
+        self.assertContains(self.client.get(reverse("buyer_orders")), "Order type: Buy Now")
         self.client.force_login(self.manufacturer_user)
         self.assertContains(self.client.get(reverse("manufacturer_orders")), "Custom cartons")
+        self.assertContains(self.client.get(reverse("manufacturer_orders")), "Order type: Buy Now")
 
 
 @override_settings(

@@ -125,6 +125,9 @@ test.describe("production auth and access smoke", () => {
   });
 
   test("account dropdown keyboard and responsive behavior", async ({ page }) => {
+    // This scenario creates two local accounts and exercises five viewport sizes per role.
+    // Leave time for the full suite when neighboring browser tests contend for the server.
+    test.setTimeout(300000);
     test.skip(Boolean(process.env.UBHAAR_BASE_URL), "This browser interaction check runs only on the local Playwright server.");
     const password = "Phase9Menu-QA-Strong-7041!";
     const buyer = buildTestUser("account-menu-buyer", uniqueRunId());
