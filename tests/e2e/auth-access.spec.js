@@ -139,6 +139,8 @@ test.describe("production auth and access smoke", () => {
       const trigger = page.locator("[data-account-menu-trigger]");
       await expect(trigger).toContainText(buyer.username);
       await expect(trigger).toContainText("Buyer");
+      const triggerBounds = await trigger.boundingBox();
+      expect(triggerBounds.height).toBeGreaterThanOrEqual(44);
       await trigger.focus();
       await page.keyboard.press("Enter");
       await expect(trigger).toHaveAttribute("aria-expanded", "true");

@@ -14,6 +14,8 @@ function runLocalDjango(code) {
 
 test.describe("listing detail commercial experience", () => {
   test("commercial facts, valid CTAs, Manufacturer navigation, Sample restrictions, and responsive layout", async ({ page }) => {
+    // This local fixture flow visits several routes and viewport sizes; keep the full browser session alive.
+    test.setTimeout(180_000);
     test.skip(Boolean(process.env.UBHAAR_BASE_URL), "Listing detail fixtures use the local E2E database.");
 
     const fixtureOutput = runLocalDjango(`

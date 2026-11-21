@@ -5789,3 +5789,10 @@ textarea {
         grid-template-columns: minmax(0, 1fr);
     }
 }
+
+/* Keep unavailable status labels readable; opacity had reduced their contrast. */
+.button-disabled,
+.button[aria-disabled="true"] {
+    color: #42505c;
+    opacity: 1;
+}
