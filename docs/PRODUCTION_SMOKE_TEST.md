@@ -1,40 +1,29 @@
-# Production Smoke Test
+# Read-only Production Smoke Checks
 
-Run against the deployed service only with disposable test accounts and non-sensitive data. Do not submit real orders, payments, or credentials during a smoke test.
+Production smoke checks are read-only. Do not register accounts, submit forms,
+create listings, request quotations, place orders, send messages, initiate
+payments, or otherwise create persistent data in production.
 
-## Public
+## Public checks
 
-- Homepage loads over HTTPS with no broken images or horizontal overflow.
-- Marketplace search and filters return expected results.
-- Listing detail and manufacturer profile load.
-- Informational and legal pages load.
-- Mobile navigation opens, closes, and is keyboard accessible.
+- Homepage and public informational/legal routes load over HTTPS.
+- Marketplace, listing detail, and Manufacturer profiles render without broken
+  images or horizontal overflow.
+- Search and filters can be inspected without submitting data or changing
+  records.
+- Mobile navigation opens, closes, and remains keyboard accessible.
 - A missing route renders the designed 404 page.
-
-## Buyer
-
-- Register and log in with a disposable account.
-- Request password reset and confirm the configured email workflow without exposing credentials.
-- Save and remove a listing.
-- Request a quote.
-- Open the buyer dashboard.
-- Review quotation accept/decline controls, order view, messages, and notifications using test records only.
-
-## Manufacturer
-
-- Register and log in with a disposable account.
-- Open and update the business profile.
-- Create and edit a listing, including image fallback behavior.
-- Receive a quote request and send a quotation using test data.
-- Open the manufacturer dashboard, order milestones, messages, and notifications.
-
-## Infrastructure
-
-- Root domain, `www` domain, and the Render hostname behave as configured.
+- `/health/` returns its expected minimal response.
+- Static files and configured public media load.
 - HTTP redirects to HTTPS where configured.
-- `/health/` returns HTTP 200 and minimal JSON.
-- Static files load from the deployed static pipeline.
-- Cloudinary images load for configured production media.
-- SMTP/password reset works with the configured Brevo settings.
-- PostgreSQL is the active production database; do not use local SQLite in production.
-- Admin login works and is not exposed through debug output.
+
+Do not use the Playwright data-creating suites against production. Any remote
+suite that registers accounts or creates listings/transactions is for an
+isolated staging service with disposable data only; see
+[`tests/e2e/README.md`](../tests/e2e/README.md).
+
+## Provider checks
+
+Verify domain/DNS, production environment variable names and presence, active
+PostgreSQL/TLS configuration, email delivery, media access, and admin access in
+the provider dashboards. Do not print credential values in logs or reports.

@@ -29,7 +29,12 @@ module.exports = defineConfig({
   },
   webServer: useLocalServer
     ? {
-        command: `python manage.py runserver 127.0.0.1:${localPort} --settings=config.settings_e2e --noreload`,
+        command: `python manage.py migrate --noinput --settings=config.settings_e2e && python manage.py seed_demo_data --settings=config.settings_e2e && python manage.py runserver 127.0.0.1:${localPort} --settings=config.settings_e2e --noreload`,
+        env: {
+          DATABASE_URL: "",
+          DJANGO_DEBUG: "True",
+          ALLOW_DEMO_SEEDING: "True"
+        },
         url: `${localBaseURL}/health/`,
         reuseExistingServer: false,
         timeout: 120_000

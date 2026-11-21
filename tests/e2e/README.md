@@ -1,38 +1,32 @@
-# Production E2E smoke tests
+# Playwright E2E tests
 
-These Playwright tests target the deployed Ubhaar-Vyapaar app through
-`UBHAAR_BASE_URL`. They create timestamped disposable users/listings and do not
-delete production data.
+## Local E2E
 
-## Required environment
-
-```powershell
-$env:UBHAAR_BASE_URL = "https://ubhaar-vyapaar.onrender.com"
-$env:TEST_USER_PASSWORD = "<strong disposable password>"
-```
-
-## Optional environment
-
-Set these only when the suite is allowed to verify a disposable manufacturer
-through Django admin. Without them, KYC-dependent marketplace/order tests are
-skipped.
-
-```powershell
-$env:TEST_ADMIN_USERNAME = "<admin username>"
-$env:TEST_ADMIN_PASSWORD = "<admin password>"
-```
-
-Password reset delivery is not verified through an inbox. The test only checks
-that the reset request page accepts a submission and shows the done page.
-
-## Run
+The default Playwright configuration starts Django with
+`config.settings_e2e`. That settings module always uses the isolated local
+`db_e2e.sqlite3` database and ignores `DATABASE_URL`, even if one is present in
+the parent shell or `.env`. The local suite must never be pointed at production
+or Neon. Playwright applies migrations to this E2E-only file before starting
+the local server and seeds fictional demo records there; it does not migrate or
+seed `db.sqlite3`.
 
 ```powershell
 npm install
 npx playwright install chromium
-npm run test:e2e
-npm run test:e2e:report
+npx playwright test
 ```
 
-Failure screenshots, traces, videos, and JSON results are written under
-`test-results/`. The readable HTML report is written to `playwright-report/`.
+The test runner writes reports and artifacts under `test-results/` and
+`playwright-report/`.
+
+## Remote E2E mode
+
+Setting `UBHAAR_BASE_URL` switches Playwright away from its local E2E server.
+Some remote E2E tests create users, listings, or other persistent records.
+Use that mode only against an isolated staging environment with disposable test
+data and explicitly authorized test accounts. Never point the data-creating
+suite at production; it does not clean up production data.
+
+Production checks must follow the read-only procedure in
+[`docs/PRODUCTION_SMOKE_TEST.md`](../../docs/PRODUCTION_SMOKE_TEST.md). Do not
+provide production credentials to the test runner.

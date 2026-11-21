@@ -34,7 +34,9 @@ const pages = [
 test.describe("public visual QA", () => {
   for (const width of widths) {
     test(`${width}px pages fit without broken media`, async ({ page }) => {
-      test.setTimeout(240_000);
+      // This scenario visits up to 26 routes and captures full-page images;
+      // allow enough time for the slowest local E2E viewport and teardown.
+      test.setTimeout(360_000);
       await page.setViewportSize({ width, height: 900 });
       await page.emulateMedia({ reducedMotion: "reduce" });
       const output = path.join("test-results", "visual-qa", String(width));
