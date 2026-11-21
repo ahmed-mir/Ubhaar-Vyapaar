@@ -14,6 +14,10 @@
     --uv-radius-card: var(--radius-card);
     --uv-radius-button: var(--radius-button);
     --uv-shadow: var(--shadow-soft);
+    --motion-fast: 140ms;
+    --motion-base: 180ms;
+    --motion-expand: 250ms;
+    --motion-ease: cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 
 html { scroll-padding-top: 92px; }
@@ -5414,30 +5418,54 @@ h1, h2, h3, h4 { letter-spacing: -0.02em; }
     color: #8c2e2b;
 }
 
-/* Restrained interaction polish on the shared UI foundation. */
+/* Shared, restrained motion for interactive controls and disclosures. */
 a {
-    transition: color 180ms ease, text-decoration-color 180ms ease;
+    transition:
+        color var(--motion-base) var(--motion-ease),
+        text-decoration-color var(--motion-base) var(--motion-ease),
+        background-color var(--motion-base) var(--motion-ease),
+        border-color var(--motion-base) var(--motion-ease);
 }
 
 button,
 input[type="submit"],
 input[type="button"],
 input[type="reset"] {
-    transition: color 180ms ease, background-color 180ms ease, border-color 180ms ease, box-shadow 180ms ease;
+    transition:
+        color var(--motion-base) var(--motion-ease),
+        background-color var(--motion-base) var(--motion-ease),
+        border-color var(--motion-base) var(--motion-ease),
+        box-shadow var(--motion-base) var(--motion-ease);
 }
 
 .button {
-    transition: color 180ms ease, background-color 180ms ease, border-color 180ms ease, box-shadow 180ms ease, transform 180ms ease;
+    transition:
+        color var(--motion-base) var(--motion-ease),
+        background-color var(--motion-base) var(--motion-ease),
+        border-color var(--motion-base) var(--motion-ease),
+        box-shadow var(--motion-base) var(--motion-ease),
+        transform var(--motion-fast) var(--motion-ease);
 }
 
-@media (hover: hover) {
+@media (hover: hover) and (pointer: fine) {
     .button:not(:disabled):not([aria-disabled="true"]):hover {
         transform: translateY(-1px);
+    }
+
+    .landing-listing-card:has(a:hover),
+    .listing-spec-row:has(h3 a:hover),
+    .quote-flow-card:has(a:hover, button:hover),
+    .saved-listing-row:has(a:hover, button:hover),
+    .management-row:has(a:hover, button:hover),
+    .record-card:has(a:hover, button:hover) {
+        transform: translateY(-1px);
+        border-color: var(--border-strong);
+        box-shadow: var(--shadow-soft);
     }
 }
 
 .button:not(:disabled):not([aria-disabled="true"]):active {
-    transform: translateY(0);
+    transform: translateY(0) scale(0.985);
 }
 
 .button:disabled,
@@ -5450,20 +5478,116 @@ input[type="reset"] {
 input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([type="submit"]):not([type="button"]):not([type="reset"]):not([type="hidden"]),
 select,
 textarea {
-    transition: border-color 180ms ease, box-shadow 180ms ease, background-color 180ms ease;
+    transition:
+        border-color var(--motion-base) var(--motion-ease),
+        box-shadow var(--motion-base) var(--motion-ease),
+        background-color var(--motion-base) var(--motion-ease);
 }
 
 .nav-link,
 .account-menu-trigger,
-.account-menu-item {
-    transition: color 180ms ease, background-color 180ms ease, border-color 180ms ease, box-shadow 180ms ease;
+.account-menu-item,
+.nav-menu-panel a,
+.marketplace-filter-chips a {
+    transition:
+        color var(--motion-base) var(--motion-ease),
+        background-color var(--motion-base) var(--motion-ease),
+        border-color var(--motion-base) var(--motion-ease),
+        box-shadow var(--motion-base) var(--motion-ease),
+        text-decoration-color var(--motion-base) var(--motion-ease),
+        transform var(--motion-fast) var(--motion-ease);
+}
+
+.nav-toggle,
+.nav-menu > summary {
+    transition:
+        color var(--motion-base) var(--motion-ease),
+        background-color var(--motion-base) var(--motion-ease),
+        border-color var(--motion-base) var(--motion-ease),
+        transform var(--motion-fast) var(--motion-ease);
+}
+
+.account-menu-trigger:active,
+.account-menu-item:active,
+.nav-toggle:active,
+.nav-menu > summary:active,
+.nav-menu-panel a:active,
+.marketplace-filter-chips a:active {
+    transform: scale(0.985);
+}
+
+#site-navigation .nav-link,
+#site-navigation .nav-link:hover,
+#site-navigation .nav-link-active {
+    transform: none;
+}
+
+#site-navigation .nav-link[aria-current="page"],
+#site-navigation .nav-link-active,
+#site-navigation .nav-link[aria-current="page"]:hover,
+#site-navigation .nav-link-active:hover {
+    background: var(--brand-50);
+    color: var(--uv-navy);
+}
+
+@media (min-width: 941px) {
+    #site-navigation .nav-group-primary > .nav-link:not(.nav-link-strong),
+    #site-navigation .nav-group-primary > .nav-menu > summary.nav-link {
+        position: relative;
+    }
+
+    #site-navigation .nav-group-primary > .nav-link,
+    #site-navigation .nav-group-primary > .nav-link:hover,
+    #site-navigation .nav-group-primary > .nav-link:focus-visible,
+    #site-navigation .nav-group-primary > .nav-menu > summary.nav-link,
+    #site-navigation .nav-group-primary > .nav-menu > summary.nav-link:hover,
+    #site-navigation .nav-group-primary > .nav-menu > summary.nav-link:focus-visible {
+        min-height: 38px;
+        padding: 6px 2px;
+    }
+
+    #site-navigation .nav-group-primary > .nav-link:not(.nav-link-strong)::after,
+    #site-navigation .nav-group-primary > .nav-menu > summary.nav-link::before {
+        position: absolute;
+        right: 0;
+        bottom: 0;
+        left: 0;
+        height: 2px;
+        background: var(--uv-teal);
+        content: "";
+        pointer-events: none;
+        transform: scaleX(0);
+        transform-origin: left center;
+        transition: transform var(--motion-base) var(--motion-ease);
+    }
+
+    #site-navigation .nav-group-primary > .nav-link:not(.nav-link-strong):hover::after,
+    #site-navigation .nav-group-primary > .nav-link:not(.nav-link-strong):focus-visible::after,
+    #site-navigation .nav-group-primary > .nav-link:not(.nav-link-strong)[aria-current="page"]::after,
+    #site-navigation .nav-group-primary > .nav-link:not(.nav-link-strong).nav-link-active::after,
+    #site-navigation .nav-group-primary > .nav-menu > summary.nav-link:hover::before,
+    #site-navigation .nav-group-primary > .nav-menu > summary.nav-link:focus-visible::before,
+    #site-navigation .nav-group-primary > .nav-menu > summary.nav-link.nav-link-active::before {
+        transform: scaleX(1);
+    }
+}
+
+#site-navigation .nav-menu > summary::after {
+    display: inline-block;
+    transition: transform var(--motion-fast) var(--motion-ease);
+}
+
+#site-navigation .nav-menu[open] > summary::after {
+    transform: rotate(180deg);
 }
 
 .account-menu-panel {
     opacity: 1;
     transform: translateY(0);
-    transition: opacity 160ms ease, transform 160ms ease;
-    transition: opacity 160ms ease, transform 160ms ease, display 160ms allow-discrete;
+    transition:
+        opacity var(--motion-base) var(--motion-ease),
+        transform var(--motion-base) var(--motion-ease),
+        display var(--motion-base) allow-discrete;
     transition-behavior: allow-discrete;
 }
 
@@ -5486,20 +5610,49 @@ textarea {
 .saved-listing-row,
 .management-row,
 .record-card {
-    transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease;
+    transition:
+        transform var(--motion-base) var(--motion-ease),
+        box-shadow var(--motion-base) var(--motion-ease),
+        border-color var(--motion-base) var(--motion-ease);
 }
 
-@media (hover: hover) {
-    .landing-listing-card:has(a:hover),
-    .listing-spec-row:has(h3 a:hover),
-    .quote-flow-card:has(a:hover, button:hover),
-    .saved-listing-row:has(a:hover, button:hover),
-    .management-row:has(a:hover, button:hover),
-    .record-card:has(a:hover, button:hover) {
-        transform: translateY(-1px);
-        border-color: var(--border-strong);
-        box-shadow: var(--shadow-soft);
-    }
+.faq-answer-motion {
+    display: flow-root;
+}
+
+[data-faq-motion="ready"][data-faq-animating] > .faq-answer-motion {
+    overflow: hidden;
+    transition:
+        height var(--motion-expand) var(--motion-ease),
+        opacity var(--motion-base) var(--motion-ease),
+        transform var(--motion-base) var(--motion-ease);
+}
+
+.landing-faq-list summary::after,
+.public-faq-page .public-faq-list summary::after {
+    top: 50%;
+    transform: translateY(-50%) rotate(0deg);
+    transition: transform var(--motion-expand) var(--motion-ease);
+}
+
+.landing-faq-list details > summary::after,
+.public-faq-page .public-faq-list details > summary::after {
+    content: "+";
+}
+
+.landing-faq-list details[open] > summary::after,
+.public-faq-page .public-faq-list details[open] > summary::after {
+    transform: translateY(-50%) rotate(45deg);
+}
+
+.public-faq-page .public-faq-list summary {
+    position: relative;
+    padding-right: 38px;
+    list-style: none;
+}
+
+.public-faq-page .public-faq-list summary::-webkit-details-marker {
+    display: none;
 }
 
 .messages .message,
@@ -5523,6 +5676,35 @@ textarea {
 
 @media (prefers-reduced-motion: reduce) {
     html { scroll-behavior: auto; }
+
+    .button:not(:disabled):not([aria-disabled="true"]):hover,
+    .button:not(:disabled):not([aria-disabled="true"]):active,
+    .account-menu-trigger:active,
+    .account-menu-item:active,
+    .nav-toggle:active,
+    .nav-menu > summary:active,
+    .nav-menu-panel a:active,
+    .marketplace-filter-chips a:active,
+    .landing-listing-card:has(a:hover),
+    .listing-spec-row:has(h3 a:hover),
+    .quote-flow-card:has(a:hover, button:hover),
+    .saved-listing-row:has(a:hover, button:hover),
+    .management-row:has(a:hover, button:hover),
+    .record-card:has(a:hover, button:hover) {
+        transform: none !important;
+    }
+
+    #site-navigation .nav-group-primary > .nav-link::after,
+    #site-navigation .nav-group-primary > .nav-menu > summary.nav-link::before,
+    #site-navigation .nav-menu > summary::after,
+    .landing-faq-list summary::after,
+    .public-faq-page .public-faq-list summary::after {
+        transition: none !important;
+    }
+
+    [data-faq-motion="ready"][data-faq-animating] > .faq-answer-motion {
+        transition: none !important;
+    }
 
     *,
     *::before,

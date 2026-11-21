@@ -197,7 +197,7 @@
     <section class="landing-section landing-faq" aria-labelledby="faq-title">
         <div class="container landing-faq-inner">
             <div><p class="eyebrow">Questions and answers</p><h2 id="faq-title">Frequently asked questions</h2><a class="text-link landing-faq-all" href="{% url 'faq' %}">View all FAQs <span aria-hidden="true">→</span></a></div>
-            <div class="landing-faq-list">{% for item in faq_items|slice:":6" %}<details><summary>{{ item.question }}</summary><p>{{ item.answer }}</p>{% if item.question == "What does Verified mean?" %}<p><a href="{% url 'trust_safety' %}">Learn about trust and safety</a>.</p>{% endif %}</details>{% endfor %}</div>
+            <div class="landing-faq-list">{% for item in faq_items|slice:":6" %}<details><summary>{{ item.question }}</summary><div class="faq-answer-motion"><p>{{ item.answer }}</p>{% if item.question == "What does Verified mean?" %}<p><a href="{% url 'trust_safety' %}">Learn about trust and safety</a>.</p>{% endif %}</div></details>{% endfor %}</div>
         </div>
     </section>
     {% endif %}

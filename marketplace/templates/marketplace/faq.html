@@ -21,6 +21,7 @@
                 {% for item in group.items %}
                 <details>
                     <summary>{{ item.question }}</summary>
+                    <div class="faq-answer-motion">
                     {% if item.pilot_payment_notice %}
                     {% include "marketplace/includes/pilot_payment_notice.html" %}
                     {% else %}
@@ -43,6 +44,7 @@
                     {% elif item.question == "How can I contact support?" %}
                     <p><a href="{% url 'contact' %}">Contact support</a>.</p>
                     {% endif %}
+                    </div>
                 </details>
                 {% endfor %}
             </div>
