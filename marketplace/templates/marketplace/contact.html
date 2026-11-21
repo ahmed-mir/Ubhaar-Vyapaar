@@ -1,17 +1,17 @@
 {% extends "marketplace/public_content_page.html" %}
 {% load accessibility %}
 
-{% block title %}Contact | Ubhaar-Vyapaar{% endblock %}
+{% block title %}Contact support | Ubhaar-Vyapaar{% endblock %}
 {% block meta_description %}Contact Ubhaar-Vyapaar with questions about the marketplace, accounts, or platform use. For accepted orders, use order messages.{% endblock %}
-{% block social_title %}Contact | Ubhaar-Vyapaar{% endblock %}
+{% block social_title %}Contact support | Ubhaar-Vyapaar{% endblock %}
 {% block social_description %}Contact Ubhaar-Vyapaar with questions about the marketplace, accounts, or platform use. For accepted orders, use order messages.{% endblock %}
-{% block twitter_title %}Contact | Ubhaar-Vyapaar{% endblock %}
+{% block twitter_title %}Contact support | Ubhaar-Vyapaar{% endblock %}
 {% block twitter_description %}Contact Ubhaar-Vyapaar with questions about the marketplace, accounts, or platform use. For accepted orders, use order messages.{% endblock %}
 
 {% block public_page_class %} public-info-page public-contact-page{% endblock %}
-{% block page_eyebrow %}Contact{% endblock %}
-{% block page_h1 %}Contact Ubhaar-Vyapaar{% endblock %}
-{% block page_lead %}Send a question about the marketplace, your account, or using the platform.{% endblock %}
+{% block page_eyebrow %}Contact support{% endblock %}
+{% block page_h1 %}Need help?{% endblock %}
+{% block page_lead %}Send us a message about the marketplace, your account, or using the platform. The Ubhaar-Vyapaar team will review it.{% endblock %}
 
 {% block page_body %}
 <div class="contact-page-layout">
@@ -70,7 +70,8 @@
             <p>Use the order messages to contact the other participant.</p>
         </div>
         <div class="contact-guidance-links">
-            <p><a href="{% url 'faq' %}">Browse frequently asked questions</a></p>
+            <p><a href="{% url 'help_page' %}">Visit Help</a></p>
+            <p><a href="{% url 'faq' %}">Browse FAQs</a></p>
             <p><a href="{% url 'how_it_works' %}">See how the marketplace works</a></p>
             <p><a href="{% url 'grievance_redressal' %}">Grievance Redressal</a></p>
         </div>

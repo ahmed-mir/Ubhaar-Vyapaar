@@ -46,7 +46,7 @@ class ContactSubmissionForm(forms.ModelForm):
             "message": "How can we help?",
         }
         help_texts = {
-            "message": "Please do not include passwords or payment details.",
+            "message": "Please do not include passwords, payment credentials, or other sensitive information.",
         }
 
     def __init__(self, *args, **kwargs):
@@ -58,6 +58,9 @@ class ContactSubmissionForm(forms.ModelForm):
             if self.is_bound and self[name].errors:
                 field.widget.attrs["aria-invalid"] = "true"
                 field.widget.attrs["aria-describedby"] = f"id_{name}_error"
+
+    def clean_email(self):
+        return self.cleaned_data["email"].strip().lower()
 
 
 class WaitlistEntryForm(forms.ModelForm):

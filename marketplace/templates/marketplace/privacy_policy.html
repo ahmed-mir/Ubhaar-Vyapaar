@@ -85,7 +85,7 @@
             <h2>User rights and requests</h2>
             <p>Users can change their password from account settings. Manufacturers can edit their business profile. A safe self-service account deletion workflow is not currently implemented because deleting accounts may affect business records, orders, messages, and reviews.</p>
             {% if legal_contact_email %}<p>To request correction, access, deletion, or review of account data, email <a href="mailto:{{ legal_contact_email }}">{{ legal_contact_email }}</a>.</p>{% endif %}
-            <p>For an account-data question when no email address is shown, use the <a href="{% url 'contact' %}">Contact page</a>.</p>
+            <p>For an account-data question when no email address is shown, use <a href="{% url 'contact' %}">Contact support</a>.</p>
         </section>
 
         <section class="public-content-section" id="childrens-data">

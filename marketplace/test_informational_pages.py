@@ -208,6 +208,12 @@ class InformationalPageTests(TestCase):
         html = response.content.decode()
         self.assertLess(html.index('class="public-content-section contact-form-section"'), html.index('class="contact-guidance"'))
         self.assertContains(response, "Other ways to get help")
+        self.assertContains(response, "Need help?")
+        self.assertContains(response, "The Ubhaar-Vyapaar team will review it.")
+        self.assertContains(response, "Visit Help")
+        self.assertContains(response, "Browse FAQs")
+        self.assertContains(response, reverse("help_page"))
+        self.assertContains(response, reverse("faq"))
         self.assertContains(response, reverse("grievance_redressal"))
         self.assertNotContains(response, "mailto:")
 
@@ -217,6 +223,7 @@ class InformationalPageTests(TestCase):
         self.assertContains(response, "Platform or service concern")
         self.assertContains(response, "accepted order")
         self.assertContains(response, reverse("contact"))
+        self.assertContains(response, "Contact support")
         self.assertNotContains(response, "Grievance contact</h2>")
         self.assertNotContains(response, "Not configured")
 
@@ -272,6 +279,7 @@ class InformationalPageTests(TestCase):
                 self.assertContains(response, 'class="legal-page-toc-mobile"')
                 self.assertContains(response, reverse("contact"))
                 self.assertContains(response, reverse("grievance_redressal"))
+                self.assertContains(response, "Contact support")
 
         for route_name in ("cookie_policy", "refund_policy"):
             with self.subTest(route_name=route_name):

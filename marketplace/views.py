@@ -239,7 +239,10 @@ def contact(request):
         form = ContactSubmissionForm(request.POST)
 
         if (request.POST.get("company_website") or "").strip():
-            messages.success(request, "Your message has been received.")
+            messages.success(
+                request,
+                "Thanks for contacting Ubhaar-Vyapaar. Your message has been received.",
+            )
             return redirect("contact")
 
         if form.is_valid():
@@ -261,10 +264,20 @@ def contact(request):
             if recipient:
                 _send_contact_notification(submission, recipient)
 
-            messages.success(request, "Your message has been received.")
+            messages.success(
+                request,
+                "Thanks for contacting Ubhaar-Vyapaar. Your message has been received.",
+            )
             return redirect("contact")
     else:
-        form = ContactSubmissionForm()
+        initial = {}
+        if request.user.is_authenticated:
+            initial["name"] = (
+                request.user.get_full_name().strip()
+                or request.user.get_username()
+            )
+            initial["email"] = request.user.email
+        form = ContactSubmissionForm(initial=initial)
 
     return render(
         request,

@@ -36,6 +36,12 @@ class ContactSubmissionTests(TestCase):
         self.assertContains(response, 'autocomplete="name"')
         self.assertContains(response, 'autocomplete="email"')
         self.assertContains(response, 'aria-hidden="true"')
+        self.assertContains(response, "Need help?")
+        self.assertContains(response, "The Ubhaar-Vyapaar team will review it.")
+        self.assertContains(
+            response,
+            "Please do not include passwords, payment credentials, or other sensitive information.",
+        )
         self.assertContains(response, "We use the information you submit")
         self.assertContains(response, reverse("privacy_policy"))
         self.assertNotContains(response, 'name="marketing_consent"')
@@ -49,6 +55,7 @@ class ContactSubmissionTests(TestCase):
             {"email": "not-an-email"},
             {"name": ""},
             {"message": ""},
+            {"message": "   \t  "},
             {"role": "ADMIN"},
             {"message": "x" * 5001},
         )
@@ -66,9 +73,48 @@ class ContactSubmissionTests(TestCase):
         self.assertEqual(len(mail.outbox), 0)
 
         success = self.client.get(response.url)
-        self.assertContains(success, "Your message has been received.")
+        self.assertContains(
+            success,
+            "Thanks for contacting Ubhaar-Vyapaar. Your message has been received.",
+        )
         self.client.get(response.url)
         self.assertEqual(ContactSubmission.objects.count(), 1)
+
+    @override_settings(LEGAL_CONTACT_EMAIL="")
+    def test_email_is_trimmed_and_normalized_before_storage(self):
+        response = self.client.post(
+            reverse("contact"),
+            self.payload(
+                name="  Asha Buyer  ",
+                email="  Asha@Example.TEST  ",
+                message="  I have a question.  ",
+            ),
+        )
+
+        self.assert_contact_redirect(response)
+        submission = ContactSubmission.objects.get()
+        self.assertEqual(submission.email, "asha@example.test")
+        self.assertEqual(submission.name, "Asha Buyer")
+        self.assertEqual(submission.message, "I have a question.")
+
+    def test_signed_in_user_gets_editable_name_and_email_defaults(self):
+        User = get_user_model()
+        user = User.objects.create_user(
+            username="contact-prefill-buyer",
+            email="prefill@example.test",
+            password="strong-password",
+            role="BUYER",
+            first_name="Asha",
+            last_name="Buyer",
+        )
+        self.client.force_login(user)
+
+        response = self.client.get(reverse("contact"))
+
+        self.assertContains(response, 'value="Asha Buyer"')
+        self.assertContains(response, 'value="prefill@example.test"')
+        self.assertContains(response, 'name="name"')
+        self.assertContains(response, 'name="email"')
 
     def test_invalid_post_shows_associated_errors_without_saving(self):
         response = self.client.post(
@@ -101,7 +147,10 @@ class ContactSubmissionTests(TestCase):
         self.assertEqual(valid_post.status_code, 302)
         self.assertEqual(ContactSubmission.objects.count(), 1)
 
-    @override_settings(LEGAL_CONTACT_EMAIL="support@contact.example.com")
+    @override_settings(
+        LEGAL_CONTACT_EMAIL="support@contact.example.com",
+        DEFAULT_FROM_EMAIL="website@contact.example.com",
+    )
     def test_notification_uses_configured_recipient_and_contains_submission(self):
         response = self.client.post(reverse("contact"), self.payload())
 
@@ -110,6 +159,7 @@ class ContactSubmissionTests(TestCase):
         self.assertEqual(len(mail.outbox), 1)
         notification = mail.outbox[0]
         self.assertEqual(notification.to, ["support@contact.example.com"])
+        self.assertEqual(notification.from_email, "website@contact.example.com")
         self.assertEqual(notification.reply_to, ["asha@example.test"])
         self.assertIn("Asha Buyer", notification.body)
         self.assertIn("asha@example.test", notification.body)
@@ -137,7 +187,10 @@ class ContactSubmissionTests(TestCase):
         self.assertNotIn("asha@example.test", logged)
         self.assertNotIn("I have a question about the marketplace", logged)
         success = self.client.get(response.url)
-        self.assertContains(success, "Your message has been received.")
+        self.assertContains(
+            success,
+            "Thanks for contacting Ubhaar-Vyapaar. Your message has been received.",
+        )
         self.assertNotContains(success, "SMTP credentials")
 
     def test_filled_honeypot_does_not_save_or_send_notification(self):
@@ -149,7 +202,10 @@ class ContactSubmissionTests(TestCase):
         self.assert_contact_redirect(response)
         self.assertEqual(ContactSubmission.objects.count(), 0)
         self.assertEqual(len(mail.outbox), 0)
-        self.assertContains(self.client.get(response.url), "Your message has been received.")
+        self.assertContains(
+            self.client.get(response.url),
+            "Thanks for contacting Ubhaar-Vyapaar. Your message has been received.",
+        )
 
     @override_settings(LEGAL_CONTACT_EMAIL="")
     def test_session_throttle_allows_five_and_blocks_the_sixth_submission(self):
