@@ -7,19 +7,23 @@ from pathlib import Path
 from django.core.exceptions import ImproperlyConfigured
 from django.test import SimpleTestCase
 
-from config.database import build_database_config, POSTGRES_ENGINE, SQLITE_ENGINE
+from config.database import (
+    build_database_config,
+    is_django_test_command,
+    POSTGRES_ENGINE,
+    SQLITE_ENGINE,
+)
 
 
 BASE_DIR = Path(__file__).resolve().parents[1]
 
 
 class DatabaseConfigurationTests(SimpleTestCase):
-    def build(self, *, debug, url="", test_mode=False):
+    def build(self, *, debug, url=""):
         return build_database_config(
             debug=debug,
             database_url=url,
             base_dir=BASE_DIR,
-            test_mode=test_mode,
         )
 
     def test_debug_development_defaults_to_local_sqlite(self):
@@ -103,15 +107,103 @@ class DatabaseConfigurationTests(SimpleTestCase):
 
         self.assertNotIn("do-not-print", str(raised.exception))
 
-    def test_standard_django_test_mode_ignores_database_url(self):
-        config = self.build(
-            debug=False,
-            url="postgresql://user:password@db.example.test/prod",
-            test_mode=True,
+    def test_only_actual_test_subcommand_enables_test_mode(self):
+        cases = (
+            (["manage.py", "test"], True),
+            (["manage.py", "test", "accounts"], True),
+            (["manage.py", "test", "marketplace.tests.SomeTest"], True),
+            (["manage.py", "check", "test"], False),
+            (["manage.py", "shell", "test"], False),
+            (["manage.py", "migrate", "test"], False),
+            (["manage.py", "somecommand", "test"], False),
         )
 
-        self.assertEqual(config["ENGINE"], SQLITE_ENGINE)
-        self.assertEqual(config["NAME"], str(BASE_DIR / "db.sqlite3"))
+        for argv, expected in cases:
+            with self.subTest(argv=argv):
+                self.assertIs(is_django_test_command(argv), expected)
+
+    def test_test_subcommand_in_real_settings_uses_local_test_database(self):
+        fake_database_url = (
+            "postgresql://local-test:fake@db.example.test/prod"
+        )
+        environment = os.environ.copy()
+        environment.update(
+            {
+                "DATABASE_URL": fake_database_url,
+                "DJANGO_DEBUG": "False",
+                "DJANGO_SECRET_KEY": "local-settings-test-key",
+                "DJANGO_USE_CLOUDINARY_MEDIA": "False",
+                "SENTRY_DSN": "",
+            }
+        )
+        script = (
+            "import json, sys; "
+            "sys.argv = ['manage.py', 'test', 'accounts']; "
+            "from config import settings as s; "
+            "print(json.dumps({"
+            "'engine': s.DATABASES['default']['ENGINE'], "
+            "'name': s.DATABASES['default']['NAME'], "
+            "'staticfiles_backend': s.STORAGES['staticfiles']['BACKEND']}))"
+        )
+
+        result = subprocess.run(
+            [sys.executable, "-c", script],
+            cwd=BASE_DIR,
+            env=environment,
+            capture_output=True,
+            text=True,
+            check=True,
+            timeout=30,
+        )
+        settings_result = json.loads(result.stdout.strip().splitlines()[-1])
+
+        self.assertEqual(settings_result["engine"], SQLITE_ENGINE)
+        self.assertEqual(
+            settings_result["name"],
+            str(BASE_DIR / "db.sqlite3"),
+        )
+        self.assertEqual(
+            settings_result["staticfiles_backend"],
+            "django.contrib.staticfiles.storage.StaticFilesStorage",
+        )
+
+    def test_non_test_command_with_test_argument_fails_closed(self):
+        environment = os.environ.copy()
+        environment.update(
+            {
+                "DATABASE_URL": "",
+                "DJANGO_DEBUG": "False",
+                "DJANGO_SECRET_KEY": "local-settings-test-key",
+                "DJANGO_USE_CLOUDINARY_MEDIA": "False",
+                "SENTRY_DSN": "",
+            }
+        )
+        script = (
+            "import sys\n"
+            "sys.argv = ['manage.py', 'shell', 'test']\n"
+            "from django.core.exceptions import ImproperlyConfigured\n"
+            "try:\n"
+            "    import config.settings\n"
+            "except ImproperlyConfigured as exc:\n"
+            "    expected = 'DATABASE_URL is required when DEBUG=False.'\n"
+            "    if str(exc) != expected:\n"
+            "        raise\n"
+            "    print('production database guard active')\n"
+            "else:\n"
+            "    raise AssertionError('settings did not fail closed')\n"
+        )
+
+        result = subprocess.run(
+            [sys.executable, "-c", script],
+            cwd=BASE_DIR,
+            env=environment,
+            capture_output=True,
+            text=True,
+            check=True,
+            timeout=30,
+        )
+
+        self.assertIn("production database guard active", result.stdout)
 
     def test_e2e_settings_ignore_parent_database_url(self):
         fake_database_url = (

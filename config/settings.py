@@ -12,7 +12,7 @@ from django.conf import global_settings
 from django.core.exceptions import ImproperlyConfigured
 from dotenv import load_dotenv
 
-from .database import build_database_config
+from .database import build_database_config, is_django_test_command
 
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -96,6 +96,8 @@ DEBUG = os.getenv(
     "DJANGO_DEBUG",
     "False",
 ).lower() == "true"
+
+IS_DJANGO_TEST = is_django_test_command(sys.argv)
 
 ALLOW_DEMO_SEEDING = _env_bool("ALLOW_DEMO_SEEDING", DEBUG)
 
@@ -198,7 +200,7 @@ DATABASES = {
         debug=DEBUG,
         database_url=os.getenv("DATABASE_URL", ""),
         base_dir=BASE_DIR,
-        test_mode="test" in sys.argv,
+        test_mode=IS_DJANGO_TEST,
     )
 }
 
@@ -353,7 +355,7 @@ DEFAULT_MEDIA_STORAGE_BACKEND = (
 
 STATICFILES_STORAGE_BACKEND = (
     "django.contrib.staticfiles.storage.StaticFilesStorage"
-    if "test" in sys.argv
+    if IS_DJANGO_TEST
     else "whitenoise.storage.CompressedManifestStaticFilesStorage"
 )
 

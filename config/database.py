@@ -1,5 +1,6 @@
 """Database configuration helpers shared by Django settings modules."""
 
+import sys
 from pathlib import Path
 
 import dj_database_url
@@ -17,6 +18,12 @@ _VALID_SSL_MODES = {
     "verify-full",
 }
 _STRICT_SSL_MODES = {"verify-ca", "verify-full"}
+
+
+def is_django_test_command(argv=None):
+    """Return whether argv's management subcommand is Django's ``test``."""
+    command_args = sys.argv if argv is None else argv
+    return len(command_args) > 1 and command_args[1] == "test"
 
 
 def sqlite_database_config(path):
