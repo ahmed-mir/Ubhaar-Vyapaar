@@ -214,6 +214,14 @@ class QuoteRequest(models.Model):
     requirements = models.TextField()
     delivery_location = models.CharField(max_length=200)
 
+    action_digest = models.CharField(
+        max_length=64,
+        null=True,
+        blank=True,
+        unique=True,
+        editable=False,
+    )
+
     status = models.CharField(
         max_length=20,
         choices=Status.choices,
@@ -296,6 +304,13 @@ class Order(models.Model):
         related_name="order",
         null=True,
         blank=True,
+    )
+    buy_now_action_digest = models.CharField(
+        max_length=64,
+        null=True,
+        blank=True,
+        unique=True,
+        editable=False,
     )
     source = models.CharField(
         max_length=20,

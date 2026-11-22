@@ -35,6 +35,12 @@ from .forms import (
     ManufacturerProfileForm,
     ReviewForm,
 )
+from .idempotency import (
+    BUY_NOW_ACTION,
+    REQUEST_QUOTE_ACTION,
+    issue_workflow_action_token,
+    workflow_action_digest,
+)
 from .models import (
     CapacityListing,
     ContactSubmission,
@@ -1623,72 +1629,127 @@ def buy_now(request, pk):
         request.POST if request.method == "POST" else None,
         listing=listing,
     )
+    action_token = (
+        request.POST.get("action_token", "")
+        if request.method == "POST"
+        else issue_workflow_action_token(
+            user=request.user,
+            listing=listing,
+            action=BUY_NOW_ACTION,
+        )
+    )
     if request.method == "POST" and form.is_valid():
-        quantity = form.cleaned_data["quantity"]
-        unit_price = listing.price_per_unit
-        total = unit_price * quantity
-        delivery_location = form.cleaned_data["delivery_location"].strip()
-        with transaction.atomic():
-            order = Order.objects.create(
-                source=Order.Source.BUY_NOW,
-                quotation=None,
-                buyer=request.user,
-                manufacturer=listing.manufacturer,
+        action_digest = workflow_action_digest(
+            action_token,
+            user=request.user,
+            listing=listing,
+            action=BUY_NOW_ACTION,
+        )
+        if action_digest is None:
+            form.add_error(None, "This purchase form has expired. Reload it to continue.")
+            action_token = issue_workflow_action_token(
+                user=request.user,
                 listing=listing,
-                specifications_snapshot={
-                    "listing_title": listing.title,
-                    "listing_category": listing.get_category_display(),
-                    "delivery_location": delivery_location,
-                    "machine_type": listing.machine_type,
-                    "materials": listing.materials,
-                    "technical_capabilities": listing.technical_capabilities,
-                    "purchase_source": "BUY_NOW",
-                },
-                quantity=quantity,
-                agreed_unit_price=unit_price,
-                total_amount=total,
-                agreed_production_days=listing.production_days,
-                status=Order.Status.AWAITING_FUNDING,
-                terms_locked_at=timezone.now(),
+                action=BUY_NOW_ACTION,
             )
-            first_milestone = (total * Decimal("0.80")).quantize(
-                Decimal("0.01")
-            )
-            Milestone.objects.bulk_create(
-                [
-                    Milestone(
-                        order=order,
-                        title="Production complete",
-                        description=(
-                            "Manufacturer marks this complete when production "
-                            "is ready for buyer review."
-                        ),
-                        percentage=80,
-                        amount=first_milestone,
-                    ),
-                    Milestone(
-                        order=order,
-                        title="Ready to ship",
-                        description=(
-                            "Final packing or dispatch readiness checkpoint."
-                        ),
-                        percentage=20,
-                        amount=total - first_milestone,
-                    ),
-                ]
-            )
-            create_order_notification(
-                request.user,
-                f"Direct purchase Order #{order.pk} was created. Review its milestone payment options.",
-                order,
-            )
-            create_order_notification(
-                listing.manufacturer.user,
-                f"A Buyer placed direct purchase Order #{order.pk} for {concise_label(listing.title)}.",
-                order,
-            )
-        messages.success(request, "Direct purchase confirmed. Your order is ready.")
-        return redirect("order_detail", pk=order.pk)
+        else:
+            existing_order = Order.objects.filter(
+                buy_now_action_digest=action_digest,
+                buyer=request.user,
+                listing=listing,
+                source=Order.Source.BUY_NOW,
+            ).first()
+            if existing_order is not None:
+                messages.info(request, "This purchase was already submitted.")
+                return redirect("order_detail", pk=existing_order.pk)
+
+            if Order.objects.filter(buy_now_action_digest=action_digest).exists():
+                form.add_error(None, "This purchase form is invalid. Reload it to continue.")
+                action_token = issue_workflow_action_token(
+                    user=request.user,
+                    listing=listing,
+                    action=BUY_NOW_ACTION,
+                )
+            else:
+                quantity = form.cleaned_data["quantity"]
+                unit_price = listing.price_per_unit
+                total = unit_price * quantity
+                delivery_location = form.cleaned_data["delivery_location"].strip()
+                try:
+                    with transaction.atomic():
+                        order = Order.objects.create(
+                            source=Order.Source.BUY_NOW,
+                            quotation=None,
+                            buy_now_action_digest=action_digest,
+                            buyer=request.user,
+                            manufacturer=listing.manufacturer,
+                            listing=listing,
+                            specifications_snapshot={
+                                "listing_title": listing.title,
+                                "listing_category": listing.get_category_display(),
+                                "delivery_location": delivery_location,
+                                "machine_type": listing.machine_type,
+                                "materials": listing.materials,
+                                "technical_capabilities": listing.technical_capabilities,
+                                "purchase_source": "BUY_NOW",
+                            },
+                            quantity=quantity,
+                            agreed_unit_price=unit_price,
+                            total_amount=total,
+                            agreed_production_days=listing.production_days,
+                            status=Order.Status.AWAITING_FUNDING,
+                            terms_locked_at=timezone.now(),
+                        )
+                        first_milestone = (total * Decimal("0.80")).quantize(
+                            Decimal("0.01")
+                        )
+                        Milestone.objects.bulk_create(
+                            [
+                                Milestone(
+                                    order=order,
+                                    title="Production complete",
+                                    description=(
+                                        "Manufacturer marks this complete when production "
+                                        "is ready for buyer review."
+                                    ),
+                                    percentage=80,
+                                    amount=first_milestone,
+                                ),
+                                Milestone(
+                                    order=order,
+                                    title="Ready to ship",
+                                    description=(
+                                        "Final packing or dispatch readiness checkpoint."
+                                    ),
+                                    percentage=20,
+                                    amount=total - first_milestone,
+                                ),
+                            ]
+                        )
+                        create_order_notification(
+                            request.user,
+                            f"Direct purchase Order #{order.pk} was created. Review its milestone payment options.",
+                            order,
+                        )
+                        create_order_notification(
+                            listing.manufacturer.user,
+                            f"A Buyer placed direct purchase Order #{order.pk} for {concise_label(listing.title)}.",
+                            order,
+                        )
+                except IntegrityError:
+                    order = Order.objects.filter(
+                        buy_now_action_digest=action_digest,
+                        buyer=request.user,
+                        listing=listing,
+                        source=Order.Source.BUY_NOW,
+                    ).first()
+                    if order is None:
+                        raise
+                    messages.info(request, "This purchase was already submitted.")
+                    return redirect("order_detail", pk=order.pk)
+
+                messages.success(request, "Direct purchase confirmed. Your order is ready.")
+                return redirect("order_detail", pk=order.pk)
 
     quantity = form["quantity"].value() or form.fields["quantity"].initial
     try:
@@ -1706,6 +1767,7 @@ def buy_now(request, pk):
             "estimated_total": estimated_total,
             "first_milestone": first_milestone,
             "second_milestone": estimated_total - first_milestone,
+            "action_token": action_token,
         },
     )
 @login_required
@@ -1736,33 +1798,88 @@ def request_quote(request, pk):
 
     if request.method == "POST":
         form = QuoteRequestForm(request.POST, listing=listing)
+        action_token = request.POST.get("action_token", "")
 
         if form.is_valid():
-            with transaction.atomic():
-                quote = form.save(commit=False)
-                quote.buyer = request.user
-                quote.listing = listing
-                quote.save()
-
-                Notification.objects.create(
-                    recipient_id=listing.manufacturer.user_id,
-                    message=(
-                        f"New quote request #{quote.pk} for {concise_label(listing.title)}: "
-                        f"{quote.quantity} units requested. Review and respond."
-                    ),
-                    destination=(
-                        Notification.Destination.MANUFACTURER_DASHBOARD
-                    ),
-                )
-
-            messages.success(
-                request,
-                "Your quote request was submitted.",
+            action_digest = workflow_action_digest(
+                action_token,
+                user=request.user,
+                listing=listing,
+                action=REQUEST_QUOTE_ACTION,
             )
+            if action_digest is None:
+                form.add_error(
+                    None,
+                    "This quote request form has expired. Reload it to continue.",
+                )
+                action_token = issue_workflow_action_token(
+                    user=request.user,
+                    listing=listing,
+                    action=REQUEST_QUOTE_ACTION,
+                )
+            else:
+                existing_quote = QuoteRequest.objects.filter(
+                    action_digest=action_digest,
+                    buyer=request.user,
+                    listing=listing,
+                ).first()
+                if existing_quote is not None:
+                    messages.info(request, "This quote request was already submitted.")
+                    return redirect("my_quote_requests")
 
-            return redirect("request_quote", pk=listing.pk)
+                if QuoteRequest.objects.filter(action_digest=action_digest).exists():
+                    form.add_error(
+                        None,
+                        "This quote request form is invalid. Reload it to continue.",
+                    )
+                    action_token = issue_workflow_action_token(
+                        user=request.user,
+                        listing=listing,
+                        action=REQUEST_QUOTE_ACTION,
+                    )
+                else:
+                    try:
+                        with transaction.atomic():
+                            quote = form.save(commit=False)
+                            quote.buyer = request.user
+                            quote.listing = listing
+                            quote.action_digest = action_digest
+                            quote.save()
+
+                            Notification.objects.create(
+                                recipient_id=listing.manufacturer.user_id,
+                                message=(
+                                    f"New quote request #{quote.pk} for {concise_label(listing.title)}: "
+                                    f"{quote.quantity} units requested. Review and respond."
+                                ),
+                                destination=(
+                                    Notification.Destination.MANUFACTURER_DASHBOARD
+                                ),
+                            )
+                    except IntegrityError:
+                        quote = QuoteRequest.objects.filter(
+                            action_digest=action_digest,
+                            buyer=request.user,
+                            listing=listing,
+                        ).first()
+                        if quote is None:
+                            raise
+                        messages.info(request, "This quote request was already submitted.")
+                        return redirect("my_quote_requests")
+
+                    messages.success(
+                        request,
+                        "Your quote request was submitted.",
+                    )
+
+                    return redirect("request_quote", pk=listing.pk)
     else:
         form = QuoteRequestForm(listing=listing)
+        action_token = issue_workflow_action_token(
+            user=request.user,
+            listing=listing,
+            action=REQUEST_QUOTE_ACTION,
+        )
 
     recent_quote = listing.quote_requests.filter(
         buyer=request.user,
@@ -1775,6 +1892,7 @@ def request_quote(request, pk):
             "form": form,
             "listing": listing,
             "recent_quote": recent_quote,
+            "action_token": action_token,
         },
     )
 @login_required
@@ -2647,33 +2765,53 @@ def mark_milestone_complete(request, pk):
 
     add_milestone_action_flags(milestone, request.user)
 
-    if milestone.can_submit:
-        milestone.status = Milestone.Status.COMPLETED
-        milestone.completed_at = timezone.now()
-        milestone.save(update_fields=["status", "completed_at", "updated_at"])
-        previous_order_status, _ = refresh_order_status(milestone.order)
-        milestone_title = concise_label(milestone.title)
-
-        create_order_notification(
-            milestone.order.buyer,
-            message=(
-                f"{milestone_title} milestone is ready for your approval "
-                f"on Order #{milestone.order_id}. Review the work and approve "
-                "or request changes."
-            ),
-            order=milestone.order,
-        )
-        notify_order_status_change(milestone.order, previous_order_status)
-
-        messages.success(
-            request,
-            "Milestone submitted for buyer approval.",
-        )
-    else:
+    if not milestone.can_submit:
         messages.info(
             request,
             "This milestone must be funded and in progress before submission.",
         )
+        return redirect("order_detail", pk=milestone.order_id)
+
+    with transaction.atomic():
+        order = Order.objects.select_for_update().get(pk=milestone.order_id)
+        updated = Milestone.objects.filter(
+            pk=milestone.pk,
+            order__manufacturer__user=request.user,
+            order__status__in=[
+                Order.Status.CONFIRMED,
+                Order.Status.AWAITING_FUNDING,
+                Order.Status.FUNDED,
+                Order.Status.IN_PRODUCTION,
+                Order.Status.MILESTONE_PENDING,
+                Order.Status.READY_TO_SHIP,
+                Order.Status.SHIPPED,
+            ],
+            status=Milestone.Status.IN_PROGRESS,
+            funding_status=Milestone.FundingStatus.FUNDED,
+        ).update(
+            status=Milestone.Status.COMPLETED,
+            completed_at=timezone.now(),
+        )
+        if updated:
+            milestone.refresh_from_db()
+            previous_order_status, _ = refresh_order_status(order)
+            milestone_title = concise_label(milestone.title)
+
+            create_order_notification(
+                order.buyer,
+                message=(
+                    f"{milestone_title} milestone is ready for your approval "
+                    f"on Order #{order.pk}. Review the work and approve "
+                    "or request changes."
+                ),
+                order=order,
+            )
+            notify_order_status_change(order, previous_order_status)
+
+    if updated:
+        messages.success(request, "Milestone submitted for buyer approval.")
+    else:
+        messages.info(request, "This milestone has already changed.")
 
     return redirect("order_detail", pk=milestone.order_id)
 
@@ -2707,45 +2845,58 @@ def respond_to_milestone(request, pk):
         messages.info(request, "This milestone is not awaiting review.")
         return redirect("order_detail", pk=milestone.order_id)
 
-    milestone.status = decision
-    milestone.buyer_feedback = feedback
+    with transaction.atomic():
+        order = Order.objects.select_for_update().get(pk=milestone.order_id)
+        update_fields = {
+            "status": decision,
+            "buyer_feedback": feedback,
+            "approved_at": timezone.now()
+            if decision == Milestone.Status.APPROVED
+            else None,
+            "completed_at": None
+            if decision == Milestone.Status.REJECTED
+            else milestone.completed_at,
+            "updated_at": timezone.now(),
+        }
+        updated = Milestone.objects.filter(
+            pk=milestone.pk,
+            order__buyer=request.user,
+            order__status__in=[
+                Order.Status.CONFIRMED,
+                Order.Status.AWAITING_FUNDING,
+                Order.Status.FUNDED,
+                Order.Status.IN_PRODUCTION,
+                Order.Status.MILESTONE_PENDING,
+                Order.Status.READY_TO_SHIP,
+                Order.Status.SHIPPED,
+            ],
+            status=Milestone.Status.COMPLETED,
+        ).update(**update_fields)
 
-    if decision == Milestone.Status.APPROVED:
-        milestone.approved_at = timezone.now()
+        if updated:
+            milestone.refresh_from_db()
+            previous_order_status, _ = refresh_order_status(order)
+            response_label = (
+                "approved"
+                if decision == Milestone.Status.APPROVED
+                else "requested changes for"
+            )
+            milestone_title = concise_label(milestone.title)
+
+            create_order_notification(
+                order.manufacturer.user,
+                message=(
+                    f"The buyer {response_label} the {milestone_title} milestone "
+                    f"on Order #{order.pk}."
+                ),
+                order=order,
+            )
+            notify_order_status_change(order, previous_order_status)
+
+    if updated:
+        messages.success(request, "Milestone response saved.")
     else:
-        milestone.approved_at = None
-        milestone.completed_at = None
-
-    milestone.save(
-        update_fields=[
-            "status",
-            "buyer_feedback",
-            "approved_at",
-            "completed_at",
-            "updated_at",
-        ]
-    )
-    previous_order_status, _ = refresh_order_status(milestone.order)
-    milestone.order.refresh_from_db(fields=["status"])
-
-    response_label = (
-        "approved"
-        if decision == Milestone.Status.APPROVED
-        else "requested changes for"
-    )
-    milestone_title = concise_label(milestone.title)
-
-    create_order_notification(
-        milestone.order.manufacturer.user,
-        message=(
-            f"The buyer {response_label} the {milestone_title} milestone "
-            f"on Order #{milestone.order_id}."
-        ),
-        order=milestone.order,
-    )
-    notify_order_status_change(milestone.order, previous_order_status)
-
-    messages.success(request, "Milestone response saved.")
+        messages.info(request, "This milestone has already changed.")
     return redirect("order_detail", pk=milestone.order_id)
 
 

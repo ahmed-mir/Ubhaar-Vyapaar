@@ -28,6 +28,7 @@
 
         <form method="post" class="order-message-form" novalidate>
             {% csrf_token %}
+            <input type="hidden" name="action_token" value="{{ action_token }}">
             <h2>Quantity and delivery</h2>
             {% with form=form %}{% include "marketplace/includes/accessible_form.html" %}{% endwith %}
             <section class="order-secondary-details__content" aria-labelledby="milestone-payment-structure">

@@ -32,6 +32,7 @@
 
                 <form method="post" class="quote-workflow-form styled-form form-grid" novalidate data-analytics-event="quote_request_submitted">
                     {% csrf_token %}
+                    <input type="hidden" name="action_token" value="{{ action_token }}">
                     <fieldset class="quote-form-group">
                         <legend>Order requirement</legend>
                         {% for field in form %}

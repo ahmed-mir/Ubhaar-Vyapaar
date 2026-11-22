@@ -14,6 +14,7 @@ from django.contrib.auth import get_user_model
 from django.core.management import call_command
 from django.core.management.base import CommandError
 from django.core.management.base import CommandError
+from django.db import IntegrityError, transaction
 from django.test import Client
 from django.test import RequestFactory, TestCase, override_settings
 from django.urls import reverse
@@ -714,25 +715,114 @@ class MarketplaceDiscoveryTrustTests(TestCase):
         )
         listing = self.create_listing(self.verified, "Real capacity")
         self.client.force_login(buyer)
+        url = reverse("request_quote", args=[listing.pk])
+        action_token = self.client.get(url).context["action_token"]
 
         response = self.client.post(
-            reverse("request_quote", args=[listing.pk]),
+            url,
             {
                 "quantity": 10,
                 "requirements": "Production order requirements",
                 "delivery_location": "Mumbai",
+                "action_token": action_token,
             },
         )
 
-        self.assertRedirects(
-            response,
-            reverse("request_quote", args=[listing.pk]),
-        )
+        self.assertRedirects(response, url)
         quote = QuoteRequest.objects.get(listing=listing, buyer=buyer)
         self.assertEqual(quote.requirements, "Production order requirements")
         self.assertTrue(
             Notification.objects.filter(recipient=self.verified_user).exists()
         )
+
+    def test_quote_action_replay_is_idempotent_but_fresh_action_is_allowed(self):
+        buyer = get_user_model().objects.create_user(
+            username="quote-idempotency-buyer",
+            password="password",
+            role="BUYER",
+        )
+        listing = self.create_listing(self.verified, "Replay-safe capacity")
+        self.client.force_login(buyer)
+        url = reverse("request_quote", args=[listing.pk])
+        action_token = self.client.get(url).context["action_token"]
+        data = {
+            "quantity": 10,
+            "requirements": "Same rendered request action",
+            "delivery_location": "Mumbai",
+            "action_token": action_token,
+        }
+
+        first = self.client.post(url, data)
+        replay = self.client.post(url, data)
+
+        self.assertRedirects(first, url)
+        self.assertRedirects(replay, reverse("my_quote_requests"))
+        self.assertEqual(QuoteRequest.objects.filter(buyer=buyer, listing=listing).count(), 1)
+        self.assertEqual(
+            Notification.objects.filter(recipient=self.verified_user).count(),
+            1,
+        )
+
+        fresh_token = self.client.get(url).context["action_token"]
+        self.client.post(url, {**data, "action_token": fresh_token})
+        quotes = QuoteRequest.objects.filter(buyer=buyer, listing=listing).order_by("pk")
+        self.assertEqual(quotes.count(), 2)
+        first_digest = quotes.first().action_digest
+        second = quotes.last()
+        with self.assertRaises(IntegrityError):
+            with transaction.atomic():
+                QuoteRequest.objects.filter(pk=second.pk).update(
+                    action_digest=first_digest,
+                )
+
+    def test_quote_token_is_bound_to_user_and_listing_and_validation_remains(self):
+        first_buyer = get_user_model().objects.create_user(
+            username="quote-token-owner",
+            password="password",
+            role="BUYER",
+        )
+        other_buyer = get_user_model().objects.create_user(
+            username="quote-token-other",
+            password="password",
+            role="BUYER",
+        )
+        listing = self.create_listing(self.verified, "Bound quote capacity")
+        other_listing = self.create_listing(self.verified, "Other quote capacity")
+        self.client.force_login(first_buyer)
+        url = reverse("request_quote", args=[listing.pk])
+        token = self.client.get(url).context["action_token"]
+        data = {
+            "quantity": 10,
+            "requirements": "A valid requirement",
+            "delivery_location": "Mumbai",
+            "action_token": token,
+        }
+
+        self.client.logout()
+        anonymous = self.client.post(url, data)
+        self.assertRedirects(
+            anonymous,
+            f"{reverse('login')}?next={url}",
+            fetch_redirect_response=False,
+        )
+        self.assertFalse(QuoteRequest.objects.exists())
+
+        self.client.force_login(other_buyer)
+        rejected = self.client.post(url, data)
+        self.assertEqual(rejected.status_code, 200)
+        self.assertFalse(QuoteRequest.objects.filter(listing=listing).exists())
+
+        self.client.force_login(first_buyer)
+        cross_listing = self.client.post(
+            reverse("request_quote", args=[other_listing.pk]),
+            data,
+        )
+        self.assertEqual(cross_listing.status_code, 200)
+        self.assertFalse(QuoteRequest.objects.exists())
+
+        invalid = self.client.post(url, {**data, "quantity": 0})
+        self.assertEqual(invalid.status_code, 200)
+        self.assertFalse(QuoteRequest.objects.exists())
 
     def test_quote_request_and_quotation_pages_show_context_and_real_fields(self):
         buyer = get_user_model().objects.create_user(
@@ -2046,14 +2136,21 @@ class OrderMessagingTests(TestCase):
         self.assertEqual(order.buyer, self.other_buyer)
         self.assertEqual(order.total_amount, Decimal("2250.00"))
         self.assertEqual(order.milestones.count(), 2)
+        notifications_before_replay = Notification.objects.filter(
+            order=order,
+        ).count()
 
         response = self.client.post(
             reverse("respond_to_quotation", args=[quotation.pk]),
-            {"status": Quotation.Status.DECLINED},
+            {"status": Quotation.Status.ACCEPTED},
         )
 
         self.assertRedirects(response, reverse("my_quote_requests"))
         self.assertEqual(Order.objects.filter(quotation=quotation).count(), 1)
+        self.assertEqual(
+            Notification.objects.filter(order=order).count(),
+            notifications_before_replay,
+        )
         quotation.refresh_from_db()
         self.assertEqual(quotation.status, Quotation.Status.ACCEPTED)
 
@@ -2172,6 +2269,18 @@ class OrderMessagingTests(TestCase):
         )
         self.milestone.refresh_from_db()
         self.assertEqual(self.milestone.status, Milestone.Status.COMPLETED)
+        notification_count = Notification.objects.filter(order=self.order).count()
+        response = self.client.post(
+            reverse("mark_milestone_complete", args=[self.milestone.pk])
+        )
+        self.assertRedirects(
+            response,
+            reverse("order_detail", args=[self.order.pk]),
+        )
+        self.assertEqual(
+            Notification.objects.filter(order=self.order).count(),
+            notification_count,
+        )
 
         self.client.force_login(self.other_buyer)
         response = self.client.post(
@@ -2289,6 +2398,26 @@ class OrderMessagingTests(TestCase):
         self.order.refresh_from_db()
         self.assertEqual(self.milestone.status, Milestone.Status.APPROVED)
         self.assertEqual(self.order.status, Order.Status.IN_PRODUCTION)
+
+        notification_count = Notification.objects.filter(order=self.order).count()
+        stale_response = self.client.post(
+            reverse("respond_to_milestone", args=[self.milestone.pk]),
+            {
+                "status": Milestone.Status.REJECTED,
+                "buyer_feedback": "Stale response must not replace approval.",
+            },
+        )
+        self.assertRedirects(
+            stale_response,
+            reverse("order_detail", args=[self.order.pk]),
+        )
+        self.milestone.refresh_from_db()
+        self.assertEqual(self.milestone.status, Milestone.Status.APPROVED)
+        self.assertEqual(self.milestone.buyer_feedback, "Looks good.")
+        self.assertEqual(
+            Notification.objects.filter(order=self.order).count(),
+            notification_count,
+        )
 
         response = self.client.post(
             reverse("release_milestone_payment", args=[self.milestone.pk])
@@ -3457,9 +3586,15 @@ class BuyNowOrderTests(TestCase):
 
     def create_order(self, quantity="120", **extra):
         self.client.force_login(self.buyer)
+        action_token = extra.pop("action_token", None)
+        if action_token is None:
+            action_token = self.client.get(
+                reverse("buy_now", args=[self.listing.pk])
+            ).context["action_token"]
         data = {
             "quantity": quantity,
             "delivery_location": "Pune, Maharashtra",
+            "action_token": action_token,
         }
         data.update(extra)
         return self.client.post(reverse("buy_now", args=[self.listing.pk]), data)
@@ -3496,6 +3631,88 @@ class BuyNowOrderTests(TestCase):
             ],
         )
         self.assertTrue(all(not item.funded_at for item in order.milestones.all()))
+
+    def test_buy_now_action_replay_returns_existing_order_and_fresh_action_creates_another(self):
+        self.client.force_login(self.buyer)
+        url = reverse("buy_now", args=[self.listing.pk])
+        action_token = self.client.get(url).context["action_token"]
+
+        first = self.create_order("120", action_token=action_token)
+        replay = self.create_order("200", action_token=action_token)
+
+        order = Order.objects.get(source=Order.Source.BUY_NOW)
+        self.assertRedirects(first, reverse("order_detail", args=[order.pk]))
+        self.assertRedirects(replay, reverse("order_detail", args=[order.pk]))
+        self.assertEqual(Order.objects.filter(source=Order.Source.BUY_NOW).count(), 1)
+        self.assertEqual(order.quantity, 120)
+        self.assertEqual(order.milestones.count(), 2)
+        self.assertEqual(Notification.objects.filter(order=order).count(), 2)
+
+        fresh = self.create_order("120")
+        self.assertEqual(fresh.status_code, 302)
+        orders = Order.objects.filter(source=Order.Source.BUY_NOW).order_by("pk")
+        self.assertEqual(orders.count(), 2)
+        first_digest = orders.first().buy_now_action_digest
+        second = orders.last()
+        with self.assertRaises(IntegrityError):
+            with transaction.atomic():
+                Order.objects.filter(pk=second.pk).update(
+                    buy_now_action_digest=first_digest,
+                )
+
+    def test_buy_now_action_token_is_bound_to_buyer_and_listing(self):
+        self.client.force_login(self.buyer)
+        url = reverse("buy_now", args=[self.listing.pk])
+        token = self.client.get(url).context["action_token"]
+        other_listing = self.make_listing(
+            self.manufacturer,
+            title="Second direct purchase listing",
+        )
+        other_buyer = get_user_model().objects.create_user(
+            username="buy-now-token-other",
+            password="Strong@4821",
+            role="BUYER",
+        )
+
+        self.client.logout()
+        anonymous = self.client.post(
+            url,
+            {
+                "quantity": 120,
+                "delivery_location": "Pune",
+                "action_token": token,
+            },
+        )
+        self.assertRedirects(
+            anonymous,
+            f"{reverse('login')}?next={url}",
+            fetch_redirect_response=False,
+        )
+        self.assertFalse(Order.objects.exists())
+
+        self.client.force_login(other_buyer)
+        other_user_response = self.client.post(
+            url,
+            {
+                "quantity": 120,
+                "delivery_location": "Pune",
+                "action_token": token,
+            },
+        )
+        self.assertEqual(other_user_response.status_code, 200)
+        self.assertFalse(Order.objects.exists())
+
+        self.client.force_login(self.buyer)
+        other_listing_response = self.client.post(
+            reverse("buy_now", args=[other_listing.pk]),
+            {
+                "quantity": 120,
+                "delivery_location": "Pune",
+                "action_token": token,
+            },
+        )
+        self.assertEqual(other_listing_response.status_code, 200)
+        self.assertFalse(Order.objects.exists())
 
     def test_quantity_below_moq_and_over_capacity_are_rejected(self):
         response = self.create_order("99")
@@ -3597,9 +3814,15 @@ class RazorpayTestModeTests(TestCase):
             is_active=True,
         )
         self.client.force_login(self.buyer)
+        buy_now_url = reverse("buy_now", args=[self.listing.pk])
+        action_token = self.client.get(buy_now_url).context["action_token"]
         self.client.post(
-            reverse("buy_now", args=[self.listing.pk]),
-            {"quantity": 120, "delivery_location": "Pune"},
+            buy_now_url,
+            {
+                "quantity": 120,
+                "delivery_location": "Pune",
+                "action_token": action_token,
+            },
         )
         self.order = Order.objects.get(source=Order.Source.BUY_NOW)
         self.milestone = self.order.milestones.get(title="Production complete")
