@@ -3965,6 +3965,206 @@ class BuyNowOrderTests(TestCase):
         self.assertContains(self.client.get(reverse("manufacturer_orders")), "Order type: Buy Now")
 
 
+class WorkflowStateAdminProtectionTests(TestCase):
+    def setUp(self):
+        User = get_user_model()
+        self.staff = User.objects.create_superuser(
+            username="workflow-admin",
+            email="workflow-admin@example.test",
+            password="StrongPass123!",
+        )
+        self.buyer = User.objects.create_user(
+            username="workflow-admin-buyer",
+            email="workflow-admin-buyer@example.test",
+            password="StrongPass123!",
+            role="BUYER",
+        )
+        manufacturer_user = User.objects.create_user(
+            username="workflow-admin-maker",
+            email="workflow-admin-maker@example.test",
+            password="StrongPass123!",
+            role="MANUFACTURER",
+        )
+        self.manufacturer = ManufacturerProfile.objects.create(
+            user=manufacturer_user,
+            business_name="Workflow Admin Manufacturing",
+            city="Pune",
+            state="Maharashtra",
+            is_verified=True,
+        )
+        self.listing = CapacityListing.objects.create(
+            manufacturer=self.manufacturer,
+            title="Workflow Admin Capacity",
+            category=CapacityListing.Category.PACKAGING,
+            description="Commercial packaging capacity.",
+            minimum_quantity=10,
+            price_per_unit=Decimal("12.50"),
+            production_days=8,
+            available_capacity=500,
+            availability_status=CapacityListing.AvailabilityStatus.AVAILABLE,
+            is_active=True,
+        )
+        self.quote_request = QuoteRequest.objects.create(
+            buyer=self.buyer,
+            listing=self.listing,
+            quantity=20,
+            requirements="Admin workflow audit request",
+            delivery_location="Pune",
+        )
+        self.quotation = Quotation.objects.create(
+            quote_request=self.quote_request,
+            quantity=20,
+            price_per_unit=Decimal("12.50"),
+            production_days=8,
+            status=Quotation.Status.SENT,
+        )
+        self.order = Order.objects.create(
+            source=Order.Source.BUY_NOW,
+            buyer=self.buyer,
+            manufacturer=self.manufacturer,
+            listing=self.listing,
+            specifications_snapshot={"listing_title": self.listing.title},
+            quantity=20,
+            agreed_unit_price=Decimal("12.50"),
+            total_amount=Decimal("250.00"),
+            agreed_production_days=8,
+            status=Order.Status.AWAITING_FUNDING,
+        )
+        self.milestone = Milestone.objects.create(
+            order=self.order,
+            title="Production complete",
+            percentage=80,
+            amount=Decimal("200.00"),
+        )
+        self.client.force_login(self.staff)
+
+    def _admin_change_url(self, model, obj):
+        return reverse(
+            f"admin:{model._meta.app_label}_{model._meta.model_name}_change",
+            args=[obj.pk],
+        )
+
+    def test_workflow_state_fields_are_read_only_in_actual_admin_forms(self):
+        protected = (
+            (Order, self.order, ("status",)),
+            (
+                Milestone,
+                self.milestone,
+                (
+                    "status",
+                    "funding_status",
+                    "percentage",
+                    "amount",
+                    "buyer_feedback",
+                ),
+            ),
+            (QuoteRequest, self.quote_request, ("status",)),
+            (Quotation, self.quotation, ("status",)),
+        )
+        for model, obj, fields in protected:
+            with self.subTest(model=model.__name__):
+                response = self.client.get(self._admin_change_url(model, obj))
+                self.assertEqual(response.status_code, 200)
+                form = response.context["adminform"].form
+                for field in fields:
+                    self.assertNotIn(field, form.fields)
+                    self.assertIn(
+                        field,
+                        admin.site._registry[model].get_readonly_fields(
+                            response.wsgi_request,
+                            obj,
+                        ),
+                    )
+
+        milestone_readonly = admin.site._registry[Milestone].get_readonly_fields(
+            None,
+            self.milestone,
+        )
+        for field in (
+            "percentage",
+            "amount",
+            "buyer_feedback",
+            "funded_at",
+            "released_at",
+            "started_at",
+            "completed_at",
+            "approved_at",
+        ):
+            self.assertIn(field, milestone_readonly)
+
+        payment_admin = admin.site._registry[PaymentTransaction]
+        self.assertFalse(payment_admin.has_change_permission(None, None))
+        webhook_admin = admin.site._registry[PaymentWebhookEvent]
+        self.assertFalse(webhook_admin.has_add_permission(None))
+        self.assertFalse(webhook_admin.has_change_permission(None, None))
+        self.assertFalse(webhook_admin.has_delete_permission(None, None))
+
+    def test_crafted_admin_posts_cannot_change_workflow_state(self):
+        attempts = (
+            (Order, self.order, {"status": Order.Status.COMPLETED}),
+            (
+                Milestone,
+                self.milestone,
+                {
+                    "status": Milestone.Status.APPROVED,
+                    "funding_status": Milestone.FundingStatus.RELEASED,
+                    "percentage": 100,
+                    "amount": "1.00",
+                    "buyer_feedback": "Forged Admin feedback",
+                },
+            ),
+            (
+                QuoteRequest,
+                self.quote_request,
+                {"status": QuoteRequest.Status.ACCEPTED},
+            ),
+            (
+                Quotation,
+                self.quotation,
+                {"status": Quotation.Status.ACCEPTED},
+            ),
+        )
+        for model, obj, forged_values in attempts:
+            with self.subTest(model=model.__name__):
+                change_url = self._admin_change_url(model, obj)
+                change_page = self.client.get(change_url)
+                self.assertEqual(change_page.status_code, 200)
+                form = change_page.context["adminform"].form
+                post_data = {"_save": "Save"}
+                for name in form.fields:
+                    value = form[name].value()
+                    if value is None:
+                        value = ""
+                    elif name == "specifications_snapshot":
+                        value = json.dumps(value)
+                    elif hasattr(value, "pk"):
+                        value = value.pk
+                    post_data[name] = value
+                post_data.update(forged_values)
+
+                response = self.client.post(
+                    change_url,
+                    post_data,
+                )
+                self.assertEqual(response.status_code, 302)
+                obj.refresh_from_db()
+                if model is Order:
+                    self.assertEqual(obj.status, Order.Status.AWAITING_FUNDING)
+                elif model is Milestone:
+                    self.assertEqual(obj.status, Milestone.Status.PENDING)
+                    self.assertEqual(
+                        obj.funding_status,
+                        Milestone.FundingStatus.NOT_FUNDED,
+                    )
+                    self.assertEqual(obj.percentage, 80)
+                    self.assertEqual(obj.amount, Decimal("200.00"))
+                    self.assertEqual(obj.buyer_feedback, "")
+                elif model is QuoteRequest:
+                    self.assertEqual(obj.status, QuoteRequest.Status.PENDING)
+                elif model is Quotation:
+                    self.assertEqual(obj.status, Quotation.Status.SENT)
+
+
 @override_settings(
     PASSWORD_HASHERS=["django.contrib.auth.hashers.MD5PasswordHasher"],
     RAZORPAY_ENABLED=True,

@@ -94,7 +94,7 @@ class QuoteRequestAdmin(admin.ModelAdmin):
         "buyer__username",
         "listing__title",
     )
-    readonly_fields = ("created_at",)    
+    readonly_fields = ("status", "created_at")
 
 @admin.register(Quotation)
 class QuotationAdmin(admin.ModelAdmin):
@@ -116,6 +116,7 @@ class QuotationAdmin(admin.ModelAdmin):
     )
     readonly_fields = (
         "subtotal",
+        "status",
         "created_at",
         "responded_at",
     )
@@ -144,6 +145,7 @@ class OrderAdmin(admin.ModelAdmin):
         "listing__title",
     )
     readonly_fields = (
+        "status",
         "terms_locked_at",
         "created_at",
         "updated_at",
@@ -162,7 +164,20 @@ class MilestoneAdmin(admin.ModelAdmin):
     )
     list_filter = ("status",)
     search_fields = ("title", "order__listing__title")
-    readonly_fields = ("completed_at", "approved_at", "created_at", "updated_at")
+    readonly_fields = (
+        "status",
+        "funding_status",
+        "percentage",
+        "amount",
+        "buyer_feedback",
+        "funded_at",
+        "released_at",
+        "started_at",
+        "completed_at",
+        "approved_at",
+        "created_at",
+        "updated_at",
+    )
 
 
 @admin.register(PaymentTransaction)
