@@ -11,7 +11,7 @@ urlpatterns = [
     path("register/", views.register, name="register"),
     path(
         "login/",
-        auth_views.LoginView.as_view(
+        views.RateLimitedLoginView.as_view(
             template_name="accounts/login.html",
             authentication_form=EmailOrUsernameAuthenticationForm,
             redirect_authenticated_user=True,
@@ -45,7 +45,7 @@ urlpatterns = [
     ),
     path(
         "password/reset/",
-        auth_views.PasswordResetView.as_view(
+        views.RateLimitedPasswordResetView.as_view(
             template_name="accounts/password_reset.html",
             email_template_name="accounts/password_reset_email.txt",
             form_class=ReliablePasswordResetForm,

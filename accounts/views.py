@@ -1,14 +1,25 @@
 from django.contrib import messages
 from django.contrib.auth import get_user_model, login
+from django.contrib.auth.views import LoginView, PasswordResetView
 from django.db import IntegrityError, transaction
 from django.db.models.functions import Lower, Trim
 from django.shortcuts import redirect, render
+from django.conf import settings
 
 from marketplace.models import ManufacturerProfile
 
 from .forms import (
     BuyerRegistrationForm,
     ManufacturerRegistrationForm,
+)
+from .rate_limits import (
+    attach_source_limit_cookie,
+    consume_rate_limits,
+    ensure_source_limit_key,
+    login_source_throttle_response,
+    normalize_email_identifier,
+    record_throttle_event,
+    registration_throttle_response,
 )
 
 
@@ -46,6 +57,24 @@ def register(request):
         form = BuyerRegistrationForm(request.POST)
 
         if form.is_valid():
+            decision = consume_rate_limits(
+                [
+                    (
+                        "signup_source",
+                        ensure_source_limit_key(request),
+                        settings.SIGNUP_LIMIT,
+                        settings.SIGNUP_WINDOW_SECONDS,
+                    ),
+                ]
+            )
+            if not decision.allowed:
+                return registration_throttle_response(
+                    request,
+                    form,
+                    "accounts/register.html",
+                    decision.retry_after_seconds,
+                )
+
             try:
                 with transaction.atomic():
                     user = form.save()
@@ -53,21 +82,26 @@ def register(request):
                 if not _add_registration_constraint_error(form):
                     raise
             else:
-                login(request, user)
+                login(
+                    request,
+                    user,
+                    backend="accounts.backends.EmailOrUsernameBackend",
+                )
                 messages.success(
                     request,
                     "Your buyer account is ready. You can now browse capacity "
                     "and request quotations from eligible listings.",
                 )
-                return redirect("home")
+                return attach_source_limit_cookie(request, redirect("home"))
     else:
         form = BuyerRegistrationForm()
 
-    return render(
+    response = render(
         request,
         "accounts/register.html",
         {"form": form},
     )
+    return attach_source_limit_cookie(request, response)
 def register_manufacturer(request):
     if request.user.is_authenticated:
         return redirect("home")
@@ -76,6 +110,24 @@ def register_manufacturer(request):
         form = ManufacturerRegistrationForm(request.POST)
 
         if form.is_valid():
+            decision = consume_rate_limits(
+                [
+                    (
+                        "signup_source",
+                        ensure_source_limit_key(request),
+                        settings.SIGNUP_LIMIT,
+                        settings.SIGNUP_WINDOW_SECONDS,
+                    ),
+                ]
+            )
+            if not decision.allowed:
+                return registration_throttle_response(
+                    request,
+                    form,
+                    "accounts/register_manufacturer.html",
+                    decision.retry_after_seconds,
+                )
+
             try:
                 with transaction.atomic():
                     user = form.save()
@@ -94,7 +146,11 @@ def register_manufacturer(request):
                 if not _add_registration_constraint_error(form):
                     raise
             else:
-                login(request, user)
+                login(
+                    request,
+                    user,
+                    backend="accounts.backends.EmailOrUsernameBackend",
+                )
 
                 messages.success(
                     request,
@@ -104,12 +160,84 @@ def register_manufacturer(request):
                     "your business is verified.",
                 )
 
-                return redirect("manufacturer_dashboard")
+                return attach_source_limit_cookie(
+                    request,
+                    redirect("manufacturer_dashboard"),
+                )
     else:
         form = ManufacturerRegistrationForm()
 
-    return render(
+    response = render(
         request,
         "accounts/register_manufacturer.html",
         {"form": form},
     )
+    return attach_source_limit_cookie(request, response)
+
+
+class RateLimitedPasswordResetView(PasswordResetView):
+    """Keep reset responses generic while limiting email and session abuse."""
+
+    def post(self, request, *args, **kwargs):
+        submitted_email = normalize_email_identifier(
+            request.POST.get("email", "")
+        )
+        specifications = [
+            (
+                "password_reset_source",
+                ensure_source_limit_key(request),
+                settings.PASSWORD_RESET_SOURCE_LIMIT,
+                settings.PASSWORD_RESET_SOURCE_WINDOW_SECONDS,
+            ),
+        ]
+        if submitted_email:
+            specifications.append(
+                (
+                    "password_reset_email",
+                    submitted_email,
+                    settings.PASSWORD_RESET_LIMIT,
+                    settings.PASSWORD_RESET_WINDOW_SECONDS,
+                )
+            )
+
+        decision = consume_rate_limits(specifications)
+        if not decision.allowed:
+            record_throttle_event("password_reset")
+            # Same redirect and completion page as an ordinary valid request;
+            # do not reveal whether an account exists or a message was sent.
+            return attach_source_limit_cookie(
+                request,
+                redirect(self.get_success_url()),
+            )
+
+        return attach_source_limit_cookie(
+            request,
+            super().post(request, *args, **kwargs),
+        )
+
+
+class RateLimitedLoginView(LoginView):
+    """Add a modest session-source ceiling alongside Axes identifier limits."""
+
+    def post(self, request, *args, **kwargs):
+        decision = consume_rate_limits(
+            [
+                (
+                    "login_source",
+                    ensure_source_limit_key(request),
+                    settings.AUTH_LOGIN_SOURCE_LIMIT,
+                    settings.AUTH_LOGIN_WINDOW_SECONDS,
+                ),
+            ]
+        )
+        if not decision.allowed:
+            return login_source_throttle_response(
+                request,
+                decision,
+                self.get_form(),
+            )
+
+        return attach_source_limit_cookie(
+            request,
+            super().post(request, *args, **kwargs),
+        )

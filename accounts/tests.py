@@ -426,6 +426,12 @@ class EmailOrUsernameAuthenticationTests(TestCase):
             **kwargs,
         )
 
+    def submit_login(self, identifier, password, path=None):
+        return self.client.post(
+            path or reverse("login"),
+            {"username": identifier, "password": password},
+        )
+
     def test_buyer_and_manufacturer_username_login_are_preserved(self):
         buyer = self.create_user(
             "buyer-username-login",
@@ -438,21 +444,16 @@ class EmailOrUsernameAuthenticationTests(TestCase):
             role=self.user_model.Role.MANUFACTURER,
         )
 
-        self.assertTrue(
-            self.client.login(
-                username=buyer.username,
-                password="StrongPass123!",
-            )
-        )
+        buyer_response = self.submit_login(buyer.username, "StrongPass123!")
+        self.assertEqual(buyer_response.status_code, 302)
         self.assertEqual(str(self.client.session["_auth_user_id"]), str(buyer.pk))
         self.client.logout()
 
-        self.assertTrue(
-            self.client.login(
-                username=manufacturer.username,
-                password="StrongPass123!",
-            )
+        manufacturer_response = self.submit_login(
+            manufacturer.username,
+            "StrongPass123!",
         )
+        self.assertEqual(manufacturer_response.status_code, 302)
         self.assertEqual(
             str(self.client.session["_auth_user_id"]),
             str(manufacturer.pk),
@@ -461,21 +462,13 @@ class EmailOrUsernameAuthenticationTests(TestCase):
     def test_email_login_is_case_insensitive_and_requires_correct_password(self):
         user = self.create_user("email-login-user", "Case@Test.Example")
 
-        self.assertTrue(
-            self.client.login(
-                username="  CASE@test.example  ",
-                password="StrongPass123!",
-            )
-        )
+        response = self.submit_login("  CASE@test.example  ", "StrongPass123!")
+        self.assertEqual(response.status_code, 302)
         self.assertEqual(str(self.client.session["_auth_user_id"]), str(user.pk))
         self.client.logout()
 
-        self.assertFalse(
-            self.client.login(
-                username="case@test.example",
-                password="WrongPassword123!",
-            )
-        )
+        response = self.submit_login("case@test.example", "WrongPassword123!")
+        self.assertEqual(response.status_code, 200)
 
     def test_inactive_user_and_blank_identifier_fail_safely(self):
         self.create_user(
@@ -485,22 +478,14 @@ class EmailOrUsernameAuthenticationTests(TestCase):
         )
 
         for identifier in ("inactive-email-user", "inactive@example.test", ""):
-            self.assertFalse(
-                self.client.login(
-                    username=identifier,
-                    password="StrongPass123!",
-                )
-            )
+            response = self.submit_login(identifier, "StrongPass123!")
+            self.assertEqual(response.status_code, 200)
 
     def test_email_login_is_deterministic_after_case_insensitive_uniqueness(self):
         user = self.create_user("unique-email-login", "user@example.test")
 
-        self.assertTrue(
-            self.client.login(
-                username="USER@EXAMPLE.TEST",
-                password="StrongPass123!",
-            )
-        )
+        response = self.submit_login("USER@EXAMPLE.TEST", "StrongPass123!")
+        self.assertEqual(response.status_code, 302)
         self.assertEqual(str(self.client.session["_auth_user_id"]), str(user.pk))
 
     def test_staff_and_superuser_can_authenticate_with_username_in_admin(self):
@@ -516,12 +501,12 @@ class EmailOrUsernameAuthenticationTests(TestCase):
         )
 
         for user in (staff, superuser):
-            self.assertTrue(
-                self.client.login(
-                    username=user.username,
-                    password="StrongPass123!",
-                )
+            response = self.submit_login(
+                user.username,
+                "StrongPass123!",
+                path="/admin/login/",
             )
+            self.assertEqual(response.status_code, 302)
             response = self.client.get("/admin/")
             self.assertEqual(response.status_code, 200)
             self.assertEqual(

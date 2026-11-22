@@ -36,3 +36,27 @@ class User(AbstractUser):
         if self.email is not None:
             self.email = self.email.strip().lower()
         return super().save(*args, **kwargs)
+
+
+class AuthRateLimitBucket(models.Model):
+    """A fixed-window counter keyed only by a keyed digest, never raw input."""
+
+    scope = models.CharField(max_length=32)
+    key_digest = models.CharField(max_length=64)
+    window_start = models.DateTimeField()
+    count = models.PositiveIntegerField(default=0)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=("scope", "key_digest", "window_start"),
+                name="auth_rate_bucket_uniq",
+            ),
+        ]
+        indexes = [
+            models.Index(
+                fields=("window_start",),
+                name="auth_rate_bucket_window_idx",
+            ),
+        ]

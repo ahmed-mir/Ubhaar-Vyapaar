@@ -1,0 +1,14 @@
+{% extends "marketplace/base.html" %}
+
+{% block title %}Sign-in temporarily limited | Ubhaar-Vyapaar{% endblock %}
+
+{% block content %}
+<section class="auth-page-shell" aria-labelledby="sign-in-limited-title">
+    <div class="auth-page-main">
+        <p class="eyebrow">Account access</p>
+        <h1 id="sign-in-limited-title">Sign-in temporarily limited</h1>
+        <p role="status">Too many sign-in attempts. Please try again later.</p>
+        <p><a class="button button-primary" href="{% url 'login' %}">Return to log in</a></p>
+    </div>
+</section>
+{% endblock %}
