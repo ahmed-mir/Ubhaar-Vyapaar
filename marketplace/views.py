@@ -734,40 +734,81 @@ def notify_order_status_change(order, previous_status):
     create_order_notification(order.manufacturer.user, message, order)
 
 
+def _lock_order_and_milestone(milestone_pk, *, buyer=None, manufacturer_user=None):
+    """Lock a milestone's parent Order first, then the milestone row.
+
+    Call only inside ``transaction.atomic()``. Reapply ownership filters after
+    acquiring the parent lock so the mutation uses an authorized, current row.
+    """
+    scoped_milestones = Milestone.objects.filter(pk=milestone_pk)
+    if buyer is not None:
+        scoped_milestones = scoped_milestones.filter(order__buyer=buyer)
+    if manufacturer_user is not None:
+        scoped_milestones = scoped_milestones.filter(
+            order__manufacturer__user=manufacturer_user,
+        )
+
+    order_id = scoped_milestones.values_list("order_id", flat=True).first()
+    if order_id is None:
+        raise Http404("Milestone not found.")
+
+    order = get_object_or_404(Order.objects.select_for_update(), pk=order_id)
+
+    if buyer is not None and order.buyer_id != buyer.pk:
+        raise Http404("Milestone not found.")
+    if manufacturer_user is not None and not ManufacturerProfile.objects.filter(
+        pk=order.manufacturer_id,
+        user_id=manufacturer_user.pk,
+    ).exists():
+        raise Http404("Milestone not found.")
+
+    milestone = get_object_or_404(
+        Milestone.objects.select_for_update(),
+        pk=milestone_pk,
+        order_id=order.pk,
+    )
+    return order, milestone
+
+
 def refresh_order_status(order):
-    previous_status = order.status
-    milestones = list(order.milestones.all())
+    """Recalculate status from fresh rows while the caller holds Order's lock."""
+    previous_status = Order.objects.values_list("status", flat=True).get(
+        pk=order.pk,
+    )
+    milestones = list(
+        Milestone.objects.filter(order_id=order.pk).values_list(
+            "status",
+            "funding_status",
+        )
+    )
 
     if not milestones:
+        order.status = previous_status
         return previous_status, order.status
 
     if all(
-        milestone.status == Milestone.Status.APPROVED
-        and milestone.funding_status == Milestone.FundingStatus.RELEASED
-        for milestone in milestones
+        status == Milestone.Status.APPROVED
+        and funding_status == Milestone.FundingStatus.RELEASED
+        for status, funding_status in milestones
     ):
         order.status = Order.Status.COMPLETED
-    elif any(
-        milestone.status == Milestone.Status.COMPLETED
-        for milestone in milestones
-    ):
+    elif any(status == Milestone.Status.COMPLETED for status, _ in milestones):
         order.status = Order.Status.MILESTONE_PENDING
     elif any(
-        milestone.status in {
+        status in {
             Milestone.Status.IN_PROGRESS,
             Milestone.Status.APPROVED,
             Milestone.Status.REJECTED,
         }
-        for milestone in milestones
+        for status, _ in milestones
     ):
         order.status = Order.Status.IN_PRODUCTION
     elif any(
-        milestone.funding_status
-        in {
+        funding_status in {
             Milestone.FundingStatus.FUNDED,
             Milestone.FundingStatus.RELEASED,
         }
-        for milestone in milestones
+        for _, funding_status in milestones
     ):
         order.status = Order.Status.FUNDED
     else:
@@ -2168,17 +2209,25 @@ def _order_status_label(order, payment_test_mode=False):
 
 def _mark_payment_captured(payment_transaction, payment_id):
     with transaction.atomic():
-        saved_payment = PaymentTransaction.objects.select_for_update().select_related(
-            "milestone__order",
-            "milestone__order__buyer",
-            "milestone__order__manufacturer__user",
-        ).get(pk=payment_transaction.pk)
+        payment_scope = PaymentTransaction.objects.filter(
+            pk=payment_transaction.pk,
+        )
+        milestone_order_id, milestone_id = payment_scope.values_list(
+            "milestone__order_id",
+            "milestone_id",
+        ).get()
+        order = Order.objects.select_for_update().get(pk=milestone_order_id)
+        milestone = Milestone.objects.select_for_update().get(
+            pk=milestone_id,
+            order_id=order.pk,
+        )
+        saved_payment = PaymentTransaction.objects.select_for_update().get(
+            pk=payment_transaction.pk,
+            milestone_id=milestone.pk,
+        )
         if saved_payment.status == PaymentTransaction.Status.CAPTURED:
             return False
 
-        milestone = Milestone.objects.select_for_update().get(
-            pk=saved_payment.milestone_id
-        )
         saved_payment.status = PaymentTransaction.Status.CAPTURED
         saved_payment.provider_payment_id = payment_id
         saved_payment.captured_at = timezone.now()
@@ -2202,25 +2251,25 @@ def _mark_payment_captured(payment_transaction, payment_id):
         )
         if milestone_updated:
             milestone.refresh_from_db()
-            previous_order_status, _ = refresh_order_status(milestone.order)
+            previous_order_status, _ = refresh_order_status(order)
             create_order_notification(
-                milestone.order.manufacturer.user,
+                order.manufacturer.user,
                 (
                     f"Payment recorded in Razorpay Test Mode for {concise_label(milestone.title)} "
-                    f"on Order #{milestone.order_id}. The milestone is ready to start; "
+                    f"on Order #{order.pk}. The milestone is ready to start; "
                     "Manufacturer payout remains simulated."
                 ),
-                milestone.order,
+                order,
             )
             create_order_notification(
                 saved_payment.buyer,
                 (
                     f"Test payment recorded for {concise_label(milestone.title)} "
-                    f"on Order #{milestone.order_id}. Manufacturer payout remains simulated."
+                    f"on Order #{order.pk}. Manufacturer payout remains simulated."
                 ),
-                milestone.order,
+                order,
             )
-            notify_order_status_change(milestone.order, previous_order_status)
+            notify_order_status_change(order, previous_order_status)
         return bool(milestone_updated)
 
 
@@ -2457,7 +2506,7 @@ def razorpay_webhook(request):
         )
         order_id = entity.get("order_id")
         payment_id = entity.get("id")
-        payment_transaction = PaymentTransaction.objects.select_for_update().filter(
+        payment_transaction = PaymentTransaction.objects.filter(
             provider=PaymentTransaction.Provider.RAZORPAY,
             provider_order_id=order_id,
         ).first()
@@ -2570,39 +2619,47 @@ def fund_milestone(request, pk):
         )
 
     with transaction.atomic():
-        updated = Milestone.objects.filter(
-            pk=milestone.pk,
-            order__buyer=request.user,
-            status=Milestone.Status.PENDING,
-            funding_status=Milestone.FundingStatus.NOT_FUNDED,
-        ).update(
-            funding_status=Milestone.FundingStatus.FUNDED,
-            funded_at=timezone.now(),
+        order, milestone = _lock_order_and_milestone(
+            pk,
+            buyer=request.user,
         )
+        add_milestone_action_flags(milestone, request.user)
+        updated = 0
+        if milestone.can_fund:
+            updated = Milestone.objects.filter(
+                pk=milestone.pk,
+                order_id=order.pk,
+                order__buyer=request.user,
+                status=Milestone.Status.PENDING,
+                funding_status=Milestone.FundingStatus.NOT_FUNDED,
+            ).update(
+                funding_status=Milestone.FundingStatus.FUNDED,
+                funded_at=timezone.now(),
+            )
 
         if updated:
             milestone.refresh_from_db()
-            previous_order_status, _ = refresh_order_status(milestone.order)
+            previous_order_status, _ = refresh_order_status(order)
             milestone_title = concise_label(milestone.title)
 
             create_order_notification(
-                milestone.order.manufacturer.user,
+                order.manufacturer.user,
                 (
                     f"Buyer funded the {milestone_title} milestone for "
-                    f"Order #{milestone.order_id} (demo funding). Start it "
+                    f"Order #{order.pk} (demo funding). Start it "
                     "when production is ready."
                 ),
-                milestone.order,
+                order,
             )
             create_order_notification(
                 request.user,
                 (
                     f"Demo funding confirmed for {milestone_title} on "
-                    f"Order #{milestone.order_id}. No real money was processed."
+                    f"Order #{order.pk}. No real money was processed."
                 ),
-                milestone.order,
+                order,
             )
-            notify_order_status_change(milestone.order, previous_order_status)
+            notify_order_status_change(order, previous_order_status)
 
     if updated:
         messages.success(
@@ -2641,32 +2698,40 @@ def start_milestone(request, pk):
         return redirect("order_detail", pk=milestone.order_id)
 
     with transaction.atomic():
-        updated = Milestone.objects.filter(
-            pk=milestone.pk,
-            order__manufacturer__user=request.user,
-            status__in=[
-                Milestone.Status.PENDING,
-                Milestone.Status.REJECTED,
-            ],
-            funding_status=Milestone.FundingStatus.FUNDED,
-        ).update(
-            status=Milestone.Status.IN_PROGRESS,
-            started_at=timezone.now(),
+        order, milestone = _lock_order_and_milestone(
+            pk,
+            manufacturer_user=request.user,
         )
+        add_milestone_action_flags(milestone, request.user)
+        updated = 0
+        if milestone.can_start:
+            updated = Milestone.objects.filter(
+                pk=milestone.pk,
+                order_id=order.pk,
+                order__manufacturer__user=request.user,
+                status__in=[
+                    Milestone.Status.PENDING,
+                    Milestone.Status.REJECTED,
+                ],
+                funding_status=Milestone.FundingStatus.FUNDED,
+            ).update(
+                status=Milestone.Status.IN_PROGRESS,
+                started_at=timezone.now(),
+            )
 
         if updated:
             milestone.refresh_from_db()
-            previous_order_status, _ = refresh_order_status(milestone.order)
+            previous_order_status, _ = refresh_order_status(order)
             milestone_title = concise_label(milestone.title)
             create_order_notification(
-                milestone.order.buyer,
+                order.buyer,
                 (
                     f"Manufacturer started the {milestone_title} milestone "
-                    f"for Order #{milestone.order_id}."
+                    f"for Order #{order.pk}."
                 ),
-                milestone.order,
+                order,
             )
-            notify_order_status_change(milestone.order, previous_order_status)
+            notify_order_status_change(order, previous_order_status)
 
     if updated:
         messages.success(request, "Milestone marked in progress.")
@@ -2773,9 +2838,14 @@ def mark_milestone_complete(request, pk):
         return redirect("order_detail", pk=milestone.order_id)
 
     with transaction.atomic():
-        order = Order.objects.select_for_update().get(pk=milestone.order_id)
+        order, milestone = _lock_order_and_milestone(
+            pk,
+            manufacturer_user=request.user,
+        )
+        add_milestone_action_flags(milestone, request.user)
         updated = Milestone.objects.filter(
             pk=milestone.pk,
+            order_id=order.pk,
             order__manufacturer__user=request.user,
             order__status__in=[
                 Order.Status.CONFIRMED,
@@ -2846,7 +2916,10 @@ def respond_to_milestone(request, pk):
         return redirect("order_detail", pk=milestone.order_id)
 
     with transaction.atomic():
-        order = Order.objects.select_for_update().get(pk=milestone.order_id)
+        order, milestone = _lock_order_and_milestone(
+            pk,
+            buyer=request.user,
+        )
         update_fields = {
             "status": decision,
             "buyer_feedback": feedback,
@@ -2926,53 +2999,60 @@ def release_milestone_payment(request, pk):
         return redirect("order_detail", pk=milestone.order_id)
 
     with transaction.atomic():
-        updated = Milestone.objects.filter(
-            pk=milestone.pk,
-            order__buyer=request.user,
-            status=Milestone.Status.APPROVED,
-            funding_status=Milestone.FundingStatus.FUNDED,
-        ).update(
-            funding_status=Milestone.FundingStatus.RELEASED,
-            released_at=timezone.now(),
+        order, milestone = _lock_order_and_milestone(
+            pk,
+            buyer=request.user,
         )
+        add_milestone_action_flags(milestone, request.user)
+        updated = 0
+        if milestone.can_release:
+            updated = Milestone.objects.filter(
+                pk=milestone.pk,
+                order_id=order.pk,
+                order__buyer=request.user,
+                status=Milestone.Status.APPROVED,
+                funding_status=Milestone.FundingStatus.FUNDED,
+            ).update(
+                funding_status=Milestone.FundingStatus.RELEASED,
+                released_at=timezone.now(),
+            )
 
         if updated:
             milestone.refresh_from_db()
-            previous_order_status, _ = refresh_order_status(milestone.order)
-            milestone.order.refresh_from_db(fields=["status"])
+            previous_order_status, _ = refresh_order_status(order)
             milestone_title = concise_label(milestone.title)
 
             create_order_notification(
-                milestone.order.manufacturer.user,
+                order.manufacturer.user,
                 (
                     f"Buyer released demo payment for milestone "
-                    f"{milestone_title} on Order #{milestone.order_id}. "
+                    f"{milestone_title} on Order #{order.pk}. "
                     "No real money was transferred."
                 ),
-                milestone.order,
+                order,
             )
             create_order_notification(
                 request.user,
                 (
                     f"Demo payment released for milestone "
-                    f"{milestone_title} on Order #{milestone.order_id}. "
+                    f"{milestone_title} on Order #{order.pk}. "
                     "No real money was transferred."
                 ),
-                milestone.order,
+                order,
             )
-            notify_order_status_change(milestone.order, previous_order_status)
+            notify_order_status_change(order, previous_order_status)
 
             if (
                 previous_order_status != Order.Status.COMPLETED
-                and milestone.order.status == Order.Status.COMPLETED
+                and order.status == Order.Status.COMPLETED
             ):
                 create_order_notification(
                     request.user,
                     message=(
-                        f"Order #{milestone.order_id} is complete. "
+                        f"Order #{order.pk} is complete. "
                         "You can now leave a review."
                     ),
-                    order=milestone.order,
+                    order=order,
                 )
 
     if updated:

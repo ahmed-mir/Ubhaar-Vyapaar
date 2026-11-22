@@ -8,6 +8,7 @@ from django.core import signing
 
 BUY_NOW_ACTION = "buy_now"
 REQUEST_QUOTE_ACTION = "request_quote"
+WORKFLOW_ACTION_MAX_AGE_SECONDS = 24 * 60 * 60
 
 _ACTION_SALTS = {
     BUY_NOW_ACTION: "marketplace.workflow.buy-now.v1",
@@ -35,7 +36,11 @@ def workflow_action_digest(token, *, user, listing, action):
         return None
 
     try:
-        payload = signing.loads(token, salt=_ACTION_SALTS[action])
+        payload = signing.loads(
+            token,
+            salt=_ACTION_SALTS[action],
+            max_age=WORKFLOW_ACTION_MAX_AGE_SECONDS,
+        )
     except (signing.BadSignature, TypeError, ValueError):
         return None
 

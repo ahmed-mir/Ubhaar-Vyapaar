@@ -2,7 +2,7 @@
 
 ## Idempotent creation actions
 
-Buy Now and Request Quote forms receive server-signed random action tokens. Each token is bound to the authenticated user, action type, and listing. The token is validated only after the normal authentication, role, listing visibility, and current eligibility checks. A SHA-256 digest is stored on the resulting `Order` or `QuoteRequest`; the raw token is not persisted or logged.
+Buy Now and Request Quote forms receive server-signed random action tokens with a 24-hour maximum age. Each token is bound to the authenticated user, action type, and listing. The token is validated only after the normal authentication, role, listing visibility, and current eligibility checks. An expired token cannot create an order or request; the user must reload the form for a fresh token. A SHA-256 digest is stored on the resulting `Order` or `QuoteRequest`; the raw token is not persisted or logged.
 
 Each resulting-object field has a database unique constraint. Replaying a valid token returns the existing order or RFQ. A fresh GET produces a fresh token, so a buyer may intentionally purchase or request a quote for the same listing again. New orders, milestones, and notifications are created in one transaction; notification side effects occur only for the request that wins the unique insert.
 
@@ -12,11 +12,11 @@ Quotation acceptance already uses a conditional `SENT`-to-response update in a t
 
 ## Milestone transitions
 
-Milestone submission and Buyer response now use conditional updates inside transactions and lock the parent order while applying the transition and updating order status. Notifications are sent only when the conditional update changes one row. Funding, start, and release keep their existing conditional updates and role/ownership checks. Milestone percentages, labels, sequence, and payment behavior are unchanged.
+Every milestone state transition that recalculates `Order.status` uses one lock order inside a transaction: parent `Order` first, then `Milestone`. This includes demo funding, starting, submission, Buyer response, release, and verified payment capture. Conditional updates remain in place; notifications are sent only when a transition changes one row. `refresh_order_status` reads milestone state directly from the database rather than a potentially prefetched relation cache, and runs before the parent lock is released. Payment verification, amounts, Test Mode, and payment semantics are unchanged.
 
 ## Concurrency testing limits
 
-Local Django tests verify replay behavior, uniqueness, transition guards, and single side-effect behavior using the configured SQLite test database. SQLite does not provide PostgreSQL row-lock semantics, so the tests do not claim to simulate simultaneous PostgreSQL transactions. Production database constraints and transactions provide the cross-worker race guard; do not run concurrency tests against production.
+Local Django tests verify replay behavior, uniqueness, transition guards, fresh aggregate status, and single side-effect behavior using the configured SQLite test database. SQLite does not provide PostgreSQL row-lock semantics, so the tests do not claim to simulate simultaneous PostgreSQL transactions. The code uses parent-first row locks and conditional updates for PostgreSQL; true PostgreSQL concurrent transactions were not executed against production. Do not run concurrency tests against production.
 
 ## Preserved protections
 

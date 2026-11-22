@@ -35,8 +35,13 @@ from .models import (
     SavedListing,
 )
 from .forms import CapacityListingEditForm, CapacityListingForm
+from .idempotency import WORKFLOW_ACTION_MAX_AGE_SECONDS
 from .templatetags.public_display import state_label
-from .views import build_order_financial_summary, build_order_timeline
+from .views import (
+    build_order_financial_summary,
+    build_order_timeline,
+    refresh_order_status,
+)
 
 
 JSON_LD_PATTERN = re.compile(
@@ -774,6 +779,44 @@ class MarketplaceDiscoveryTrustTests(TestCase):
                 QuoteRequest.objects.filter(pk=second.pk).update(
                     action_digest=first_digest,
                 )
+
+    def test_expired_quote_action_token_cannot_create_rfq_but_fresh_token_can(self):
+        buyer = get_user_model().objects.create_user(
+            username="expired-quote-token-buyer",
+            password="password",
+            role="BUYER",
+        )
+        listing = self.create_listing(self.verified, "Expiring quote token")
+        self.client.force_login(buyer)
+        url = reverse("request_quote", args=[listing.pk])
+        base_timestamp = 1_800_000_000
+
+        with patch("django.core.signing.time.time", return_value=base_timestamp):
+            token = self.client.get(url).context["action_token"]
+
+        data = {
+            "quantity": 10,
+            "requirements": "Time-bounded request",
+            "delivery_location": "Mumbai",
+            "action_token": token,
+        }
+        with patch(
+            "django.core.signing.time.time",
+            return_value=base_timestamp + WORKFLOW_ACTION_MAX_AGE_SECONDS + 1,
+        ):
+            expired = self.client.post(url, data)
+            self.assertEqual(expired.status_code, 200)
+            self.assertContains(expired, "form has expired")
+            self.assertFalse(QuoteRequest.objects.filter(buyer=buyer).exists())
+
+            fresh_data = {**data, "action_token": expired.context["action_token"]}
+            created = self.client.post(url, fresh_data)
+            expired_replay = self.client.post(url, data)
+
+        self.assertRedirects(created, url)
+        self.assertEqual(QuoteRequest.objects.filter(buyer=buyer, listing=listing).count(), 1)
+        self.assertEqual(expired_replay.status_code, 200)
+        self.assertEqual(QuoteRequest.objects.filter(buyer=buyer, listing=listing).count(), 1)
 
     def test_quote_token_is_bound_to_user_and_listing_and_validation_remains(self):
         first_buyer = get_user_model().objects.create_user(
@@ -2331,6 +2374,7 @@ class OrderMessagingTests(TestCase):
                 order=self.order,
             ).exists()
         )
+        notification_count = Notification.objects.filter(order=self.order).count()
 
         response = self.client.post(
             reverse("fund_milestone", args=[self.milestone.pk])
@@ -2342,6 +2386,10 @@ class OrderMessagingTests(TestCase):
         self.assertEqual(
             Milestone.objects.get(pk=self.milestone.pk).funding_status,
             Milestone.FundingStatus.FUNDED,
+        )
+        self.assertEqual(
+            Notification.objects.filter(order=self.order).count(),
+            notification_count,
         )
 
         self.client.force_login(self.other_buyer)
@@ -2362,6 +2410,19 @@ class OrderMessagingTests(TestCase):
         self.order.refresh_from_db()
         self.assertEqual(self.milestone.status, Milestone.Status.IN_PROGRESS)
         self.assertEqual(self.order.status, Order.Status.IN_PRODUCTION)
+        notification_count = Notification.objects.filter(order=self.order).count()
+
+        response = self.client.post(
+            reverse("start_milestone", args=[self.milestone.pk])
+        )
+        self.assertRedirects(
+            response,
+            reverse("order_detail", args=[self.order.pk]),
+        )
+        self.assertEqual(
+            Notification.objects.filter(order=self.order).count(),
+            notification_count,
+        )
 
         response = self.client.post(
             reverse("mark_milestone_complete", args=[self.milestone.pk])
@@ -2441,6 +2502,7 @@ class OrderMessagingTests(TestCase):
                 order=self.order,
             ).exists()
         )
+        notification_count = Notification.objects.filter(order=self.order).count()
 
         response = self.client.post(
             reverse("release_milestone_payment", args=[self.milestone.pk])
@@ -2453,6 +2515,101 @@ class OrderMessagingTests(TestCase):
             Milestone.objects.get(pk=self.milestone.pk).funding_status,
             Milestone.FundingStatus.RELEASED,
         )
+        self.assertEqual(
+            Notification.objects.filter(order=self.order).count(),
+            notification_count,
+        )
+
+    def test_order_status_refresh_uses_fresh_states_across_milestones(self):
+        second = Milestone.objects.create(
+            order=self.order,
+            title="Ready to ship",
+            percentage=20,
+            amount=Decimal("240.00"),
+            status=Milestone.Status.PENDING,
+            funding_status=Milestone.FundingStatus.FUNDED,
+        )
+        self.milestone.status = Milestone.Status.IN_PROGRESS
+        self.milestone.funding_status = Milestone.FundingStatus.FUNDED
+        self.milestone.save(update_fields=["status", "funding_status"])
+        self.order.status = Order.Status.IN_PRODUCTION
+        self.order.save(update_fields=["status"])
+
+        cached_order = Order.objects.prefetch_related("milestones").get(
+            pk=self.order.pk,
+        )
+        list(cached_order.milestones.all())
+
+        with transaction.atomic():
+            locked_order = Order.objects.select_for_update().get(pk=self.order.pk)
+            Milestone.objects.filter(pk=self.milestone.pk).update(
+                status=Milestone.Status.COMPLETED,
+            )
+            _, first_status = refresh_order_status(cached_order)
+            self.assertEqual(first_status, Order.Status.MILESTONE_PENDING)
+
+            Milestone.objects.filter(pk=second.pk).update(
+                status=Milestone.Status.IN_PROGRESS,
+            )
+            _, final_status = refresh_order_status(locked_order)
+
+        self.order.refresh_from_db()
+        self.assertEqual(final_status, Order.Status.MILESTONE_PENDING)
+        self.assertEqual(self.order.status, Order.Status.MILESTONE_PENDING)
+
+    def test_two_milestone_workflow_recalculates_status_from_both_rows(self):
+        second = Milestone.objects.create(
+            order=self.order,
+            title="Ready to ship",
+            percentage=20,
+            amount=Decimal("240.00"),
+        )
+
+        self.client.force_login(self.buyer)
+        for milestone in (self.milestone, second):
+            self.client.post(reverse("fund_milestone", args=[milestone.pk]))
+            self.order.refresh_from_db()
+            self.assertEqual(self.order.status, Order.Status.FUNDED)
+
+        self.client.force_login(self.manufacturer_user)
+        for milestone in (self.milestone, second):
+            self.client.post(reverse("start_milestone", args=[milestone.pk]))
+            self.order.refresh_from_db()
+            self.assertEqual(self.order.status, Order.Status.IN_PRODUCTION)
+
+        self.client.post(
+            reverse("mark_milestone_complete", args=[self.milestone.pk]),
+        )
+        self.order.refresh_from_db()
+        self.assertEqual(self.order.status, Order.Status.MILESTONE_PENDING)
+
+        self.client.force_login(self.buyer)
+        self.client.post(
+            reverse("respond_to_milestone", args=[self.milestone.pk]),
+            {"status": Milestone.Status.APPROVED},
+        )
+        self.order.refresh_from_db()
+        self.assertEqual(self.order.status, Order.Status.IN_PRODUCTION)
+
+        self.client.force_login(self.manufacturer_user)
+        self.client.post(reverse("mark_milestone_complete", args=[second.pk]))
+        self.order.refresh_from_db()
+        self.assertEqual(self.order.status, Order.Status.MILESTONE_PENDING)
+
+        self.client.force_login(self.buyer)
+        self.client.post(
+            reverse("respond_to_milestone", args=[second.pk]),
+            {"status": Milestone.Status.APPROVED},
+        )
+        self.order.refresh_from_db()
+        self.assertEqual(self.order.status, Order.Status.IN_PRODUCTION)
+
+        for milestone in (self.milestone, second):
+            self.client.post(
+                reverse("release_milestone_payment", args=[milestone.pk]),
+            )
+        self.order.refresh_from_db()
+        self.assertEqual(self.order.status, Order.Status.COMPLETED)
 
     def test_completed_order_blocks_funding_and_milestone_updates(self):
         self.milestone.funding_status = Milestone.FundingStatus.RELEASED
@@ -3659,6 +3816,36 @@ class BuyNowOrderTests(TestCase):
                 Order.objects.filter(pk=second.pk).update(
                     buy_now_action_digest=first_digest,
                 )
+
+    def test_expired_buy_now_token_cannot_create_order_but_fresh_token_can(self):
+        self.client.force_login(self.buyer)
+        url = reverse("buy_now", args=[self.listing.pk])
+        base_timestamp = 1_800_000_000
+        with patch("django.core.signing.time.time", return_value=base_timestamp):
+            token = self.client.get(url).context["action_token"]
+
+        data = {
+            "quantity": 120,
+            "delivery_location": "Pune, Maharashtra",
+            "action_token": token,
+        }
+        with patch(
+            "django.core.signing.time.time",
+            return_value=base_timestamp + WORKFLOW_ACTION_MAX_AGE_SECONDS + 1,
+        ):
+            expired = self.client.post(url, data)
+            self.assertEqual(expired.status_code, 200)
+            self.assertContains(expired, "form has expired")
+            self.assertFalse(Order.objects.filter(source=Order.Source.BUY_NOW).exists())
+
+            fresh_data = {**data, "action_token": expired.context["action_token"]}
+            created = self.client.post(url, fresh_data)
+            expired_replay = self.client.post(url, data)
+
+        self.assertEqual(created.status_code, 302)
+        self.assertEqual(Order.objects.filter(source=Order.Source.BUY_NOW).count(), 1)
+        self.assertEqual(expired_replay.status_code, 200)
+        self.assertEqual(Order.objects.filter(source=Order.Source.BUY_NOW).count(), 1)
 
     def test_buy_now_action_token_is_bound_to_buyer_and_listing(self):
         self.client.force_login(self.buyer)
