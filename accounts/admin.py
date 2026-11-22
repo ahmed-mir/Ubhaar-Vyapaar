@@ -1,7 +1,13 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
 
+from .auth_forms import RateLimitedAdminAuthenticationForm
 from .models import User
+
+
+# Keep the standard AdminSite login flow and staff checks, replacing only its
+# form so failed Admin authentication uses the shared identifier limiter.
+admin.site.login_form = RateLimitedAdminAuthenticationForm
 
 
 @admin.register(User)

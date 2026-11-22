@@ -4,14 +4,14 @@
 
 | Endpoint | Protection | Default |
 | --- | --- | --- |
-| `/accounts/login/` | django-axes database-backed identifier limit plus a pseudonymous browser-source limit | 5 failures per identifier per 15 minutes; 30 login submissions per browser source per 15 minutes |
-| `/admin/` login | django-axes database-backed identifier limit | 5 failures per identifier per 15 minutes |
+| `/accounts/login/` | HMAC-keyed database fixed-window identifier failures plus a pseudonymous browser-source limit | Failures 1–4 show the generic login error; failure 5 and later attempts in that same 15-minute fixed window are throttled. 30 login submissions per browser source per 15-minute fixed window. |
+| `/admin/` login | The same HMAC-keyed database fixed-window identifier failure limiter using Django Admin's authentication form | Failure 5 and later attempts in the same 15-minute fixed window are throttled. |
 | `/accounts/password/reset/` | HMAC-keyed database windows for normalized email and browser source | 3 requests per email per hour; 8 per browser source per hour |
 | Buyer and Manufacturer registration POSTs | HMAC-keyed shared database window, counted after form validation | 8 valid submissions per browser source per hour |
 
-The account identifier and browser-source counters are stored as keyed HMAC digests. Passwords, reset tokens, cookies, and raw session IDs are not written to throttle records. django-axes masks password, identifier, CSRF, and token fields in its diagnostic request data and stores a pseudonymized username. Login errors remain generic. A successful login clears the matching account attempt history; email logins also clear the submitted email digest.
+The identifier and browser-source counters are stored as keyed HMAC digests in `AuthRateLimitBucket`. Login failures use fixed windows aligned to epoch multiples of the configured duration: a new 15-minute window starts at each quarter-hour boundary. Only failed authentication attempts count; the request that records failure 5 is throttled. A successful public or Admin login clears that normalized identifier's failure buckets. It does not clear browser-source counters. Passwords, reset tokens, cookies, and raw session IDs are never written to limiter records. Login errors and throttled login responses remain generic.
 
-No forwarded client-IP header is trusted by application code. The source counters use a random, signed, HttpOnly browser marker cookie. Only its keyed digest is persisted in the limiter table. This is defense in depth and can be bypassed by a determined client that discards cookies. Application limits are not a substitute for an upstream WAF or origin controls.
+No forwarded client-IP header is trusted by application code. Source counters use a random, signed, HttpOnly browser marker cookie with `SameSite=Lax` and `Secure` when production session cookies are Secure. Only its keyed digest is persisted in the limiter table. Clearing, rejecting, or omitting the cookie can evade this source dimension; it is defense in depth, not IP-based protection. Application limits are not a substitute for an upstream WAF or origin controls.
 
 ## Configuration
 
@@ -31,7 +31,7 @@ No new secret variables are required. Existing `DJANGO_SECRET_KEY` is used as HM
 
 ## Expiry and maintenance
 
-Requests automatically use a new fixed-window bucket after the configured window; expired buckets do not block later requests. django-axes expires attempts on subsequent login traffic. Run this command periodically (for example, from a private Render Cron job) to remove old limiter records:
+Requests automatically use a new fixed-window bucket after the configured window; expired buckets do not block later requests even if cleanup is delayed. The cleanup command removes only scopes' prior windows, preserves current active windows, and is safe to run repeatedly. **Schedule `prune_auth_throttles` daily in production** using the deployment's private scheduled-job facility (for example, a Render Cron job). Actual provider-side scheduling remains an operations task; no scheduler is configured in this repository.
 
 ```text
 python manage.py prune_auth_throttles

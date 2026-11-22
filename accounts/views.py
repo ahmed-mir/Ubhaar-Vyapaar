@@ -1,10 +1,10 @@
 from django.contrib import messages
 from django.contrib.auth import get_user_model, login
 from django.contrib.auth.views import LoginView, PasswordResetView
+from django.conf import settings
 from django.db import IntegrityError, transaction
 from django.db.models.functions import Lower, Trim
 from django.shortcuts import redirect, render
-from django.conf import settings
 
 from marketplace.models import ManufacturerProfile
 
@@ -102,6 +102,8 @@ def register(request):
         {"form": form},
     )
     return attach_source_limit_cookie(request, response)
+
+
 def register_manufacturer(request):
     if request.user.is_authenticated:
         return redirect("home")
@@ -217,7 +219,7 @@ class RateLimitedPasswordResetView(PasswordResetView):
 
 
 class RateLimitedLoginView(LoginView):
-    """Add a modest session-source ceiling alongside Axes identifier limits."""
+    """Add the browser-source ceiling beside fixed-window identifier limits."""
 
     def post(self, request, *args, **kwargs):
         decision = consume_rate_limits(

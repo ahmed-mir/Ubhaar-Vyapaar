@@ -1,26 +1,22 @@
-from datetime import timedelta
+from datetime import datetime, timedelta, timezone as datetime_timezone
+from unittest.mock import patch
 
 from django.conf import settings as project_settings
+from django.contrib import admin
 from django.contrib.auth import get_user_model
 from django.core import mail
-from django.core import signing
 from django.core.management import call_command
-from django.http import HttpResponse, QueryDict
 from django.test import Client, TestCase, override_settings
 from django.urls import reverse
 from django.utils import timezone
 
-from axes.helpers import get_query_str
-from axes.models import AccessAttempt, AccessAttemptExpiration
-
 from .models import AuthRateLimitBucket
 from .rate_limits import (
+    LOGIN_IDENTIFIER_FAILURE_SCOPE,
     SOURCE_COOKIE_NAME,
-    SOURCE_COOKIE_SALT,
-    _digest,
     _fixed_window_start,
-    axes_username_digest,
     consume_rate_limits,
+    login_identifier_digest,
 )
 
 
@@ -44,6 +40,10 @@ class AuthenticationAbuseProtectionTests(TestCase):
                 "password": password or self.password,
             },
         )
+
+    def login_post_at(self, client, identifier, when, password=None, path=None):
+        with patch("accounts.rate_limits.timezone.now", return_value=when):
+            return self.login_post(client, identifier, password, path)
 
     def reset_post(self, client, email):
         return client.post(reverse("password_reset"), {"email": email})
@@ -73,7 +73,18 @@ class AuthenticationAbuseProtectionTests(TestCase):
             "legal_acknowledgement": "on",
         }
 
-    def test_login_failures_share_identifier_limit_across_clients(self):
+    def current_identifier_bucket(self, identifier, now=None):
+        now = now or timezone.now()
+        return AuthRateLimitBucket.objects.filter(
+            scope=LOGIN_IDENTIFIER_FAILURE_SCOPE,
+            key_digest=login_identifier_digest(identifier),
+            window_start=_fixed_window_start(
+                now,
+                project_settings.AUTH_LOGIN_WINDOW_SECONDS,
+            ),
+        )
+
+    def test_failures_one_to_four_are_generic_and_failure_five_throttles(self):
         user = self.create_user("limited-buyer", "limited@example.test")
         clients = (Client(), Client())
 
@@ -84,23 +95,33 @@ class AuthenticationAbuseProtectionTests(TestCase):
                 password="Wrong-Password@4821",
             )
             self.assertEqual(response.status_code, 200)
-            self.assertContains(response, "Please enter a correct email or username")
+            self.assertContains(
+                response,
+                "Please enter a correct email or username and password",
+            )
 
+        with self.assertLogs("accounts.security", level="WARNING") as logs:
+            response = self.login_post(
+                clients[1],
+                "limited@example.test",
+                password="Wrong-Password@4821",
+            )
+        self.assertEqual(response.status_code, 429)
+        self.assertGreaterEqual(int(response["Retry-After"]), 1)
+        self.assertContains(response, "Too many sign-in attempts", status_code=429)
+        self.assertNotIn(user.email, " ".join(logs.output))
+        self.assertNotIn("Wrong-Password@4821", " ".join(logs.output))
+
+        # Attempts beyond the threshold stay blocked and do not extend/count it.
         response = self.login_post(
-            clients[1],
-            "limited@example.test",
+            clients[0],
+            "LIMITED@example.test",
             password="Wrong-Password@4821",
         )
         self.assertEqual(response.status_code, 429)
-        self.assertEqual(response["Retry-After"], str(project_settings.AUTH_LOGIN_WINDOW_SECONDS))
-        self.assertContains(response, "Too many sign-in attempts", status_code=429)
+        self.assertEqual(self.current_identifier_bucket(user.email).get().count, 5)
         user.refresh_from_db()
         self.assertTrue(user.is_active)
-
-        attempt = AccessAttempt.objects.get()
-        self.assertNotIn(user.email, attempt.username)
-        self.assertNotIn(self.password, attempt.post_data)
-        self.assertNotIn("limited@example.test", attempt.post_data)
 
     @override_settings(AUTH_LOGIN_SOURCE_LIMIT=2)
     def test_login_browser_source_limit_reduces_identifier_spraying(self):
@@ -123,80 +144,114 @@ class AuthenticationAbuseProtectionTests(TestCase):
         self.assertEqual(response.status_code, 429)
         self.assertContains(response, "Too many sign-in attempts", status_code=429)
 
-    def test_login_errors_are_generic_and_success_clears_email_identifier(self):
+    def test_known_and_unknown_username_and_email_errors_are_generic(self):
         user = self.create_user("generic-login", "generic@example.test")
-        known = self.login_post(
-            self.client,
-            user.username,
-            password="Incorrect-Password@4821",
+        pairs = (
+            (user.username, "not-a-real-username"),
+            (user.email.upper(), "not-a-real-account@example.test"),
         )
-        unknown = self.login_post(
-            Client(),
-            "not-a-real-account@example.test",
-            password="Incorrect-Password@4821",
-        )
-        self.assertContains(known, "Please enter a correct email or username")
-        self.assertContains(unknown, "Please enter a correct email or username")
-
-        email_client = Client()
-        for _ in range(project_settings.AUTH_LOGIN_LIMIT - 1):
-            self.login_post(
-                email_client,
-                "GENERIC@EXAMPLE.TEST",
+        for known_identifier, unknown_identifier in pairs:
+            known = self.login_post(
+                Client(),
+                known_identifier,
                 password="Incorrect-Password@4821",
             )
-        success = self.login_post(email_client, "generic@example.test")
-        self.assertEqual(success.status_code, 302)
-        digest = axes_username_digest(None, {"username": user.email})
-        self.assertFalse(AccessAttempt.objects.filter(username=digest).exists())
+            unknown = self.login_post(
+                Client(),
+                unknown_identifier,
+                password="Incorrect-Password@4821",
+            )
+            self.assertEqual((known.status_code, unknown.status_code), (200, 200))
+            generic_message = "Please enter a correct email or username and password"
+            self.assertContains(known, generic_message)
+            self.assertContains(unknown, generic_message)
 
-    def test_unknown_identifier_gets_same_temporary_lockout_response(self):
-        user = self.create_user("known-lockout", "known-lockout@example.test")
-        known_client, unknown_client = Client(), Client()
-        responses = []
-        for client, identifier in (
-            (known_client, user.username),
-            (unknown_client, "unknown-lockout@example.test"),
-        ):
+        throttled_responses = []
+        for identifier in (user.username, "unknown-throttled@example.test"):
+            client = Client()
             for _ in range(project_settings.AUTH_LOGIN_LIMIT):
                 response = self.login_post(
                     client,
                     identifier,
                     password="Incorrect-Password@4821",
                 )
-            responses.append(response)
+            throttled_responses.append(response)
 
-        self.assertEqual([response.status_code for response in responses], [429, 429])
-        self.assertContains(responses[0], "Too many sign-in attempts", status_code=429)
-        self.assertContains(responses[1], "Too many sign-in attempts", status_code=429)
-        self.assertEqual(responses[0].content, responses[1].content)
+        for response in throttled_responses:
+            self.assertEqual(response.status_code, 429)
+            self.assertContains(response, "Too many sign-in attempts", status_code=429)
 
-    def test_login_throttle_expires_and_does_not_disable_user(self):
-        user = self.create_user("expiring-login", "expiring@example.test")
-        for _ in range(project_settings.AUTH_LOGIN_LIMIT):
+    def test_expired_fixed_window_failures_do_not_carry_forward(self):
+        user = self.create_user("fixed-window-user", "fixed-window@example.test")
+        client = Client()
+        window_one = datetime(2026, 1, 1, 14, 0, tzinfo=datetime_timezone.utc)
+
+        for second in range(4):
+            response = self.login_post_at(
+                client,
+                user.email,
+                window_one + timedelta(seconds=second),
+                password="Wrong-Password@4821",
+            )
+            self.assertEqual(response.status_code, 200)
+
+        window_two = window_one + timedelta(
+            seconds=project_settings.AUTH_LOGIN_WINDOW_SECONDS,
+        )
+        response = self.login_post_at(
+            client,
+            user.email,
+            window_two,
+            password="Wrong-Password@4821",
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(self.current_identifier_bucket(user.email, window_two).get().count, 1)
+
+        for offset in range(1, project_settings.AUTH_LOGIN_LIMIT - 1):
+            response = self.login_post_at(
+                client,
+                user.email,
+                window_two + timedelta(seconds=offset),
+                password="Wrong-Password@4821",
+            )
+            self.assertEqual(response.status_code, 200)
+
+        response = self.login_post_at(
+            client,
+            user.email,
+            window_two + timedelta(seconds=project_settings.AUTH_LOGIN_LIMIT),
+            password="Wrong-Password@4821",
+        )
+        self.assertEqual(response.status_code, 429)
+        self.assertEqual(self.current_identifier_bucket(user.email, window_two).get().count, 5)
+        self.assertEqual(self.current_identifier_bucket(user.email, window_one).get().count, 4)
+
+    def test_successful_login_clears_only_identifier_failures(self):
+        user = self.create_user("success-reset", "success-reset@example.test")
+        client = Client()
+        for _ in range(3):
             response = self.login_post(
-                self.client,
-                user.username,
+                client,
+                "SUCCESS-RESET@example.test",
                 password="Incorrect-Password@4821",
             )
-        self.assertEqual(response.status_code, 429)
+            self.assertEqual(response.status_code, 200)
 
-        old_time = timezone.now() - timedelta(
-            seconds=project_settings.AUTH_LOGIN_WINDOW_SECONDS + 2,
+        self.assertEqual(self.current_identifier_bucket(user.email).get().count, 3)
+        response = self.login_post(client, user.email)
+        self.assertEqual(response.status_code, 302)
+        self.assertFalse(self.current_identifier_bucket(user.email).exists())
+
+        client.post(reverse("logout"))
+        response = self.login_post(
+            client,
+            user.email,
+            password="Incorrect-Password@4821",
         )
-        attempt = AccessAttempt.objects.get()
-        attempt.attempt_time = old_time
-        attempt.save(update_fields=["attempt_time"])
-        AccessAttemptExpiration.objects.filter(
-            access_attempt=attempt,
-        ).update(expires_at=old_time)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(self.current_identifier_bucket(user.email).get().count, 1)
 
-        success = self.login_post(self.client, user.username)
-        self.assertEqual(success.status_code, 302)
-        user.refresh_from_db()
-        self.assertTrue(user.is_active)
-
-    def test_unrelated_login_identifier_remains_available(self):
+    def test_unrelated_identifier_remains_available(self):
         locked = self.create_user("locked-fixture", "locked@example.test")
         available = self.create_user("available-fixture", "available@example.test")
         for _ in range(project_settings.AUTH_LOGIN_LIMIT):
@@ -211,16 +266,17 @@ class AuthenticationAbuseProtectionTests(TestCase):
         locked.refresh_from_db()
         self.assertTrue(locked.is_active)
 
-    def test_admin_login_is_throttled_and_valid_admin_can_sign_in(self):
-        admin = self.create_user(
+    def test_admin_login_uses_shared_limiter_and_preserves_staff_checks(self):
+        admin_user = self.create_user(
             "admin-login-fixture",
             "admin-login@example.test",
             is_staff=True,
             is_superuser=True,
         )
+        self.assertEqual(admin.site.login_form.__name__, "RateLimitedAdminAuthenticationForm")
         response = self.login_post(
             self.client,
-            admin.username,
+            admin_user.username,
             path="/admin/login/",
         )
         self.assertEqual(response.status_code, 302)
@@ -233,56 +289,100 @@ class AuthenticationAbuseProtectionTests(TestCase):
             is_superuser=True,
         )
         throttle_client = Client()
-        for _ in range(project_settings.AUTH_LOGIN_LIMIT):
+        for _ in range(project_settings.AUTH_LOGIN_LIMIT - 1):
             response = self.login_post(
                 throttle_client,
                 second_admin.username,
                 password="Incorrect-Password@4821",
                 path="/admin/login/",
             )
+            self.assertEqual(response.status_code, 200)
+        response = self.login_post(
+            throttle_client,
+            second_admin.username,
+            password="Incorrect-Password@4821",
+            path="/admin/login/",
+        )
         self.assertEqual(response.status_code, 429)
         self.assertContains(response, "Too many sign-in attempts", status_code=429)
         second_admin.refresh_from_db()
         self.assertTrue(second_admin.is_active)
 
-    @override_settings(EMAIL_BACKEND="django.core.mail.backends.locmem.EmailBackend")
-    def test_password_reset_is_generic_and_shared_limit_stops_email_sends(self):
+    def test_public_and_admin_login_share_identifier_failure_history(self):
+        admin_user = self.create_user(
+            "shared-admin-login",
+            "shared-admin@example.test",
+            is_staff=True,
+            is_superuser=True,
+        )
+        client = Client()
+        for _ in range(project_settings.AUTH_LOGIN_LIMIT - 1):
+            response = self.login_post(
+                client,
+                admin_user.username,
+                password="Incorrect-Password@4821",
+            )
+            self.assertEqual(response.status_code, 200)
+        response = self.login_post(
+            client,
+            admin_user.username,
+            password="Incorrect-Password@4821",
+            path="/admin/login/",
+        )
+        self.assertEqual(response.status_code, 429)
+        self.assertContains(response, "Too many sign-in attempts", status_code=429)
+
+    @override_settings(
+        EMAIL_BACKEND="django.core.mail.backends.locmem.EmailBackend",
+        PASSWORD_RESET_LIMIT=2,
+    )
+    def test_password_reset_known_unknown_and_throttled_responses_match(self):
         mail.outbox = []
         user = self.create_user("reset-fixture", "Reset@Example.Test")
-        first_client = Client()
-        second_client = Client()
 
-        for client, email in (
-            (first_client, "RESET@example.test"),
-            (second_client, "reset@EXAMPLE.TEST"),
-            (first_client, "reset@example.test"),
-        ):
-            response = self.reset_post(client, email)
+        existing_responses = [
+            self.reset_post(Client(), " RESET@example.test "),
+            self.reset_post(Client(), "reset@EXAMPLE.test"),
+            self.reset_post(Client(), "reset@example.test"),
+        ]
+        unknown_responses = [
+            self.reset_post(Client(), "unknown@example.test"),
+            self.reset_post(Client(), "UNKNOWN@example.test"),
+            self.reset_post(Client(), "unknown@example.test"),
+        ]
+        for response in existing_responses + unknown_responses:
             self.assertRedirects(response, reverse("password_reset_done"))
-
-        sent_count = len(mail.outbox)
-        self.assertEqual(sent_count, project_settings.PASSWORD_RESET_LIMIT)
-
-        throttled = self.reset_post(second_client, "RESET@example.test")
-        self.assertRedirects(throttled, reverse("password_reset_done"))
+        self.assertEqual(len(mail.outbox), 2)
         self.assertEqual(
-            len(mail.outbox),
-            sent_count,
+            [response.status_code for response in existing_responses],
+            [response.status_code for response in unknown_responses],
         )
-
-        unknown = self.reset_post(Client(), "unknown@example.test")
-        self.assertRedirects(unknown, reverse("password_reset_done"))
-        self.assertEqual(unknown.status_code, throttled.status_code)
-        self.assertEqual(unknown["Location"], throttled["Location"])
+        self.assertEqual(
+            [response["Location"] for response in existing_responses],
+            [response["Location"] for response in unknown_responses],
+        )
         user.refresh_from_db()
         self.assertTrue(user.is_active)
-
-        buckets = AuthRateLimitBucket.objects.filter(
-            scope="password_reset_email",
-        )
-        self.assertEqual(buckets.count(), 2)
-        for bucket in buckets:
+        for bucket in AuthRateLimitBucket.objects.filter(scope="password_reset_email"):
             self.assertNotIn(user.email, bucket.key_digest)
+
+    @override_settings(
+        EMAIL_BACKEND="django.core.mail.backends.locmem.EmailBackend",
+        PASSWORD_RESET_SOURCE_LIMIT=8,
+    )
+    def test_password_reset_source_limit_allows_eight_then_generic_redirects(self):
+        mail.outbox = []
+        responses = [
+            self.reset_post(self.client, f"unknown-{index}@example.test")
+            for index in range(8)
+        ]
+        for response in responses:
+            self.assertRedirects(response, reverse("password_reset_done"))
+
+        ninth = self.reset_post(self.client, "unknown-ninth@example.test")
+        self.assertRedirects(ninth, reverse("password_reset_done"))
+        self.assertEqual(ninth.status_code, 302)
+        self.assertEqual(mail.outbox, [])
 
     @override_settings(SIGNUP_LIMIT=1)
     def test_buyer_signup_source_limit_survives_login_and_logout(self):
@@ -331,8 +431,8 @@ class AuthenticationAbuseProtectionTests(TestCase):
             ).exists()
         )
 
-    def test_database_window_expiry_and_cross_client_persistence(self):
-        now = timezone.now().replace(second=0, microsecond=0)
+    def test_database_fixed_windows_are_shared_across_clients(self):
+        now = datetime(2026, 1, 1, 14, 0, tzinfo=datetime_timezone.utc)
         specification = [("cross_client", "opaque-source", 2, 60)]
         self.assertTrue(consume_rate_limits(specification, now=now).allowed)
         self.assertTrue(
@@ -354,64 +454,61 @@ class AuthenticationAbuseProtectionTests(TestCase):
             ).allowed
         )
 
-    def test_source_limit_cookie_is_signed_and_record_is_only_digest(self):
-        marker = "deterministic-browser-source"
-        signed_response = HttpResponse()
-        signed_response.set_signed_cookie(
-            SOURCE_COOKIE_NAME,
-            marker,
-            salt=SOURCE_COOKIE_SALT,
-        )
-        cookie_value = signed_response.cookies[SOURCE_COOKIE_NAME].value
-        client_a, client_b = Client(), Client()
-        client_a.cookies[SOURCE_COOKIE_NAME] = cookie_value
-        client_b.cookies[SOURCE_COOKIE_NAME] = cookie_value
+    @override_settings(SESSION_COOKIE_SECURE=True)
+    def test_source_cookie_is_signed_secure_http_only_and_browser_scoped(self):
+        first, second = Client(), Client()
+        self.login_post(first, "first@example.test", password="Wrong-Password@4821")
+        self.login_post(second, "second@example.test", password="Wrong-Password@4821")
+        first_cookie = first.cookies[SOURCE_COOKIE_NAME]
+        second_cookie = second.cookies[SOURCE_COOKIE_NAME]
 
-        data = self.buyer_registration_data("cookie-source")
-        # The same browser marker is recognized across independent clients.
-        client_a.get(reverse("register"))
-        client_b.get(reverse("register"))
-        bucket = AuthRateLimitBucket.objects.create(
+        self.assertNotEqual(first_cookie.value, second_cookie.value)
+        self.assertTrue(first_cookie["httponly"])
+        self.assertTrue(first_cookie["secure"])
+        self.assertEqual(first_cookie["samesite"], "Lax")
+
+    def test_login_identifiers_are_pseudonymized_and_normalized_consistently(self):
+        self.assertEqual(
+            login_identifier_digest("  PERSON@EXAMPLE.TEST "),
+            login_identifier_digest("person@example.test"),
+        )
+        self.assertNotEqual(
+            login_identifier_digest("CaseSensitiveUser"),
+            login_identifier_digest("casesensitiveuser"),
+        )
+
+        user = self.create_user("private-user", "private@example.test")
+        self.login_post(
+            Client(),
+            user.email,
+            password="Wrong-Password@4821",
+        )
+        bucket = self.current_identifier_bucket(user.email).get()
+        self.assertEqual(len(bucket.key_digest), 64)
+        self.assertNotIn(user.email, bucket.key_digest)
+        self.assertNotIn("Wrong-Password@4821", repr(bucket))
+
+    def test_prune_command_is_idempotent_and_preserves_current_windows(self):
+        now = datetime(2026, 1, 1, 14, 20, tzinfo=datetime_timezone.utc)
+        current_window = _fixed_window_start(now, project_settings.SIGNUP_WINDOW_SECONDS)
+        old_window = current_window - timedelta(
+            seconds=project_settings.SIGNUP_WINDOW_SECONDS,
+        )
+        old = AuthRateLimitBucket.objects.create(
             scope="signup_source",
-            key_digest=_digest("signup_source", marker),
-            window_start=_fixed_window_start(
-                timezone.now(),
-                project_settings.SIGNUP_WINDOW_SECONDS,
-            ),
-            count=project_settings.SIGNUP_LIMIT,
-        )
-        response = client_b.post(reverse("register"), data)
-        self.assertEqual(response.status_code, 429)
-        self.assertNotIn(marker, bucket.key_digest)
-
-    def test_axes_request_diagnostics_mask_credentials_and_tokens(self):
-        query = QueryDict(
-            "username=private%40example.test"
-            "&email=private%40example.test"
-            "&password=fixture-password"
-            "&csrfmiddlewaretoken=fixture-csrf-token"
-            "&reset_token=fixture-reset-token"
-            "&session_key=fixture-session-key"
-        )
-        diagnostic = get_query_str(query)
-        for secret_value in (
-            "private@example.test",
-            "fixture-password",
-            "fixture-csrf-token",
-            "fixture-reset-token",
-            "fixture-session-key",
-        ):
-            self.assertNotIn(secret_value, diagnostic)
-
-    def test_prune_command_removes_expired_rate_windows(self):
-        old_window = timezone.now() - timedelta(days=2)
-        AuthRateLimitBucket.objects.create(
-            scope="expired",
             key_digest="f" * 64,
             window_start=old_window,
             count=1,
         )
-        call_command("prune_auth_throttles", verbosity=0)
-        self.assertFalse(
-            AuthRateLimitBucket.objects.filter(scope="expired").exists()
+        current = AuthRateLimitBucket.objects.create(
+            scope="signup_source",
+            key_digest="e" * 64,
+            window_start=current_window,
+            count=1,
         )
+        with patch("accounts.management.commands.prune_auth_throttles.timezone.now", return_value=now):
+            call_command("prune_auth_throttles", verbosity=0)
+            call_command("prune_auth_throttles", verbosity=0)
+
+        self.assertFalse(AuthRateLimitBucket.objects.filter(pk=old.pk).exists())
+        self.assertTrue(AuthRateLimitBucket.objects.filter(pk=current.pk).exists())
