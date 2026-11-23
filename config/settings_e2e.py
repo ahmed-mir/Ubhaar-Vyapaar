@@ -12,6 +12,8 @@ import os
 # supplying a database URL or production DEBUG setting to the E2E process.
 os.environ["DATABASE_URL"] = ""
 os.environ["DJANGO_DEBUG"] = "True"
+# Never send errors from local browser tests to a configured Sentry project.
+os.environ["SENTRY_DSN"] = ""
 
 from .settings import *  # noqa: F403
 

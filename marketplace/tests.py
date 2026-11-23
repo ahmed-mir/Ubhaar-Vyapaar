@@ -14,9 +14,10 @@ from django.contrib.auth import get_user_model
 from django.core.management import call_command
 from django.core.management.base import CommandError
 from django.core.management.base import CommandError
-from django.db import IntegrityError, transaction
+from django.db import IntegrityError, OperationalError, transaction
 from django.test import Client
 from django.test import RequestFactory, TestCase, override_settings
+from django.test.utils import CaptureQueriesContext
 from django.urls import reverse
 from django.views.defaults import server_error
 
@@ -1751,6 +1752,86 @@ class ProductionReadinessTests(TestCase):
         self.assertFalse(settings.SENTRY_ENABLED)
         self.assertFalse(settings.SENTRY_SEND_DEFAULT_PII)
         self.assertEqual(settings.SENTRY_TRACES_SAMPLE_RATE, 0.0)
+        self.assertEqual(
+            settings.LOGGING["loggers"]["marketplace"]["level"],
+            "WARNING",
+        )
+
+    def test_sentry_initializer_is_noop_without_dsn(self):
+        from config.sentry import initialize_sentry
+
+        initialized = initialize_sentry(
+            dsn="",
+            environment="test",
+            release=None,
+            traces_sample_rate=0.0,
+            before_send=None,
+            traces_sampler=None,
+        )
+
+        self.assertFalse(initialized)
+
+    def test_sentry_initializer_uses_fake_dsn_with_pii_disabled(self):
+        import sys
+        from types import ModuleType
+        from unittest.mock import Mock
+
+        from config.sentry import initialize_sentry
+
+        fake_sdk = ModuleType("sentry_sdk")
+        fake_sdk.init = Mock()
+        fake_integrations = ModuleType("sentry_sdk.integrations")
+        fake_django = ModuleType("sentry_sdk.integrations.django")
+
+        class FakeDjangoIntegration:
+            pass
+
+        fake_django.DjangoIntegration = FakeDjangoIntegration
+        with patch.dict(
+            sys.modules,
+            {
+                "sentry_sdk": fake_sdk,
+                "sentry_sdk.integrations": fake_integrations,
+                "sentry_sdk.integrations.django": fake_django,
+            },
+        ):
+            initialized = initialize_sentry(
+                dsn="https://public@example.invalid/1",
+                environment="test",
+                release="test-build",
+                traces_sample_rate=0.0,
+                before_send=lambda event, hint: event,
+                traces_sampler=lambda context: 0.0,
+            )
+
+        self.assertTrue(initialized)
+        kwargs = fake_sdk.init.call_args.kwargs
+        self.assertEqual(kwargs["dsn"], "https://public@example.invalid/1")
+        self.assertEqual(kwargs["environment"], "test")
+        self.assertEqual(kwargs["release"], "test-build")
+        self.assertFalse(kwargs["send_default_pii"])
+        self.assertEqual(kwargs["traces_sample_rate"], 0.0)
+
+    def test_sentry_scrubber_removes_request_secrets_and_url_query(self):
+        from config.settings import _scrub_sentry_event
+
+        event = {
+            "user": {"email": "private@example.invalid"},
+            "request": {
+                "url": "https://site.example/path?reset_token=private",
+                "query_string": "reset_token=private",
+                "body": "password=private",
+                "headers": {"Authorization": "private"},
+                "cookies": {"sessionid": "private"},
+            },
+            "breadcrumbs": {"values": [{"data": {"token": "private"}}]},
+        }
+
+        scrubbed = _scrub_sentry_event(event, {})
+
+        self.assertNotIn("user", scrubbed)
+        self.assertEqual(scrubbed["request"], {"url": "https://site.example/path"})
+        self.assertNotIn("data", scrubbed["breadcrumbs"]["values"][0])
 
     @override_settings(LEGAL_CONTACT_EMAIL="")
     def test_contact_page_omits_missing_contact_details(self):
@@ -1846,6 +1927,68 @@ class ProductionReadinessTests(TestCase):
             set(response.json()),
             {"status"},
         )
+
+    def test_health_liveness_does_not_check_database(self):
+        from django.db import connection
+
+        with CaptureQueriesContext(connection) as captured_queries:
+            response = self.client.get(reverse("health"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json(), {"status": "ok"})
+        self.assertEqual(len(captured_queries), 0)
+
+    @patch(
+        "marketplace.views._check_readiness_database",
+        side_effect=OperationalError("database unavailable"),
+    )
+    def test_health_remains_healthy_when_database_is_unavailable(
+        self,
+        database_check,
+    ):
+        response = self.client.get(reverse("health"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json(), {"status": "ok"})
+        database_check.assert_not_called()
+
+    def test_readiness_returns_ready_after_database_query(self):
+        response = self.client.get(reverse("ready"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json(), {"status": "ready"})
+
+    @patch(
+        "marketplace.views._check_readiness_database",
+        side_effect=[
+            OperationalError(
+                "postgres://private-user:private-password@private-host/private-db"
+            ),
+            OperationalError(
+                "postgres://private-user:private-password@private-host/private-db"
+            ),
+        ],
+    )
+    def test_readiness_database_failure_is_generic_and_safe(self, database_check):
+        from marketplace import views
+
+        views._readiness_failure_logged = False
+        with self.assertLogs("marketplace.views", level="WARNING") as captured:
+            response = self.client.get(reverse("ready"))
+            repeated_response = self.client.get(reverse("ready"))
+
+        self.assertEqual(response.status_code, 503)
+        self.assertEqual(response.json(), {"status": "not_ready"})
+        self.assertEqual(repeated_response.status_code, 503)
+        self.assertNotContains(response, "private-user", status_code=503)
+        self.assertNotContains(response, "private-password", status_code=503)
+        self.assertNotContains(response, "private-host", status_code=503)
+        self.assertNotContains(response, "private-db", status_code=503)
+        self.assertEqual(database_check.call_count, 2)
+        self.assertEqual(len(captured.records), 1)
+        self.assertIn("OperationalError", captured.output[0])
+        self.assertNotIn("private-host", "\n".join(captured.output))
+        views._readiness_failure_logged = False
 
     def test_pages_use_configured_canonical_origin(self):
         response = self.client.get(reverse("home"))

@@ -5,6 +5,7 @@ from . import styleguide
 
 urlpatterns = [
     path("health/", views.health, name="health"),
+    path("ready/", views.ready, name="ready"),
     path("styleguide/", styleguide.styleguide, name="styleguide"),
     path("", views.home, name="home"),
     path("marketplace/", views.marketplace, name="marketplace"),

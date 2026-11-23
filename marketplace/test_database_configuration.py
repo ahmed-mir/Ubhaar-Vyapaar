@@ -63,6 +63,26 @@ class DatabaseConfigurationTests(SimpleTestCase):
         self.assertEqual(config["ENGINE"], POSTGRES_ENGINE)
         self.assertEqual(config["HOST"], "db.example.test")
         self.assertEqual(config["OPTIONS"]["sslmode"], "require")
+        self.assertEqual(config["OPTIONS"]["connect_timeout"], 10)
+
+    def test_production_preserves_finite_connect_timeout_and_replaces_unbounded(self):
+        explicit = self.build(
+            debug=False,
+            url=(
+                "postgresql://user:password@db.example.test/app"
+                "?connect_timeout=20"
+            ),
+        )
+        unbounded = self.build(
+            debug=False,
+            url=(
+                "postgresql://user:password@db.example.test/app"
+                "?connect_timeout=0"
+            ),
+        )
+
+        self.assertEqual(explicit["OPTIONS"]["connect_timeout"], 20)
+        self.assertEqual(unbounded["OPTIONS"]["connect_timeout"], 10)
 
     def test_production_replaces_weaker_ssl_modes_with_require(self):
         for mode in ("disable", "allow", "prefer"):
@@ -133,7 +153,7 @@ class DatabaseConfigurationTests(SimpleTestCase):
                 "DJANGO_DEBUG": "False",
                 "DJANGO_SECRET_KEY": "local-settings-test-key",
                 "DJANGO_USE_CLOUDINARY_MEDIA": "False",
-                "SENTRY_DSN": "",
+                "SENTRY_DSN": "https://test@example.invalid/1",
             }
         )
         script = (
@@ -143,7 +163,8 @@ class DatabaseConfigurationTests(SimpleTestCase):
             "print(json.dumps({"
             "'engine': s.DATABASES['default']['ENGINE'], "
             "'name': s.DATABASES['default']['NAME'], "
-            "'staticfiles_backend': s.STORAGES['staticfiles']['BACKEND']}))"
+            "'staticfiles_backend': s.STORAGES['staticfiles']['BACKEND'], "
+            "'sentry_enabled': s.SENTRY_ENABLED}))"
         )
 
         result = subprocess.run(
@@ -166,6 +187,7 @@ class DatabaseConfigurationTests(SimpleTestCase):
             settings_result["staticfiles_backend"],
             "django.contrib.staticfiles.storage.StaticFilesStorage",
         )
+        self.assertFalse(settings_result["sentry_enabled"])
 
     def test_non_test_command_with_test_argument_fails_closed(self):
         environment = os.environ.copy()
@@ -215,6 +237,7 @@ class DatabaseConfigurationTests(SimpleTestCase):
                 "DATABASE_URL": fake_database_url,
                 "DJANGO_DEBUG": "False",
                 "DJANGO_SECRET_KEY": "local-e2e-settings-test-key",
+                "SENTRY_DSN": "https://test@example.invalid/1",
             }
         )
         script = (
@@ -224,6 +247,7 @@ class DatabaseConfigurationTests(SimpleTestCase):
             "'engine': s.DATABASES['default']['ENGINE'], "
             "'name': s.DATABASES['default']['NAME'], "
             "'debug': s.DEBUG, "
+            "'sentry_enabled': s.SENTRY_ENABLED, "
             "'database_url': os.environ.get('DATABASE_URL')}))"
         )
 
@@ -248,5 +272,6 @@ class DatabaseConfigurationTests(SimpleTestCase):
             str(BASE_DIR / "db.sqlite3"),
         )
         self.assertTrue(settings_result["debug"])
+        self.assertFalse(settings_result["sentry_enabled"])
         self.assertEqual(settings_result["database_url"], "")
         self.assertNotIn(fake_database_url, result.stdout + result.stderr)

@@ -26,10 +26,22 @@ does not access or validate the production database.
 
 ## Durability and backups
 
-The code does not create backups or verify provider retention. Backup frequency,
-point-in-time recovery, expiration limits, and restore testing must be configured
-and confirmed in the PostgreSQL provider or Render dashboard. Do not assume a
-database plan is durable without provider confirmation.
+The repository contains no evidence that automated backups or point-in-time
+recovery are enabled. Their availability, retention window, recovery point
+granularity, and restore permissions depend on the current Neon plan and must be
+verified in the provider dashboard. Do not infer a retention period or claim
+PITR is enabled from application configuration.
+
+Record launch recovery objectives with the service owner before launch:
+
+- **RPO (acceptable data loss): TBD** — the maximum data loss the service
+  owner accepts after an incident.
+- **RTO (acceptable recovery time): TBD** — the maximum time the service owner
+  accepts before service is restored.
+
+The provider's documented backup/PITR capability is an application continuity
+requirement; actual backups, retention, access controls, and permissions are
+provider-verification requirements.
 
 ## Migration procedure
 
@@ -40,19 +52,33 @@ database plan is durable without provider confirmation.
 3. Take or confirm a provider snapshot/backup before destructive or irreversible
    changes.
 4. Apply reviewed migrations through the controlled deployment process.
-5. Check deploy logs, `/health/`, admin login, and approved core flows.
+5. Check deploy logs, `/health/`, `/ready/`, the Admin login page (GET only),
+   and approved read-only core flows.
 
 Do not use `makemigrations` as part of production startup. Review generated
 migrations before committing them.
 
 ## Restore procedure
 
-Use the provider's documented restore or point-in-time recovery flow to create
-or restore a PostgreSQL instance. After provider recovery completes, set the
-service `DATABASE_URL` to the restored database, deploy/restart, run the
-approved migration process, and verify `/health/`, admin, authentication, and
-approved reads/writes. Keep the original database untouched until the restored
-instance is validated.
+Never use production as the first restore test. A future restore drill should:
+
+1. Record the approved recovery point, restore operator, and change approval.
+2. Use the provider's documented backup/PITR flow to restore into a separate
+   non-production project, branch, or database.
+3. Use non-production credentials and confirm the target before running any
+   command. Do not connect this drill to production.
+4. Run Django `check` and inspect migration state; apply reviewed migrations
+   only if the drill requires them.
+5. Perform read-only verification: representative counts for Users, Orders,
+   Quotations, and Milestones; confirm recent Orders exist without displaying
+   personal details; request `/health/` and `/ready/`; inspect application
+   pages in the isolated environment.
+6. Record the recovered point, elapsed time, validation result, and approval.
+   Remove the temporary restore after the drill according to provider policy.
+
+Keep the original production database untouched until an approved recovery plan
+has been validated. A real incident cutover requires an explicit owner decision,
+not an automatic URL swap.
 
 ## Before destructive migrations
 
@@ -68,4 +94,5 @@ instance is validated.
 Confirm the managed PostgreSQL plan, TLS, access controls, backups, retention,
 recovery testing, alerting, billing, and expiry settings in the provider
 dashboards. Render's `DATABASE_URL` must point to the intended PostgreSQL
-database.
+database. Verify who can create/restore branches and how restore credentials
+are managed and rotated. Do not put provider values in this runbook.

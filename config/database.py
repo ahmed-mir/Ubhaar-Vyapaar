@@ -1,5 +1,6 @@
 """Database configuration helpers shared by Django settings modules."""
 
+import math
 import sys
 from pathlib import Path
 
@@ -80,6 +81,14 @@ def build_database_config(*, debug, database_url, base_dir, test_mode=False):
         )
 
     options = database.setdefault("OPTIONS", {})
+    # Bound connection establishment in production. Keep any URL-provided
+    # value and the TLS mode selected below intact.
+    try:
+        connect_timeout = float(options.get("connect_timeout", 0))
+    except (TypeError, ValueError):
+        connect_timeout = 0
+    if not math.isfinite(connect_timeout) or connect_timeout <= 0:
+        options["connect_timeout"] = 10
     sslmode = options.get("sslmode", "require").lower()
     if sslmode not in _VALID_SSL_MODES:
         raise ImproperlyConfigured(

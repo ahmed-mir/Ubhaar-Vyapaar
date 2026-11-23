@@ -5,6 +5,7 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied, ValidationError
 from django.core.mail import EmailMessage
+from django.db import DatabaseError, connection, transaction
 from django.core.validators import validate_email
 from django.core.paginator import Paginator
 from django.db.models import Case, Count, IntegerField, Prefetch, Q, When
@@ -223,6 +224,42 @@ def refund_policy(request):
 
 def health(request):
     return JsonResponse({"status": "ok"})
+
+
+_readiness_failure_logged = False
+
+
+def _check_readiness_database():
+    with transaction.atomic():
+        with connection.cursor() as cursor:
+            if connection.vendor == "postgresql":
+                # Scope the readiness query timeout to this transaction.
+                cursor.execute("SET LOCAL statement_timeout = '3000ms'")
+            cursor.execute("SELECT 1")
+            cursor.fetchone()
+
+
+def ready(request):
+    """Check the primary database without exposing connection details."""
+    global _readiness_failure_logged
+
+    try:
+        _check_readiness_database()
+    except DatabaseError as exc:
+        if not _readiness_failure_logged:
+            logger.warning(
+                "Database readiness check failed (%s).",
+                type(exc).__name__,
+            )
+            _readiness_failure_logged = True
+        response = JsonResponse({"status": "not_ready"}, status=503)
+        # Django's request logger otherwise emits an ERROR for every health
+        # poll. The generic incident warning above is logged once per outage.
+        response._has_been_logged = True
+        return response
+
+    _readiness_failure_logged = False
+    return JsonResponse({"status": "ready"})
 
 
 def about(request):

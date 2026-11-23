@@ -14,6 +14,10 @@ payments, or otherwise create persistent data in production.
 - Mobile navigation opens, closes, and remains keyboard accessible.
 - A missing route renders the designed 404 page.
 - `/health/` returns its expected minimal response.
+- `/ready/` returns `{"status":"ready"}` with HTTP 200 when the primary
+  database is reachable; an unavailable database produces a generic HTTP 503.
+- The login page and `/admin/login/` render on GET. Do not submit credentials as
+  part of the public smoke check.
 - Static files and configured public media load.
 - HTTP redirects to HTTPS where configured.
 
