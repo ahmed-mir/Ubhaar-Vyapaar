@@ -4,13 +4,24 @@ from django.contrib.auth.views import LoginView, PasswordResetView
 from django.conf import settings
 from django.db import IntegrityError, transaction
 from django.db.models.functions import Lower, Trim
+from django.contrib.auth.decorators import login_required
+from django.contrib.auth import logout
+from django.http import JsonResponse
 from django.shortcuts import redirect, render
+from django.views.decorators.http import require_POST
 
 from marketplace.models import ManufacturerProfile
 
 from .forms import (
+    AccountClosureForm,
     BuyerRegistrationForm,
     ManufacturerRegistrationForm,
+)
+from .privacy import (
+    ActiveWorkflowError,
+    build_user_export,
+    close_account as close_user_account,
+    has_active_workflows,
 )
 from .rate_limits import (
     attach_source_limit_cookie,
@@ -243,3 +254,76 @@ class RateLimitedLoginView(LoginView):
             request,
             super().post(request, *args, **kwargs),
         )
+
+
+@login_required
+def privacy_settings(request):
+    """Provide authenticated export and closure controls for this account."""
+    return render(
+        request,
+        "accounts/privacy_settings.html",
+        {
+            "has_active_workflows": has_active_workflows(request.user),
+            "closure_form": AccountClosureForm(user=request.user),
+            "closure_available": not (
+                request.user.is_staff or request.user.is_superuser
+            ),
+            "support_email": settings.LEGAL_CONTACT_EMAIL,
+        },
+    )
+
+
+@login_required
+def export_account_data(request):
+    """Return a private, no-store JSON export scoped to the session user."""
+    response = JsonResponse(
+        build_user_export(request.user),
+        json_dumps_params={"ensure_ascii": False},
+    )
+    response["Content-Disposition"] = 'attachment; filename="account-data-export.json"'
+    response["Cache-Control"] = "private, no-store, max-age=0"
+    response["Pragma"] = "no-cache"
+    response["X-Content-Type-Options"] = "nosniff"
+    return response
+
+
+@login_required
+@require_POST
+def close_account(request):
+    form = AccountClosureForm(request.POST, user=request.user)
+    if form.is_valid():
+        try:
+            closed = close_user_account(request.user.pk, form.cleaned_data["password"])
+        except ActiveWorkflowError:
+            form.add_error(
+                None,
+                "Resolve active orders, quote requests, or pending payment "
+                "workflows before closing your account. Contact support if "
+                "you need help.",
+            )
+        else:
+            if closed:
+                logout(request)
+                return redirect("account_closed")
+            form.add_error(
+                None,
+                "We could not close this account. Refresh the page and try again.",
+            )
+
+    return render(
+        request,
+        "accounts/privacy_settings.html",
+        {
+            "has_active_workflows": has_active_workflows(request.user),
+            "closure_form": form,
+            "closure_available": not (
+                request.user.is_staff or request.user.is_superuser
+            ),
+            "support_email": settings.LEGAL_CONTACT_EMAIL,
+        },
+        status=400,
+    )
+
+
+def account_closed(request):
+    return render(request, "accounts/account_closed.html")

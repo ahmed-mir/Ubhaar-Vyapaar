@@ -43,6 +43,10 @@ urlpatterns = [
         ),
         name="password_change_done",
     ),
+    path("privacy/", views.privacy_settings, name="privacy_settings"),
+    path("privacy/export/", views.export_account_data, name="export_account_data"),
+    path("privacy/close/", views.close_account, name="close_account"),
+    path("privacy/closed/", views.account_closed, name="account_closed"),
     path(
         "password/reset/",
         views.RateLimitedPasswordResetView.as_view(

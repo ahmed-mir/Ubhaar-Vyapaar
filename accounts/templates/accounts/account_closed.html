@@ -1,0 +1,12 @@
+{% extends "marketplace/base.html" %}
+{% block title %}Account closed | Ubhaar-Vyapaar{% endblock %}
+{% block content %}
+<section class="auth-page-shell password-reset-layout" aria-labelledby="closed-title">
+    <div class="auth-page-main password-reset-main password-reset-state">
+        <p class="eyebrow">Account data</p>
+        <h1 id="closed-title">Account closed</h1>
+        <p class="password-reset-intro">Your account has been closed and you have been signed out. Necessary marketplace transaction records may remain with identifying profile details anonymized.</p>
+        <a class="button button-primary password-reset-state-action" href="{% url 'home' %}">Back to marketplace</a>
+    </div>
+</section>
+{% endblock %}

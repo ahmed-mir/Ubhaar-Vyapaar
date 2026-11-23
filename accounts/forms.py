@@ -142,6 +142,39 @@ class ReliablePasswordResetForm(PasswordResetForm):
             raise
 
 
+class AccountClosureForm(forms.Form):
+    """Require password reauthentication and a deliberate closure phrase."""
+
+    password = forms.CharField(
+        label="Current password",
+        strip=False,
+        widget=forms.PasswordInput(
+            attrs={"autocomplete": "current-password"}
+        ),
+    )
+    confirmation = forms.CharField(
+        label='Type "CLOSE" to confirm',
+        strip=True,
+        max_length=5,
+    )
+
+    def __init__(self, *args, user, **kwargs):
+        self.user = user
+        super().__init__(*args, **kwargs)
+
+    def clean_password(self):
+        password = self.cleaned_data["password"]
+        if not self.user.check_password(password):
+            raise ValidationError("Enter your current password to continue.")
+        return password
+
+    def clean_confirmation(self):
+        value = self.cleaned_data["confirmation"]
+        if value != "CLOSE":
+            raise ValidationError('Type "CLOSE" to confirm account closure.')
+        return value
+
+
 class RegistrationConsentMixin(forms.Form):
     legal_acknowledgement = forms.BooleanField(
         required=True,

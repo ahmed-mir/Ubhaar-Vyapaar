@@ -37,6 +37,12 @@ class User(AbstractUser):
             self.email = self.email.strip().lower()
         return super().save(*args, **kwargs)
 
+    @property
+    def account_display_name(self):
+        if not self.is_active:
+            return "Deleted account"
+        return self.first_name or self.username or self.email
+
 
 class AuthRateLimitBucket(models.Model):
     """A fixed-window counter keyed only by a keyed digest, never raw input."""

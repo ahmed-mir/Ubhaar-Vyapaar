@@ -69,7 +69,7 @@
                 <h2>{{ quote_request.listing.title }}</h2>
                 <p class="quote-workflow-context__manufacturer">Request #{{ quote_request.pk }} · {{ quote_request.created_at|date:"d M Y" }}</p>
                 <dl class="quote-context-facts">
-                    <div><dt>Buyer</dt><dd>{{ quote_request.buyer.username }}</dd></div>
+                    <div><dt>Buyer</dt><dd>{{ quote_request.buyer.account_display_name }}</dd></div>
                     <div><dt>Requested quantity</dt><dd>{{ quote_request.quantity }} units</dd></div>
                     <div><dt>Delivery location</dt><dd>{{ quote_request.delivery_location }}</dd></div>
                 </dl>

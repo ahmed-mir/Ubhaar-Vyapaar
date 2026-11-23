@@ -17,7 +17,7 @@
                     {% if user.role == "BUYER" %}
                         Manufacturer: {{ order.manufacturer.business_name }}
                     {% else %}
-                        Buyer: {{ order.buyer.username }}
+                        Buyer: {{ order.buyer.account_display_name }}
                     {% endif %}
                 </p>
             </div>
@@ -185,7 +185,7 @@
                         <article class="order-message{% if order_message.sender == user %} order-message--own{% endif %}">
                             <header>
                                 <strong>
-                                    {% if order_message.sender == user %}You{% elif order_message.sender == order.buyer %}Buyer: {{ order_message.sender.username }}{% else %}Manufacturer: {{ order_message.sender.username }}{% endif %}
+                                    {% if order_message.sender == user %}You{% elif order_message.sender == order.buyer %}Buyer: {{ order_message.sender.account_display_name }}{% else %}Manufacturer: {{ order_message.sender.account_display_name }}{% endif %}
                                 </strong>
                                 <time datetime="{{ order_message.created_at|date:'c' }}">{{ order_message.created_at|date:"d M Y, H:i" }}</time>
                             </header>
@@ -229,7 +229,7 @@
                     <div><dt>Buyer requirements</dt><dd>{{ order.specifications_snapshot.requirements|linebreaksbr }}</dd></div>
                     {% if order.specifications_snapshot.machine_type %}<div><dt>Machine type</dt><dd>{{ order.specifications_snapshot.machine_type }}</dd></div>{% endif %}
                     {% if order.specifications_snapshot.materials %}<div><dt>Materials</dt><dd>{{ order.specifications_snapshot.materials }}</dd></div>{% endif %}
-                    <div><dt>Buyer</dt><dd>{{ order.buyer.username }}</dd></div>
+                    <div><dt>Buyer</dt><dd>{{ order.buyer.account_display_name }}</dd></div>
                     <div><dt>Manufacturer</dt><dd>{{ order.manufacturer.business_name }}</dd></div>
                     <div><dt>Terms locked</dt><dd>{{ order.terms_locked_at|date:"d M Y, H:i" }}</dd></div>
                 </dl>

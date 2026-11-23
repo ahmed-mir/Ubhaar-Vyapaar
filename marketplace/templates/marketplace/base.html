@@ -259,6 +259,11 @@
                                    {% if current_url == 'password_change' %}aria-current="page"{% endif %}>
                                     Change password
                                 </a>
+                                <a class="account-menu-item{% if current_url == 'privacy_settings' %} account-menu-item-active{% endif %}"
+                                   href="{% url 'privacy_settings' %}"
+                                   {% if current_url == 'privacy_settings' %}aria-current="page"{% endif %}>
+                                    Privacy and data
+                                </a>
                                 <form method="post" action="{% url 'logout' %}" class="account-menu-logout">
                                     {% csrf_token %}
                                     <button class="account-menu-item account-menu-logout-button" type="submit">Log out</button>

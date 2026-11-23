@@ -24,6 +24,8 @@ from django.urls import reverse
 from django.templatetags.static import static
 from urllib.parse import urlencode, urljoin
 
+from accounts.privacy import lock_active_workflow_accounts
+
 from .forms import (
     CapacityListingEditForm,
     CapacityListingForm,
@@ -68,6 +70,10 @@ from .payments import (
 )
 
 logger = logging.getLogger(__name__)
+
+
+class _InactiveWorkflowParticipants(Exception):
+    """Raised when an account closes before new work can be committed."""
 
 CONTACT_SUBMISSION_WINDOW_SECONDS = 60 * 60
 CONTACT_SUBMISSION_LIMIT = 5
@@ -1754,8 +1760,13 @@ def buy_now(request, pk):
                 unit_price = listing.price_per_unit
                 total = unit_price * quantity
                 delivery_location = form.cleaned_data["delivery_location"].strip()
+                order = None
                 try:
                     with transaction.atomic():
+                        if not lock_active_workflow_accounts(
+                            (request.user.pk, listing.manufacturer.user_id)
+                        ):
+                            raise _InactiveWorkflowParticipants
                         order = Order.objects.create(
                             source=Order.Source.BUY_NOW,
                             quotation=None,
@@ -1815,6 +1826,17 @@ def buy_now(request, pk):
                             f"A Buyer placed direct purchase Order #{order.pk} for {concise_label(listing.title)}.",
                             order,
                         )
+                except _InactiveWorkflowParticipants:
+                    form.add_error(
+                        None,
+                        "An account involved in this purchase is no longer active. "
+                        "Refresh the page or contact support.",
+                    )
+                    action_token = issue_workflow_action_token(
+                        user=request.user,
+                        listing=listing,
+                        action=BUY_NOW_ACTION,
+                    )
                 except IntegrityError:
                     order = Order.objects.filter(
                         buy_now_action_digest=action_digest,
@@ -1827,8 +1849,9 @@ def buy_now(request, pk):
                     messages.info(request, "This purchase was already submitted.")
                     return redirect("order_detail", pk=order.pk)
 
-                messages.success(request, "Direct purchase confirmed. Your order is ready.")
-                return redirect("order_detail", pk=order.pk)
+                if order is not None:
+                    messages.success(request, "Direct purchase confirmed. Your order is ready.")
+                    return redirect("order_detail", pk=order.pk)
 
     quantity = form["quantity"].value() or form.fields["quantity"].initial
     try:
@@ -1917,8 +1940,13 @@ def request_quote(request, pk):
                         action=REQUEST_QUOTE_ACTION,
                     )
                 else:
+                    quote = None
                     try:
                         with transaction.atomic():
+                            if not lock_active_workflow_accounts(
+                                (request.user.pk, listing.manufacturer.user_id)
+                            ):
+                                raise _InactiveWorkflowParticipants
                             quote = form.save(commit=False)
                             quote.buyer = request.user
                             quote.listing = listing
@@ -1935,6 +1963,17 @@ def request_quote(request, pk):
                                     Notification.Destination.MANUFACTURER_DASHBOARD
                                 ),
                             )
+                    except _InactiveWorkflowParticipants:
+                        form.add_error(
+                            None,
+                            "An account involved in this request is no longer active. "
+                            "Refresh the page or contact support.",
+                        )
+                        action_token = issue_workflow_action_token(
+                            user=request.user,
+                            listing=listing,
+                            action=REQUEST_QUOTE_ACTION,
+                        )
                     except IntegrityError:
                         quote = QuoteRequest.objects.filter(
                             action_digest=action_digest,
@@ -1946,12 +1985,13 @@ def request_quote(request, pk):
                         messages.info(request, "This quote request was already submitted.")
                         return redirect("my_quote_requests")
 
-                    messages.success(
-                        request,
-                        "Your quote request was submitted.",
-                    )
+                    if quote is not None:
+                        messages.success(
+                            request,
+                            "Your quote request was submitted.",
+                        )
 
-                    return redirect("request_quote", pk=listing.pk)
+                        return redirect("request_quote", pk=listing.pk)
     else:
         form = QuoteRequestForm(listing=listing)
         action_token = issue_workflow_action_token(
@@ -2788,19 +2828,28 @@ def send_order_message(request, pk):
 
     if form.is_valid():
         with transaction.atomic():
-            order_message = form.save(commit=False)
-            order_message.order = order
-            order_message.sender = request.user
-            order_message.save()
+            if lock_active_workflow_accounts(
+                (order.buyer_id, order.manufacturer.user_id)
+            ):
+                order_message = form.save(commit=False)
+                order_message.order = order
+                order_message.sender = request.user
+                order_message.save()
 
-            recipient = get_order_message_recipient(order, request.user)
-            create_order_notification(
-                recipient,
-                f"New message on Order #{order.pk}. Open the order to reply.",
-                order,
-            )
+                recipient = get_order_message_recipient(order, request.user)
+                create_order_notification(
+                    recipient,
+                    f"New message on Order #{order.pk}. Open the order to reply.",
+                    order,
+                )
+                sent = True
+            else:
+                sent = False
 
-        messages.success(request, "Message sent.")
+        if sent:
+            messages.success(request, "Message sent.")
+        else:
+            messages.error(request, "This account is no longer active.")
     else:
         messages.error(request, "Please enter a message before sending.")
 
@@ -2828,20 +2877,29 @@ def review_order(request, pk):
         form = ReviewForm(request.POST)
 
         if form.is_valid():
-            review = form.save(commit=False)
-            review.order = order
-            review.buyer = request.user
-            review.manufacturer = order.manufacturer
-            review.save()
+            with transaction.atomic():
+                if lock_active_workflow_accounts(
+                    (request.user.pk, order.manufacturer.user_id)
+                ):
+                    review = form.save(commit=False)
+                    review.order = order
+                    review.buyer = request.user
+                    review.manufacturer = order.manufacturer
+                    review.save()
 
-            create_order_notification(
-                order.manufacturer.user,
-                f"The buyer reviewed Order #{order.pk}. View the completed-order feedback.",
-                order,
-            )
+                    create_order_notification(
+                        order.manufacturer.user,
+                        f"The buyer reviewed Order #{order.pk}. View the completed-order feedback.",
+                        order,
+                    )
+                    reviewed = True
+                else:
+                    form.add_error(None, "This account is no longer active.")
+                    reviewed = False
 
-            messages.success(request, "Thank you for reviewing this order.")
-            return redirect("order_detail", pk=order.pk)
+            if reviewed:
+                messages.success(request, "Thank you for reviewing this order.")
+                return redirect("order_detail", pk=order.pk)
     else:
         form = ReviewForm()
 
@@ -3259,24 +3317,35 @@ def create_listing(request):
         if getattr(request, "_listing_image_too_large", False):
             form.add_error("image", LISTING_IMAGE_TOO_LARGE_MESSAGE)
         elif form_is_valid:
-            listing = form.save(commit=False)
-            listing.manufacturer = manufacturer
-            listing.is_active = True
-            listing.save()
+            pending_listing = form.save(commit=False)
+            with transaction.atomic():
+                if lock_active_workflow_accounts((request.user.pk,)):
+                    manufacturer = ManufacturerProfile.objects.select_for_update().get(
+                        pk=manufacturer.pk,
+                        user=request.user,
+                    )
+                    pending_listing.manufacturer = manufacturer
+                    pending_listing.is_active = True
+                    pending_listing.save()
+                    created = True
+                else:
+                    form.add_error(None, "This account is no longer active.")
+                    created = False
 
-            if manufacturer.is_verified:
-                messages.success(
-                    request,
-                    "Your listing was created and is now visible to buyers.",
-                )
-            else:
-                messages.success(
-                    request,
-                    "Your listing was saved. It will become visible "
-                    "to buyers after your business is verified.",
-                )
+            if created:
+                if manufacturer.is_verified:
+                    messages.success(
+                        request,
+                        "Your listing was created and is now visible to buyers.",
+                    )
+                else:
+                    messages.success(
+                        request,
+                        "Your listing was saved. It will become visible "
+                        "to buyers after your business is verified.",
+                    )
 
-            return redirect("manufacturer_dashboard")
+                return redirect("manufacturer_dashboard")
     else:
         form = CapacityListingForm()
 
@@ -3327,12 +3396,31 @@ def edit_listing(request, pk):
         if getattr(request, "_listing_image_too_large", False):
             form.add_error("image", LISTING_IMAGE_TOO_LARGE_MESSAGE)
         elif form_is_valid:
-            form.save()
-            messages.success(
-                request,
-                "Your listing was updated.",
-            )
-            return redirect("my_listings")
+            pending_listing = form.save(commit=False)
+            with transaction.atomic():
+                if lock_active_workflow_accounts((request.user.pk,)):
+                    listing = CapacityListing.objects.select_for_update().get(
+                        pk=listing.pk,
+                        manufacturer__user=request.user,
+                    )
+                    for field_name in form.changed_data:
+                        setattr(
+                            listing,
+                            field_name,
+                            getattr(pending_listing, field_name),
+                        )
+                    listing.save()
+                    updated = True
+                else:
+                    form.add_error(None, "This account is no longer active.")
+                    updated = False
+
+            if updated:
+                messages.success(
+                    request,
+                    "Your listing was updated.",
+                )
+                return redirect("my_listings")
     else:
         form = CapacityListingEditForm(instance=listing)
 
@@ -3354,7 +3442,11 @@ def send_quotation(request, pk):
         )
 
     quote_request = get_object_or_404(
-        QuoteRequest.objects.select_related("listing", "buyer"),
+        QuoteRequest.objects.select_related(
+            "listing",
+            "listing__manufacturer__user",
+            "buyer",
+        ),
         pk=pk,
         listing__manufacturer__user=request.user,
     )
@@ -3380,6 +3472,15 @@ def send_quotation(request, pk):
 
         if form.is_valid():
             with transaction.atomic():
+                if not lock_active_workflow_accounts(
+                    (request.user.pk, quote_request.buyer_id)
+                ):
+                    messages.error(
+                        request,
+                        "An account involved in this request is no longer active. "
+                        "Refresh the page or contact support.",
+                    )
+                    return redirect("manufacturer_dashboard")
                 # Claim a pending or previously accepted request.
                 # This also coordinates with the existing reject action.
                 updated = QuoteRequest.objects.filter(
@@ -3454,7 +3555,7 @@ def respond_to_quotation(request, pk):
 
     quotation = get_object_or_404(
         Quotation.objects.select_related(
-            "quote_request__listing__manufacturer",
+            "quote_request__listing__manufacturer__user",
         ),
         pk=pk,
         quote_request__buyer=request.user,
@@ -3471,14 +3572,21 @@ def respond_to_quotation(request, pk):
         raise PermissionDenied("Invalid quotation response.")
 
     with transaction.atomic():
-        updated = Quotation.objects.filter(
-            pk=quotation.pk,
-            quote_request__buyer=request.user,
-            status=Quotation.Status.SENT,
-        ).update(
-            status=new_status,
-            responded_at=timezone.now(),
-        )
+        updated = 0
+        if lock_active_workflow_accounts(
+            (
+                request.user.pk,
+                quotation.quote_request.listing.manufacturer.user_id,
+            )
+        ):
+            updated = Quotation.objects.filter(
+                pk=quotation.pk,
+                quote_request__buyer=request.user,
+                status=Quotation.Status.SENT,
+            ).update(
+                status=new_status,
+                responded_at=timezone.now(),
+            )
 
         if updated:
             order = None
@@ -3622,6 +3730,8 @@ def manufacturer_profile(request, pk):
         ),
         pk=pk,
     )
+    if not manufacturer.user.is_active:
+        raise Http404
     if not manufacturer.is_verified and not manufacturer.is_demo:
         raise Http404
 
@@ -3703,14 +3813,38 @@ def edit_business_profile(request):
             needs_review = bool(
                 verification_fields.intersection(form.changed_data)
             )
+            pending_profile = form.save(commit=False)
 
-            profile = form.save(commit=False)
+            with transaction.atomic():
+                if lock_active_workflow_accounts((request.user.pk,)):
+                    manufacturer = ManufacturerProfile.objects.select_for_update().get(
+                        pk=manufacturer.pk,
+                        user=request.user,
+                    )
+                    for field_name in form.changed_data:
+                        setattr(
+                            manufacturer,
+                            field_name,
+                            getattr(pending_profile, field_name),
+                        )
+                    profile = manufacturer
 
-            if needs_review:
-                profile.is_verified = False
-                profile.kyc_status = ManufacturerProfile.KycStatus.UNDER_REVIEW
+                    if needs_review:
+                        profile.is_verified = False
+                        profile.kyc_status = ManufacturerProfile.KycStatus.UNDER_REVIEW
 
-            profile.save()
+                    profile.save()
+                    updated = True
+                else:
+                    form.add_error(None, "This account is no longer active.")
+                    updated = False
+
+            if not updated:
+                return render(
+                    request,
+                    "marketplace/edit_business_profile.html",
+                    {"form": form, "manufacturer": manufacturer},
+                )
 
             if needs_review:
                 messages.success(

@@ -72,8 +72,9 @@
 
         <section class="public-content-section" id="data-retention">
             <h2>Data retention</h2>
-            <p>The current application does not implement automated deletion or retention schedules. Account, order, quotation, milestone, message, review, notification, listing, and contact-submission records may be retained until an administrator changes or deletes them. Pilot update request records may be retained until an administrator changes or deletes them.</p>
-            <p>This policy does not set a specific retention period for each record type.</p>
+            <p>Users can export account data and close an eligible account from the signed-in Privacy and data page. Closure deactivates sign-in and anonymizes account/profile contact details. Manufacturer listings are unpublished. Active orders, open quote requests, or pending payment workflows must be resolved first.</p>
+            <p>Orders, quotations, milestones, payment history, reviews, and other records needed to preserve marketplace history may remain after closure, with account/profile identity anonymized where the application can do so safely. The application does not set a specific retention period for these records. Support handles requests because contact-submission records may be retained and Pilot update request records may be retained; the application does not set a specific retention period for either category. Requests about those records can be sent to the privacy/support contact above, or through Contact support.</p>
+            <p>Account closure does not automatically remove copies held by service providers or from backups, logs, or stored listing media. Provider retention and deletion settings are handled separately and may affect how long copies remain.</p>
         </section>
 
         <section class="public-content-section" id="security">
@@ -83,9 +84,10 @@
 
         <section class="public-content-section" id="user-rights">
             <h2>User rights and requests</h2>
-            <p>Users can change their password from account settings. Manufacturers can edit their business profile. A safe self-service account deletion workflow is not currently implemented because deleting accounts may affect business records, orders, messages, and reviews.</p>
-            {% if legal_contact_email %}<p>To request correction, access, deletion, or review of account data, email <a href="mailto:{{ legal_contact_email }}">{{ legal_contact_email }}</a>.</p>{% endif %}
-            <p>For an account-data question when no email address is shown, use <a href="{% url 'contact' %}">Contact support</a>.</p>
+            <p>Signed-in users can download a JSON export of their account and associated marketplace data, or request account closure through the Privacy and data page. Closure requires current-password confirmation. It may be deferred while marketplace obligations are active. Transaction and payment records are not erased as part of account closure.</p>
+            <p>Pilot-update requests do not currently have an automated unsubscribe control. To stop future pilot communications or request review of a contact/pilot submission, use the configured privacy/support contact or <a href="{% url 'contact' %}">Contact support</a>. Support may ask for information needed to verify the request.</p>
+            {% if legal_contact_email %}<p>Privacy and account-data requests: <a href="mailto:{{ legal_contact_email }}">{{ legal_contact_email }}</a>.</p>{% endif %}
+            <p>Provider-held information and backup copies may have separate retention. The application does not claim to erase those copies immediately.</p>
         </section>
 
         <section class="public-content-section" id="childrens-data">

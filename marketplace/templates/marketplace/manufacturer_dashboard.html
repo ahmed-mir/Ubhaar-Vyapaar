@@ -64,7 +64,7 @@
                             <h3>{{ quote.listing.title }}</h3>
                             <p class="manufacturer-dashboard__meta">Request #{{ quote.pk }} · {{ quote.created_at|date:"d M Y, H:i" }}</p>
                         </div>
-                        <div class="manufacturer-dashboard__request-buyer"><span>Buyer account</span><strong>{{ quote.buyer.username }}</strong></div>
+                        <div class="manufacturer-dashboard__request-buyer"><span>Buyer account</span><strong>{{ quote.buyer.account_display_name }}</strong></div>
                     </header>
 
                     <div class="manufacturer-dashboard__request-content">
@@ -147,7 +147,7 @@
                             <span class="manufacturer-dashboard__status manufacturer-dashboard__status--order">{{ order.status_label }}</span>
                             <h3>Order #{{ order.pk }}</h3>
                             <p class="manufacturer-dashboard__source">Order type: {% if order.source == "BUY_NOW" %}Buy Now{% else %}Quotation{% endif %}</p>
-                            <p class="manufacturer-dashboard__meta">{{ order.listing.title }} · Buyer: {{ order.buyer.username }}</p>
+                            <p class="manufacturer-dashboard__meta">{{ order.listing.title }} · Buyer: {{ order.buyer.account_display_name }}</p>
                         </div>
                         <a class="button button-secondary" href="{% url 'order_detail' order.pk %}">View order</a>
                     </article>

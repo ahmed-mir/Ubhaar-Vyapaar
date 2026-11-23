@@ -1,4 +1,5 @@
 from django.contrib import admin
+from django.core.exceptions import PermissionDenied
 
 from .models import (
     ManufacturerProfile,
@@ -54,6 +55,15 @@ class ManufacturerProfileAdmin(admin.ModelAdmin):
     )
     list_filter = ("is_verified", "kyc_status", "state")
     search_fields = ("business_name", "city", "pincode")
+
+    def has_delete_permission(self, request, obj=None):
+        return False
+
+    def delete_model(self, request, obj):
+        raise PermissionDenied("Manufacturer profiles are closed through account privacy controls.")
+
+    def delete_queryset(self, request, queryset):
+        raise PermissionDenied("Manufacturer profiles are closed through account privacy controls.")
 
 
 @admin.register(CapacityListing)

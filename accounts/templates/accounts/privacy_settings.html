@@ -1,0 +1,46 @@
+{% extends "marketplace/base.html" %}
+{% block title %}Privacy and data | Ubhaar-Vyapaar{% endblock %}
+{% block content %}
+<section class="auth-page-shell password-reset-layout" aria-labelledby="privacy-title">
+    <div class="auth-page-main password-reset-main">
+        <p class="eyebrow">Account data</p>
+        <h1 id="privacy-title">Privacy and data</h1>
+        <p class="password-reset-intro">Export a copy of account data or close your account.</p>
+
+        <section aria-labelledby="export-title">
+            <h2 id="export-title">Export your data</h2>
+            <p>The JSON export includes your account/profile details and records connected to your account. Private information about other users and payment credentials are excluded.</p>
+            <a class="button button-secondary" href="{% url 'export_account_data' %}">Export my data</a>
+        </section>
+
+        <section aria-labelledby="closure-title">
+            <h2 id="closure-title">Close your account</h2>
+            <p>Closing deactivates sign-in and anonymizes your account and profile contact details. Manufacturer listings and the public profile are unpublished. Your messages and quote-request free text are removed where applicable.</p>
+            <p>Orders, quotations, milestones, payment history, and related business records are retained so counterparties can access transaction history. The app does not apply a fixed retention period to these records or erase provider backups, logs, or stored images.</p>
+            <p>This action cannot be undone. You will be signed out, and the account cannot be recovered using its previous email address.</p>
+            {% if has_active_workflows %}
+                <p class="message info" role="status">Resolve active orders, quote requests, or pending payment workflows before closing your account. Contact support if you need help.</p>
+            {% endif %}
+            {% if not closure_available %}
+                <p class="message info" role="note">Staff and administrator accounts must contact support to request account closure.</p>
+            {% else %}
+                <form method="post" action="{% url 'close_account' %}" class="styled-form auth-form password-reset-form" novalidate>
+                    {% csrf_token %}
+                    {% if closure_form.non_field_errors %}
+                        <div class="field-errors" role="alert">{{ closure_form.non_field_errors }}</div>
+                    {% endif %}
+                    {% include "accounts/includes/account_field.html" with field=closure_form.password %}
+                    {% include "accounts/includes/account_field.html" with field=closure_form.confirmation %}
+                    <button class="button button-danger form-submit" type="submit">Close and anonymize account</button>
+                </form>
+            {% endif %}
+            {% if support_email %}
+                <p>Need help with a request? <a href="mailto:{{ support_email }}">Contact privacy support</a>.</p>
+            {% else %}
+                <p>Need help with a request? <a href="{% url 'contact' %}">Contact support</a>.</p>
+            {% endif %}
+        </section>
+        <p class="password-reset-back"><a href="{% url 'privacy_policy' %}">Read the Privacy Policy</a></p>
+    </div>
+</section>
+{% endblock %}

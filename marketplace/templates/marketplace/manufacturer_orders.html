@@ -20,7 +20,7 @@
                     <div class="order-index-record__identity">
                         <p class="order-workspace__eyebrow">Order #{{ order.pk }}</p>
                         <h2>{{ order.listing.title }}</h2>
-                        <p>Buyer: {{ order.buyer.username }}</p>
+                        <p>Buyer: {{ order.buyer.account_display_name }}</p>
                         <p class="order-index-record__source">Order type: {% if order.source == "BUY_NOW" %}Buy Now{% else %}Quotation{% endif %}</p>
                     </div>
                     <span class="status-pill status-{{ order.status|lower }} order-index-record__status">{{ order.status_label }}</span>
