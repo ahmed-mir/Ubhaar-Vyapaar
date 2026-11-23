@@ -15,8 +15,8 @@
 
         <section aria-labelledby="closure-title">
             <h2 id="closure-title">Close your account</h2>
-            <p>Closing deactivates sign-in and anonymizes your account and profile contact details. Manufacturer listings and the public profile are unpublished. Your messages and quote-request free text are removed where applicable.</p>
-            <p>Orders, quotations, milestones, payment history, and related business records are retained so counterparties can access transaction history. The app does not apply a fixed retention period to these records or erase provider backups, logs, or stored images.</p>
+            <p>Closing deactivates sign-in and anonymizes your account/profile identifiers and structured contact details. Manufacturer listings and the public profile are unpublished. Buyer RFQ fields and your order-message bodies are cleared where implemented.</p>
+            <p>Manufacturer quotation messages and completed/cancelled Order requirements snapshots may remain as written to preserve transaction context. Buyer quote-request requirements and delivery fields, plus structured delivery fields copied to Order snapshots, are cleared where implemented. Free text in retained records is not automatically scrubbed and may contain details you entered. Exceptional requests involving retained free text require manual review. Orders, quotations, milestones, payment history, and related business records may remain; the app does not set a fixed retention period or erase provider backups, logs, or stored images.</p>
             <p>This action cannot be undone. You will be signed out, and the account cannot be recovered using its previous email address.</p>
             {% if has_active_workflows %}
                 <p class="message info" role="status">Resolve active orders, quote requests, or pending payment workflows before closing your account. Contact support if you need help.</p>

@@ -58,6 +58,7 @@ class PrivacyTestDataMixin:
             listing=listing,
             specifications_snapshot={
                 "private_counterparty": "DO_NOT_EXPORT",
+                "requirements": "Historical buyer requirements",
                 "delivery_location": "Private order delivery location",
             },
             quantity=10,
@@ -202,6 +203,11 @@ class PrivacyDataExportTests(PrivacyTestDataMixin, TestCase):
             payload["orders"][0]["buyer_supplied_details"]["delivery_location"],
             "Private order delivery location",
         )
+        self.assertEqual(
+            payload["orders"][0]["buyer_supplied_details"]["requirements"],
+            "Historical buyer requirements",
+        )
+        self.assertIsNone(payload["quotations"][0]["message"])
         self.assertIn("Buyer submitted requirement", body)
         self.assertIn("Buyer-authored message", body)
         self.assertEqual(len(payload["orders"]), 1)
@@ -265,12 +271,15 @@ class PrivacyDataExportTests(PrivacyTestDataMixin, TestCase):
             message="Manufacturer authored terms",
             status=Quotation.Status.ACCEPTED,
         )
+        own_order = self.make_order(buyer, profile, own_listing)
 
         response, payload = self.get_export(manufacturer_user)
         body = response.content.decode()
         self.assertEqual([item["title"] for item in payload["listings"]], ["Own listing"])
         self.assertEqual(len(payload["quotations"]), 1)
         self.assertEqual(payload["quotations"][0]["message"], "Manufacturer authored terms")
+        self.assertEqual(payload["orders"][0]["order_id"], own_order.pk)
+        self.assertIsNone(payload["orders"][0]["buyer_supplied_details"])
         for private_value in (
             buyer.email,
             buyer.phone,
@@ -304,6 +313,7 @@ class AccountClosureTests(PrivacyTestDataMixin, TestCase):
     def test_buyer_closure_anonymizes_pii_preserves_completed_history_and_sessions(self):
         buyer = self.make_user("close-buyer")
         original_email = buyer.email
+        original_username = buyer.username
         original_phone = buyer.phone
         manufacturer = self.make_user("history-mfr", User.Role.MANUFACTURER)
         profile = ManufacturerProfile.objects.create(
@@ -315,6 +325,12 @@ class AccountClosureTests(PrivacyTestDataMixin, TestCase):
         )
         listing = self.make_listing(profile, "History listing")
         order = self.make_order(buyer, profile, listing)
+        cancelled_order = self.make_order(
+            buyer,
+            profile,
+            listing,
+            status=Order.Status.CANCELLED,
+        )
         milestone = Milestone.objects.create(
             order=order,
             title="Production",
@@ -383,6 +399,7 @@ class AccountClosureTests(PrivacyTestDataMixin, TestCase):
         self.assertNotEqual(buyer.email, original_email)
         self.assertNotIn(original_email, buyer.email)
         self.assertNotIn(original_email, buyer.username)
+        self.assertNotIn(original_username, buyer.username)
         self.assertTrue(buyer.email.endswith("@invalid.local"))
         self.assertIsNone(buyer.terms_accepted_at)
         self.assertFalse(client.session.get("_auth_user_id"))
@@ -399,11 +416,23 @@ class AccountClosureTests(PrivacyTestDataMixin, TestCase):
         self.assertEqual(order.status, Order.Status.COMPLETED)
         self.assertNotIn("delivery_location", order.specifications_snapshot)
         self.assertEqual(
+            order.specifications_snapshot["requirements"],
+            "Historical buyer requirements",
+        )
+        self.assertEqual(
             order.specifications_snapshot["private_counterparty"],
             "DO_NOT_EXPORT",
         )
         self.assertEqual(quote_request.status, QuoteRequest.Status.ACCEPTED)
         self.assertEqual((quote_request.requirements, quote_request.delivery_location), ("", ""))
+        cancelled_order.refresh_from_db()
+        self.assertTrue(Order.objects.filter(pk=cancelled_order.pk).exists())
+        self.assertEqual(cancelled_order.status, Order.Status.CANCELLED)
+        self.assertEqual(
+            cancelled_order.specifications_snapshot["requirements"],
+            "Historical buyer requirements",
+        )
+        self.assertNotIn("delivery_location", cancelled_order.specifications_snapshot)
         self.assertEqual(quotation.status, Quotation.Status.ACCEPTED)
         self.assertEqual(milestone.status, Milestone.Status.APPROVED)
         self.assertEqual(payment.status, PaymentTransaction.Status.CAPTURED)
@@ -419,6 +448,13 @@ class AccountClosureTests(PrivacyTestDataMixin, TestCase):
         )
         self.assertEqual(login_response.status_code, 200)
         self.assertNotIn("_auth_user_id", login_client.session)
+        username_login_client = Client()
+        username_login_response = username_login_client.post(
+            reverse("login"),
+            {"username": original_username, "password": PASSWORD},
+        )
+        self.assertEqual(username_login_response.status_code, 200)
+        self.assertNotIn("_auth_user_id", username_login_client.session)
         reset_response = Client().post(
             reverse("password_reset"),
             {"email": original_email},
@@ -428,6 +464,7 @@ class AccountClosureTests(PrivacyTestDataMixin, TestCase):
 
     def test_manufacturer_closure_unpublishes_profile_and_preserves_history(self):
         manufacturer = self.make_user("close-manufacturer", User.Role.MANUFACTURER)
+        original_email = manufacturer.email
         profile = ManufacturerProfile.objects.create(
             user=manufacturer,
             business_name="Personal Manufacturer Name",
@@ -471,6 +508,7 @@ class AccountClosureTests(PrivacyTestDataMixin, TestCase):
         order.refresh_from_db()
         quotation.refresh_from_db()
         self.assertFalse(manufacturer.is_active)
+        self.assertNotEqual(manufacturer.email, original_email)
         self.assertEqual(profile.business_name, "Closed manufacturer account")
         self.assertEqual((profile.description, profile.city, profile.state, profile.pincode), ("", "", "", ""))
         self.assertFalse(profile.is_verified)
@@ -509,6 +547,10 @@ class AccountClosureTests(PrivacyTestDataMixin, TestCase):
         self.assertTrue(buyer.is_active)
         self.assertEqual(buyer.email, original_email)
         self.assertEqual(order.status, Order.Status.IN_PRODUCTION)
+        self.assertEqual(
+            order.specifications_snapshot["requirements"],
+            "Historical buyer requirements",
+        )
 
     def test_manufacturer_with_active_order_is_not_anonymized(self):
         buyer = self.make_user("active-order-buyer")
