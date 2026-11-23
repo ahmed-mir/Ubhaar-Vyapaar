@@ -148,6 +148,11 @@ class PrivacyDataExportTests(PrivacyTestDataMixin, TestCase):
             sender=buyer,
             body="Buyer-authored message",
         )
+        OrderMessage.objects.create(
+            order=own_order,
+            sender=manufacturer,
+            body="Manufacturer reply visible to Buyer",
+        )
         Review.objects.create(
             order=own_order,
             buyer=buyer,
@@ -161,6 +166,11 @@ class PrivacyDataExportTests(PrivacyTestDataMixin, TestCase):
 
         other_listing = self.make_listing(profile, "Other buyer listing")
         other_order = self.make_order(other_buyer, profile, other_listing)
+        OrderMessage.objects.create(
+            order=other_order,
+            sender=manufacturer,
+            body="Unrelated Buyer order message",
+        )
         SavedListing.objects.create(buyer=buyer, listing=other_listing)
         Notification.objects.create(
             recipient=buyer,
@@ -210,6 +220,18 @@ class PrivacyDataExportTests(PrivacyTestDataMixin, TestCase):
         self.assertIsNone(payload["quotations"][0]["message"])
         self.assertIn("Buyer submitted requirement", body)
         self.assertIn("Buyer-authored message", body)
+        self.assertEqual(
+            [message["body"] for message in payload["order_messages"]],
+            ["Buyer-authored message", "Manufacturer reply visible to Buyer"],
+        )
+        self.assertTrue(
+            all(
+                set(message) == {"order_id", "body", "created_at"}
+                and message["order_id"] == own_order.pk
+                for message in payload["order_messages"]
+            )
+        )
+        self.assertNotIn("Unrelated Buyer order message", body)
         self.assertEqual(len(payload["orders"]), 1)
         self.assertEqual(payload["orders"][0]["order_id"], own_order.pk)
         for private_value in (
@@ -251,7 +273,7 @@ class PrivacyDataExportTests(PrivacyTestDataMixin, TestCase):
             city="Delhi",
             state="Delhi",
         )
-        self.make_listing(other_profile, "Other listing title")
+        other_listing = self.make_listing(other_profile, "Other listing title")
         buyer = self.make_user("mfr-export-buyer")
         buyer.phone = "+912222222222"
         buyer.save(update_fields=["phone"])
@@ -272,6 +294,23 @@ class PrivacyDataExportTests(PrivacyTestDataMixin, TestCase):
             status=Quotation.Status.ACCEPTED,
         )
         own_order = self.make_order(buyer, profile, own_listing)
+        OrderMessage.objects.create(
+            order=own_order,
+            sender=manufacturer_user,
+            body="Manufacturer order message",
+        )
+        OrderMessage.objects.create(
+            order=own_order,
+            sender=buyer,
+            body="Buyer reply visible to Manufacturer",
+        )
+        unrelated_buyer = self.make_user("unrelated-order-buyer")
+        unrelated_order = self.make_order(unrelated_buyer, other_profile, other_listing)
+        OrderMessage.objects.create(
+            order=unrelated_order,
+            sender=other_user,
+            body="Unrelated Manufacturer order message",
+        )
 
         response, payload = self.get_export(manufacturer_user)
         body = response.content.decode()
@@ -280,6 +319,18 @@ class PrivacyDataExportTests(PrivacyTestDataMixin, TestCase):
         self.assertEqual(payload["quotations"][0]["message"], "Manufacturer authored terms")
         self.assertEqual(payload["orders"][0]["order_id"], own_order.pk)
         self.assertIsNone(payload["orders"][0]["buyer_supplied_details"])
+        self.assertEqual(
+            [message["body"] for message in payload["order_messages"]],
+            ["Manufacturer order message", "Buyer reply visible to Manufacturer"],
+        )
+        self.assertTrue(
+            all(
+                set(message) == {"order_id", "body", "created_at"}
+                and message["order_id"] == own_order.pk
+                for message in payload["order_messages"]
+            )
+        )
+        self.assertNotIn("Unrelated Manufacturer order message", body)
         for private_value in (
             buyer.email,
             buyer.phone,

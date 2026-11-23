@@ -93,9 +93,10 @@ inactive users.
 
 The export contains the requesting user's account/profile fields, owned
 Manufacturer listings, Buyer-created quote requests, quotations authored or
-received, participant orders and milestones, safe payment summaries, messages
-authored by that user, reviews authored by that Buyer, saved listing titles,
-and notification destination/read metadata.
+received, participant orders and milestones, safe payment summaries, Order
+messages from both participants in the requester's authorized Orders, reviews
+authored by that Buyer, saved listing titles, and notification destination/read
+metadata.
 
 Historical quotation messages are included only for quotations authored by
 the requesting Manufacturer; a Buyer export includes the quotation record but
@@ -103,10 +104,13 @@ not the Manufacturer's message text. A Buyer export includes that Buyer's own
 current QuoteRequest fields (which are blanked by eligible closure). An Order
 requirements snapshot is included only for the requesting Buyer on that
 Buyer-owned Order. Manufacturer exports omit Buyer-supplied Order details.
-These are explicit owner/role allowlists; no separate counterparty
-contact/profile fields are appended. User-entered free text is preserved as
-written and may itself contain personal details. The export does not attempt
-unreliable automatic text scrubbing.
+These are explicit owner/role allowlists; Order messages are scoped through
+the same Buyer/Manufacturer Order participation rules as Order detail access.
+An Order message export contains only its Order ID, body, and timestamp; it
+does not append sender identity or separate counterparty contact/profile
+fields. Message bodies and other user-entered free text are preserved as
+written and may themselves contain personal details. The export does not
+attempt unreliable automatic text scrubbing.
 
 The implementation uses explicit allowlists. It excludes password hashes,
 sessions, CSRF values, reset tokens, HMAC throttle digests, `PaymentWebhookEvent`

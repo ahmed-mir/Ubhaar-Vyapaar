@@ -269,16 +269,15 @@ def build_user_export(user):
             }
             for payment in payments
         ],
-        "messages_authored": [
+        "order_messages": [
             {
                 "order_id": message.order_id,
                 "body": message.body,
                 "created_at": _iso(message.created_at),
             }
             for message in OrderMessage.objects.filter(
-                sender=user,
                 order_id__in=order_ids,
-            ).order_by("pk")
+            ).order_by("order_id", "pk")
         ],
         "reviews_authored": [
             {
