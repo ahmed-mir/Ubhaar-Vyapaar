@@ -4030,6 +4030,18 @@ class WorkflowStateAdminProtectionTests(TestCase):
             agreed_production_days=8,
             status=Order.Status.AWAITING_FUNDING,
         )
+        self.other_order = Order.objects.create(
+            source=Order.Source.BUY_NOW,
+            buyer=self.buyer,
+            manufacturer=self.manufacturer,
+            listing=self.listing,
+            specifications_snapshot={"listing_title": self.listing.title},
+            quantity=20,
+            agreed_unit_price=Decimal("12.50"),
+            total_amount=Decimal("250.00"),
+            agreed_production_days=8,
+            status=Order.Status.IN_PRODUCTION,
+        )
         self.milestone = Milestone.objects.create(
             order=self.order,
             title="Production complete",
@@ -4051,6 +4063,7 @@ class WorkflowStateAdminProtectionTests(TestCase):
                 Milestone,
                 self.milestone,
                 (
+                    "order",
                     "status",
                     "funding_status",
                     "percentage",
@@ -4091,6 +4104,12 @@ class WorkflowStateAdminProtectionTests(TestCase):
             "approved_at",
         ):
             self.assertIn(field, milestone_readonly)
+        milestone_change = self.client.get(
+            self._admin_change_url(Milestone, self.milestone),
+        )
+        milestone_form = milestone_change.context["adminform"].form
+        for field in ("title", "description", "due_date"):
+            self.assertIn(field, milestone_form.fields)
 
         payment_admin = admin.site._registry[PaymentTransaction]
         self.assertFalse(payment_admin.has_change_permission(None, None))
@@ -4163,6 +4182,33 @@ class WorkflowStateAdminProtectionTests(TestCase):
                     self.assertEqual(obj.status, QuoteRequest.Status.PENDING)
                 elif model is Quotation:
                     self.assertEqual(obj.status, Quotation.Status.SENT)
+
+    def test_valid_crafted_admin_post_cannot_reparent_milestone(self):
+        original_order_status = self.order.status
+        other_order_status = self.other_order.status
+        change_url = self._admin_change_url(Milestone, self.milestone)
+        change_page = self.client.get(change_url)
+        self.assertEqual(change_page.status_code, 200)
+        form = change_page.context["adminform"].form
+        post_data = {"_save": "Save"}
+        for name in form.fields:
+            value = form[name].value()
+            if value is None:
+                value = ""
+            elif hasattr(value, "pk"):
+                value = value.pk
+            post_data[name] = value
+        post_data["order"] = self.other_order.pk
+
+        response = self.client.post(change_url, post_data)
+
+        self.assertEqual(response.status_code, 302)
+        self.milestone.refresh_from_db()
+        self.order.refresh_from_db()
+        self.other_order.refresh_from_db()
+        self.assertEqual(self.milestone.order_id, self.order.pk)
+        self.assertEqual(self.order.status, original_order_status)
+        self.assertEqual(self.other_order.status, other_order_status)
 
 
 @override_settings(
@@ -4275,6 +4321,59 @@ class RazorpayTestModeTests(TestCase):
         self.assertEqual(client.order.create.call_args.kwargs["data"]["amount"], 96000)
         self.assertEqual(client.order.create.call_args.kwargs["data"]["currency"], "INR")
         self.assertEqual(self.milestone.funding_status, Milestone.FundingStatus.NOT_FUNDED)
+
+    @patch("marketplace.views.get_razorpay_client")
+    def test_payment_initiation_locks_order_then_milestone_then_payment(self, get_client):
+        get_client.return_value.order.create.return_value = {
+            "id": "order_lock_order_test",
+            "amount": 96000,
+            "currency": "INR",
+        }
+        lock_order = Order.objects.select_for_update
+        lock_milestone = Milestone.objects.select_for_update
+        lock_payment = PaymentTransaction.objects.select_for_update
+        lock_sequence = []
+
+        def observe_lock(name, original):
+            def lock(*args, **kwargs):
+                lock_sequence.append(name)
+                return original(*args, **kwargs)
+
+            return lock
+
+        with (
+            patch.object(
+                Order.objects,
+                "select_for_update",
+                side_effect=observe_lock("Order", lock_order),
+            ),
+            patch.object(
+                Milestone.objects,
+                "select_for_update",
+                side_effect=observe_lock("Milestone", lock_milestone),
+            ),
+            patch.object(
+                PaymentTransaction.objects,
+                "select_for_update",
+                side_effect=observe_lock("PaymentTransaction", lock_payment),
+            ),
+        ):
+            response = self.client.post(
+                reverse("fund_milestone", args=[self.milestone.pk]),
+            )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(
+            lock_sequence,
+            ["Order", "Milestone", "PaymentTransaction"],
+        )
+        payment_transaction = PaymentTransaction.objects.get(
+            milestone=self.milestone,
+        )
+        self.assertEqual(payment_transaction.amount, Decimal("960.00"))
+        self.assertEqual(payment_transaction.currency, "INR")
+        self.assertEqual(self.milestone.funding_status, Milestone.FundingStatus.NOT_FUNDED)
+        self.assertEqual(self.order.status, Order.Status.AWAITING_FUNDING)
 
     @patch("marketplace.views.get_razorpay_client")
     def test_valid_signed_callback_funds_only_after_gateway_confirms_capture(self, get_client):

@@ -2306,17 +2306,18 @@ def _gateway_payment_matches(payment_transaction, payment, gateway_order):
 
 def _start_razorpay_milestone_payment(milestone, buyer):
     with transaction.atomic():
-        locked = Milestone.objects.select_for_update().select_related(
-            "order__manufacturer",
-            "order__manufacturer__user",
-        ).get(pk=milestone.pk, order__buyer=buyer)
+        order, locked = _lock_order_and_milestone(
+            milestone.pk,
+            buyer=buyer,
+        )
+        locked.order = order
         add_milestone_action_flags(locked, buyer)
         if not locked.can_fund or not _order_uses_razorpay_test_mode(locked.order):
             return None, "This milestone cannot be paid in its current state."
         if locked.amount is None or locked.amount <= 0:
             return None, "This milestone does not have a payable amount."
 
-        payment_transaction = PaymentTransaction.objects.filter(
+        payment_transaction = PaymentTransaction.objects.select_for_update().filter(
             milestone=locked,
             provider=PaymentTransaction.Provider.RAZORPAY,
             status=PaymentTransaction.Status.CREATED,

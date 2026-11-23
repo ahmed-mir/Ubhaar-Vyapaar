@@ -165,6 +165,7 @@ class MilestoneAdmin(admin.ModelAdmin):
     list_filter = ("status",)
     search_fields = ("title", "order__listing__title")
     readonly_fields = (
+        "order",
         "status",
         "funding_status",
         "percentage",
