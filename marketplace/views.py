@@ -36,6 +36,7 @@ from .forms import (
     ManufacturerProfileForm,
     ReviewForm,
 )
+from .upload_security import LISTING_IMAGE_TOO_LARGE_MESSAGE
 from .idempotency import (
     BUY_NOW_ACTION,
     REQUEST_QUOTE_ACTION,
@@ -3253,8 +3254,11 @@ def create_listing(request):
 
     if request.method == "POST":
         form = CapacityListingForm(request.POST, request.FILES)
+        form_is_valid = form.is_valid()
 
-        if form.is_valid():
+        if getattr(request, "_listing_image_too_large", False):
+            form.add_error("image", LISTING_IMAGE_TOO_LARGE_MESSAGE)
+        elif form_is_valid:
             listing = form.save(commit=False)
             listing.manufacturer = manufacturer
             listing.is_active = True
@@ -3318,8 +3322,11 @@ def edit_listing(request, pk):
             request.FILES,
             instance=listing,
         )
+        form_is_valid = form.is_valid()
 
-        if form.is_valid():
+        if getattr(request, "_listing_image_too_large", False):
+            form.add_error("image", LISTING_IMAGE_TOO_LARGE_MESSAGE)
+        elif form_is_valid:
             form.save()
             messages.success(
                 request,

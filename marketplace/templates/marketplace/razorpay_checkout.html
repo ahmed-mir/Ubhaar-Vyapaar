@@ -36,8 +36,8 @@
             {{ checkout_options|json_script:"razorpay-checkout-options" }}
         </section>
     </div>
-    <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
-    <script>
+    <script src="https://checkout.razorpay.com/v1/checkout.js" {% csp_nonce_attr %}></script>
+    <script {% csp_nonce_attr %}>
         (() => {
             const options = JSON.parse(document.getElementById("razorpay-checkout-options").textContent);
             const status = document.getElementById("payment-status");

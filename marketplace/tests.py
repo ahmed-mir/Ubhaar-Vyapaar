@@ -3259,7 +3259,8 @@ class PlatformReadinessTests(TestCase):
         response = self.client.get(reverse("listing_detail", args=[self.listing.pk]))
 
         self.assertContains(response, "listings/missing-demo-image.webp")
-        self.assertContains(response, "media-failed")
+        self.assertContains(response, "marketplace/js/listing-image-fallback.js")
+        self.assertNotContains(response, "onerror=")
         self.assertContains(response, "detail-image-placeholder")
         self.assertContains(response, "fallback-brand-mark")
 
@@ -4456,6 +4457,10 @@ class RazorpayTestModeTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "Razorpay Test Mode")
         self.assertContains(response, "rzp_test_phase8a")
+        self.assertIn("https://checkout.razorpay.com", response["Content-Security-Policy"])
+        self.assertIn("https://api.razorpay.com", response["Content-Security-Policy"])
+        self.assertIn("frame-src", response["Content-Security-Policy"])
+        self.assertRegex(response.content.decode(), r'<script[^>]+nonce="[^"]+"')
         self.assertNotContains(response, "test_key_secret_only")
         self.assertNotContains(response, "test_webhook_secret_only")
         self.assertEqual(payment_transaction.amount, Decimal("960.00"))

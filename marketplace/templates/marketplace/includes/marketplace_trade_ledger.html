@@ -118,7 +118,7 @@
     </div>
 </form>
 
-<script>
+<script {% csp_nonce_attr %}>
     document.querySelectorAll(".marketplace-filter-disclosure").forEach((disclosure) => {
         const mobileFilters = window.matchMedia("(max-width: 900px)");
         const syncDisclosure = () => {

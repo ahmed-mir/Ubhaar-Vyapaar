@@ -11,6 +11,7 @@ from urllib.parse import urlsplit, urlunsplit
 
 from django.conf import global_settings
 from django.core.exceptions import ImproperlyConfigured
+from django.utils.csp import CSP
 from dotenv import load_dotenv
 
 from .database import build_database_config, is_django_test_command
@@ -166,6 +167,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
+    "django.middleware.csp.ContentSecurityPolicyMiddleware",
     "whitenoise.middleware.WhiteNoiseMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
@@ -173,6 +175,7 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    "config.middleware.PermissionsPolicyMiddleware",
     "accounts.middleware.LoginIdentifierThrottleResponseMiddleware",
 ]
 
@@ -190,6 +193,7 @@ TEMPLATES = [
                 "django.template.context_processors.request",
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
+                "django.template.context_processors.csp",
                 "marketplace.context_processors.notification_count",
                 "marketplace.context_processors.platform_readiness",
             ],
@@ -394,6 +398,18 @@ MEDIA_URL = "/media/"
 
 MEDIA_ROOT = BASE_DIR / "media"
 
+# Bound non-file request data. Django's DATA_UPLOAD_MAX_MEMORY_SIZE excludes
+# uploaded file bytes; listing images have their own byte limit in the form
+# and streaming upload handler.
+DATA_UPLOAD_MAX_MEMORY_SIZE = 10 * 1024 * 1024
+FILE_UPLOAD_MAX_MEMORY_SIZE = 2_621_440  # 2.5 MiB; larger files spool to disk.
+DATA_UPLOAD_MAX_NUMBER_FILES = 1
+FILE_UPLOAD_HANDLERS = [
+    "marketplace.upload_security.ListingImageSizeUploadHandler",
+    "django.core.files.uploadhandler.MemoryFileUploadHandler",
+    "django.core.files.uploadhandler.TemporaryFileUploadHandler",
+]
+
 
 # Authentication
 # --------------
@@ -558,6 +574,55 @@ GOOGLE_ANALYTICS_ID = _env_str("GOOGLE_ANALYTICS_ID", "")
 # Production security
 # -------------------
 
+SECURE_CONTENT_TYPE_NOSNIFF = True
+SECURE_REFERRER_POLICY = "same-origin"
+X_FRAME_OPTIONS = "DENY"
+
+SECURE_CSP = {
+    "default-src": [CSP.SELF],
+    "base-uri": [CSP.SELF],
+    "object-src": [CSP.NONE],
+    "frame-ancestors": [CSP.NONE],
+    "form-action": [CSP.SELF],
+    "script-src": [
+        CSP.SELF,
+        CSP.NONCE,
+        "https://checkout.razorpay.com",
+        "https://www.googletagmanager.com",
+    ],
+    "script-src-attr": [CSP.NONE],
+    "style-src": [CSP.SELF, CSP.NONCE],
+    "style-src-attr": [CSP.NONE],
+    "img-src": [
+        CSP.SELF,
+        "https://res.cloudinary.com",
+        "https://www.google-analytics.com",
+    ],
+    "font-src": [CSP.SELF],
+    "connect-src": [
+        CSP.SELF,
+        "https://api.razorpay.com",
+        "https://checkout.razorpay.com",
+        "https://www.google-analytics.com",
+        "https://region1.google-analytics.com",
+    ],
+    "frame-src": [
+        CSP.SELF,
+        "https://api.razorpay.com",
+        "https://checkout.razorpay.com",
+    ],
+    "media-src": [CSP.SELF],
+    "manifest-src": [CSP.SELF],
+    "worker-src": [CSP.SELF],
+}
+
+if not DEBUG:
+    SECURE_CSP["upgrade-insecure-requests"] = True
+
+SECURE_PERMISSIONS_POLICY = (
+    "camera=(), microphone=(), geolocation=(), usb=(), bluetooth=()"
+)
+
 if not DEBUG:
     SECURE_PROXY_SSL_HEADER = (
         "HTTP_X_FORWARDED_PROTO",
@@ -575,13 +640,6 @@ if not DEBUG:
     SECURE_HSTS_INCLUDE_SUBDOMAINS = True
 
     SECURE_HSTS_PRELOAD = True
-
-    SECURE_CONTENT_TYPE_NOSNIFF = True
-
-    SECURE_REFERRER_POLICY = "same-origin"
-
-    X_FRAME_OPTIONS = "DENY"
-
 
 LOGGING = {
     "version": 1,

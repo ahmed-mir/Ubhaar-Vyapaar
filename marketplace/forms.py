@@ -12,6 +12,12 @@ from .models import (
     Review,
     WaitlistEntry,
 )
+from .upload_security import (
+    ALLOWED_LISTING_IMAGE_FORMATS,
+    LISTING_IMAGE_TOO_LARGE_MESSAGE,
+    MAX_LISTING_IMAGE_PIXELS,
+    MAX_LISTING_IMAGE_SIZE_BYTES,
+)
 from .locations import (
     INDIA_PINCODE_HTML_PATTERN,
     INDIA_STATE_UT_CHOICES,
@@ -267,17 +273,15 @@ class CapacityListingForm(forms.ModelForm):
         if uploaded_image is None:
             return image
 
-        if image.size > 5 * 1024 * 1024:
-            raise forms.ValidationError(
-                "Please upload an image no larger than 5 MB."
-            )
+        if image.size > MAX_LISTING_IMAGE_SIZE_BYTES:
+            raise forms.ValidationError(LISTING_IMAGE_TOO_LARGE_MESSAGE)
 
-        if uploaded_image.format not in {"JPEG", "PNG", "WEBP"}:
+        if uploaded_image.format not in ALLOWED_LISTING_IMAGE_FORMATS:
             raise forms.ValidationError(
                 "Please upload a JPG, PNG, or WebP image."
             )
 
-        if uploaded_image.width * uploaded_image.height > 20_000_000:
+        if uploaded_image.width * uploaded_image.height > MAX_LISTING_IMAGE_PIXELS:
             raise forms.ValidationError(
                 "Please use an image with no more than 20 megapixels."
             )
