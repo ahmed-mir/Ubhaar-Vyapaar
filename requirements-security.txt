@@ -1,0 +1,2 @@
+# CI-only dependency audit tool; not installed by the production build.
+pip-audit==2.10.1

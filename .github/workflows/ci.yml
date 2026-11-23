@@ -1,0 +1,219 @@
+name: CI and repository security
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  schedule:
+    - cron: "23 5 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  django-validation:
+    name: Django validation
+    if: github.event_name != 'schedule'
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+    env:
+      DATABASE_URL: ""
+      DJANGO_DEBUG: "True"
+      DJANGO_SECRET_KEY: "not-a-real-key-used-only-in-ci"
+      DJANGO_USE_CLOUDINARY_MEDIA: "False"
+      SENTRY_DSN: ""
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Set up Python
+        uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version-file: .python-version
+
+      - name: Install Python dependencies
+        run: python -m pip install --disable-pip-version-check -r requirements.txt
+
+      - name: Django system check
+        run: python manage.py check
+
+      - name: Check migrations
+        run: python manage.py makemigrations --check --dry-run
+
+      - name: Run Django tests
+        run: python manage.py test
+
+      - name: Collect static files
+        run: python manage.py collectstatic --noinput
+
+      - name: Check changed lines for whitespace errors
+        if: github.event_name == 'pull_request' || github.event_name == 'push'
+        env:
+          PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          PUSH_BEFORE_SHA: ${{ github.event.before }}
+        shell: bash
+        run: |
+          if [[ -n "$PR_BASE_SHA" ]]; then
+            base_sha="$PR_BASE_SHA"
+          else
+            base_sha="$PUSH_BEFORE_SHA"
+          fi
+          if [[ -z "$base_sha" || "$base_sha" =~ ^0+$ ]]; then
+            base_sha="$(git rev-parse HEAD^)"
+          fi
+          git diff --check "$base_sha...HEAD"
+
+  e2e-settings-tests:
+    name: E2E settings tests
+    if: github.event_name != 'schedule'
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+    env:
+      DATABASE_URL: ""
+      DJANGO_DEBUG: "True"
+      DJANGO_SECRET_KEY: "not-a-real-key-used-only-in-ci"
+      DJANGO_USE_CLOUDINARY_MEDIA: "False"
+      SENTRY_DSN: ""
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Set up Python
+        uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version-file: .python-version
+
+      - name: Install Python dependencies
+        run: python -m pip install --disable-pip-version-check -r requirements.txt
+
+      - name: Run tests with isolated E2E settings
+        run: python manage.py test --settings=config.settings_e2e
+
+  playwright:
+    name: Playwright
+    if: github.event_name != 'schedule'
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+    env:
+      DATABASE_URL: ""
+      DJANGO_DEBUG: "True"
+      DJANGO_SECRET_KEY: "not-a-real-key-used-only-in-ci"
+      DJANGO_USE_CLOUDINARY_MEDIA: "False"
+      SENTRY_DSN: ""
+      UBHAAR_BASE_URL: ""
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Set up Python
+        uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version-file: .python-version
+
+      - name: Set up Node.js
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: "22"
+
+      - name: Install Python dependencies
+        run: python -m pip install --disable-pip-version-check -r requirements.txt
+
+      - name: Install locked Node dependencies
+        run: npm ci
+
+      - name: Install Chromium and system dependencies
+        run: npx playwright install --with-deps chromium
+
+      - name: Run isolated Playwright suite
+        run: npx playwright test --workers=1
+
+      - name: Upload Playwright diagnostics on failure
+        if: failure()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: playwright-failure-diagnostics
+          path: |
+            playwright-report/
+            test-results/
+          if-no-files-found: ignore
+          retention-days: 7
+
+  python-dependency-audit:
+    name: Python dependency audit
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Set up Python
+        uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version-file: .python-version
+
+      - name: Install pip-audit
+        run: python -m pip install --disable-pip-version-check -r requirements-security.txt
+
+      - name: Audit pinned Python requirements
+        run: pip-audit --requirement requirements.txt
+
+  node-dependency-audit:
+    name: Node dependency audit
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Set up Node.js
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: "22"
+
+      - name: Audit lockfile for high and critical vulnerabilities
+        run: npm audit --audit-level=high
+
+  secret-scan:
+    name: Secret scan
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+    steps:
+      - name: Check out full Git history
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Download pinned Gitleaks binary
+        shell: bash
+        run: |
+          archive="$RUNNER_TEMP/gitleaks.tar.gz"
+          curl --fail --location --silent --show-error \
+            https://github.com/gitleaks/gitleaks/releases/download/v8.30.1/gitleaks_8.30.1_linux_x64.tar.gz \
+            --output "$archive"
+          echo "551f6fc83ea457d62a0d98237cbad105af8d557003051f41f3e7ca7b3f2470eb  $archive" | sha256sum --check
+          tar -xzf "$archive" -C "$RUNNER_TEMP" gitleaks
+
+      - name: Scan current files and all fetched Git history
+        shell: bash
+        run: |
+          "$RUNNER_TEMP/gitleaks" git --redact=100 --log-opts="--all" .
