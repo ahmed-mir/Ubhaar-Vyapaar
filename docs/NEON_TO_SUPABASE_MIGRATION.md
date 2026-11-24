@@ -127,12 +127,18 @@ dump/backup and compressed SQL dump extensions as a safety net.
    FROM information_schema.tables
    WHERE table_type = 'BASE TABLE'
      AND (table_name = 'django_migrations'
-          OR table_name LIKE 'accounts\\_%' ESCAPE '\\'
-          OR table_name LIKE 'marketplace\\_%' ESCAPE '\\')
+          OR LEFT(table_name, LENGTH('accounts_')) = 'accounts_'
+          OR LEFT(table_name, LENGTH('marketplace_')) = 'marketplace_'
+          OR LEFT(table_name, LENGTH('auth_')) = 'auth_'
+          OR LEFT(table_name, LENGTH('django_')) = 'django_')
    ORDER BY table_schema, table_name;
    ```
 
-   Compare the result with the expected Django inventory: users/auth and
+   The prefixes correspond to project apps `accounts` and `marketplace` and
+   standard Django `auth_` / `django_` tables; `django_migrations` is also
+   checked explicitly. This query locates representative application tables
+   and is not an exhaustive inventory. Compare the result with the expected
+   Django inventory: users/auth and
    `django_migrations`, account profiles and throttle buckets, listings,
    saved listings, RFQs, quotations, Orders, milestones, messages, payments,
    webhook events, notifications, reviews, contact/waitlist, and other Django
