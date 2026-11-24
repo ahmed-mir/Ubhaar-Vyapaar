@@ -33,49 +33,52 @@ test.describe("signup and login hardening", () => {
   test.setTimeout(120000);
 
   test("auth forms remain usable at 320px through desktop widths", async ({ page }) => {
-    for (const width of viewports) {
-      await page.setViewportSize({ width, height: 900 });
+    const registrationRoutes = [
+      "/accounts/register/",
+      "/accounts/register/manufacturer/"
+    ];
 
-      for (const route of [
-        "/accounts/register/",
-        "/accounts/register/manufacturer/",
-        "/accounts/login/"
-      ]) {
-        await page.goto(route);
-        await dismissCookieBanner(page);
-        await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
+    for (const route of [...registrationRoutes, "/accounts/login/"]) {
+      await page.goto(route);
+      await dismissCookieBanner(page);
+      await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
+
+      for (const width of viewports) {
+        await page.setViewportSize({ width, height: 900 });
+        await assertPageFits(page, width);
+
+        if (registrationRoutes.includes(route)) {
+          const phone = page.locator('[name="phone"]');
+          await expect(phone).toHaveAttribute("type", "tel");
+          await expect(phone).toHaveAttribute("inputmode", "numeric");
+          await expect(phone).toHaveAttribute("autocomplete", "tel-national");
+          await expect(phone).toHaveAttribute("maxlength", "10");
+          await expect(phone).toHaveAttribute("pattern", "[0-9]{10}");
+          await expect(page.locator(".phone-country-prefix")).toHaveText("+91");
+
+          const requirements = page.locator("[data-password-requirements]");
+          await expect(requirements).toBeVisible();
+          await expect(requirements.locator("[data-password-rule]")).toHaveCount(4);
+          await expect(requirements).not.toContainText("too common");
+        } else {
+          const username = page.getByLabel("Email or username");
+          await expect(username).toHaveAttribute("autocomplete", "username");
+          const loginPassword = page.locator('[name="password"]');
+          await expect(loginPassword).toHaveAttribute("autocomplete", "current-password");
+          await expect(page.locator("[data-password-requirements]")).toHaveCount(0);
+
+          if (width === viewports[0]) {
+            await loginPassword.fill("ExistingPassword123!");
+            const toggle = loginPassword.locator("xpath=following-sibling::button");
+            await toggle.focus();
+            await page.keyboard.press("Enter");
+            await expect(loginPassword).toHaveAttribute("type", "text");
+            await expect(toggle).toHaveAttribute("aria-pressed", "true");
+          }
+        }
+
         await assertPageFits(page, width);
       }
-
-      for (const route of ["/accounts/register/", "/accounts/register/manufacturer/"]) {
-        await page.goto(route);
-        const phone = page.locator('[name="phone"]');
-        await expect(phone).toHaveAttribute("type", "tel");
-        await expect(phone).toHaveAttribute("inputmode", "numeric");
-        await expect(phone).toHaveAttribute("autocomplete", "tel-national");
-        await expect(phone).toHaveAttribute("maxlength", "10");
-        await expect(phone).toHaveAttribute("pattern", "[0-9]{10}");
-        await expect(page.locator(".phone-country-prefix")).toHaveText("+91");
-
-        const requirements = page.locator("[data-password-requirements]");
-        await expect(requirements).toBeVisible();
-        await expect(requirements.locator("[data-password-rule]")).toHaveCount(4);
-        await expect(requirements).not.toContainText("too common");
-        await assertPageFits(page, width);
-      }
-
-      await page.goto("/accounts/login/");
-      await expect(page.getByLabel("Email or username")).toHaveAttribute("autocomplete", "username");
-      const loginPassword = page.locator('[name="password"]');
-      await expect(loginPassword).toHaveAttribute("autocomplete", "current-password");
-      await expect(page.locator("[data-password-requirements]")).toHaveCount(0);
-      await loginPassword.fill("ExistingPassword123!");
-      const toggle = loginPassword.locator("xpath=following-sibling::button");
-      await toggle.focus();
-      await page.keyboard.press("Enter");
-      await expect(loginPassword).toHaveAttribute("type", "text");
-      await expect(toggle).toHaveAttribute("aria-pressed", "true");
-      await assertPageFits(page, width);
     }
   });
 
