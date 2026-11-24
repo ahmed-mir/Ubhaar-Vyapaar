@@ -107,40 +107,109 @@ dump/backup and compressed SQL dump extensions as a safety net.
 
 ## Rehearsal (Stage A; no production cutover)
 
-1. Take an approved source copy using the operator's secure procedure; never
-   put dump data in Git.
-2. Restore into the new Supabase project using the selected target role and
-   endpoint. Use a custom-format dump and avoid source ownership/ACL metadata:
+1. **Discover and confirm schema scope before any dump.** Do not assume the
+   schema scope solely from local code. Connect read-only to the deployed source
+   during an approved rehearsal and inspect non-system schemas:
 
-   ```powershell
-   pg_dump --format=custom --no-owner --no-acl --file="<restricted-path>/rehearsal.dump" "$env:SOURCE_DATABASE_URL"
-   pg_restore --no-owner --no-acl --dbname="$env:TARGET_DATABASE_URL" "<restricted-path>/rehearsal.dump"
+   ```sql
+   SELECT schema_name
+   FROM information_schema.schemata
+   WHERE schema_name NOT IN ('information_schema', 'pg_catalog')
+   ORDER BY schema_name;
    ```
 
-   Scope schemas to the audited application schema (normally `public`) only
-   after confirming the actual source schema inventory. Do not restore
-   provider-managed Supabase schemas or Neon ownership/ACL metadata. No
+   Provider/system schemas may appear in this result; their presence does not
+   make them application schemas. Inspect the locations of known Django tables
+   to confirm where application tables actually live:
+
+   ```sql
+   SELECT table_schema, table_name
+   FROM information_schema.tables
+   WHERE table_type = 'BASE TABLE'
+     AND (table_name = 'django_migrations'
+          OR table_name LIKE 'accounts\\_%' ESCAPE '\\'
+          OR table_name LIKE 'marketplace\\_%' ESCAPE '\\')
+   ORDER BY table_schema, table_name;
+   ```
+
+   Compare the result with the expected Django inventory: users/auth and
+   `django_migrations`, account profiles and throttle buckets, listings,
+   saved listings, RFQs, quotations, Orders, milestones, messages, payments,
+   webhook events, notifications, reviews, contact/waitlist, and other Django
+   framework tables. Confirm every required table is present and record the
+   intentionally included application schema set. Current local audit expects
+   `public`, but set `public` only if the deployed source inspection confirms
+   it. Do not include Neon/provider schemas or future Supabase-managed auth,
+   storage, internal, or metadata schemas without a separately reviewed reason.
+
+   Define the confirmed schema(s) for subsequent commands. For a single
+   confirmed `public` schema:
+
+   ```powershell
+   $env:APP_SCHEMA = "public"
+   ```
+
+   For multiple confirmed application schemas, use a separate explicit
+   `--schema` option for each one in the dump and restore commands below. Never
+   use a wildcard or include every non-system schema automatically. Preserve
+   `django_migrations` by including the schema where it resides.
+
+2. Take an approved source copy using the operator's secure procedure; never
+   put dump data in Git. Use a custom-format dump scoped to the confirmed
+   application schema(s), without source ownership/ACL metadata:
+
+   ```powershell
+   pg_dump --format=custom --no-owner --no-acl --schema="$env:APP_SCHEMA" --file="<restricted-path>/rehearsal.dump" "$env:SOURCE_DATABASE_URL"
+   ```
+
+   For each additional confirmed schema, add another explicit
+   `--schema="<confirmed-schema>"` option. The archive itself must contain only
+   intended application schemas; do not rely on restore-time exclusions to
+   sanitize a broad dump. Inspect the archive before restoring:
+
+   ```powershell
+   pg_restore --list "<restricted-path>/rehearsal.dump"
+   ```
+
+   Verify the intended schema(s), `django_migrations`, and expected Django
+   tables appear, and provider-managed schemas do not. This lists archive
+   metadata only, not row contents. If inspection is wrong, stop and recreate a
+   correctly scoped archive.
+
+3. Restore only the scoped archive, explicitly restricting restore to the same
+   confirmed schema(s) as defense in depth:
+
+   ```powershell
+   pg_restore --no-owner --no-acl --schema="$env:APP_SCHEMA" --dbname="$env:TARGET_DATABASE_URL" "<restricted-path>/rehearsal.dump"
+   ```
+
+   Repeat `--schema="<confirmed-schema>"` for each confirmed application
+   schema. Verify after restore that application objects landed only in the
+   intended schema(s), and that no provider-managed schema was copied. Do not
+   restore Supabase Auth, Storage, internal, or provider metadata schemas, or
+   Neon/provider-specific schemas, for this Django database migration. No
    extension is currently identified as required; if the source audit later
    finds one, enable/verify it through the target provider before restore rather
    than copying provider internals.
-3. Connect a local or staging Django app using a secure target URL; do not
+
+4. Connect a local or staging Django app using a secure target URL; do not
    change Render. Run `manage.py check`, migration-state inspection, and
    read-only application checks. Preserve `django_migrations`; do not rebuild
    production records from fixtures or regenerate primary keys.
-4. Compare source and target count snapshots for critical application tables
+5. Compare source and target count snapshots for critical application tables
    without retaining row-level data or URLs. Include users, Buyer/Manufacturer
    profiles, listings, RFQs, quotations, Orders, milestones, messages,
    payments, webhook events, and Django framework tables.
-5. Verify primary/foreign keys, unique constraints, indexes, timestamps, JSON
+6. Verify primary/foreign keys, unique constraints, indexes, timestamps, JSON
    and Decimal values, and representative relationships: Order participants,
    quotation/order links, milestone/order links, payment/order links, and
    message/order links. Use constraint and read-only orphan checks; do not
    repair data destructively.
-6. Check each serial/identity sequence is at least the maximum existing key for
+7. Check each serial/identity sequence is at least the maximum existing key for
    its table (and correctly handles an empty table). Use `pg_get_serial_sequence`
    / `last_value` or equivalent read-only catalog inspection; record results,
    not PII.
-7. Validate UTF-8, database timezone behavior, and collation where relevant.
+8. Validate UTF-8, database timezone behavior, and collation where relevant.
    Confirm Django migration state agrees with the restored schema. Test a
    dedicated account's dashboard and privacy export without exposing real
    personal data.
