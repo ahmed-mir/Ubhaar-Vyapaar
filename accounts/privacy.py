@@ -90,7 +90,6 @@ def build_user_export(user):
         CapacityListing,
         Milestone,
         Notification,
-        Order,
         OrderMessage,
         PaymentTransaction,
         Quotation,
@@ -98,36 +97,32 @@ def build_user_export(user):
         Review,
         SavedListing,
     )
+    from marketplace.querysets import order_queryset_for_user
 
     profile = getattr(user, "manufacturer_profile", None)
-    order_scope = Q(buyer=user)
-    if profile is not None:
-        order_scope |= Q(manufacturer=profile)
-
-    orders = list(
-        Order.objects.filter(order_scope)
-        .select_related("listing", "manufacturer")
-        .order_by("pk")
-    )
+    is_buyer = user.role == User.Role.BUYER
+    is_manufacturer = user.role == User.Role.MANUFACTURER and profile is not None
+    orders = list(order_queryset_for_user(user).order_by("pk"))
     order_ids = [order.pk for order in orders]
 
-    quote_requests = QuoteRequest.objects.filter(buyer=user).select_related(
-        "listing", "listing__manufacturer"
-    )
-    if profile is not None:
-        quotations = Quotation.objects.filter(
-            Q(quote_request__listing__manufacturer=profile)
-            | Q(quote_request__buyer=user)
-        ).select_related("quote_request", "quote_request__listing")
-        listings = CapacityListing.objects.filter(manufacturer=profile).order_by("pk")
-    else:
+    quote_requests = QuoteRequest.objects.none()
+    quotations = Quotation.objects.none()
+    listings = CapacityListing.objects.none()
+    if is_buyer:
+        quote_requests = QuoteRequest.objects.filter(buyer=user).select_related(
+            "listing", "listing__manufacturer"
+        )
         quotations = Quotation.objects.filter(
             quote_request__buyer=user
         ).select_related("quote_request", "quote_request__listing")
-        listings = CapacityListing.objects.none()
+    elif is_manufacturer:
+        quotations = Quotation.objects.filter(
+            quote_request__listing__manufacturer=profile
+        ).select_related("quote_request", "quote_request__listing")
+        listings = CapacityListing.objects.filter(manufacturer=profile).order_by("pk")
 
     payments = PaymentTransaction.objects.filter(
-        Q(buyer=user) | Q(milestone__order_id__in=order_ids)
+        milestone__order_id__in=order_ids
     ).select_related("milestone", "milestone__order").order_by("pk")
 
     return {
@@ -204,7 +199,7 @@ def build_user_export(user):
                 "production_days": quotation.production_days,
                 "message": (
                     quotation.message
-                    if profile is not None
+                    if is_manufacturer
                     and quotation.quote_request.listing.manufacturer_id == profile.pk
                     else None
                 ),
@@ -291,7 +286,10 @@ def build_user_export(user):
                 "comment": review.comment,
                 "created_at": _iso(review.created_at),
             }
-            for review in Review.objects.filter(buyer=user).order_by("pk")
+            for review in Review.objects.filter(
+                order_id__in=order_ids,
+                buyer=user,
+            ).order_by("pk")
         ],
         "saved_listings": [
             {"title": saved.listing.title, "saved_at": _iso(saved.created_at)}

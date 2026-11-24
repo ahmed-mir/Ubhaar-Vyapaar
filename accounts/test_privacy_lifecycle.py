@@ -22,6 +22,7 @@ from marketplace.models import (
     ContactSubmission,
     WaitlistEntry,
 )
+from marketplace.querysets import order_queryset_for_user
 
 from .models import AuthRateLimitBucket
 from .privacy import has_active_workflows
@@ -206,6 +207,10 @@ class PrivacyDataExportTests(PrivacyTestDataMixin, TestCase):
         self.assertEqual(response["Cache-Control"], "private, no-store, max-age=0")
         self.assertEqual(response["X-Content-Type-Options"], "nosniff")
         self.assertEqual([item["order_id"] for item in payload["orders"]], [own_order.pk])
+        self.assertEqual(
+            {item["order_id"] for item in payload["orders"]},
+            set(order_queryset_for_user(buyer).values_list("pk", flat=True)),
+        )
         self.assertEqual([item["order_id"] for item in payload["milestones"]], [own_order.pk])
         self.assertEqual(payload["payments"][0]["status"], PaymentTransaction.Status.CAPTURED)
         self.assertEqual(payload["payments"][0]["amount"], "100.00")
@@ -234,6 +239,10 @@ class PrivacyDataExportTests(PrivacyTestDataMixin, TestCase):
         self.assertNotIn("Unrelated Buyer order message", body)
         self.assertEqual(len(payload["orders"]), 1)
         self.assertEqual(payload["orders"][0]["order_id"], own_order.pk)
+        self.assertEqual(
+            {item["order_id"] for item in payload["orders"]},
+            set(order_queryset_for_user(buyer).values_list("pk", flat=True)),
+        )
         for private_value in (
             manufacturer.email,
             manufacturer.phone,
@@ -318,6 +327,10 @@ class PrivacyDataExportTests(PrivacyTestDataMixin, TestCase):
         self.assertEqual(len(payload["quotations"]), 1)
         self.assertEqual(payload["quotations"][0]["message"], "Manufacturer authored terms")
         self.assertEqual(payload["orders"][0]["order_id"], own_order.pk)
+        self.assertEqual(
+            {item["order_id"] for item in payload["orders"]},
+            set(order_queryset_for_user(manufacturer_user).values_list("pk", flat=True)),
+        )
         self.assertIsNone(payload["orders"][0]["buyer_supplied_details"])
         self.assertEqual(
             [message["body"] for message in payload["order_messages"]],
@@ -341,6 +354,229 @@ class PrivacyDataExportTests(PrivacyTestDataMixin, TestCase):
             "Other listing title",
         ):
             self.assertNotIn(private_value, body)
+
+    def test_manufacturer_to_buyer_change_removes_stale_profile_records_from_export(self):
+        manufacturer = self.make_user("stale-profile-mfr", User.Role.MANUFACTURER)
+        profile = ManufacturerProfile.objects.create(
+            user=manufacturer,
+            business_name="Former Manufacturer",
+            city="Pune",
+            state="Maharashtra",
+        )
+        listing = self.make_listing(profile, "Former manufacturer listing")
+        buyer = self.make_user("stale-profile-buyer")
+        order = self.make_order(buyer, profile, listing)
+        milestone = Milestone.objects.create(
+            order=order,
+            title="Former manufacturer milestone",
+            percentage=80,
+            amount="100.00",
+        )
+        PaymentTransaction.objects.create(
+            buyer=buyer,
+            milestone=milestone,
+            amount="100.00",
+            currency="INR",
+            status=PaymentTransaction.Status.CAPTURED,
+        )
+        OrderMessage.objects.create(
+            order=order,
+            sender=manufacturer,
+            body="Former manufacturer order message",
+        )
+        quote_request = QuoteRequest.objects.create(
+            buyer=buyer,
+            listing=listing,
+            quantity=10,
+            requirements="Former manufacturer RFQ context",
+            delivery_location="Private buyer location",
+            status=QuoteRequest.Status.REJECTED,
+        )
+        Quotation.objects.create(
+            quote_request=quote_request,
+            price_per_unit="12.00",
+            quantity=10,
+            production_days=8,
+            message="Former manufacturer quotation",
+            status=Quotation.Status.DECLINED,
+        )
+
+        manufacturer.role = User.Role.BUYER
+        manufacturer.save(update_fields=["role"])
+
+        self.assertTrue(ManufacturerProfile.objects.filter(pk=profile.pk).exists())
+        self.assertFalse(order_queryset_for_user(manufacturer).filter(pk=order.pk).exists())
+        ui_client = Client()
+        ui_client.force_login(manufacturer)
+        self.assertEqual(
+            ui_client.get(reverse("order_detail", args=[order.pk])).status_code,
+            404,
+        )
+        _response, payload = self.get_export(manufacturer)
+        ui_order_ids = set(
+            order_queryset_for_user(manufacturer).values_list("pk", flat=True)
+        )
+        self.assertEqual(
+            {item["order_id"] for item in payload["orders"]},
+            ui_order_ids,
+        )
+        self.assertNotIn(order.pk, ui_order_ids)
+        self.assertNotIn(order.pk, [item["order_id"] for item in payload["milestones"]])
+        self.assertNotIn(order.pk, [item["order_id"] for item in payload["payments"]])
+        self.assertNotIn(order.pk, [item["order_id"] for item in payload["order_messages"]])
+        self.assertNotIn("Former manufacturer order message", json.dumps(payload))
+        self.assertNotIn("Former manufacturer quotation", json.dumps(payload))
+        self.assertNotIn("Former manufacturer listing", json.dumps(payload))
+        self.assertEqual(payload["orders"], [])
+        self.assertEqual(payload["milestones"], [])
+        self.assertEqual(payload["payments"], [])
+        self.assertEqual(payload["order_messages"], [])
+        self.assertEqual(payload["quotations"], [])
+        self.assertEqual(payload["listings"], [])
+
+    def test_buyer_to_manufacturer_change_matches_current_role_order_scope(self):
+        user = self.make_user("role-change-user", User.Role.BUYER)
+        former_manufacturer = self.make_user(
+            "role-change-old-mfr", User.Role.MANUFACTURER
+        )
+        former_profile = ManufacturerProfile.objects.create(
+            user=former_manufacturer,
+            business_name="Old manufacturer",
+            city="Pune",
+            state="Maharashtra",
+        )
+        former_listing = self.make_listing(former_profile, "Former buyer listing")
+        former_buyer_order = self.make_order(user, former_profile, former_listing)
+        former_buyer_milestone = Milestone.objects.create(
+            order=former_buyer_order,
+            title="Former buyer milestone",
+            percentage=80,
+            amount="100.00",
+        )
+        PaymentTransaction.objects.create(
+            buyer=user,
+            milestone=former_buyer_milestone,
+            amount="100.00",
+            currency="INR",
+            status=PaymentTransaction.Status.CAPTURED,
+        )
+        former_request = QuoteRequest.objects.create(
+            buyer=user,
+            listing=former_listing,
+            quantity=10,
+            requirements="Former buyer RFQ requirements",
+            delivery_location="Former buyer location",
+            status=QuoteRequest.Status.REJECTED,
+        )
+        Quotation.objects.create(
+            quote_request=former_request,
+            price_per_unit="12.00",
+            quantity=10,
+            production_days=8,
+            status=Quotation.Status.DECLINED,
+        )
+        OrderMessage.objects.create(
+            order=former_buyer_order,
+            sender=user,
+            body="Former buyer order message",
+        )
+        Review.objects.create(
+            order=former_buyer_order,
+            buyer=user,
+            manufacturer=former_profile,
+            quality_rating=5,
+            timeliness_rating=5,
+            communication_rating=5,
+            overall_rating=5,
+            comment="Former buyer review",
+        )
+
+        user.role = User.Role.MANUFACTURER
+        user.save(update_fields=["role"])
+        profile = ManufacturerProfile.objects.create(
+            user=user,
+            business_name="Current manufacturer",
+            city="Surat",
+            state="Gujarat",
+        )
+        listing = self.make_listing(profile, "Current manufacturer listing")
+        buyer = self.make_user("role-change-new-buyer")
+        manufacturer_order = self.make_order(buyer, profile, listing)
+        milestone = Milestone.objects.create(
+            order=manufacturer_order,
+            title="Current manufacturer milestone",
+            percentage=80,
+            amount="100.00",
+        )
+        PaymentTransaction.objects.create(
+            buyer=buyer,
+            milestone=milestone,
+            amount="100.00",
+            currency="INR",
+            status=PaymentTransaction.Status.CAPTURED,
+        )
+        OrderMessage.objects.create(
+            order=manufacturer_order,
+            sender=user,
+            body="Current manufacturer order message",
+        )
+        OrderMessage.objects.create(
+            order=manufacturer_order,
+            sender=buyer,
+            body="Current buyer reply",
+        )
+        manufacturer_request = QuoteRequest.objects.create(
+            buyer=buyer,
+            listing=listing,
+            quantity=10,
+            requirements="Counterparty request excluded from manufacturer export",
+            delivery_location="Counterparty location excluded",
+            status=QuoteRequest.Status.REJECTED,
+        )
+        Quotation.objects.create(
+            quote_request=manufacturer_request,
+            price_per_unit="12.00",
+            quantity=10,
+            production_days=8,
+            message="Current manufacturer quotation",
+            status=Quotation.Status.DECLINED,
+        )
+
+        self.assertFalse(
+            order_queryset_for_user(user).filter(pk=former_buyer_order.pk).exists()
+        )
+        self.assertTrue(
+            order_queryset_for_user(user).filter(pk=manufacturer_order.pk).exists()
+        )
+        _response, payload = self.get_export(user)
+        ui_order_ids = set(order_queryset_for_user(user).values_list("pk", flat=True))
+        export_order_ids = {item["order_id"] for item in payload["orders"]}
+        self.assertEqual(export_order_ids, ui_order_ids)
+        self.assertEqual(export_order_ids, {manufacturer_order.pk})
+        self.assertEqual(
+            [item["order_id"] for item in payload["milestones"]],
+            [milestone.order_id],
+        )
+        self.assertEqual(
+            [item["order_id"] for item in payload["payments"]],
+            [milestone.order_id],
+        )
+        self.assertEqual(
+            [item["body"] for item in payload["order_messages"]],
+            ["Current manufacturer order message", "Current buyer reply"],
+        )
+        self.assertEqual(payload["quote_requests"], [])
+        self.assertEqual(len(payload["quotations"]), 1)
+        self.assertEqual(
+            payload["quotations"][0]["message"], "Current manufacturer quotation"
+        )
+        serialized = json.dumps(payload)
+        self.assertNotIn("Former buyer order message", serialized)
+        self.assertNotIn("Former buyer review", serialized)
+        self.assertNotIn("Former buyer RFQ requirements", serialized)
+        self.assertNotIn("Former buyer location", serialized)
+        self.assertNotIn("Counterparty request excluded", serialized)
+        self.assertNotIn("Counterparty location excluded", serialized)
 
     def test_empty_export_is_valid_json_and_does_not_require_related_rows(self):
         buyer = self.make_user("empty-export")

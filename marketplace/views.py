@@ -61,6 +61,7 @@ from .models import (
     WaitlistEntry,
 )
 from .locations import canonical_india_state_ut_name
+from .querysets import order_queryset_for_user
 from .payments import (
     amount_to_paise,
     checkout_signature_is_valid,
@@ -708,28 +709,6 @@ def create_order_from_quotation(quotation):
         )
 
     return order, created
-
-
-def order_queryset_for_user(user):
-    orders = Order.objects.select_related(
-        "buyer",
-        "manufacturer",
-        "manufacturer__user",
-        "listing",
-        "quotation",
-    ).prefetch_related(
-        "milestones",
-        "messages",
-        "messages__sender",
-    )
-
-    if user.role == "BUYER":
-        return orders.filter(buyer=user)
-
-    if user.role == "MANUFACTURER":
-        return orders.filter(manufacturer__user=user)
-
-    return Order.objects.none()
 
 
 def get_order_for_user(user, pk):
