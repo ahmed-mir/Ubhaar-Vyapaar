@@ -13,6 +13,9 @@ test_db_e2e.sqlite3
 
 media/
 backups/
+*.dump
+*.backup
+*.sql.gz
 
 staticfiles/
 
@@ -30,6 +33,7 @@ docs/*
 !docs/PRODUCTION_DATABASE_RUNBOOK.md
 !docs/PRODUCTION_OPERATIONS.md
 !docs/PRODUCTION_SMOKE_TEST.md
+!docs/NEON_TO_SUPABASE_MIGRATION.md
 node_modules/
 playwright-report/
 test-results/

@@ -28,9 +28,9 @@ does not access or validate the production database.
 
 The repository contains no evidence that automated backups or point-in-time
 recovery are enabled. Their availability, retention window, recovery point
-granularity, and restore permissions depend on the current Neon plan and must be
-verified in the provider dashboard. Do not infer a retention period or claim
-PITR is enabled from application configuration.
+granularity, and restore permissions depend on the configured PostgreSQL
+provider and must be verified in its provider dashboard. Do not infer a
+retention period or claim PITR is enabled from application configuration.
 
 Record launch recovery objectives with the service owner before launch:
 
