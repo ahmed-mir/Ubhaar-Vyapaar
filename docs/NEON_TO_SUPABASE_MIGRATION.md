@@ -48,7 +48,8 @@ the configured Render build/start commands must be verified in its dashboard.
   Django schema/data migrations. No raw provider-specific SQL was found.
 - Payment webhook endpoint persists event/payment processing records. During a
   cutover, incoming webhook writes must be paused or otherwise accounted for;
-  do not leave delivery directed to the old database after the final dump.
+  do not leave delivery directed to the old database during or after the final
+  logical copy.
 - No existing maintenance/read-only mode was found. A future cutover therefore
   requires an operator-managed write freeze (for example, temporarily
   restricting write routes/service access); no maintenance feature is added.
@@ -264,15 +265,17 @@ target DDL must come from current repository migrations applied to PostgreSQL
 
 This procedure is **not being executed now**. A write freeze is required so a
 new Order, RFQ, message, payment state, or webhook event cannot be committed to
-the source after the final dump and be missing from the target. There is no
-built-in maintenance mode; arrange an approved temporary restriction of public
-write access and coordinate the service/webhook window before the cutover.
+the source during the final logical copy and be missing from the target.
+There is no built-in maintenance mode; arrange an approved temporary
+restriction of public write access and coordinate the service/webhook window
+before the cutover.
 
 1. Approve rehearsal results, target connection mode, backup/PITR and rollback
    ownership, and a service window.
 2. Announce and activate the write freeze. Stop signup/marketplace workflow
    writes and payment initiation. Coordinate Razorpay Test Mode webhook
-   delivery so no event is accepted only by the old database after the dump;
+   delivery so no event is accepted only by the old database during the final
+   logical copy;
    pause/queue delivery where supported and account for pending deliveries.
 3. Confirm no active migration-sensitive operation is in progress. Create the
    target schema by running the reviewed repository migrations on PG17, then
