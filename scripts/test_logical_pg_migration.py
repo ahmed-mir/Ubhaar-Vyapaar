@@ -18,10 +18,13 @@ class LogicalMigrationSafetyTests(unittest.TestCase):
         target_identity=("target", "10.0.0.2", 5432),
         source_keys=(),
         target_keys=(),
+        column_results=None,
     ):
         stack.enter_context(mock.patch.object(migration, "_version", side_effect=[18, 17]))
         stack.enter_context(mock.patch.object(migration, "_tables", return_value=["django_migrations"]))
-        stack.enter_context(mock.patch.object(migration, "_columns", return_value=[("id",)]))
+        stack.enter_context(mock.patch.object(
+            migration, "_columns", side_effect=column_results or [("id",), ("id",)]
+        ))
         stack.enter_context(mock.patch.object(migration, "_foreign_keys", return_value=[]))
         stack.enter_context(mock.patch.object(migration, "_foreign_key_structures", side_effect=[[], []]))
         stack.enter_context(mock.patch.object(
@@ -48,10 +51,85 @@ class LogicalMigrationSafetyTests(unittest.TestCase):
             migration.topological_table_order(["a", "b"], [("a", "b"), ("b", "a")])
 
     def test_column_compatibility_requires_exact_order_and_metadata(self):
-        columns = [("id", 1, "pg_catalog", "int8", "NO", None, 64, 0, None)]
+        columns = [("id", "pg_catalog", "int8", "NO", None, 64, 0, None, "NO", None)]
         migration.compare_table_columns(columns, list(columns), "sample")
         with self.assertRaises(migration.MigrationSafetyError):
             migration.compare_table_columns(columns, [], "sample")
+
+    def test_contenttype_dropped_ordinal_gap_is_logically_compatible(self):
+        definitions = [
+            ("id", "pg_catalog", "int4", "NO", None, 32, 0, None, "YES", "BY DEFAULT"),
+            ("app_label", "pg_catalog", "varchar", "NO", 100, None, None, None, "NO", None),
+            ("model", "pg_catalog", "varchar", "NO", 100, None, None, None, "NO", None),
+        ]
+        source_physical = [(1, *definitions[0]), (2, *definitions[1]), (3, *definitions[2])]
+        target_physical = [(1, *definitions[0]), (3, *definitions[1]), (4, *definitions[2])]
+        self.assertNotEqual(source_physical, target_physical)
+        # The first tuple item is physical ordinal_position. _columns orders by
+        # it, then omits it from the logical metadata passed to the comparator.
+        source = [row[1:] for row in source_physical]
+        target = [row[1:] for row in target_physical]
+        migration.compare_table_columns(source, target, "django_content_type")
+
+    def test_column_query_orders_visible_columns_without_selecting_physical_ordinal(self):
+        class Cursor:
+            query = None
+            def __enter__(self):
+                return self
+            def __exit__(self, *_args):
+                return False
+            def execute(self, query, _params):
+                self.query = query
+            def fetchall(self):
+                return [("id", "pg_catalog", "int4", "NO", None, 32, 0, None, "YES", "BY DEFAULT")]
+
+        cursor = Cursor()
+        connection = mock.Mock()
+        connection.cursor.return_value = cursor
+        rows = migration._columns(connection, "django_content_type")
+        select_clause = cursor.query.split("FROM", 1)[0]
+        self.assertNotIn("ordinal_position", select_clause)
+        self.assertIn("ORDER BY ordinal_position", cursor.query)
+        self.assertEqual(rows[0][0], "id")
+        self.assertEqual(rows[0][-2:], ("YES", "BY DEFAULT"))
+
+    def test_visible_column_reordering_remains_incompatible(self):
+        id_column = ("id", "pg_catalog", "int4", "NO", None, 32, 0, None, "YES", "BY DEFAULT")
+        app_label = ("app_label", "pg_catalog", "varchar", "NO", 100, None, None, None, "NO", None)
+        model = ("model", "pg_catalog", "varchar", "NO", 100, None, None, None, "NO", None)
+        with self.assertRaises(migration.MigrationSafetyError):
+            migration.compare_table_columns(
+                [id_column, app_label, model], [id_column, model, app_label], "django_content_type"
+            )
+
+    def test_genuine_column_mismatches_abort_before_reset_planning(self):
+        id_column = ("id", "pg_catalog", "int4", "NO", None, 32, 0, None, "YES", "BY DEFAULT")
+        varchar_100 = ("app_label", "pg_catalog", "varchar", "NO", 100, None, None, None, "NO", None)
+        varchar_200 = ("app_label", "pg_catalog", "varchar", "NO", 200, None, None, None, "NO", None)
+        nullable = ("app_label", "pg_catalog", "varchar", "YES", 100, None, None, None, "NO", None)
+        int8 = ("id", "pg_catalog", "int8", "NO", None, 64, 0, None, "YES", "BY DEFAULT")
+        identity_always = ("id", "pg_catalog", "int4", "NO", None, 32, 0, None, "YES", "ALWAYS")
+        numeric_10_2 = ("amount", "pg_catalog", "numeric", "NO", None, 10, 2, None, "NO", None)
+        numeric_12_2 = ("amount", "pg_catalog", "numeric", "NO", None, 12, 2, None, "NO", None)
+        base = [id_column, varchar_100]
+        mismatches = (
+            (base, [id_column]),
+            (base, [id_column, varchar_100, ("extra", "pg_catalog", "text", "YES", None, None, None, None, "NO", None)]),
+            (base, [id_column, ("other",) + varchar_100[1:]]),
+            (base, [id_column, varchar_200]),
+            (base, [id_column, nullable]),
+            (base, [int8, varchar_100]),
+            (base, [identity_always, varchar_100]),
+            ([numeric_10_2], [numeric_12_2]),
+        )
+        for source_columns, target_columns in mismatches:
+            with self.subTest(source=source_columns, target=target_columns), ExitStack() as stack:
+                reset_plan = self._inspection_mocks(
+                    stack, column_results=[source_columns, target_columns]
+                )
+                with self.assertRaises(migration.MigrationSafetyError):
+                    migration.inspect(mock.Mock(), mock.Mock())
+                reset_plan.assert_not_called()
 
     def test_full_fk_comparison_detects_column_action_and_composite_order(self):
         # psycopg2 adapts PostgreSQL array_agg results to Python lists.

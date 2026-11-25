@@ -58,7 +58,12 @@ def topological_table_order(tables, foreign_keys):
 
 
 def compare_table_columns(source_columns, target_columns, table_name):
-    """Require identical ordered column metadata before COPY."""
+    """Require identical ordered visible-column metadata before COPY.
+
+    Physical PostgreSQL attribute numbers are intentionally absent: they may
+    have gaps after dropped columns. The catalog query orders visible columns
+    by ordinal_position, preserving their logical sequence here.
+    """
     if source_columns != target_columns:
         raise MigrationSafetyError(f"Column structure mismatch in {table_name}")
 
@@ -77,9 +82,9 @@ def _tables(connection):
 def _columns(connection, table):
     with connection.cursor() as cursor:
         cursor.execute(
-            "SELECT column_name, ordinal_position, udt_schema, udt_name, "
+            "SELECT column_name, udt_schema, udt_name, "
             "is_nullable, character_maximum_length, numeric_precision, "
-            "numeric_scale, datetime_precision "
+            "numeric_scale, datetime_precision, is_identity, identity_generation "
             "FROM information_schema.columns "
             "WHERE table_schema = %s AND table_name = %s "
             "ORDER BY ordinal_position",
