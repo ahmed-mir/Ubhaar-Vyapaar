@@ -457,7 +457,16 @@ def inspect(source_conn, target_conn, expected_target_database=None):
 
 
 def copy_data(source_conn, target_conn, report):
-    target_conn.autocommit = False
+    phase = "target-transaction-prepare"
+    try:
+        # inspect() has already queried TARGET using psycopg2's default
+        # autocommit=False connection, which leaves an inspection transaction
+        # open. Discard that read-only transaction before starting the atomic
+        # reset/copy transaction. Do not reassign autocommit while it is open.
+        target_conn.rollback()
+    except psycopg2.Error as exc:
+        raise _execution_failure(phase, None, exc) from None
+
     phase = "target-reset"
     table = None
     try:

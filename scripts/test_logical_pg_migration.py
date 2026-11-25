@@ -414,7 +414,7 @@ class LogicalMigrationSafetyTests(unittest.TestCase):
              mock.patch.object(migration, "_copy_table", side_effect=KeyboardInterrupt):
             with self.assertRaises(KeyboardInterrupt):
                 migration.copy_data(mock.Mock(), target, report)
-        self.assertEqual(target.rollback_count, 1)
+        self.assertEqual(target.rollback_count, 2)  # inspection + failed write transaction
         self.assertEqual(target.commit_count, 0)
 
     def test_delete_programming_error_reports_phase_table_sqlstate_and_rolls_back(self):
@@ -577,7 +577,90 @@ class LogicalMigrationSafetyTests(unittest.TestCase):
         self.assertIn("type=ProgrammingError", message)
         self.assertIn("sqlstate=42601", message)
         self.assertNotIn("ROW_SENTINEL", message)
+        self.assertEqual(target.rollback_count, 2)  # inspection + failed commit
+
+    def test_copy_data_discards_inspection_transaction_without_setting_autocommit(self):
+        class Cursor:
+            def __init__(self, connection):
+                self.connection = connection
+            def __enter__(self):
+                return self
+            def __exit__(self, *_args):
+                return False
+            def execute(self, _statement):
+                if not self.connection.in_transaction:
+                    raise AssertionError("target reset did not run in a transaction")
+                self.connection.reset_executed = True
+
+        class TransactionConnection:
+            def __init__(self):
+                self.in_transaction = True  # SELECTs from inspect() opened it.
+                self.rollback_count = 0
+                self.commit_count = 0
+                self.autocommit_set_count = 0
+                self.reset_executed = False
+            @property
+            def autocommit(self):
+                return False  # psycopg2's default for a new connection.
+            @autocommit.setter
+            def autocommit(self, _value):
+                self.autocommit_set_count += 1
+                raise AssertionError("autocommit must not be reassigned")
+            def rollback(self):
+                self.rollback_count += 1
+                self.in_transaction = False
+            def __enter__(self):
+                if self.in_transaction:
+                    raise AssertionError("inspection transaction was not ended")
+                self.in_transaction = True
+                return self
+            def __exit__(self, exc_type, _exc, _tb):
+                if exc_type is None:
+                    self.commit_count += 1
+                    self.in_transaction = False
+                else:
+                    self.rollback()
+                return False
+            def cursor(self):
+                return Cursor(self)
+
+        target = TransactionConnection()
+        report = {
+            "reset_statements": ["DELETE FROM public.accounts_user"],
+            "reset_order": ["accounts_user"],
+            "order": [],
+            "sequence_rows": [],
+            "tables": ["accounts_user"],
+            "source_counts": {"accounts_user": 0},
+        }
+        with mock.patch.object(migration, "_counts", return_value={"accounts_user": 0}):
+            migration.copy_data(mock.Mock(), target, report)
+
         self.assertEqual(target.rollback_count, 1)
+        self.assertEqual(target.commit_count, 1)
+        self.assertEqual(target.autocommit_set_count, 0)
+        self.assertTrue(target.reset_executed)
+
+    def test_target_inspection_rollback_failure_has_safe_prepare_diagnostic(self):
+        error = self._programming_error()
+
+        class TargetConnection:
+            autocommit = False
+            def rollback(self):
+                raise error
+
+        with self.assertRaises(migration.MigrationExecutionError) as raised:
+            migration.copy_data(mock.Mock(), TargetConnection(), {})
+
+        message = str(raised.exception)
+        self.assertIn("phase=target-transaction-prepare", message)
+        self.assertIn("type=ProgrammingError", message)
+        self.assertIn("sqlstate=42601", message)
+        for secret in (
+            "SOURCE_DATABASE_URL", "TARGET_DATABASE_URL", "postgresql://",
+            "source-pw", "target-pw", "ROW_SENTINEL", "DELETE FROM",
+        ):
+            self.assertNotIn(secret, message)
 
     def test_credentials_never_appear_in_connection_failure_output(self):
         sentinel_source = "postgresql://source:secret-source@host/source"
