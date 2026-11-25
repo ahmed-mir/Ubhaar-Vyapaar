@@ -1,4 +1,4 @@
-# Neon to Supabase PostgreSQL Migration Preparation
+# Neon PostgreSQL 18 to Supabase PostgreSQL 17 Migration Preparation
 
 **Preparation only. No Supabase project exists yet. No migration, dump, restore,
 production connection, Render setting change, or cutover has been performed.**
@@ -7,7 +7,11 @@ Neon remains the current database. Django continues to use PostgreSQL through
 
 ## Scope and current architecture
 
-Only the PostgreSQL hosting provider is expected to change. Render runs Django;
+The known versions are Neon PostgreSQL 18.7 and Supabase PostgreSQL 17.12.
+Because this is a major-version downgrade, a PostgreSQL 18 schema dump must NOT
+be restored into PostgreSQL 17. This plan creates the PG17 schema from current
+Django migrations, then copies logical table data. Only the PostgreSQL hosting
+provider is expected to change. Render runs Django;
 Cloudinary continues to serve current media; Razorpay remains in Test Mode;
 Django authentication and authorization remain authoritative. This plan does
 not use Supabase REST, Auth, or Storage, add RLS to Django tables, or add a
@@ -77,8 +81,9 @@ commit a URL.
    locks, and cursor behavior. Any use requires explicit compatibility and
    concurrency review.
 
-For `pg_dump`, `pg_restore`, and `psql`, prefer the direct endpoint when
-reachable, independently of the runtime endpoint. Compare source and target
+For read-only catalog inspection using `psql`, prefer the direct endpoint when
+reachable, independently of the runtime endpoint. Do not use a PG18-generated
+schema dump/restore as the PG17 migration path. Compare source and target
 PostgreSQL versions first. Verify UTF-8 encoding, timezone behavior, and
 collation compatibility; do not change Django timezone settings speculatively.
 
@@ -91,9 +96,11 @@ backup/PITR capabilities, and restore permissions. Also verify Render network
 reachability and the plan's pooling limits. None of these target details are
 known or verified yet.
 
-Install/use compatible PostgreSQL client tools (`pg_dump`, `pg_restore`,
-`psql`) on the operator machine; no system software is installed by this plan.
-Use placeholders only:
+For the PG18-to-PG17 data copy, use the repository utility and its pinned
+`psycopg2-binary` driver; do not use full-version `pg_dump`/`pg_restore` as the
+schema migration path. PostgreSQL client tools may still be useful for future
+read-only inspection, but are not required by the logical-copy utility. No
+system software is installed by this plan. Use placeholders only:
 
 ```powershell
 $env:SOURCE_DATABASE_URL = "<source-postgresql-url>"
@@ -107,8 +114,12 @@ dump/backup and compressed SQL dump extensions as a safety net.
 
 ## Rehearsal (Stage A; no production cutover)
 
-1. **Discover and confirm schema scope before any dump.** Do not assume the
-   schema scope solely from local code. Connect read-only to the deployed source
+Do not restore a PostgreSQL 18-generated schema dump into PostgreSQL 17. The
+target DDL must come from current repository migrations applied to PostgreSQL
+17, followed by logical row transfer.
+
+1. **Discover and confirm schema scope before any copy.** Do not assume the
+   schema scope solely from local code. Connect read-only to the source
    during an approved rehearsal and inspect non-system schemas:
 
    ```sql
@@ -160,65 +171,76 @@ dump/backup and compressed SQL dump extensions as a safety net.
    use a wildcard or include every non-system schema automatically. Preserve
    `django_migrations` by including the schema where it resides.
 
-2. Take an approved source copy using the operator's secure procedure; never
-   put dump data in Git. Use a custom-format dump scoped to the confirmed
-   application schema(s), without source ownership/ACL metadata:
+2. Confirm the target is a newly created, disposable rehearsal database. Never
+   run target reset tooling against a database that was not explicitly verified
+   as the intended rehearsal target.
+3. Create the PG17 schema from this repository's current migrations, using the
+   target URL only in a secure local environment. For PowerShell, for example:
 
    ```powershell
-   pg_dump --format=custom --no-owner --no-acl --schema="$env:APP_SCHEMA" --file="<restricted-path>/rehearsal.dump" "$env:SOURCE_DATABASE_URL"
+   $env:DATABASE_URL = $env:TARGET_DATABASE_URL
+   python manage.py migrate
    ```
 
-   For each additional confirmed schema, add another explicit
-   `--schema="<confirmed-schema>"` option. The archive itself must contain only
-   intended application schemas; do not rely on restore-time exclusions to
-   sanitize a broad dump. Inspect the archive before restoring:
+   Do not restore source schema DDL. Use the repository-pinned Django version
+   (`pip install -r requirements.txt`) before rehearsal; the prior local venv
+   showed Django 6.1.1 while requirements pin 6.1.2. The version pin is not
+   changed. Keep `psycopg2-binary==2.9.13` unless actual PG17 compatibility
+   testing demonstrates a problem.
+4. Run the logical-copy utility in default dry-run mode first:
 
    ```powershell
-   pg_restore --list "<restricted-path>/rehearsal.dump"
+   $env:SOURCE_DATABASE_URL = "<source-postgresql-url>"
+   $env:TARGET_DATABASE_URL = "<target-session-pooler-postgresql-url>"
+   python scripts/logical_pg_migration.py --dry-run
    ```
 
-   Verify the intended schema(s), `django_migrations`, and expected Django
-   tables appear, and provider-managed schemas do not. This lists archive
-   metadata only, not row contents. If inspection is wrong, stop and recreate a
-   correctly scoped archive.
-
-3. Restore only the scoped archive, explicitly restricting restore to the same
-   confirmed schema(s) as defense in depth:
+   It expects PostgreSQL 18 source and PostgreSQL 17 target, inspects only the
+   confirmed `public` schema, compares source/target table and column metadata,
+   foreign-key structure and migration app/name state, validates the target
+   freshness allowlist, computes parent-first table order, and reports counts.
+   It does not print connection URLs or row contents. The utility uses the
+   ordinary PostgreSQL URI; use Supabase Session pooler for the current IPv4
+   rehearsal environment, not Transaction pooler.
+5. Review dry-run results. The fresh target may contain Django migration rows,
+   content types and permissions, but no unknown user/business rows. Exact copy
+   intentionally replaces those generated rows with source rows so IDs and
+   foreign-key references are preserved. The utility refuses other target
+   rows, mismatched table/column/FK structure, mismatched migration app/name
+   history, unsupported versions, FK cycles, or source/target identity matches.
+6. Only after confirming the disposable target identity and dry-run results,
+   execute the target-only transactional replacement with both explicit flags
+   and the exact target database name:
 
    ```powershell
-   pg_restore --no-owner --no-acl --schema="$env:APP_SCHEMA" --dbname="$env:TARGET_DATABASE_URL" "<restricted-path>/rehearsal.dump"
+   python scripts/logical_pg_migration.py --execute --confirm-target-reset --expected-target-database "<exact-rehearsal-database-name>"
    ```
 
-   Repeat `--schema="<confirmed-schema>"` for each confirmed application
-   schema. Verify after restore that application objects landed only in the
-   intended schema(s), and that no provider-managed schema was copied. Do not
-   restore Supabase Auth, Storage, internal, or provider metadata schemas, or
-   Neon/provider-specific schemas, for this Django database migration. No
-   extension is currently identified as required; if the source audit later
-   finds one, enable/verify it through the target provider before restore rather
-   than copying provider internals.
-
-4. Connect a local or staging Django app using a secure target URL; do not
-   change Render. Run `manage.py check`, migration-state inspection, and
-   read-only application checks. Preserve `django_migrations`; do not rebuild
-   production records from fixtures or regenerate primary keys.
-5. Compare source and target count snapshots for critical application tables
-   without retaining row-level data or URLs. Include users, Buyer/Manufacturer
-   profiles, listings, RFQs, quotations, Orders, milestones, messages,
-   payments, webhook events, and Django framework tables.
-6. Verify primary/foreign keys, unique constraints, indexes, timestamps, JSON
-   and Decimal values, and representative relationships: Order participants,
-   quotation/order links, milestone/order links, payment/order links, and
-   message/order links. Use constraint and read-only orphan checks; do not
-   repair data destructively.
-7. Check each serial/identity sequence is at least the maximum existing key for
-   its table (and correctly handles an empty table). Use `pg_get_serial_sequence`
-   / `last_value` or equivalent read-only catalog inspection; record results,
-   not PII.
-8. Validate UTF-8, database timezone behavior, and collation where relevant.
-   Confirm Django migration state agrees with the restored schema. Test a
-   dedicated account's dashboard and privacy export without exposing real
-   personal data.
+   Source is placed in a read-only transaction. The target is reset and copied
+   inside a transaction; an error rolls target table changes back. Data is
+   streamed table-by-table using PostgreSQL COPY text format through a
+   temporary local spool, which must be protected as sensitive data and removed
+   under operator policy. Sequence restart uses transactional `ALTER SEQUENCE`
+   statements built from target catalog-owned sequence names. Do not run this
+   against production or an unverified target.
+7. After a successful copy, verify row counts for every source table against
+   target. Preserve primary keys, timestamps, JSON/Decimal values, passwords,
+   transaction/payment/webhook history and relationships exactly. The utility
+   reports counts only, not row contents. Also verify constraints, indexes,
+   sequence next values, and representative user/profile, listing/manufacturer,
+   RFQ/quotation, Order/milestone/message/payment/webhook, review, notification,
+   and framework relationships. No destructive repair is automated.
+8. Compare source and target `django_migrations` by app and migration name; the
+   target schema was created from this repository's migrations, and the copy
+   replaces target-generated migration rows with the source state. Content
+   types and permissions are likewise copied exactly rather than assuming
+   target-generated IDs match source.
+9. Point only a dedicated local application process at the rehearsal target.
+   Run `manage.py check`, `manage.py showmigrations`, and read-only dashboard,
+   marketplace, existing Order, and privacy-export checks using an approved
+   test account. Do not run `manage.py test` or E2E against this copied dataset:
+   those suites create/destroy isolated test databases. Keep standard tests and
+   `config.settings_e2e` on their existing isolated local databases.
 
 ## Final cutover (Stage B; only after rehearsal approval)
 
@@ -234,13 +256,13 @@ write access and coordinate the service/webhook window before the cutover.
    writes and payment initiation. Coordinate Razorpay Test Mode webhook
    delivery so no event is accepted only by the old database after the dump;
    pause/queue delivery where supported and account for pending deliveries.
-3. Confirm no active migration-sensitive operation is in progress. Take the
-   final Neon dump using the compatible PostgreSQL tools and secure custom
-   format (`--no-owner --no-acl`, audited application schema scope).
-4. Restore to Supabase. Run migration-state, table/critical row counts,
-   constraints/indexes, sequence, relationship, payment/webhook, encoding and
-   read-only application validation. Do not expose actual user data in
-   screenshots or logs.
+3. Confirm no active migration-sensitive operation is in progress. Create the
+   target schema by running the reviewed repository migrations on PG17, then
+   perform the final logical copy with the guarded utility. Do not use a PG18
+   schema dump/restore for this downgrade.
+4. Run migration-state, table/critical row counts, constraints/indexes,
+   sequence, relationship, payment/webhook, encoding and read-only application
+   validation. Do not expose actual user data in screenshots or logs.
 5. Change **only** Render's `DATABASE_URL` to the approved target runtime URL;
    leave other production settings unchanged unless rehearsal proved a need.
    Redeploy using the normal approved process.
