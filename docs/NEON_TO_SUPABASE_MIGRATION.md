@@ -197,7 +197,9 @@ target DDL must come from current repository migrations applied to PostgreSQL
 
    It expects PostgreSQL 18 source and PostgreSQL 17 target, inspects only the
    confirmed `public` schema, compares source/target table and column metadata,
-   foreign-key structure and migration app/name state, validates the target
+   complete ordered foreign-key metadata (columns, actions, match and
+   deferrability), primary/unique constraints, and migration app/name state,
+   validates the target
    freshness allowlist, computes parent-first table order, and reports counts.
    It does not print connection URLs or row contents. The utility uses the
    ordinary PostgreSQL URI; use Supabase Session pooler for the current IPv4
@@ -208,6 +210,8 @@ target DDL must come from current repository migrations applied to PostgreSQL
    foreign-key references are preserved. The utility refuses other target
    rows, mismatched table/column/FK structure, mismatched migration app/name
    history, unsupported versions, FK cycles, or source/target identity matches.
+   It also refuses target FKs from outside the verified `public` table set that
+   reference an application table.
 6. Only after confirming the disposable target identity and dry-run results,
    execute the target-only transactional replacement with both explicit flags
    and the exact target database name:
@@ -217,7 +221,10 @@ target DDL must come from current repository migrations applied to PostgreSQL
    ```
 
    Source is placed in a read-only transaction. The target is reset and copied
-   inside a transaction; an error rolls target table changes back. Data is
+   inside a transaction, clearing rows in child-first FK order with
+   individually schema-qualified `DELETE` statements and no `CASCADE`; an
+   external cross-schema reference aborts before reset. An error rolls target
+   table changes back. Data is
    streamed table-by-table using PostgreSQL COPY text format through a
    temporary local spool, which must be protected as sensitive data and removed
    under operator policy. Sequence restart uses transactional `ALTER SEQUENCE`
@@ -229,7 +236,9 @@ target DDL must come from current repository migrations applied to PostgreSQL
    reports counts only, not row contents. Also verify constraints, indexes,
    sequence next values, and representative user/profile, listing/manufacturer,
    RFQ/quotation, Order/milestone/message/payment/webhook, review, notification,
-   and framework relationships. No destructive repair is automated.
+   and framework relationships. Primary/unique/FK constraints are structurally
+   compared before execution. Index equivalence is a post-copy rehearsal check,
+   not an automated utility guarantee. No destructive repair is automated.
 8. Compare source and target `django_migrations` by app and migration name; the
    target schema was created from this repository's migrations, and the copy
    replaces target-generated migration rows with the source state. Content

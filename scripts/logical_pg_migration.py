@@ -104,6 +104,84 @@ def _foreign_keys(connection):
         return cursor.fetchall()
 
 
+def _foreign_key_structures(connection):
+    """Return ordered, complete FK metadata for constraints touching public."""
+    with connection.cursor() as cursor:
+        cursor.execute(
+            "SELECT c.conname, child_ns.nspname, child.relname, "
+            "array_agg(child_col.attname ORDER BY child_key.ord), "
+            "parent_ns.nspname, parent.relname, "
+            "array_agg(parent_col.attname ORDER BY parent_key.ord), "
+            "c.confupdtype, c.confdeltype, c.confmatchtype, "
+            "c.condeferrable, c.condeferred "
+            "FROM pg_constraint c "
+            "JOIN pg_class child ON child.oid = c.conrelid "
+            "JOIN pg_namespace child_ns ON child_ns.oid = child.relnamespace "
+            "JOIN pg_class parent ON parent.oid = c.confrelid "
+            "JOIN pg_namespace parent_ns ON parent_ns.oid = parent.relnamespace "
+            "JOIN LATERAL unnest(c.conkey) WITH ORDINALITY child_key(attnum, ord) ON TRUE "
+            "JOIN pg_attribute child_col ON child_col.attrelid = child.oid AND child_col.attnum = child_key.attnum "
+            "JOIN LATERAL unnest(c.confkey) WITH ORDINALITY parent_key(attnum, ord) ON parent_key.ord = child_key.ord "
+            "JOIN pg_attribute parent_col ON parent_col.attrelid = parent.oid AND parent_col.attnum = parent_key.attnum "
+            "WHERE c.contype = 'f' AND (child_ns.nspname = %s OR parent_ns.nspname = %s) "
+            "GROUP BY c.conname, child_ns.nspname, child.relname, parent_ns.nspname, "
+            "parent.relname, c.confupdtype, c.confdeltype, c.confmatchtype, "
+            "c.condeferrable, c.condeferred "
+            "ORDER BY child_ns.nspname, child.relname, c.conname",
+            (APP_SCHEMA, APP_SCHEMA),
+        )
+        return cursor.fetchall()
+
+
+def compare_foreign_keys(source_constraints, target_constraints):
+    if set(source_constraints) != set(target_constraints):
+        raise MigrationSafetyError("Source/target foreign-key structures differ.")
+
+
+def external_references(foreign_key_rows, app_schema, app_tables):
+    table_set = set(app_tables)
+    return [
+        row for row in foreign_key_rows
+        if row[4] == app_schema and row[5] in table_set
+        and (row[1] != app_schema or row[2] not in table_set)
+    ]
+
+
+def require_no_external_references(foreign_key_rows, app_schema, app_tables):
+    external = external_references(foreign_key_rows, app_schema, app_tables)
+    if external:
+        details = ", ".join(
+            f"{row[1]}.{row[2]}.{row[0]} -> {row[4]}.{row[5]}" for row in external
+        )
+        raise MigrationSafetyError("External target FK references block reset: " + details)
+
+
+def _key_constraint_structures(connection):
+    with connection.cursor() as cursor:
+        cursor.execute(
+            "SELECT n.nspname, t.relname, c.conname, c.contype, "
+            "pg_get_constraintdef(c.oid), c.condeferrable, c.condeferred "
+            "FROM pg_constraint c JOIN pg_class t ON t.oid = c.conrelid "
+            "JOIN pg_namespace n ON n.oid = t.relnamespace "
+            "WHERE n.nspname = %s AND c.contype IN ('p', 'u') "
+            "ORDER BY n.nspname, t.relname, c.conname",
+            (APP_SCHEMA,),
+        )
+        return cursor.fetchall()
+
+
+def target_reset_statements(schema_name, tables, parent_first_order):
+    """Build qualified child-first DELETE statements for verified tables only."""
+    if set(tables) != set(parent_first_order):
+        raise MigrationSafetyError("Reset list does not match verified table set.")
+    return [
+        sql.SQL("DELETE FROM {}.{}").format(
+            sql.Identifier(schema_name), sql.Identifier(table)
+        )
+        for table in reversed(parent_first_order)
+    ]
+
+
 def _migration_rows(connection):
     with connection.cursor() as cursor:
         cursor.execute(
@@ -207,12 +285,28 @@ def _copy_table(source_conn, target_conn, table, columns):
     )
     # Per-table secure temporary spool allows native COPY text escaping without
     # constructing INSERTs or holding a whole database/table in memory.
+    try:
+        def copy_out(spool):
+            with source_conn.cursor() as source_cursor:
+                source_cursor.copy_expert(source_copy.as_string(source_conn), spool)
+
+        def copy_in(spool):
+            with target_conn.cursor() as target_cursor:
+                target_cursor.copy_expert(target_copy.as_string(target_conn), spool)
+
+        copy_via_temporary_spool(copy_out, copy_in)
+    except Exception as exc:
+        raise MigrationSafetyError(
+            f"COPY failed for table {table} ({type(exc).__name__}); row details withheld."
+        ) from None
+
+
+def copy_via_temporary_spool(copy_out, copy_in):
+    """TemporaryFile closes and removes its OS-managed spool on all exits."""
     with tempfile.TemporaryFile(mode="w+b") as spool:
-        with source_conn.cursor() as source_cursor:
-            source_cursor.copy_expert(source_copy.as_string(source_conn), spool)
+        copy_out(spool)
         spool.seek(0)
-        with target_conn.cursor() as target_cursor:
-            target_cursor.copy_expert(target_copy.as_string(target_conn), spool)
+        copy_in(spool)
 
 
 def inspect(source_conn, target_conn, expected_target_database=None):
@@ -232,8 +326,12 @@ def inspect(source_conn, target_conn, expected_target_database=None):
     for table in source_tables:
         compare_table_columns(_columns(source_conn, table), _columns(target_conn, table), table)
     fk_rows = _foreign_keys(source_conn)
-    if set(fk_rows) != set(_foreign_keys(target_conn)):
-        raise MigrationSafetyError("Source/target foreign-key structures differ.")
+    source_fk_structures = _foreign_key_structures(source_conn)
+    target_fk_structures = _foreign_key_structures(target_conn)
+    compare_foreign_keys(source_fk_structures, target_fk_structures)
+    if _key_constraint_structures(source_conn) != _key_constraint_structures(target_conn):
+        raise MigrationSafetyError("Source/target primary or unique constraints differ.")
+    require_no_external_references(target_fk_structures, APP_SCHEMA, target_tables)
     if _migration_rows(source_conn) != _migration_rows(target_conn):
         raise MigrationSafetyError("Source and migrated target Django migration histories differ.")
     order = topological_table_order(source_tables, fk_rows)
@@ -252,6 +350,7 @@ def inspect(source_conn, target_conn, expected_target_database=None):
         "target_version": target_version,
         "tables": source_tables,
         "order": order,
+        "reset_statements": target_reset_statements(APP_SCHEMA, source_tables, order),
         "source_counts": source_counts,
         "target_counts": target_counts,
         "sequence_rows": _sequence_reset_statements(target_conn, target_tables),
@@ -263,12 +362,8 @@ def copy_data(source_conn, target_conn, report):
     try:
         with target_conn:
             with target_conn.cursor() as cursor:
-                for table in report["tables"]:
-                    cursor.execute(
-                        sql.SQL("TRUNCATE TABLE {}.{} CASCADE").format(
-                            sql.Identifier(APP_SCHEMA), sql.Identifier(table)
-                        )
-                    )
+                for statement in report["reset_statements"]:
+                    cursor.execute(statement)
             for table in report["order"]:
                 _copy_table(source_conn, target_conn, table, _columns(source_conn, table))
             _reset_sequences(target_conn, report["sequence_rows"])
@@ -314,7 +409,12 @@ def main(argv=None):
         else:
             print("DRY RUN: no target data mutation performed")
         return 0
-    except (psycopg2.Error, MigrationSafetyError) as exc:
+    except MigrationSafetyError as exc:
+        # Safety errors contain only structural metadata (schema/table names,
+        # versions, or counts); database driver errors remain redacted below.
+        print(f"Migration safety check failed: {exc}", file=sys.stderr)
+        return 2
+    except psycopg2.Error as exc:
         print(f"Migration safety check failed ({type(exc).__name__}); details withheld.", file=sys.stderr)
         return 2
     finally:
