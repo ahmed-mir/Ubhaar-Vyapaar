@@ -18,7 +18,7 @@
     margin: 0 0 8px;
     color: #526770;
     font-size: .78rem;
-    font-weight: 700;
+    font-weight: var(--font-weight-bold);
     letter-spacing: .08em;
     text-transform: uppercase;
 }
@@ -108,7 +108,7 @@
     margin: 0 0 8px;
     color: var(--public-ink);
     font-size: .8rem;
-    font-weight: 750;
+    font-weight: var(--font-weight-bold);
     letter-spacing: .06em;
     text-transform: uppercase;
 }
@@ -139,7 +139,7 @@
     vertical-align: top;
     line-height: 1.55;
 }
-.public-facts-table th { width: 27%; color: var(--public-ink); font-weight: 700; }
+.public-facts-table th { width: 27%; color: var(--public-ink); font-weight: var(--font-weight-bold); }
 .public-facts-table td { color: #344f59; }
 
 .public-faq-group + .public-faq-group { margin-top: 32px; }
@@ -154,7 +154,7 @@
     padding: 12px 2px;
     color: var(--public-ink);
     cursor: pointer;
-    font-weight: 700;
+    font-weight: var(--font-weight-bold);
     line-height: 1.45;
 }
 .public-faq-list summary::after { content: "+"; color: #805615; font-size: 1.25rem; }
