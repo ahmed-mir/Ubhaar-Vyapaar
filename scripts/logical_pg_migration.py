@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import argparse
 import os
+import re
 import sys
 import tempfile
 from collections import defaultdict, deque
@@ -27,6 +28,40 @@ FRESH_TARGET_ALLOWLIST = {
 
 class MigrationSafetyError(RuntimeError):
     pass
+
+
+class MigrationExecutionError(MigrationSafetyError):
+    """Safe execution diagnostic containing structural context only."""
+
+    def __init__(self, phase, table=None, error_type="MigrationError", sqlstate=None):
+        self.phase = phase
+        self.table = _safe_diagnostic_identifier(table) if table else None
+        self.error_type = error_type
+        self.sqlstate = (
+            sqlstate
+            if isinstance(sqlstate, str) and re.fullmatch(r"[0-9A-Z]{5}", sqlstate)
+            else None
+        )
+        fields = [f"phase={phase}"]
+        if self.table:
+            fields.append(f"table={self.table}")
+        fields.append(f"type={error_type}")
+        if self.sqlstate:
+            fields.append(f"sqlstate={self.sqlstate}")
+        fields.append("details withheld")
+        super().__init__("Migration execution failed: " + " ".join(fields))
+
+
+def _safe_diagnostic_identifier(value):
+    """Keep diagnostics to a bounded, single-line structural identifier."""
+    text = str(value)
+    safe = "".join(char if char.isalnum() or char in "_.$-" else "_" for char in text)
+    return safe[:128] or "unknown"
+
+
+def _execution_failure(phase, table, exc):
+    sqlstate = getattr(exc, "pgcode", None) if isinstance(exc, psycopg2.Error) else None
+    return MigrationExecutionError(phase, table, type(exc).__name__, sqlstate)
 
 
 def topological_table_order(tables, foreign_keys):
@@ -243,16 +278,19 @@ def _version(connection):
     return number // 10000
 
 
-def _counts(connection, tables):
+def _counts(connection, tables, phase="row-count"):
     result = {}
     with connection.cursor() as cursor:
         for table in tables:
-            cursor.execute(
-                sql.SQL("SELECT count(*) FROM {}.{}").format(
-                    sql.Identifier(APP_SCHEMA), sql.Identifier(table)
+            try:
+                cursor.execute(
+                    sql.SQL("SELECT count(*) FROM {}.{}").format(
+                        sql.Identifier(APP_SCHEMA), sql.Identifier(table)
+                    )
                 )
-            )
-            result[table] = cursor.fetchone()[0]
+                result[table] = cursor.fetchone()[0]
+            except psycopg2.Error as exc:
+                raise _execution_failure(phase, table, exc) from None
     return result
 
 
@@ -290,16 +328,20 @@ def _sequence_reset_statements(target_conn, tables):
     statements = []
     with target_conn.cursor() as cursor:
         for table in tables:
-            cursor.execute(
-                "SELECT a.attname, pg_get_serial_sequence(%s, a.attname) "
-                "FROM pg_attribute a "
-                "JOIN pg_class t ON t.oid = a.attrelid "
-                "JOIN pg_namespace n ON n.oid = t.relnamespace "
-                "WHERE n.nspname = %s AND t.relname = %s "
-                "AND a.attnum > 0 AND NOT a.attisdropped",
-                (f'{APP_SCHEMA}."{table}"', APP_SCHEMA, table),
-            )
-            for column, sequence_name in cursor.fetchall():
+            try:
+                cursor.execute(
+                    "SELECT a.attname, pg_get_serial_sequence(%s, a.attname) "
+                    "FROM pg_attribute a "
+                    "JOIN pg_class t ON t.oid = a.attrelid "
+                    "JOIN pg_namespace n ON n.oid = t.relnamespace "
+                    "WHERE n.nspname = %s AND t.relname = %s "
+                    "AND a.attnum > 0 AND NOT a.attisdropped",
+                    (f'{APP_SCHEMA}."{table}"', APP_SCHEMA, table),
+                )
+                sequence_rows = cursor.fetchall()
+            except psycopg2.Error as exc:
+                raise _execution_failure("sequence-discovery", table, exc) from None
+            for column, sequence_name in sequence_rows:
                 if sequence_name:
                     statements.append((table, column, sequence_name))
     return statements
@@ -308,17 +350,20 @@ def _sequence_reset_statements(target_conn, tables):
 def _reset_sequences(target_conn, sequence_rows):
     with target_conn.cursor() as cursor:
         for table, column, sequence_name in sequence_rows:
-            cursor.execute(
-                sql.SQL("SELECT COALESCE(MAX({}), 0) FROM {}.{}").format(
-                    sql.Identifier(column), sql.Identifier(APP_SCHEMA), sql.Identifier(table)
+            try:
+                cursor.execute(
+                    sql.SQL("SELECT COALESCE(MAX({}), 0) FROM {}.{}").format(
+                        sql.Identifier(column), sql.Identifier(APP_SCHEMA), sql.Identifier(table)
+                    )
                 )
-            )
-            maximum = cursor.fetchone()[0]
-            # ALTER SEQUENCE RESTART is transactional (unlike setval).
-            sequence_schema, sequence_local_name = sequence_name.split(".", 1)
-            cursor.execute(sequence_restart_sql(
-                sequence_schema, sequence_local_name, maximum + 1
-            ))
+                maximum = cursor.fetchone()[0]
+                # ALTER SEQUENCE RESTART is transactional (unlike setval).
+                sequence_schema, sequence_local_name = sequence_name.split(".", 1)
+                cursor.execute(sequence_restart_sql(
+                    sequence_schema, sequence_local_name, maximum + 1
+                ))
+            except psycopg2.Error as exc:
+                raise _execution_failure("sequence-reset", table, exc) from None
 
 
 def _copy_table(source_conn, target_conn, table, columns):
@@ -331,20 +376,26 @@ def _copy_table(source_conn, target_conn, table, columns):
     )
     # Per-table secure temporary spool allows native COPY text escaping without
     # constructing INSERTs or holding a whole database/table in memory.
-    try:
-        def copy_out(spool):
+    def copy_out(spool):
+        try:
             with source_conn.cursor() as source_cursor:
                 source_cursor.copy_expert(source_copy.as_string(source_conn), spool)
+        except Exception as exc:
+            raise _execution_failure("copy-out", table, exc) from None
 
-        def copy_in(spool):
+    def copy_in(spool):
+        try:
             with target_conn.cursor() as target_cursor:
                 target_cursor.copy_expert(target_copy.as_string(target_conn), spool)
+        except Exception as exc:
+            raise _execution_failure("copy-in", table, exc) from None
 
+    try:
         copy_via_temporary_spool(copy_out, copy_in)
     except Exception as exc:
-        raise MigrationSafetyError(
-            f"COPY failed for table {table} ({type(exc).__name__}); row details withheld."
-        ) from None
+        if isinstance(exc, MigrationExecutionError):
+            raise
+        raise _execution_failure("copy-spool", table, exc) from None
 
 
 def copy_via_temporary_spool(copy_out, copy_in):
@@ -397,6 +448,7 @@ def inspect(source_conn, target_conn, expected_target_database=None):
         "target_version": target_version,
         "tables": source_tables,
         "order": order,
+        "reset_order": list(reversed(order)),
         "reset_statements": target_reset_statements(APP_SCHEMA, source_tables, order),
         "source_counts": source_counts,
         "target_counts": target_counts,
@@ -406,17 +458,37 @@ def inspect(source_conn, target_conn, expected_target_database=None):
 
 def copy_data(source_conn, target_conn, report):
     target_conn.autocommit = False
+    phase = "target-reset"
+    table = None
     try:
         with target_conn:
             with target_conn.cursor() as cursor:
-                for statement in report["reset_statements"]:
-                    cursor.execute(statement)
+                for table, statement in zip(report["reset_order"], report["reset_statements"]):
+                    try:
+                        cursor.execute(statement)
+                    except psycopg2.Error as exc:
+                        raise _execution_failure("target-reset", table, exc) from None
             for table in report["order"]:
-                _copy_table(source_conn, target_conn, table, _columns(source_conn, table))
+                try:
+                    columns = _columns(source_conn, table)
+                except psycopg2.Error as exc:
+                    raise _execution_failure("copy-prepare", table, exc) from None
+                _copy_table(source_conn, target_conn, table, columns)
+            phase = "sequence-reset"
+            table = None
             _reset_sequences(target_conn, report["sequence_rows"])
-            target_counts = _counts(target_conn, report["tables"])
-            if target_counts != report["source_counts"]:
-                raise MigrationSafetyError("Post-copy row-count validation failed.")
+            phase = "row-count-validation"
+            target_counts = _counts(target_conn, report["tables"], phase=phase)
+            for table in report["tables"]:
+                if target_counts[table] != report["source_counts"][table]:
+                    raise MigrationExecutionError(phase, table, "RowCountMismatch")
+            # psycopg2 commits on a clean connection-context exit. If that
+            # commit itself raises a driver error, label it as the commit phase.
+            phase = "commit"
+            table = None
+    except psycopg2.Error as exc:
+        target_conn.rollback()
+        raise _execution_failure(phase, table, exc) from None
     except Exception:
         target_conn.rollback()
         raise

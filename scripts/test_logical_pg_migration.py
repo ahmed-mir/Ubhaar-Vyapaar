@@ -10,6 +10,31 @@ except ImportError:
 
 
 class LogicalMigrationSafetyTests(unittest.TestCase):
+    def _programming_error(self):
+        class ProgrammingErrorWithState(migration.psycopg2.ProgrammingError):
+            @property
+            def pgcode(self):
+                return "42601"
+
+        return ProgrammingErrorWithState(
+            "SOURCE_DATABASE_URL=postgresql://source:source-pw@host/db "
+            "TARGET_DATABASE_URL=postgresql://target:target-pw@host/db "
+            "DELETE FROM public.table COPY SQL SENTINEL ROW_SENTINEL"
+        )
+
+    def _assert_safe_execution_diagnostic(self, error, phase, table):
+        message = str(error)
+        self.assertIn(f"phase={phase}", message)
+        self.assertIn(f"table={table}", message)
+        self.assertIn("type=ProgrammingError", message)
+        self.assertIn("sqlstate=42601", message)
+        for secret in (
+            "SOURCE_DATABASE_URL", "TARGET_DATABASE_URL", "postgresql://",
+            "source-pw", "target-pw", "ROW_SENTINEL", "DELETE FROM",
+            "COPY SQL", "SELECT ", "ALTER SEQUENCE",
+        ):
+            self.assertNotIn(secret, message)
+
     def _inspection_mocks(
         self,
         stack,
@@ -383,7 +408,7 @@ class LogicalMigrationSafetyTests(unittest.TestCase):
                 self.rollback_count += 1
 
         target = TransactionConnection()
-        report = {"reset_statements": ["DELETE FROM public.sample"], "order": ["sample"],
+        report = {"reset_statements": ["DELETE FROM public.sample"], "reset_order": ["sample"], "order": ["sample"],
                   "sequence_rows": [], "tables": ["sample"], "source_counts": {"sample": 1}}
         with mock.patch.object(migration, "_columns", return_value=[("id",)]), \
              mock.patch.object(migration, "_copy_table", side_effect=KeyboardInterrupt):
@@ -391,6 +416,168 @@ class LogicalMigrationSafetyTests(unittest.TestCase):
                 migration.copy_data(mock.Mock(), target, report)
         self.assertEqual(target.rollback_count, 1)
         self.assertEqual(target.commit_count, 0)
+
+    def test_delete_programming_error_reports_phase_table_sqlstate_and_rolls_back(self):
+        error = self._programming_error()
+
+        class Cursor:
+            def __enter__(self):
+                return self
+            def __exit__(self, *_args):
+                return False
+            def execute(self, _statement):
+                raise error
+
+        class TransactionConnection:
+            autocommit = True
+            def __init__(self):
+                self.rollback_count = 0
+            def __enter__(self):
+                return self
+            def __exit__(self, exc_type, _exc, _tb):
+                if exc_type is not None:
+                    self.rollback()
+                return False
+            def cursor(self):
+                return Cursor()
+            def rollback(self):
+                self.rollback_count += 1
+
+        target = TransactionConnection()
+        report = {"reset_statements": [mock.Mock()], "reset_order": ["django_session"],
+                  "order": [], "sequence_rows": [], "tables": [], "source_counts": {}}
+        with self.assertRaises(migration.MigrationExecutionError) as raised:
+            migration.copy_data(mock.Mock(), target, report)
+        self._assert_safe_execution_diagnostic(raised.exception, "target-reset", "django_session")
+        self.assertGreaterEqual(target.rollback_count, 1)
+
+    def test_copy_out_and_copy_in_programming_errors_have_safe_stage_context(self):
+        for stage in ("copy-out", "copy-in"):
+            error = self._programming_error()
+
+            def connection_failing_at(target_stage):
+                cursor = mock.Mock()
+                if target_stage == stage:
+                    cursor.copy_expert.side_effect = error
+                manager = mock.MagicMock()
+                manager.__enter__.return_value = cursor
+                conn = mock.Mock()
+                conn.cursor.return_value = manager
+                return conn, cursor
+
+            source_conn, source_cursor = connection_failing_at("copy-out")
+            target_conn, target_cursor = connection_failing_at("copy-in")
+            if stage == "copy-in":
+                source_cursor.copy_expert.return_value = None
+            with mock.patch.object(migration.sql.Composed, "as_string", return_value="COPY SQL SENTINEL"):
+                with self.assertRaises(migration.MigrationExecutionError) as raised:
+                    migration._copy_table(
+                        source_conn, target_conn, "accounts_user",
+                        [("id",), ("password",)],
+                    )
+            self._assert_safe_execution_diagnostic(raised.exception, stage, "accounts_user")
+            cursor = source_cursor if stage == "copy-out" else target_cursor
+            self.assertIsInstance(cursor.copy_expert.call_args.args[0], str)
+
+    def test_sequence_reset_programming_error_reports_safe_table_context(self):
+        error = self._programming_error()
+
+        class Cursor:
+            def __init__(self):
+                self.calls = 0
+            def __enter__(self):
+                return self
+            def __exit__(self, *_args):
+                return False
+            def execute(self, _statement):
+                self.calls += 1
+                if self.calls == 2:
+                    raise error
+            def fetchone(self):
+                return (10,)
+
+        cursor = Cursor()
+        conn = mock.Mock()
+        conn.cursor.return_value = cursor
+        with self.assertRaises(migration.MigrationExecutionError) as raised:
+            migration._reset_sequences(conn, [("accounts_user", "id", "public.user_seq")])
+        self._assert_safe_execution_diagnostic(raised.exception, "sequence-reset", "accounts_user")
+
+    def test_row_count_validation_reports_table_and_rolls_back(self):
+        class Cursor:
+            def __enter__(self):
+                return self
+            def __exit__(self, *_args):
+                return False
+            def execute(self, _statement):
+                pass
+
+        class TransactionConnection:
+            autocommit = True
+            def __init__(self):
+                self.rollback_count = 0
+            def __enter__(self):
+                return self
+            def __exit__(self, exc_type, _exc, _tb):
+                if exc_type is not None:
+                    self.rollback()
+                return False
+            def cursor(self):
+                return Cursor()
+            def rollback(self):
+                self.rollback_count += 1
+
+        target = TransactionConnection()
+        report = {"reset_statements": [], "reset_order": [], "order": ["accounts_user"],
+                  "sequence_rows": [], "tables": ["accounts_user"],
+                  "source_counts": {"accounts_user": 3}}
+        with mock.patch.object(migration, "_columns", return_value=[("id",)]), \
+             mock.patch.object(migration, "_counts", return_value={"accounts_user": 2}), \
+             mock.patch.object(migration, "_copy_table"):
+            with self.assertRaises(migration.MigrationExecutionError) as raised:
+                migration.copy_data(mock.Mock(), target, report)
+        self.assertIn("phase=row-count-validation table=accounts_user", str(raised.exception))
+        self.assertNotIn("3", str(raised.exception))
+        self.assertGreaterEqual(target.rollback_count, 1)
+
+    def test_commit_programming_error_is_labeled_and_rolled_back(self):
+        error = self._programming_error()
+
+        class Cursor:
+            def __enter__(self):
+                return self
+            def __exit__(self, *_args):
+                return False
+            def execute(self, _statement):
+                pass
+
+        class TransactionConnection:
+            autocommit = True
+            def __init__(self):
+                self.rollback_count = 0
+            def __enter__(self):
+                return self
+            def __exit__(self, exc_type, _exc, _tb):
+                if exc_type is None:
+                    raise error
+                self.rollback()
+                return False
+            def cursor(self):
+                return Cursor()
+            def rollback(self):
+                self.rollback_count += 1
+
+        target = TransactionConnection()
+        report = {"reset_statements": [], "reset_order": [], "order": [],
+                  "sequence_rows": [], "tables": [], "source_counts": {}}
+        with self.assertRaises(migration.MigrationExecutionError) as raised:
+            migration.copy_data(mock.Mock(), target, report)
+        message = str(raised.exception)
+        self.assertIn("phase=commit", message)
+        self.assertIn("type=ProgrammingError", message)
+        self.assertIn("sqlstate=42601", message)
+        self.assertNotIn("ROW_SENTINEL", message)
+        self.assertEqual(target.rollback_count, 1)
 
     def test_credentials_never_appear_in_connection_failure_output(self):
         sentinel_source = "postgresql://source:secret-source@host/source"
