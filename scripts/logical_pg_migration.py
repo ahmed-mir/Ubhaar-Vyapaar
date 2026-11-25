@@ -133,9 +133,50 @@ def _foreign_key_structures(connection):
         return cursor.fetchall()
 
 
+def _freeze_catalog_value(value):
+    if isinstance(value, (list, tuple)):
+        return tuple(_freeze_catalog_value(item) for item in value)
+    return value
+
+
+def normalize_fk_row(row):
+    """Validate and freeze one FK row returned by psycopg2 catalog queries."""
+    if not isinstance(row, (list, tuple)) or len(row) != 12:
+        raise MigrationSafetyError("Invalid foreign-key catalog metadata shape.")
+    frozen = list(row)
+    for index in (3, 6):
+        columns = row[index]
+        if (not isinstance(columns, (list, tuple)) or not columns
+                or any(not isinstance(column, str) or not column for column in columns)):
+            raise MigrationSafetyError("Invalid ordered foreign-key column metadata.")
+        frozen[index] = tuple(columns)
+    return tuple(_freeze_catalog_value(value) for value in frozen)
+
+
+def _normalize_catalog_rows(rows):
+    if rows is None:
+        raise MigrationSafetyError("Invalid constraint catalog metadata.")
+    try:
+        normalized = tuple(tuple(_freeze_catalog_value(value) for value in row) for row in rows)
+        return tuple(sorted(normalized))
+    except (TypeError, ValueError) as exc:
+        raise MigrationSafetyError("Invalid constraint catalog metadata shape.") from None
+
+
 def compare_foreign_keys(source_constraints, target_constraints):
-    if set(source_constraints) != set(target_constraints):
+    try:
+        source_normalized = tuple(sorted(normalize_fk_row(row) for row in source_constraints))
+        target_normalized = tuple(sorted(normalize_fk_row(row) for row in target_constraints))
+    except (TypeError, ValueError):
+        raise MigrationSafetyError("Invalid foreign-key catalog metadata ordering.") from None
+    if source_normalized != target_normalized:
         raise MigrationSafetyError("Source/target foreign-key structures differ.")
+
+
+def compare_key_constraints(source_constraints, target_constraints):
+    """Compare PK/unique catalog rows as deterministic immutable structures."""
+    if _normalize_catalog_rows(source_constraints) != _normalize_catalog_rows(target_constraints):
+        raise MigrationSafetyError("Source/target primary or unique constraints differ.")
 
 
 def external_references(foreign_key_rows, app_schema, app_tables):
@@ -329,8 +370,9 @@ def inspect(source_conn, target_conn, expected_target_database=None):
     source_fk_structures = _foreign_key_structures(source_conn)
     target_fk_structures = _foreign_key_structures(target_conn)
     compare_foreign_keys(source_fk_structures, target_fk_structures)
-    if _key_constraint_structures(source_conn) != _key_constraint_structures(target_conn):
-        raise MigrationSafetyError("Source/target primary or unique constraints differ.")
+    compare_key_constraints(
+        _key_constraint_structures(source_conn), _key_constraint_structures(target_conn)
+    )
     require_no_external_references(target_fk_structures, APP_SCHEMA, target_tables)
     if _migration_rows(source_conn) != _migration_rows(target_conn):
         raise MigrationSafetyError("Source and migrated target Django migration histories differ.")

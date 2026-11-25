@@ -212,6 +212,15 @@ target DDL must come from current repository migrations applied to PostgreSQL
    history, unsupported versions, FK cycles, or source/target identity matches.
    It also refuses target FKs from outside the verified `public` table set that
    reference an application table.
+   Same-source/target detection compares server-returned facts (`current_database`,
+   server address and port) where available. A pooler or proxy may expose its
+   own endpoint rather than uniquely identify the backend database, especially
+   when different pooler endpoints are used. Treat identity detection as
+   defense-in-depth: use separate source/target URLs, verify the disposable
+   target with the operator, and require the exact `--expected-target-database`
+   plus `--confirm-target-reset` execution gates. Session pooler remains the
+   planned IPv4-compatible rehearsal option; its endpoint facts do not replace
+   those confirmations.
 6. Only after confirming the disposable target identity and dry-run results,
    execute the target-only transactional replacement with both explicit flags
    and the exact target database name:
