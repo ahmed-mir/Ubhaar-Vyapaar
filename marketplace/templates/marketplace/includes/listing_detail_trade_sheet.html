@@ -20,7 +20,7 @@
 
 <div class="listing-sheet-overview">
     <div class="listing-sheet-media listing-media-frame{% if not resolved_image_url %} media-no-image{% endif %}" data-listing-media>
-        {% include "marketplace/includes/listing_visual.html" with listing=listing resolved_image_url=resolved_image_url image_class="detail-image" placeholder_class="detail-image detail-image-placeholder" image_loading="eager" %}
+        {% include "marketplace/includes/listing_visual.html" with listing=listing image_class="detail-image" placeholder_class="detail-image detail-image-placeholder" image_width=800 image_height=600 image_crop="limit" image_sizes="(max-width: 940px) calc(100vw - 32px), (max-width: 1280px) 58vw, 720px" image_loading="eager" image_fetchpriority="high" %}
     </div>
     <aside class="detail-commercial-panel" aria-labelledby="commercial-terms-title">
         <p class="eyebrow">Commercial summary</p>

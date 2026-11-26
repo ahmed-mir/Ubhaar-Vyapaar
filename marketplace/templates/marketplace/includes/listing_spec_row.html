@@ -2,7 +2,7 @@
 {% listing_image_url listing as resolved_image_url %}
 <article class="listing-spec-row" data-sample-listing="{% if listing.manufacturer.is_demo %}true{% else %}false{% endif %}">
     <div class="listing-spec-media listing-media-frame{% if not resolved_image_url %} media-no-image{% endif %}" data-listing-media>
-        {% include "marketplace/includes/listing_visual.html" with listing=listing resolved_image_url=resolved_image_url image_class="listing-image" placeholder_class="listing-image-placeholder" %}
+        {% include "marketplace/includes/listing_visual.html" with listing=listing image_class="listing-image" placeholder_class="listing-image-placeholder" image_sizes="(max-width: 640px) calc(100vw - 40px), (max-width: 1024px) 36vw, 340px" %}
     </div>
     <div class="listing-spec-main">
         <div class="listing-spec-flags">

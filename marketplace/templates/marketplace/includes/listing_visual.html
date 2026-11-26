@@ -1,15 +1,20 @@
-{% load static %}
-{% if resolved_image_url %}
+{% load static listing_media %}
+{% with rendered_width=image_width|default:800 rendered_height=image_height|default:600 rendered_crop=image_crop|default:"fill" %}
+{% listing_image_sources listing rendered_width rendered_height rendered_crop as image_sources %}
+{% if image_sources.src %}
     <img
         class="{{ image_class|default:'listing-image' }}"
-        src="{{ resolved_image_url }}"
+        src="{{ image_sources.src }}"
+        {% if image_sources.srcset %}srcset="{{ image_sources.srcset }}" sizes="{{ image_sizes|default:'(max-width: 640px) calc(100vw - 40px), (max-width: 1024px) 36vw, 360px' }}"{% endif %}
         alt="{% if listing.machine_type %}{{ listing.machine_type }}{% elif listing.materials %}{{ listing.materials }}{% else %}{{ listing.get_category_display }}{% endif %} manufacturing capacity"
         loading="{{ image_loading|default:'lazy' }}"
         decoding="async"
-        width="800"
-        height="600"
+        {% if image_fetchpriority %}fetchpriority="{{ image_fetchpriority }}"{% endif %}
+        width="{{ rendered_width }}"
+        height="{{ rendered_height }}"
     >
 {% endif %}
+{% endwith %}
 
 <div class="{{ placeholder_class|default:'listing-image-placeholder' }}" aria-hidden="true">
     <span class="fallback-brand-mark"><img src="{% static 'marketplace/images/brand/logo-mark.svg' %}" alt="" width="20" height="20"></span>
