@@ -111,6 +111,21 @@ class ListingImageDeliveryTests(SimpleTestCase):
         url_builder.assert_not_called()
 
     @patch("cloudinary.utils.cloudinary_url")
+    def test_malformed_absolute_url_renders_placeholder_without_raising(self, url_builder):
+        listing = make_listing("https://[invalid-host/image.jpg")
+
+        sources = listing_image_sources(listing)
+        rendered = render_to_string(
+            "marketplace/includes/listing_visual.html",
+            {"listing": listing},
+        )
+
+        self.assertEqual(sources, {"src": "", "srcset": ""})
+        self.assertIn('class="listing-image-placeholder"', rendered)
+        self.assertNotIn('class="listing-image"', rendered)
+        url_builder.assert_not_called()
+
+    @patch("cloudinary.utils.cloudinary_url")
     def test_template_emits_responsive_attributes_and_reserved_dimensions(self, url_builder):
         url_builder.side_effect = lambda public_id, **options: (
             "https://res.cloudinary.com/project-cloud/image/upload/"

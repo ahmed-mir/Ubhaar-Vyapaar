@@ -79,7 +79,10 @@ def listing_image_sources(listing, width=800, height=600, crop="fill"):
     if not original_url:
         return {"src": "", "srcset": ""}
 
-    parsed_url = urlsplit(original_url)
+    try:
+        parsed_url = urlsplit(original_url)
+    except ValueError:
+        return {"src": "", "srcset": ""}
     if parsed_url.scheme and parsed_url.scheme not in {"http", "https"}:
         return {"src": "", "srcset": ""}
     if parsed_url.scheme in {"http", "https"} and not parsed_url.hostname:
