@@ -35,11 +35,8 @@
                     <a class="button button-secondary order-index-record__action" href="{% url 'order_detail' order.pk %}">View order</a>
                 </article>
             {% empty %}
-                <div class="empty-panel order-index-empty">
-                    <h2>No orders yet</h2>
-                        <p>Orders appear here after you accept a quotation or confirm a fixed-price purchase.</p>
-                    <a class="button button-primary" href="{% url 'marketplace' %}">Browse marketplace</a>
-                </div>
+                {% url 'marketplace' as browse_marketplace_url %}
+                {% include "marketplace/includes/empty_state.html" with heading_id="orders-empty-title" heading="No orders yet" description="Orders appear here after you accept a quotation or confirm a fixed-price purchase." action_url=browse_marketplace_url action_label="Browse marketplace" extra_classes="empty-panel order-index-empty" %}
             {% endfor %}
         </section>
     </div>

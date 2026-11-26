@@ -26,11 +26,8 @@
                 </form>
             </div>
         {% empty %}
-            <section class="empty-panel authenticated-empty" aria-labelledby="saved-empty-title">
-                <h2 id="saved-empty-title">No saved listings yet</h2>
-                <p>Save listings you are considering and return to them here.</p>
-                <a class="button button-primary" href="{% url 'marketplace' %}">Browse marketplace</a>
-            </section>
+            {% url 'marketplace' as browse_marketplace_url %}
+            {% include "marketplace/includes/empty_state.html" with heading_id="saved-empty-title" heading="No saved listings yet" description="Save listings you are considering and return to them here." action_url=browse_marketplace_url action_label="Browse marketplace" extra_classes="empty-panel authenticated-empty" %}
         {% endfor %}
     </div>
 </div>

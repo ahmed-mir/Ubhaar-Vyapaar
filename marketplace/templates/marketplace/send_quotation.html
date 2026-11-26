@@ -20,7 +20,7 @@
             <section class="quote-workflow-main" aria-label="Quotation terms">
                 <form method="post" class="quote-workflow-form styled-form form-grid" novalidate>
                     {% csrf_token %}
-                    {% if form.non_field_errors %}<div class="form-error-summary" role="alert" tabindex="-1">{{ form.non_field_errors }}</div>{% endif %}
+                    {% include "marketplace/includes/form_error_summary.html" with form=form %}
                     <fieldset class="quote-form-group">
                         <legend>Pricing</legend>
                         {% for field in form %}
@@ -28,7 +28,7 @@
                                 <div class="form-field{% if field.errors %} form-field-error{% endif %}">
                                     {{ field.label_tag }}{{ field|render_accessible_field }}
                                     {% if field.help_text %}<p id="{{ field.auto_id }}_helptext" class="helptext">{{ field.help_text }}</p>{% endif %}
-                                    {% if field.errors %}<div id="{{ field.auto_id }}_error" class="field-errors" role="alert"><ul class="errorlist">{% for error in field.errors %}<li>{{ error }}</li>{% endfor %}</ul></div>{% endif %}
+                                    {% if field.errors %}<div id="{{ field.auto_id }}_error" class="field-errors"><ul class="errorlist">{% for error in field.errors %}<li>{{ error }}</li>{% endfor %}</ul></div>{% endif %}
                                 </div>
                             {% endif %}
                         {% endfor %}
@@ -40,7 +40,7 @@
                                 <div class="form-field{% if field.errors %} form-field-error{% endif %}">
                                     {{ field.label_tag }}{{ field|render_accessible_field }}
                                     {% if field.help_text %}<p id="{{ field.auto_id }}_helptext" class="helptext">{{ field.help_text }}</p>{% endif %}
-                                    {% if field.errors %}<div id="{{ field.auto_id }}_error" class="field-errors" role="alert"><ul class="errorlist">{% for error in field.errors %}<li>{{ error }}</li>{% endfor %}</ul></div>{% endif %}
+                                    {% if field.errors %}<div id="{{ field.auto_id }}_error" class="field-errors"><ul class="errorlist">{% for error in field.errors %}<li>{{ error }}</li>{% endfor %}</ul></div>{% endif %}
                                 </div>
                             {% endif %}
                         {% endfor %}
@@ -52,7 +52,7 @@
                                 <div class="form-field{% if field.errors %} form-field-error{% endif %}">
                                     {{ field.label_tag }}{{ field|render_accessible_field }}
                                     {% if field.help_text %}<p id="{{ field.auto_id }}_helptext" class="helptext">{{ field.help_text }}</p>{% endif %}
-                                    {% if field.errors %}<div id="{{ field.auto_id }}_error" class="field-errors" role="alert"><ul class="errorlist">{% for error in field.errors %}<li>{{ error }}</li>{% endfor %}</ul></div>{% endif %}
+                                    {% if field.errors %}<div id="{{ field.auto_id }}_error" class="field-errors"><ul class="errorlist">{% for error in field.errors %}<li>{{ error }}</li>{% endfor %}</ul></div>{% endif %}
                                 </div>
                             {% endif %}
                         {% endfor %}

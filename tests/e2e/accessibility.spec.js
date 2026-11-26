@@ -34,6 +34,107 @@ test.describe("accessibility and keyboard UX", () => {
     await expect(username).toHaveAttribute("aria-describedby", /id_username_error/);
     await expect(page.locator("#id_username_error")).toHaveCount(1);
     await expect(page.locator("#id_username_error")).toBeVisible();
+    await expect(page.locator("[data-form-error-summary]")).toBeFocused();
+    await expect(page.locator("[data-form-error-summary] a[href='#id_username']")).toBeVisible();
+  });
+
+  test("current marketplace navigation is identified once", async ({ page }) => {
+    await page.goto("/marketplace/");
+    const currentLinks = page.locator("#site-navigation [aria-current='page']");
+    await expect(currentLinks).toHaveCount(1);
+    await expect(currentLinks).toHaveAttribute("href", "/marketplace/");
+  });
+
+  test("marketplace zero results explain filters and offer recovery actions", async ({ page }) => {
+    await page.setViewportSize({ width: 320, height: 900 });
+    await page.goto("/marketplace/?q=phase8b-no-matching-capacity-unique");
+    await expect(page.getByRole("heading", { name: /no matching manufacturing capacity found/i })).toBeVisible();
+    await expect(page.getByText(/no results for/i)).toBeVisible();
+    await expect(page.getByRole("link", { name: /clear filters/i })).toBeVisible();
+    await expect(page.getByRole("link", { name: /browse all listings/i })).toBeVisible();
+    await expect(page.getByLabel("Search capacity")).toHaveValue("phase8b-no-matching-capacity-unique");
+    expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(320);
+  });
+
+  test("control boundary contrast exceeds three to one and prose links are underlined", async ({ page }) => {
+    await page.goto("/contact/");
+    const results = await page.evaluate(() => {
+      const parse = (value) => {
+        const match = value.match(/rgba?\(([^)]+)\)/);
+        if (!match) return null;
+        return match[1].split(",").slice(0, 3).map((channel) => Number.parseFloat(channel.trim()));
+      };
+      const luminance = (rgb) => {
+        const values = rgb.map((channel) => {
+          const value = channel / 255;
+          return value <= 0.04045 ? value / 12.92 : ((value + 0.055) / 1.055) ** 2.4;
+        });
+        return values[0] * 0.2126 + values[1] * 0.7152 + values[2] * 0.0722;
+      };
+      const border = parse(getComputedStyle(document.querySelector("#id_name")).borderTopColor);
+      const background = parse(getComputedStyle(document.querySelector("#id_name")).backgroundColor);
+      const first = luminance(border);
+      const second = luminance(background);
+      return {
+        ratio: (Math.max(first, second) + 0.05) / (Math.min(first, second) + 0.05),
+        linkDecoration: getComputedStyle(document.querySelector(".contact-privacy-note a")).textDecorationLine
+      };
+    });
+    expect(results.ratio).toBeGreaterThanOrEqual(3);
+    expect(results.linkDecoration).toContain("underline");
+  });
+
+  test("form focus, invalid, and disabled states remain visually distinct", async ({ page }) => {
+    await page.goto("/contact/");
+    const email = page.getByLabel(/^Email:?$/);
+    const normalBorder = await email.evaluate((element) => getComputedStyle(element).borderTopColor);
+    await email.focus();
+    const focusState = await email.evaluate((element) => {
+      const style = getComputedStyle(element);
+      return { border: style.borderTopColor, outlineWidth: style.outlineWidth, outlineStyle: style.outlineStyle };
+    });
+    await email.evaluate((element) => element.setAttribute("aria-invalid", "true"));
+    const invalidBorder = await email.evaluate((element) => getComputedStyle(element).borderTopColor);
+    await email.evaluate((element) => {
+      element.removeAttribute("aria-invalid");
+      element.disabled = true;
+    });
+    const disabled = await email.evaluate((element) => ({
+      cursor: getComputedStyle(element).cursor,
+      background: getComputedStyle(element).backgroundColor
+    }));
+
+    expect(focusState.outlineStyle).toBe("solid");
+    expect(Number.parseFloat(focusState.outlineWidth)).toBeGreaterThanOrEqual(3);
+    expect(invalidBorder).not.toBe(normalBorder);
+    expect(disabled.cursor).toBe("not-allowed");
+    expect(disabled.background).not.toBe("rgb(255, 255, 255)");
+  });
+
+  test("cookie choice confirmation reports analytics state", async ({ page }) => {
+    await page.goto("/");
+    const reject = page.getByRole("button", { name: /reject analytics/i });
+    if (await reject.isVisible()) await reject.click();
+    await expect(page.locator("#cookie-preference-status")).toContainText("Analytics cookies are off.");
+    await expect(page.locator("#cookie-preference-status")).toContainText("Necessary cookies remain on.");
+    expect(await page.evaluate(() => typeof window.gtag)).toBe("undefined");
+  });
+
+  test("Django messages can be dismissed by keyboard-accessible control", async ({ page }) => {
+    await page.goto("/contact/");
+    await page.evaluate(() => {
+      const container = document.createElement("div");
+      container.className = "messages";
+      container.innerHTML = '<p class="message success" role="status" aria-live="polite">Saved successfully.<button class="message-dismiss" type="button" data-dismiss-message aria-label="Dismiss message"><span aria-hidden="true">×</span></button></p>';
+      document.querySelector("main").prepend(container);
+    });
+    const dismiss = page.getByRole("button", { name: "Dismiss message" });
+    const box = await dismiss.boundingBox();
+    expect(box.width).toBeGreaterThanOrEqual(44);
+    expect(box.height).toBeGreaterThanOrEqual(44);
+    await dismiss.focus();
+    await page.keyboard.press("Enter");
+    await expect(page.locator(".messages .message")).toHaveCount(0);
   });
 
   test("skip link moves keyboard users to main content", async ({ page }) => {
@@ -149,6 +250,18 @@ test.describe("accessibility and keyboard UX", () => {
       disabled.textContent = "Unavailable";
       document.body.appendChild(disabled);
       pairs.push(["disabled state", disabled]);
+
+      [
+        ["success feedback", "message success", "Saved successfully."],
+        ["warning feedback", "message warning", "Review this update."],
+        ["error feedback", "message error", "Please review this error."]
+      ].forEach(([label, className, message]) => {
+        const feedback = document.createElement("p");
+        feedback.className = className;
+        feedback.textContent = message;
+        document.body.appendChild(feedback);
+        pairs.push([label, feedback]);
+      });
 
       const measured = pairs.map(([label, element]) => {
         const style = getComputedStyle(element);

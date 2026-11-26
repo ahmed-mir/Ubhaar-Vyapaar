@@ -70,6 +70,9 @@ test.describe("signup and login hardening", () => {
           if (width === viewports[0]) {
             await loginPassword.fill("ExistingPassword123!");
             const toggle = loginPassword.locator("xpath=following-sibling::button");
+            const toggleBox = await toggle.boundingBox();
+            expect(toggleBox.width).toBeGreaterThanOrEqual(44);
+            expect(toggleBox.height).toBeGreaterThanOrEqual(44);
             await toggle.focus();
             await page.keyboard.press("Enter");
             await expect(loginPassword).toHaveAttribute("type", "text");

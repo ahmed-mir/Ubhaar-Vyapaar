@@ -299,13 +299,13 @@
 
         {% if messages %}
 
-            <div class="messages">
+            <div class="messages" role="region" aria-label="Site messages">
 
                 {% for message in messages %}
 
                     <p
                         class="message {{ message.tags }}"
-                        {% if message.tags == "error" %}role="alert"{% else %}role="status"{% endif %}
+                        {% if message.level_tag == "error" or message.level_tag == "warning" %}role="alert" aria-live="assertive"{% else %}role="status" aria-live="polite"{% endif %}
                     >
                         {% if message.tags %}
                             <strong class="visually-hidden">
@@ -313,6 +313,9 @@
                             </strong>
                         {% endif %}
                         {{ message }}
+                        <button class="message-dismiss" type="button" data-dismiss-message aria-label="Dismiss message">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
                     </p>
 
                 {% endfor %}
@@ -408,6 +411,12 @@
     </footer>
 
     <div id="form-status" class="visually-hidden" aria-live="polite"></div>
+    <div id="cookie-preference-status" class="cookie-preference-toast" role="status" aria-live="polite" aria-atomic="true" hidden>
+        <span data-cookie-preference-message></span>
+        <button class="message-dismiss" type="button" data-dismiss-cookie-preference aria-label="Dismiss cookie confirmation">
+            <span aria-hidden="true">&times;</span>
+        </button>
+    </div>
 
     <section
         class="cookie-consent"
@@ -552,6 +561,9 @@
             const preferencesForm = document.querySelector("[data-cookie-preferences]");
             const analyticsCheckbox = document.querySelector("[data-cookie-analytics]");
             const settingsButtons = document.querySelectorAll("[data-cookie-settings]");
+            const cookieStatus = document.querySelector("#cookie-preference-status");
+            const cookieStatusMessage = document.querySelector("[data-cookie-preference-message]");
+            let cookieStatusTimer = null;
             let consentReturnFocus = null;
 
             const focusMainContent = function () {
@@ -625,6 +637,17 @@
                 writePreferences(preferences);
                 applyPreferences(preferences);
                 hideConsent();
+                if (cookieStatus && cookieStatusMessage) {
+                    cookieStatusMessage.textContent = "Cookie preferences saved. Necessary cookies remain on. Analytics cookies are " +
+                        (preferences.analytics ? "on." : "off.");
+                    cookieStatus.hidden = false;
+                    window.clearTimeout(cookieStatusTimer);
+                    cookieStatusTimer = window.setTimeout(function () {
+                        if (!cookieStatus.contains(document.activeElement)) {
+                            cookieStatus.hidden = true;
+                        }
+                    }, 7000);
+                }
             };
 
             if (!readPreferences()) {
@@ -838,9 +861,18 @@
 
             document.querySelectorAll("form").forEach(function (form) {
                 form.addEventListener("submit", function (event) {
+                    if (form.matches("[data-cookie-preferences]")) {
+                        return;
+                    }
+
                     const submitter = event.submitter;
                     const acceptMessage = form.getAttribute("data-confirm-accept");
                     const statusRegion = document.querySelector("#form-status");
+
+                    if (form.dataset.submissionStarted === "true") {
+                        event.preventDefault();
+                        return;
+                    }
 
                     if (
                         acceptMessage &&
@@ -853,41 +885,99 @@
                         return;
                     }
 
+                    form.dataset.submissionStarted = "true";
                     form.classList.add("form-submitting");
                     form.setAttribute("aria-busy", "true");
 
                     if (statusRegion) {
-                        statusRegion.textContent = "Processing form submission.";
+                        statusRegion.textContent = "Submitting. Please wait.";
                     }
 
                     if (submitter && submitter.matches("button[type='submit'], input[type='submit']")) {
-                        const originalLabel = submitter.innerText || submitter.value || "Submit";
+                        const isInput = submitter.tagName === "INPUT";
+                        const originalLabel = (isInput ? submitter.value : submitter.textContent) || "Submit";
+                        const originalAriaLabel = submitter.getAttribute("aria-label");
+                        let inputProgressText = null;
 
-                        submitter.setAttribute("data-original-label", originalLabel);
-                        submitter.setAttribute("aria-label", "Processing: " + originalLabel.trim());
+                        submitter.dataset.originalLabel = originalLabel;
+                        submitter.dataset.originalAriaLabel = originalAriaLabel || "";
+                        submitter.setAttribute("aria-label", "Submitting: " + originalLabel.trim());
+                        submitter.setAttribute("aria-disabled", "true");
 
                         window.setTimeout(function () {
                             submitter.disabled = true;
                             submitter.classList.add("button-processing");
-                            submitter.textContent = "Processing... " + originalLabel.trim();
+                            if (isInput) {
+                                inputProgressText = document.createElement("span");
+                                inputProgressText.className = "form-submit-status";
+                                inputProgressText.setAttribute("aria-hidden", "true");
+                                inputProgressText.textContent = "Submitting...";
+                                submitter.insertAdjacentElement("afterend", inputProgressText);
+                            } else {
+                                submitter.textContent = "Submitting... " + originalLabel.trim();
+                            }
                         }, 0);
 
                         window.setTimeout(function () {
                             if (document.body.contains(submitter)) {
                                 submitter.disabled = false;
                                 submitter.classList.remove("button-processing");
-                                submitter.removeAttribute("aria-label");
-                                submitter.textContent = originalLabel;
+                                submitter.removeAttribute("aria-disabled");
+                                if (originalAriaLabel) {
+                                    submitter.setAttribute("aria-label", originalAriaLabel);
+                                } else {
+                                    submitter.removeAttribute("aria-label");
+                                }
+                                if (isInput) {
+                                    inputProgressText?.remove();
+                                } else {
+                                    submitter.textContent = originalLabel;
+                                }
+                                delete submitter.dataset.originalLabel;
+                                delete submitter.dataset.originalAriaLabel;
+                        submitter.parentElement?.querySelectorAll(".form-submit-status").forEach(function (status) { status.remove(); });
                                 form.classList.remove("form-submitting");
                                 form.removeAttribute("aria-busy");
+                                delete form.dataset.submissionStarted;
+                                if (statusRegion) {
+                                    statusRegion.textContent = "The submission is taking longer than expected. Check your connection, then try again.";
+                                }
                             }
-                        }, 15000);
+                        }, 20000);
                     }
+                });
+            });
+
+            window.addEventListener("pageshow", function () {
+                document.querySelectorAll("form[data-submission-started='true']").forEach(function (form) {
+                    form.classList.remove("form-submitting");
+                    form.removeAttribute("aria-busy");
+                    delete form.dataset.submissionStarted;
+                    form.querySelectorAll(".button-processing").forEach(function (button) {
+                        button.disabled = false;
+                        button.classList.remove("button-processing");
+                        button.removeAttribute("aria-disabled");
+                        if (button.dataset.originalLabel) {
+                            if (button.tagName === "INPUT") {
+                                button.value = button.dataset.originalLabel;
+                            } else {
+                                button.textContent = button.dataset.originalLabel;
+                            }
+                            delete button.dataset.originalLabel;
+                        }
+                        if (button.dataset.originalAriaLabel) {
+                            button.setAttribute("aria-label", button.dataset.originalAriaLabel);
+                        } else {
+                            button.removeAttribute("aria-label");
+                        }
+                        delete button.dataset.originalAriaLabel;
+                    });
                 });
             });
         })();
     </script>
     <script src="{% static 'marketplace/js/account-password-toggle.js' %}" defer></script>
+    <script src="{% static 'marketplace/js/form-feedback.js' %}" defer></script>
     <script src="{% static 'marketplace/js/password-requirements.js' %}" defer></script>
     <script src="{% static 'marketplace/js/phone-input.js' %}" defer></script>
     <script src="{% static 'marketplace/js/account-menu.js' %}" defer></script>

@@ -65,11 +65,8 @@
                     </div>
                 </article>
             {% empty %}
-                <section class="empty-panel authenticated-empty" aria-labelledby="listings-empty-title">
-                    <h2 id="listings-empty-title">No capacity listings yet</h2>
-                    <p>Add a listing with your minimum order and production time so buyers can review your capacity.</p>
-                    <a class="button button-primary" href="{% url 'create_listing' %}">Add capacity</a>
-                </section>
+                {% url 'create_listing' as create_listing_url %}
+                {% include "marketplace/includes/empty_state.html" with heading_id="listings-empty-title" heading="No capacity listings yet" description="Add a listing with your minimum order and production time so buyers can review your capacity." action_url=create_listing_url action_label="Add capacity" extra_classes="empty-panel authenticated-empty" %}
             {% endfor %}
         </div>
     </div>

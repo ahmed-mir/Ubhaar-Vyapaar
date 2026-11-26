@@ -17,9 +17,40 @@ test.describe("contact form local QA", () => {
     await page.getByRole("button", { name: "Send message" }).click();
 
     await expect(page).toHaveURL(/\/contact\/$/);
-    await expect(page.getByRole("status")).toContainText("Thanks for contacting Ubhaar-Vyapaar.");
-    await expect(page.getByRole("status")).toContainText("Your message has been received.");
+    await expect(page.locator(".messages .message")).toContainText("Thanks for contacting Ubhaar-Vyapaar.");
+    await expect(page.locator(".messages .message")).toContainText("Your message has been received.");
+    const flashMessage = page.locator(".messages .message");
+    await expect(flashMessage).toBeVisible();
+    const dismissMessage = flashMessage.getByRole("button", { name: "Dismiss message" });
+    await dismissMessage.focus();
+    await page.keyboard.press("Enter");
+    await expect(flashMessage).toHaveCount(0);
     expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);
+  });
+
+  test("submission shows progress and prevents repeated submission while waiting", async ({ page }) => {
+    await page.goto("/contact/");
+    const dispatchResult = await page.evaluate(() => {
+      const form = document.querySelector(".contact-form");
+      const submitter = form.querySelector("button[type='submit']");
+      const firstEvent = new SubmitEvent("submit", { bubbles: true, cancelable: true, submitter });
+      form.dispatchEvent(firstEvent);
+      const secondEvent = new SubmitEvent("submit", { bubbles: true, cancelable: true, submitter });
+      form.dispatchEvent(secondEvent);
+      return {
+        firstAllowed: !firstEvent.defaultPrevented,
+        secondPrevented: secondEvent.defaultPrevented,
+        busy: form.getAttribute("aria-busy"),
+        ariaDisabled: submitter.getAttribute("aria-disabled")
+      };
+    });
+
+    await expect(page.locator("#form-status")).toContainText("Submitting. Please wait.");
+    await expect(page.getByRole("button", { name: /submitting: send message/i })).toBeVisible();
+    expect(dispatchResult.firstAllowed).toBe(true);
+    expect(dispatchResult.secondPrevented).toBe(true);
+    expect(dispatchResult.busy).toBe("true");
+    expect(dispatchResult.ariaDisabled).toBe("true");
   });
 
   test("contact page fits required responsive widths without horizontal overflow", async ({ page }) => {

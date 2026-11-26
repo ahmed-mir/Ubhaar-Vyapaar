@@ -120,11 +120,8 @@
                     {% endif %}
                 </article>
             {% empty %}
-                <div class="empty-panel quote-requests-empty">
-                    <h2>You haven't requested a quote yet</h2>
-                    <p>Find manufacturing capacity and share your order requirements with a manufacturer.</p>
-                    <a class="button button-primary" href="{% url 'marketplace' %}">Browse marketplace</a>
-                </div>
+                {% url 'marketplace' as browse_marketplace_url %}
+                {% include "marketplace/includes/empty_state.html" with heading_id="quote-requests-empty-title" heading="You haven't requested a quote yet" description="Find manufacturing capacity and share your order requirements with a manufacturer." action_url=browse_marketplace_url action_label="Browse marketplace" extra_classes="empty-panel quote-requests-empty" %}
             {% endfor %}
         </section>
     </div>

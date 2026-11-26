@@ -192,10 +192,7 @@
                             <p>{{ order_message.body|linebreaksbr }}</p>
                         </article>
                     {% empty %}
-                        <div class="order-messages-empty">
-                            <h3>No messages yet</h3>
-                            <p>Use this thread for order-specific updates and questions.</p>
-                        </div>
+                        {% include "marketplace/includes/empty_state.html" with heading_id="order-messages-empty-title" heading="No messages yet" heading_level="h3" description="Use this thread for order-specific updates and questions." extra_classes="order-messages-empty" %}
                     {% endfor %}
                 </section>
 

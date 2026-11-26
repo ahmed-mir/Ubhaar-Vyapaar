@@ -6,7 +6,7 @@
         <p id="{{ field.auto_id }}_helptext" class="helptext">{{ field.help_text }}</p>
     {% endif %}
     {% if field.errors %}
-        <div id="{{ field.auto_id }}_error" class="field-errors" role="alert">
+        <div id="{{ field.auto_id }}_error" class="field-errors">
             <ul class="errorlist">
                 {% for error in field.errors %}<li>{{ error }}</li>{% endfor %}
             </ul>

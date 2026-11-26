@@ -1,0 +1,7 @@
+<section class="empty-state {{ extra_classes|default:'' }}" aria-labelledby="{{ heading_id }}">
+    {% if heading_level == "h3" %}<h3 id="{{ heading_id }}">{{ heading }}</h3>{% else %}<h2 id="{{ heading_id }}">{{ heading }}</h2>{% endif %}
+    <p>{{ description }}</p>
+    {% if action_url and action_label %}
+        <a class="{{ action_class|default:'button button-primary' }}" href="{{ action_url }}">{{ action_label }}</a>
+    {% endif %}
+</section>

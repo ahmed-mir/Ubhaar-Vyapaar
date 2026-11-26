@@ -1,13 +1,6 @@
 {% load accessibility %}
 
-{% if form.non_field_errors %}
-    <div class="form-error-summary" role="alert" tabindex="-1">
-        <p>
-            Please review the form errors below.
-        </p>
-        {{ form.non_field_errors }}
-    </div>
-{% endif %}
+{% include "marketplace/includes/form_error_summary.html" with form=form %}
 
 {% for field in form %}
     <div class="form-field{% if field.errors %} form-field-error{% endif %}{% if field.field.widget.input_type == 'checkbox' %} form-field-checkbox{% endif %}">
@@ -34,7 +27,7 @@
         {% endif %}
 
         {% if field.errors %}
-            <div id="{{ field.auto_id }}_error" class="field-errors" role="alert">
+            <div id="{{ field.auto_id }}_error" class="field-errors">
                 <ul class="errorlist">
                     {% for error in field.errors %}
                         <li>{{ error }}</li>

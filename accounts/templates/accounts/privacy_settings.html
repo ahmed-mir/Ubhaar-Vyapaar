@@ -26,9 +26,7 @@
             {% else %}
                 <form method="post" action="{% url 'close_account' %}" class="styled-form auth-form password-reset-form" novalidate>
                     {% csrf_token %}
-                    {% if closure_form.non_field_errors %}
-                        <div class="field-errors" role="alert">{{ closure_form.non_field_errors }}</div>
-                    {% endif %}
+                    {% include "marketplace/includes/form_error_summary.html" with form=closure_form %}
                     {% include "accounts/includes/account_field.html" with field=closure_form.password %}
                     {% include "accounts/includes/account_field.html" with field=closure_form.confirmation %}
                     <button class="button button-danger form-submit" type="submit">Close and anonymize account</button>

@@ -20,6 +20,7 @@
     --color-text-soft: #78817c;
     --color-border: #dfe4df;
     --color-border-strong: #c5cec6;
+    --color-control-border: #7d897f;
     --color-border-subtle: rgba(22, 36, 31, 0.08);
     --color-primary: var(--brand-900);
     --color-primary-hover: var(--brand-800);

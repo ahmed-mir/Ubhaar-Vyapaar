@@ -42,10 +42,7 @@
                     </form>
                 </article>
             {% empty %}
-                <section class="empty-panel authenticated-empty" aria-labelledby="notifications-empty-title">
-                    <h2 id="notifications-empty-title">No notifications yet.</h2>
-                    <p>Updates about your quotes, orders, and messages will appear here.</p>
-                </section>
+                {% include "marketplace/includes/empty_state.html" with heading_id="notifications-empty-title" heading="No notifications yet." description="Updates about your quotes, orders, and messages will appear here." extra_classes="empty-panel authenticated-empty" %}
             {% endfor %}
         </div>
 

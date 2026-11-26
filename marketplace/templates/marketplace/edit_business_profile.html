@@ -44,12 +44,7 @@
             <section class="profile-edit-fields" aria-labelledby="profile-edit-fields-title">
                 <h2 id="profile-edit-fields-title">Business details</h2>
                 <p>Business name, description, and location.</p>
-                {% if form.non_field_errors %}
-                    <div class="form-error-summary" role="alert" tabindex="-1">
-                        <p>Please review the form errors below.</p>
-                        {{ form.non_field_errors }}
-                    </div>
-                {% endif %}
+                {% include "marketplace/includes/form_error_summary.html" with form=form %}
                 {% for field in form %}
                     {% if field.name == "city" %}
                         <div class="manufacturer-location-grid profile-location-grid">

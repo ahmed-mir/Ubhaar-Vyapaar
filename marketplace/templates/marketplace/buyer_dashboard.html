@@ -92,7 +92,7 @@
             {% endfor %}
 
             {% if not pending_quotations and not funding_milestones and not review_milestones and not release_milestones %}
-                <div class="buyer-dashboard__empty buyer-dashboard__empty--inline">
+                <div class="buyer-dashboard__empty buyer-dashboard__empty--inline empty-state">
                     <span class="buyer-dashboard__empty-mark" aria-hidden="true">✓</span>
                     <div>
                         <h3>Nothing waiting for your decision</h3>
@@ -100,6 +100,7 @@
                             <p>New quotations and milestone tasks will appear here.</p>
                         {% else %}
                             <p>Browse manufacturing capacity to start sourcing. New quotations and milestone tasks will appear here.</p>
+                            <a class="button button-secondary" href="{% url 'marketplace' %}">Browse marketplace</a>
                         {% endif %}
                     </div>
                 </div>
@@ -139,11 +140,8 @@
                     {% endif %}
                 </article>
             {% empty %}
-                <div class="buyer-dashboard__empty">
-                    <h3>No quote requests yet</h3>
-                    <p>Browse manufacturing capacity and send a request when you find a fit.</p>
-                    <a class="button button-secondary" href="{% url 'marketplace' %}">Browse marketplace</a>
-                </div>
+                {% url 'marketplace' as browse_marketplace_url %}
+                {% include "marketplace/includes/empty_state.html" with heading_id="buyer-requests-empty-title" heading="No quote requests yet" heading_level="h3" description="Browse manufacturing capacity and send a request when you find a fit." action_url=browse_marketplace_url action_label="Browse marketplace" action_class="button button-secondary" extra_classes="buyer-dashboard__empty" %}
             {% endfor %}
         </div>
     </section>
@@ -175,10 +173,7 @@
                     <a class="button button-secondary" href="{% url 'order_detail' order.pk %}">View order</a>
                 </article>
             {% empty %}
-                <div class="buyer-dashboard__empty">
-                    <h3>No orders in progress</h3>
-                    <p>When you accept a quotation, the resulting order will be available to track here.</p>
-                </div>
+                {% include "marketplace/includes/empty_state.html" with heading_id="buyer-active-orders-empty-title" heading="No orders in progress" heading_level="h3" description="When you accept a quotation, the resulting order will be available to track here." extra_classes="buyer-dashboard__empty" %}
             {% endfor %}
         </div>
     </section>
@@ -211,11 +206,8 @@
                     {% endif %}
                 </article>
             {% empty %}
-                <div class="buyer-dashboard__empty">
-                    <h3>No saved listings yet</h3>
-                    <p>Save listings you are considering and they will be ready here for comparison.</p>
-                    <a class="button button-secondary" href="{% url 'marketplace' %}">Browse marketplace</a>
-                </div>
+                {% url 'marketplace' as browse_marketplace_url %}
+                {% include "marketplace/includes/empty_state.html" with heading_id="buyer-saved-empty-title" heading="No saved listings yet" heading_level="h3" description="Save listings you are considering and they will be ready here for comparison." action_url=browse_marketplace_url action_label="Browse marketplace" action_class="button button-secondary" extra_classes="buyer-dashboard__empty" %}
             {% endfor %}
         </div>
     </section>
@@ -250,10 +242,7 @@
                     </form>
                 </article>
             {% empty %}
-                <div class="buyer-dashboard__empty buyer-dashboard__empty--compact">
-                    <h3>No notifications yet</h3>
-                    <p>Updates about quote requests and manufacturer responses will appear here.</p>
-                </div>
+                {% include "marketplace/includes/empty_state.html" with heading_id="buyer-notifications-empty-title" heading="No notifications yet" heading_level="h3" description="Updates about quote requests and manufacturer responses will appear here." extra_classes="buyer-dashboard__empty buyer-dashboard__empty--compact" %}
             {% endfor %}
         </div>
     </section>

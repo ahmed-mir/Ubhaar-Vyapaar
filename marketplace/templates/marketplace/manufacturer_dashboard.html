@@ -121,11 +121,8 @@
                     {% endif %}
                 </article>
             {% empty %}
-                <div class="manufacturer-dashboard__empty manufacturer-dashboard__empty--requests">
-                    <h3>No quote requests yet</h3>
-                    <p>Buyer requests will appear here when buyers enquire about your listings.</p>
-                    <a class="button button-secondary" href="{% url 'my_listings' %}">Manage listings</a>
-                </div>
+                {% url 'my_listings' as manage_listings_url %}
+                {% include "marketplace/includes/empty_state.html" with heading_id="manufacturer-requests-empty-title" heading="No quote requests yet" heading_level="h3" description="Buyer requests will appear here when buyers enquire about your listings." action_url=manage_listings_url action_label="Manage listings" action_class="button button-secondary" extra_classes="manufacturer-dashboard__empty manufacturer-dashboard__empty--requests" %}
             {% endfor %}
         </div>
     </section>
@@ -213,11 +210,8 @@
                 <p><strong>{{ stats.active_listings }}</strong> active <span aria-hidden="true">·</span> <strong>{{ stats.public_listings }}</strong> public <span aria-hidden="true">·</span> <strong>{{ stats.total_listings }}</strong> total</p>
             </div>
         {% else %}
-            <div class="manufacturer-dashboard__empty manufacturer-dashboard__empty--listing">
-                <h3>Publish your manufacturing capacity</h3>
-                <p>Create a listing to share your available capacity and start receiving buyer requests.</p>
-                <a class="button button-primary" href="{% url 'create_listing' %}">Create your first listing</a>
-            </div>
+            {% url 'create_listing' as create_listing_url %}
+            {% include "marketplace/includes/empty_state.html" with heading_id="manufacturer-listings-empty-title" heading="Publish your manufacturing capacity" heading_level="h3" description="Create a listing to share your available capacity and start receiving buyer requests." action_url=create_listing_url action_label="Create your first listing" extra_classes="manufacturer-dashboard__empty manufacturer-dashboard__empty--listing" %}
         {% endif %}
     </section>
 

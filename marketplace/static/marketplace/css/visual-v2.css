@@ -5970,3 +5970,197 @@ textarea {
     color: #42505c;
     opacity: 1;
 }
+
+/* Phase 8B: visible control boundaries, prose links, and keyboard targets. */
+.styled-form input:not([type="checkbox"]):not([type="radio"]):not([type="file"]),
+.styled-form select,
+.styled-form textarea,
+.form-field input:not([type="checkbox"]):not([type="radio"]):not([type="file"]),
+.form-field select,
+.form-field textarea,
+.marketplace-filter-field input:not([type="checkbox"]):not([type="radio"]):not([type="file"]),
+.marketplace-filter-field select,
+.marketplace-filter-field textarea,
+.waitlist-form input:not([type="checkbox"]):not([type="radio"]):not([type="file"]),
+.waitlist-form select,
+.waitlist-form textarea {
+    border-color: var(--color-control-border);
+}
+
+.styled-form input:not([type="checkbox"]):not([type="radio"]):not([type="file"])[aria-invalid="true"],
+.styled-form select[aria-invalid="true"],
+.styled-form textarea[aria-invalid="true"],
+.form-field input:not([type="checkbox"]):not([type="radio"]):not([type="file"])[aria-invalid="true"],
+.form-field select[aria-invalid="true"],
+.form-field textarea[aria-invalid="true"],
+.marketplace-filter-field input:not([type="checkbox"]):not([type="radio"]):not([type="file"])[aria-invalid="true"],
+.marketplace-filter-field select[aria-invalid="true"],
+.marketplace-filter-field textarea[aria-invalid="true"],
+.waitlist-form input:not([type="checkbox"]):not([type="radio"]):not([type="file"])[aria-invalid="true"],
+.waitlist-form select[aria-invalid="true"],
+.waitlist-form textarea[aria-invalid="true"] {
+    border-color: var(--color-danger);
+}
+
+.styled-form input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):disabled,
+.styled-form select:disabled,
+.styled-form textarea:disabled,
+.form-field input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):disabled,
+.form-field select:disabled,
+.form-field textarea:disabled,
+.marketplace-filter-field input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):disabled,
+.marketplace-filter-field select:disabled,
+.marketplace-filter-field textarea:disabled,
+.waitlist-form input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):disabled,
+.waitlist-form select:disabled,
+.waitlist-form textarea:disabled {
+    border-color: var(--color-control-border);
+    background: var(--color-surface-muted);
+    color: var(--color-text-muted);
+    cursor: not-allowed;
+}
+
+:where(.public-info-page, .public-content-page, .legal-page, .privacy-page, .contact-guidance, .manufacturer-about-copy, .order-conversation)
+    :is(p, li, dd) a:not(.button):not(.text-action):not(.nav-link) {
+    text-decoration-line: underline;
+    text-decoration-thickness: 0.08em;
+    text-underline-offset: 0.18em;
+}
+
+.form-error-summary {
+    scroll-margin-block: 24px;
+}
+
+.form-error-summary a {
+    min-height: 32px;
+    text-decoration: underline;
+    text-underline-offset: 0.16em;
+}
+
+.form-submit-status {
+    display: inline-block;
+    margin-inline-start: 8px;
+    color: var(--color-text-muted);
+    font-weight: var(--font-weight-medium);
+}
+
+.form-submitting .button-processing {
+    cursor: progress;
+}
+
+.messages {
+    display: grid;
+    gap: 8px;
+}
+
+.messages .message {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+}
+
+.message-dismiss {
+    display: inline-grid;
+    flex: 0 0 44px;
+    min-width: 44px;
+    min-height: 44px;
+    place-items: center;
+    margin: -10px -10px -10px auto;
+    border: 0;
+    border-radius: var(--radius-sm);
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    font-size: 22px;
+    line-height: 1;
+    cursor: pointer;
+}
+
+.message-dismiss:hover {
+    background: rgba(22, 36, 31, 0.08);
+}
+
+.message-dismiss:focus-visible {
+    outline: 3px solid var(--color-focus);
+    outline-offset: 2px;
+}
+
+.cookie-preference-toast {
+    position: fixed;
+    z-index: 1200;
+    right: max(12px, env(safe-area-inset-right));
+    bottom: max(12px, env(safe-area-inset-bottom));
+    left: max(12px, env(safe-area-inset-left));
+    display: flex;
+    width: min(520px, calc(100% - 24px));
+    min-height: 60px;
+    align-items: center;
+    gap: 12px;
+    margin-inline: auto;
+    padding: 8px 12px 8px 16px;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    background: var(--color-surface);
+    color: var(--color-text);
+    box-shadow: var(--shadow-md);
+}
+
+.cookie-preference-toast[hidden] {
+    display: none;
+}
+
+.cookie-preference-toast [data-cookie-preference-message] {
+    flex: 1;
+    line-height: 1.45;
+}
+
+.empty-state {
+    min-width: 0;
+}
+
+.empty-state > :last-child {
+    margin-bottom: 0;
+}
+
+.empty-state > .button {
+    width: fit-content;
+    margin-top: 8px;
+}
+
+.auth-consent-note a,
+.waitlist-privacy a,
+.quote-workflow-context :is(p, li, dd) a:not(.button),
+.landing-faq-list .faq-answer-motion p a {
+    text-decoration: underline;
+    text-underline-offset: 0.18em;
+}
+
+.auth-form .password-input-shell .password-visibility-toggle {
+    min-width: 44px;
+    min-height: 44px;
+}
+
+@media (max-width: 640px) {
+    .site-nav .nav-link,
+    .site-footer .footer-links a,
+    .site-footer .footer-cookie-button,
+    .marketplace-filter-close,
+    .marketplace-filter-chips a,
+    .marketplace-pagination a,
+    .profile-pagination a,
+    .password-visibility-toggle {
+        min-height: 44px;
+    }
+
+    .pagination .button,
+    .profile-pagination .button {
+        min-height: 44px;
+    }
+
+    .marketplace-filter-chips a {
+        min-width: 44px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+    }
+}
