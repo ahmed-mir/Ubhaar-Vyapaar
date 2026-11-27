@@ -1326,7 +1326,7 @@ h1, h2, h3, h4 { letter-spacing: -0.02em; }
     aspect-ratio: auto;
     object-fit: contain;
 }
-.detail-commercial-panel { position: sticky; top: 20px; padding: 22px; }
+.detail-commercial-panel { position: sticky; top: 88px; padding: 22px; }
 .detail-commercial-panel .eyebrow, .detail-flow .eyebrow, .quote-process .eyebrow, .similar-listings > .eyebrow, .manufacturer-about .eyebrow, .manufacturer-reviews .eyebrow, .manufacturer-listings .eyebrow { color: var(--color-text-muted); font-family: inherit; font-size: 12px; font-weight: var(--font-weight-medium); line-height: 1.4; letter-spacing: .04em; text-transform: none; }
 .detail-commercial-panel h2 { margin-bottom: 10px; color: var(--color-primary); font-size: 21px; }
 .detail-commercial-panel .detail-facts { margin: 0; }
@@ -1367,7 +1367,7 @@ h1, h2, h3, h4 { letter-spacing: -0.02em; }
     .marketplace-filter-disclosure:not([open]) .marketplace-filter-rail { display: none; }
     .marketplace-filter-disclosure[open] .marketplace-filter-close { display: inline-flex; }
     .listing-sheet-overview { display: flex; flex-direction: column; }
-    .detail-commercial-panel { position: static; order: -1; width: 100%; }
+    .detail-commercial-panel { position: static; width: 100%; }
     .listing-sheet-media { width: 100%; max-height: none; }
     .listing-detail-content { grid-template-columns: minmax(0, 1fr); }
 }
@@ -5027,7 +5027,7 @@ h1, h2, h3, h4 { letter-spacing: -0.02em; }
 
 @media (max-width: 900px) {
     .listing-spec-row { display: flex; }
-    .listing-sheet-overview .detail-commercial-panel { order: -1; }
+    .listing-sheet-overview .detail-commercial-panel { order: 0; }
     .listing-sheet-media { max-height: 320px; }
 }
 @media (max-width: 600px) {

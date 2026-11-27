@@ -52,6 +52,13 @@ listing = CapacityListing.objects.create(
     availability_status=CapacityListing.AvailabilityStatus.AVAILABLE,
     is_active=True,
 )
+quote_listing = CapacityListing.objects.create(
+    manufacturer=manufacturer, title=f"{prefix} quotation pricing capacity",
+    category=CapacityListing.Category.PACKAGING, description="Pricing is provided through a quotation.",
+    price_per_unit=Decimal("0.00"), minimum_quantity=25,
+    production_days=10, availability_status=CapacityListing.AvailabilityStatus.AVAILABLE,
+    is_active=True,
+)
 paused_listing = CapacityListing.objects.create(
     manufacturer=manufacturer, title=f"{prefix} paused capacity",
     category=CapacityListing.Category.METAL, description="Temporarily paused.",
@@ -85,6 +92,7 @@ print(json.dumps({
     "buyerPassword": "temporary-password",
     "listingTitle": listing.title,
     "listingPath": reverse("listing_detail", args=[listing.pk]),
+    "quotePath": reverse("listing_detail", args=[quote_listing.pk]),
     "samplePath": reverse("listing_detail", args=[sample_listing.pk]),
     "pausedPath": reverse("listing_detail", args=[paused_listing.pk]),
     "manufacturerPath": reverse("manufacturer_profile", args=[manufacturer.pk]),
@@ -110,6 +118,7 @@ print(json.dumps({
 
       await expect(page.getByRole("heading", { level: 1, name: fixture.listingTitle })).toBeVisible();
       await expect(page.locator(".listing-sheet-heading .trust-badge")).toHaveText("Verified Manufacturer");
+      await expect(page.locator(".listing-sheet-heading .listing-availability")).toHaveText("Available");
       await expect(page.locator(".detail-manufacturer-line")).toContainText("Leh, Jammu and Kashmir");
       await expect(page.locator(".detail-commercial-panel")).toContainText("185 / unit");
       await expect(page.locator(".detail-commercial-panel")).toContainText("50 units");
@@ -119,6 +128,10 @@ print(json.dumps({
       await expect(page.getByRole("link", { name: "Buy Now" })).toBeVisible();
       await expect(page.getByRole("link", { name: "Request Quote" })).toBeVisible();
       await expect(page.getByText("Purchase at the displayed fixed price and terms.")).toBeVisible();
+      const relatedListings = page.locator(".similar-listings");
+      await expect(relatedListings).toBeVisible();
+      await expect(relatedListings).toContainText("sample capacity");
+      await expect(relatedListings).not.toContainText(fixture.listingTitle);
       await expect(page.locator(".description-content script")).toHaveCount(0);
       await expect(page.locator(".description-content")).toContainText("CNC machining for custom aluminium components.");
       await expect(page.locator(".listing-sheet-media .detail-image-placeholder")).toBeVisible();
@@ -145,11 +158,20 @@ print(json.dumps({
       await expect(page.getByRole("link", { name: "Buy Now" })).toHaveCount(0);
       await expect(page.getByRole("link", { name: "Request Quote" })).toHaveCount(0);
 
-      const screenshotDir = path.join("test-results", "phase4-listing-detail");
+      const screenshotDir = path.join("phase8f-screenshots");
       fs.mkdirSync(screenshotDir, { recursive: true });
+      await page.setViewportSize({ width: 390, height: 844 });
+      await page.goto(fixture.samplePath);
+      await page.screenshot({ path: path.join(screenshotDir, "sample-listing-390.png"), fullPage: true });
+      await page.goto(fixture.quotePath);
+      await expect(page.getByText("Provided through a quotation", { exact: true })).toBeVisible();
+      await expect(page.getByRole("link", { name: "Buy Now" })).toHaveCount(0);
+      await expect(page.getByRole("link", { name: "Request Quote" })).toBeVisible();
+      await page.screenshot({ path: path.join(screenshotDir, "quotation-listing-390.png"), fullPage: true });
       for (const width of [320, 390, 768, 1024, 1440]) {
         await page.setViewportSize({ width, height: 900 });
         await page.goto(fixture.listingPath);
+        await page.evaluate(() => window.scrollTo(0, 0));
         await expect(page.locator("h1")).toHaveCount(1);
         expect(
           await page.evaluate(() => document.documentElement.scrollWidth),
@@ -159,6 +181,15 @@ print(json.dumps({
         await expect(page.getByRole("link", { name: "Request Quote" })).toBeVisible();
         const media = await page.locator(".listing-sheet-media").boundingBox();
         expect(media.width).toBeLessThanOrEqual(width);
+        const commercialPanel = page.locator(".detail-commercial-panel");
+        const commercialBox = await commercialPanel.boundingBox();
+        if (width <= 900) {
+          expect(media.y).toBeLessThan(commercialBox.y);
+          await expect(commercialPanel).toHaveCSS("position", "static");
+        } else {
+          await expect(commercialPanel).toHaveCSS("position", "sticky");
+          await expect(commercialPanel).toHaveCSS("top", "88px");
+        }
         const placeholder = page.locator(".listing-sheet-media .detail-image-placeholder");
         if (await placeholder.isVisible()) {
           const placeholderBox = await placeholder.boundingBox();

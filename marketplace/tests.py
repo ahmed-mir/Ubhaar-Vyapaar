@@ -952,6 +952,54 @@ class MarketplaceDiscoveryTrustTests(TestCase):
             reverse("buy_now", args=[listing.pk]),
         )
 
+    def test_detail_does_not_present_zero_price_as_free_fixed_price(self):
+        listing = self.create_listing(self.verified, "Quotation priced capacity")
+        listing.price_per_unit = Decimal("0.00")
+        listing.save(update_fields=["price_per_unit"])
+
+        response = self.client.get(reverse("listing_detail", args=[listing.pk]))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Provided through a quotation")
+        self.assertNotContains(response, "₹0.00")
+        self.assertNotContains(response, reverse("buy_now", args=[listing.pk]))
+        self.assertContains(response, reverse("request_quote", args=[listing.pk]))
+
+    def test_related_detail_listings_use_public_eligibility_and_exclude_current(self):
+        current = self.create_listing(self.verified, "Current related-listing source")
+        eligible = self.create_listing(self.verified, "Public related capacity")
+        sample = self.create_listing(self.demo, "Sample related capacity")
+        inactive = self.create_listing(self.verified, "Inactive related capacity")
+        inactive.is_active = False
+        inactive.save(update_fields=["is_active"])
+        private_user = get_user_model().objects.create_user(
+            username="private-related-maker",
+            password="password",
+            role="MANUFACTURER",
+        )
+        private_manufacturer = ManufacturerProfile.objects.create(
+            user=private_user,
+            business_name="Private Related Works",
+            city="Pune",
+            state="Maharashtra",
+            is_verified=False,
+        )
+        private = self.create_listing(
+            private_manufacturer,
+            "Unverified related capacity",
+        )
+
+        response = self.client.get(reverse("listing_detail", args=[current.pk]))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(
+            [item.pk for item in response.context["similar_listings"]],
+            [sample.pk, eligible.pk],
+        )
+        self.assertNotIn(current.pk, [item.pk for item in response.context["similar_listings"]])
+        self.assertNotIn(inactive.pk, [item.pk for item in response.context["similar_listings"]])
+        self.assertNotIn(private.pk, [item.pk for item in response.context["similar_listings"]])
+
     def test_sample_profile_hides_reviews_and_real_profile_reviews_remain_visible(self):
         self.create_review(
             self.demo,
