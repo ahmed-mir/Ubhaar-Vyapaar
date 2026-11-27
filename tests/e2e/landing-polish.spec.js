@@ -14,11 +14,11 @@ test("landing search is the primary action and fits supported viewports", async 
     const searchButton = page.getByRole("button", { name: "Search capacity" });
     await expect(searchButton).toBeVisible();
     await expect(page.locator(".landing-hero-copy").getByRole("link", { name: "Register as Manufacturer" })).toBeVisible();
-    await expect(page.locator(".landing-hero-copy")).toContainText("Buy Now on eligible fixed-price listings");
-    await expect(page.locator(".landing-hero-copy")).toContainText("Request Quote for custom quantities and terms");
+    await expect(page.locator(".landing-hero-copy")).toContainText("Compare active Indian manufacturing capacity");
+    await expect(page.getByRole("link", { name: "Browse all listings" })).toBeVisible();
     await expect(page.getByText("No real funds are transferred").first()).toBeVisible();
-    if ((await page.locator(".landing-featured").count()) === 0) {
-      const emptyPreview = page.locator(".landing-preview-empty");
+    if ((await page.locator(".landing-visual-primary").count()) === 0) {
+      const emptyPreview = page.locator(".landing-visual-empty");
       await expect(emptyPreview).toBeVisible();
       await expect(emptyPreview.getByRole("link", { name: "Browse marketplace" })).toBeVisible();
     }
@@ -42,7 +42,7 @@ test("public journeys and account creation links match available workflows", asy
   await dismissCookieBanner(page);
 
   await expect(page.getByText("Buy Now on eligible fixed-price listings", { exact: false }).first()).toBeVisible();
-  await expect(page.getByText("Request Quote for custom quantities and terms", { exact: false }).first()).toBeVisible();
+  await expect(page.locator(".landing-hero-copy")).toContainText("request a quote for custom work");
   const paymentNotice = page.getByRole("note", { name: "Pilot payment status" });
   await expect(paymentNotice).toContainText("Razorpay Test Mode");
   await expect(paymentNotice).toContainText(/no real funds are transferred/i);
@@ -61,4 +61,30 @@ test("public journeys and account creation links match available workflows", asy
 
   await page.getByRole("link", { name: "Create Buyer account" }).click();
   await expect(page.getByRole("heading", { level: 1, name: "Create your buyer account" })).toBeVisible();
+});
+
+test("homepage hero hierarchy, pilot disclosure, and responsive layout are clear", async ({ page }) => {
+  for (const width of [320, 390, 768, 1024, 1440]) {
+    await page.setViewportSize({ width, height: 900 });
+    await page.goto("/");
+    await dismissCookieBanner(page);
+
+    await expect(page.locator("main h1")).toHaveCount(1);
+    await expect(page.locator("main h1")).toContainText("Find manufacturers with spare capacity");
+    await expect(page.getByRole("searchbox", { name: "Search by product or process" })).toBeVisible();
+    await expect(page.getByRole("link", { name: "Browse all listings" })).toBeVisible();
+    await expect(page.locator(".landing-manufacturer-link")).toBeVisible();
+    await expect(page.getByRole("region", { name: "Public marketplace activity" })).toContainText("Marketplace pilot");
+    await expect(page.locator(".landing-visual-empty")).toBeVisible();
+    expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(width);
+  }
+
+  const searchbox = page.getByRole("searchbox", { name: "Search by product or process" });
+  await searchbox.focus();
+  await page.keyboard.press("Tab");
+  await expect(page.getByRole("button", { name: "Search capacity" })).toBeFocused();
+  await page.keyboard.press("Tab");
+  await expect(page.getByRole("link", { name: "Browse all listings" })).toBeFocused();
+  await page.keyboard.press("Tab");
+  await expect(page.locator(".landing-manufacturer-link")).toBeFocused();
 });

@@ -21,7 +21,7 @@
         <div class="landing-hero-copy">
                 <p class="landing-badge"><span aria-hidden="true"></span>Marketplace pilot</p>
                 <h1 id="landing-title">Find manufacturers with spare capacity for small&#8209;batch orders</h1>
-                <p class="landing-lede">Browse Indian manufacturing capacity. Buy Now on eligible fixed-price listings, or Request Quote for custom quantities and terms.</p>
+                <p class="landing-lede">Compare active Indian manufacturing capacity by process, minimum order and lead time. Use Buy Now where fixed terms apply, or request a quote for custom work.</p>
                 <form class="landing-search" method="get" action="{% url 'marketplace' %}" role="search">
                     <label for="landing-query">Search by product or process</label>
                     <div class="landing-search-row">
@@ -29,39 +29,52 @@
                         <button class="button button-primary" type="submit" data-analytics="hero_browse">Search capacity</button>
                     </div>
                 </form>
-                <a class="button button-secondary landing-manufacturer-link" href="{{ manufacturer_cta_url }}" data-analytics="hero_list">{% if user.is_authenticated and user.role == "MANUFACTURER" %}List capacity{% elif user.is_authenticated %}For manufacturers{% else %}Register as Manufacturer{% endif %}</a>
+                <div class="landing-hero-actions">
+                    <a class="button button-secondary" href="{% url 'marketplace' %}">Browse all listings</a>
+                    <a class="landing-manufacturer-link" href="{{ manufacturer_cta_url }}" data-analytics="hero_list">{% if user.is_authenticated and user.role == "MANUFACTURER" %}List capacity{% elif user.is_authenticated %}For manufacturers{% else %}Register as Manufacturer{% endif %} <span aria-hidden="true">→</span></a>
+                </div>
             </div>
 
-            {% if featured_listings %}
-                {% with preview_listing=featured_listings.0 %}
-                {% listing_image_sources preview_listing 720 420 "fill" as preview_image_sources %}
-                <aside class="landing-preview" aria-label="Marketplace listing preview">
-                    <div class="landing-preview-heading"><span>Marketplace listing</span>{% if preview_listing.manufacturer.is_demo %}<span class="landing-sample-label">Sample</span>{% else %}<span class="landing-preview-label">Listing preview</span>{% endif %}</div>
-                    <article class="landing-preview-card">
-                        <div class="landing-preview-media">
-                            {% if preview_image_sources.src %}<img src="{{ preview_image_sources.src }}"{% if preview_image_sources.srcset %} srcset="{{ preview_image_sources.srcset }}" sizes="(max-width: 640px) calc(100vw - 36px), (max-width: 1024px) 48vw, 520px"{% endif %} alt="" width="720" height="420" loading="eager" decoding="async" fetchpriority="high">{% else %}<span aria-hidden="true">{{ preview_listing.get_category_display }}</span>{% endif %}
-                        </div>
-                        <div class="landing-preview-content">
-                            <p class="eyebrow">{{ preview_listing.get_category_display }}</p>
-                            <h2>{{ preview_listing.title }}</h2>
-                            <p class="landing-preview-maker">{{ preview_listing.manufacturer.business_name }} · {{ preview_listing.manufacturer.city }}{% if preview_listing.manufacturer.state %}, {{ preview_listing.manufacturer.state|state_label }}{% endif %}</p>
-                            <dl class="landing-preview-facts">
-                                {% if preview_listing.minimum_quantity %}<div><dt>MOQ</dt><dd>{{ preview_listing.minimum_quantity }}</dd></div>{% endif %}
-                                {% if preview_listing.production_days %}<div><dt>Lead time</dt><dd>{{ preview_listing.production_days }} day{{ preview_listing.production_days|pluralize }}</dd></div>{% endif %}
-                                {% if preview_listing.price_per_unit %}<div><dt>Unit price</dt><dd>₹{{ preview_listing.price_per_unit }}</dd></div>{% endif %}
-                            </dl>
-                            {% if preview_listing.manufacturer.is_publicly_verified %}<span class="landing-preview-verified">Verified profile</span>{% endif %}
-                        </div>
-                    </article>
-                    <div class="landing-preview-flow"><p>Choose your route</p><ol aria-label="Buy Now or Request Quote workflow"><li>Buy Now when eligible</li><li>Request Quote for custom terms</li><li>Track your order</li></ol></div>
+            {% if hero_listings %}
+                <aside class="landing-visual" aria-label="Featured public manufacturing capacity">
+                    {% with hero_listing=hero_listings.0 %}
+                    {% listing_image_sources hero_listing 960 640 "fill" as hero_image_sources %}
+                    <a class="landing-visual-primary" href="{% url 'listing_detail' hero_listing.pk %}" aria-label="View featured listing: {{ hero_listing.title }}">
+                        {% if hero_image_sources.src %}<img src="{{ hero_image_sources.src }}"{% if hero_image_sources.srcset %} srcset="{{ hero_image_sources.srcset }}" sizes="(max-width: 800px) calc(100vw - 36px), (max-width: 1200px) 44vw, 560px"{% endif %} alt="" width="960" height="640" loading="eager" decoding="async" fetchpriority="high">{% endif %}
+                        <span class="landing-visual-primary-caption"><span class="landing-visual-kicker">{{ hero_listing.get_category_display }} · Featured capacity</span><strong>{{ hero_listing.title }}</strong><span>{{ hero_listing.manufacturer.city }}{% if hero_listing.manufacturer.state %}, {{ hero_listing.manufacturer.state|state_label }}{% endif %}</span></span>
+                        {% if hero_listing.manufacturer.is_publicly_verified %}<span class="landing-visual-verified">Verified profile</span>{% endif %}
+                    </a>
+                    {% endwith %}
+                    {% if hero_listings|length > 1 %}
+                    <div class="landing-visual-secondary" aria-label="More featured listings">
+                        {% for hero_listing in hero_listings|slice:"1:3" %}
+                        {% listing_image_sources hero_listing 480 320 "fill" as hero_image_sources %}
+                        <a class="landing-visual-tile" href="{% url 'listing_detail' hero_listing.pk %}" aria-label="View featured listing: {{ hero_listing.title }}">
+                            {% if hero_image_sources.src %}<img src="{{ hero_image_sources.src }}"{% if hero_image_sources.srcset %} srcset="{{ hero_image_sources.srcset }}" sizes="(max-width: 800px) 42vw, (max-width: 1200px) 22vw, 260px"{% endif %} alt="" width="480" height="320" loading="lazy" decoding="async">{% endif %}
+                            <span>{{ hero_listing.get_category_display }}</span>
+                        </a>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                    <p class="landing-visual-note">Selected from active public listings. Sample listings are labeled separately.</p>
                 </aside>
-                {% endwith %}
             {% else %}
-                <aside class="landing-preview landing-preview-empty" aria-label="Marketplace preview">
-                    <div class="landing-preview-heading"><span>Marketplace preview</span><span class="landing-preview-label">Listings</span></div>
-                    <div class="landing-preview-empty-content"><span class="landing-preview-empty-icon" aria-hidden="true">+</span><h2>Explore manufacturing capacity</h2><p>Listings show practical details such as location, minimum order quantity and production lead time when provided.</p><a href="{% url 'marketplace' %}">Browse marketplace</a></div>
+                <aside class="landing-visual landing-visual-empty" aria-label="Featured listing preview">
+                    <div><p class="eyebrow">Marketplace pilot</p><h2>Explore manufacturing capacity</h2><p>Featured imagery appears when eligible public listings are selected. Browse the marketplace for current capacity and clearly labeled Samples.</p><a class="button button-secondary" href="{% url 'marketplace' %}">Browse marketplace</a></div>
                 </aside>
             {% endif %}
+
+            <section class="landing-proof-strip" aria-label="Public marketplace activity">
+                {% if public_listing_metrics.listings %}
+                <div><strong>{{ public_listing_metrics.listings }}</strong><span>active public listings</span></div>
+                <div><strong>{{ public_listing_metrics.manufacturers }}</strong><span>manufacturers with active verified profiles</span></div>
+                <div><strong>{{ public_listing_metrics.categories }}</strong><span>categories with active public capacity</span></div>
+                <p>Counts exclude Sample profiles and inactive or paused listings. <a href="{% url 'trust_safety' %}">How verification works</a></p>
+                {% else %}
+                <div class="landing-proof-pilot"><strong>Marketplace pilot</strong><span>Public listing details are shown where provided. Sample profiles are labeled, and verification indicates profile status rather than a guarantee.</span></div>
+                <p>Review the <a href="{% url 'trust_safety' %}">Trust &amp; Safety guidance</a> before engaging.</p>
+                {% endif %}
+            </section>
         </div>
     </section>
 

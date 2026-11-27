@@ -3739,6 +3739,94 @@ class LandingPageTests(TestCase):
         self.assertRegex(content, r'<input[^>]+name="q"')
         self.assertContains(response, '<button class="button button-primary" type="submit" data-analytics="hero_browse">Search capacity</button>')
         self.assertContains(response, 'href="/accounts/register/manufacturer/" data-analytics="hero_list"')
+        self.assertContains(response, 'href="/marketplace/">Browse all listings</a>')
+        self.assertContains(response, 'aria-label="Public marketplace activity"')
+
+    def test_homepage_public_metrics_exclude_sample_unverified_and_unavailable_listings(self):
+        public_one = self.make_listing(
+            1, featured=True, image="listings/public-one.jpg",
+            category=CapacityListing.Category.METAL,
+        )
+        self.make_listing(
+            2, featured=True, image="listings/public-two.jpg",
+            category=CapacityListing.Category.PACKAGING,
+        )
+        self.make_listing(3, sample=True, featured=True, image="listings/sample.jpg")
+        self.make_listing(4, verified=False, featured=True, image="listings/unverified.jpg")
+        self.make_listing(5, active=False, featured=True, image="listings/inactive.jpg")
+        self.make_listing(
+            6, featured=True, image="listings/paused.jpg",
+            availability_status=CapacityListing.AvailabilityStatus.PAUSED,
+        )
+
+        response = self.client.get(reverse("home"))
+        metrics = response.context["public_listing_metrics"]
+        self.assertEqual(metrics, {"listings": 2, "manufacturers": 2, "categories": 2})
+        content = response.content.decode()
+        self.assertContains(response, "active public listings")
+        self.assertContains(response, "manufacturers with active verified profiles")
+        self.assertContains(response, "categories with active public capacity")
+        self.assertNotIn("Capacity listing 3", content)
+        self.assertNotIn("Capacity listing 4", content)
+        self.assertNotIn("Capacity listing 5", content)
+        self.assertNotIn("Capacity listing 6", content)
+        self.assertContains(response, public_one.title)
+
+    def test_homepage_hero_uses_diverse_public_featured_listing_images(self):
+        first = self.make_listing(
+            11, featured=True, image="listings/metal.jpg",
+            category=CapacityListing.Category.METAL,
+        )
+        second = self.make_listing(
+            12, featured=True, image="listings/packaging.jpg",
+            category=CapacityListing.Category.PACKAGING,
+        )
+        self.make_listing(
+            13, featured=True, sample=True, verified=True, image="listings/sample.jpg",
+            category=CapacityListing.Category.TEXTILES,
+        )
+
+        response = self.client.get(reverse("home"))
+        self.assertEqual(response.context["hero_listings"], [second, first])
+        self.assertContains(response, f'aria-label="View featured listing: {first.title}"')
+        self.assertContains(response, f'aria-label="View featured listing: {second.title}"')
+        self.assertContains(response, 'loading="eager" decoding="async" fetchpriority="high"')
+        self.assertContains(response, 'loading="lazy" decoding="async"')
+        self.assertNotContains(response, "Capacity listing 13")
+
+    @patch("marketplace.templatetags.listing_media.listing_image_url")
+    @patch("cloudinary.utils.cloudinary_url")
+    def test_homepage_hero_cloudinary_images_keep_responsive_variants_and_priority(
+        self, url_builder, image_url
+    ):
+        image_url.return_value = (
+            "https://res.cloudinary.com/project-cloud/image/upload/listings/hero.webp"
+        )
+        url_builder.side_effect = lambda public_id, **options: (
+            "https://res.cloudinary.com/project-cloud/image/upload/"
+            f"w_{options['transformation'][0]['width']}/{public_id}",
+            {},
+        )
+        self.make_listing(21, featured=True, image="listings/hero-one.webp")
+        self.make_listing(
+            22,
+            featured=True,
+            image="listings/hero-two.webp",
+            category=CapacityListing.Category.PACKAGING,
+        )
+
+        response = self.client.get(reverse("home"))
+        content = response.content.decode()
+        self.assertContains(response, 'srcset="')
+        for width in (320, 480, 640, 960, 1280):
+            self.assertIn(f"w_{width}/listings/", content)
+        self.assertContains(
+            response,
+            'sizes="(max-width: 800px) calc(100vw - 36px), (max-width: 1200px) 44vw, 560px"',
+        )
+        self.assertEqual(content.count('fetchpriority="high"'), 1)
+        self.assertContains(response, 'loading="eager" decoding="async" fetchpriority="high"')
+        self.assertContains(response, 'loading="lazy" decoding="async"')
 
     def test_categories_only_show_real_active_listing_counts_and_routes(self):
         self.make_listing(1, category=CapacityListing.Category.METAL)

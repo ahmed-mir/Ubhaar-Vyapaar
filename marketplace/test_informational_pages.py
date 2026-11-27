@@ -180,7 +180,7 @@ class InformationalPageTests(TestCase):
     def test_public_journeys_and_account_destinations_match_available_workflows(self):
         home = self.client.get(reverse("home"))
         self.assertContains(home, "Buy Now on eligible fixed-price listings")
-        self.assertContains(home, "Request Quote for custom quantities and terms")
+        self.assertContains(home, "request a quote for custom work")
         self.assertContains(home, "Create an account to use the marketplace")
         self.assertContains(home, "Get pilot updates")
         self.assertNotContains(home, "Join early access")

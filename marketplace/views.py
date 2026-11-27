@@ -1265,6 +1265,15 @@ def home(request):
         for value, label in CapacityListing.Category.choices
         if category_counts.get(value, 0)
     ]
+    public_listing_metrics = discovery_listings.filter(
+        manufacturer__is_verified=True,
+    ).exclude(
+        manufacturer__user__username__startswith="demo_mfr_",
+    ).aggregate(
+        listings=Count("pk"),
+        manufacturers=Count("manufacturer_id", distinct=True),
+        categories=Count("category", distinct=True),
+    )
     featured_listings = list(
         CapacityListing.objects.filter(
             is_featured=True,
@@ -1280,6 +1289,20 @@ def home(request):
         .select_related("manufacturer")
         .order_by("-pk")[:6]
     )
+    hero_listings = []
+    seen_hero_categories = set()
+    for listing in featured_listings:
+        if listing.category not in seen_hero_categories:
+            hero_listings.append(listing)
+            seen_hero_categories.add(listing.category)
+            if len(hero_listings) == 3:
+                break
+    if len(hero_listings) < 3:
+        for listing in featured_listings:
+            if listing not in hero_listings:
+                hero_listings.append(listing)
+                if len(hero_listings) == 3:
+                    break
 
     if request.user.is_authenticated and request.user.role == "MANUFACTURER":
         manufacturer_cta_url = reverse("create_listing")
@@ -1296,7 +1319,9 @@ def home(request):
             "organization_schema": organization_schema,
             "website_schema": website_schema,
             "categories": categories,
+            "public_listing_metrics": public_listing_metrics,
             "featured_listings": featured_listings,
+            "hero_listings": hero_listings,
             "manufacturer_cta_url": manufacturer_cta_url,
             "faq_items": LANDING_FAQ_ITEMS,
             "waitlist_form": waitlist_form,
