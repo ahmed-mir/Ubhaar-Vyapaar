@@ -164,7 +164,8 @@ print(json.dumps({
       await page.goto(fixture.samplePath);
       await page.screenshot({ path: path.join(screenshotDir, "sample-listing-390.png"), fullPage: true });
       await page.goto(fixture.quotePath);
-      await expect(page.getByText("Provided through a quotation", { exact: true })).toBeVisible();
+      await expect(page.locator(".detail-commercial-panel")).toContainText("Not provided");
+      await expect(page.getByText("Provided through a quotation", { exact: true })).toHaveCount(0);
       await expect(page.getByRole("link", { name: "Buy Now" })).toHaveCount(0);
       await expect(page.getByRole("link", { name: "Request Quote" })).toBeVisible();
       await page.screenshot({ path: path.join(screenshotDir, "quotation-listing-390.png"), fullPage: true });

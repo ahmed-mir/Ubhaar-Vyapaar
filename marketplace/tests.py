@@ -952,18 +952,31 @@ class MarketplaceDiscoveryTrustTests(TestCase):
             reverse("buy_now", args=[listing.pk]),
         )
 
-    def test_detail_does_not_present_zero_price_as_free_fixed_price(self):
-        listing = self.create_listing(self.verified, "Quotation priced capacity")
+    def test_detail_uses_neutral_copy_for_zero_price_without_changing_actions(self):
+        listing = self.create_listing(self.verified, "Unpriced capacity")
         listing.price_per_unit = Decimal("0.00")
         listing.save(update_fields=["price_per_unit"])
 
         response = self.client.get(reverse("listing_detail", args=[listing.pk]))
 
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, "Provided through a quotation")
+        self.assertContains(response, "Not provided")
+        self.assertNotContains(response, "Provided through a quotation")
         self.assertNotContains(response, "₹0.00")
         self.assertNotContains(response, reverse("buy_now", args=[listing.pk]))
         self.assertContains(response, reverse("request_quote", args=[listing.pk]))
+
+        sample_listing = self.create_listing(self.demo, "Unpriced Sample capacity")
+        sample_listing.price_per_unit = Decimal("0.00")
+        sample_listing.save(update_fields=["price_per_unit"])
+        sample_response = self.client.get(reverse("listing_detail", args=[sample_listing.pk]))
+
+        self.assertEqual(sample_response.status_code, 200)
+        self.assertContains(sample_response, "Not provided")
+        self.assertNotContains(sample_response, "Provided through a quotation")
+        self.assertContains(sample_response, "Sample listing: quoting and purchasing are disabled.")
+        self.assertNotContains(sample_response, reverse("buy_now", args=[sample_listing.pk]))
+        self.assertNotContains(sample_response, reverse("request_quote", args=[sample_listing.pk]))
 
     def test_related_detail_listings_use_public_eligibility_and_exclude_current(self):
         current = self.create_listing(self.verified, "Current related-listing source")
