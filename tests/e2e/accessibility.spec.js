@@ -86,20 +86,22 @@ test.describe("accessibility and keyboard UX", () => {
 
   test("form focus, invalid, and disabled states remain visually distinct", async ({ page }) => {
     await page.goto("/contact/");
-    const email = page.getByLabel(/^Email:?$/);
-    const normalBorder = await email.evaluate((element) => getComputedStyle(element).borderTopColor);
-    await email.focus();
-    const focusState = await email.evaluate((element) => {
+    // The contact email is intentionally disabled for this visitor; exercise
+    // state changes on an editable control so the invalid-state assertion is meaningful.
+    const name = page.getByLabel(/^Name:?$/);
+    const normalBorder = await name.evaluate((element) => getComputedStyle(element).borderTopColor);
+    await name.focus();
+    const focusState = await name.evaluate((element) => {
       const style = getComputedStyle(element);
       return { border: style.borderTopColor, outlineWidth: style.outlineWidth, outlineStyle: style.outlineStyle };
     });
-    await email.evaluate((element) => element.setAttribute("aria-invalid", "true"));
-    const invalidBorder = await email.evaluate((element) => getComputedStyle(element).borderTopColor);
-    await email.evaluate((element) => {
+    await name.evaluate((element) => element.setAttribute("aria-invalid", "true"));
+    const invalidBorder = await name.evaluate((element) => getComputedStyle(element).borderTopColor);
+    await name.evaluate((element) => {
       element.removeAttribute("aria-invalid");
       element.disabled = true;
     });
-    const disabled = await email.evaluate((element) => ({
+    const disabled = await name.evaluate((element) => ({
       cursor: getComputedStyle(element).cursor,
       background: getComputedStyle(element).backgroundColor
     }));

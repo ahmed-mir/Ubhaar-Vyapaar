@@ -38,10 +38,10 @@ sample = ManufacturerProfile.objects.create(
     state="Maharashtra", is_verified=False
 )
 
-def make_listing(manufacturer, title, moq, price):
+def make_listing(manufacturer, title, moq, price, category=CapacityListing.Category.METAL):
     return CapacityListing.objects.create(
         manufacturer=manufacturer, title=title, description=f"Unique filter token {suffix}",
-        category=CapacityListing.Category.METAL, minimum_quantity=moq,
+        category=category, minimum_quantity=moq,
         price_per_unit=Decimal(price), production_days=5,
         availability_status=CapacityListing.AvailabilityStatus.AVAILABLE, is_active=True
     )
@@ -49,10 +49,15 @@ def make_listing(manufacturer, title, moq, price):
 eligible = make_listing(verified, f"Eligible filter {suffix}", 250, "20.00")
 sample_listing = make_listing(sample, f"Sample filter {suffix}", 260, "10.00")
 above_moq = make_listing(verified, f"Above MOQ filter {suffix}", 500, "15.00")
+packaging = make_listing(
+    verified, f"Packaging category filter {suffix}", 250, "18.00",
+    category=CapacityListing.Category.PACKAGING
+)
 print(json.dumps({
     "suffix": suffix, "verified_username": verified_user.username,
     "sample_username": sample_user.username, "eligible": eligible.title,
-    "sample": sample_listing.title, "above_moq": above_moq.title
+    "sample": sample_listing.title, "above_moq": above_moq.title,
+    "packaging": packaging.title
 }))
 `);
     const fixture = JSON.parse(fixtureOutput.split(/\r?\n/).filter(Boolean).at(-1));
@@ -72,6 +77,7 @@ print(json.dumps({
       await expect(page.locator(".marketplace-filter-chips")).toContainText("Location: Maharashtra");
 
       await filterPanel.locator("summary").click();
+      await page.getByLabel("Category").selectOption("METAL");
       await page.getByLabel("Manufacturer verification").selectOption("verified");
       await page.getByLabel("MOQ up to (units)").fill("275");
       await page.getByRole("button", { name: "Apply filters" }).click();
@@ -80,7 +86,17 @@ print(json.dumps({
       await expect(results).toContainText(fixture.eligible);
       await expect(results).not.toContainText(fixture.sample);
       await expect(results).not.toContainText(fixture.above_moq);
-      await expect(page.locator("summary").filter({ hasText: "Filters (4)" })).toBeVisible();
+      await expect(page.locator("summary").filter({ hasText: "Filters (5)" })).toBeVisible();
+      const categoryNav = page.getByRole("navigation", { name: "Browse manufacturing categories" });
+      await expect(categoryNav.getByRole("link", { name: "Metal & Fabrication" })).toHaveAttribute("aria-current", "page");
+      const packagingHref = await categoryNav.getByRole("link", { name: "Packaging", exact: true }).getAttribute("href");
+      const packagingUrl = new URL(packagingHref, page.url());
+      expect(packagingUrl.searchParams.get("q")).toBe(fixture.suffix);
+      expect(packagingUrl.searchParams.get("category")).toBe("PACKAGING");
+      expect(packagingUrl.searchParams.get("location")).toBe("maharashtra");
+      expect(packagingUrl.searchParams.get("moq")).toBe("275");
+      expect(packagingUrl.searchParams.get("verification")).toBe("verified");
+      expect(packagingUrl.searchParams.has("page")).toBe(false);
 
       await page.getByRole("link", { name: "Remove Verified only filter" }).click();
       await expect(results).toContainText(fixture.eligible);
@@ -88,6 +104,12 @@ print(json.dumps({
       await expect(results).not.toContainText(fixture.above_moq);
       await expect(page.locator(".marketplace-filter-chips")).toContainText("Location: Maharashtra");
       await expect(page.locator(".marketplace-filter-chips")).toContainText("MOQ ≤ 275");
+      const allCategoriesHref = await categoryNav.getByRole("link", { name: "All categories" }).getAttribute("href");
+      const allCategoriesUrl = new URL(allCategoriesHref, page.url());
+      expect(allCategoriesUrl.searchParams.get("q")).toBe(fixture.suffix);
+      expect(allCategoriesUrl.searchParams.get("location")).toBe("maharashtra");
+      expect(allCategoriesUrl.searchParams.get("moq")).toBe("275");
+      expect(allCategoriesUrl.searchParams.has("category")).toBe(false);
 
       await page.getByLabel("Sort").selectOption("price");
       await page.getByRole("button", { name: "Search" }).click();

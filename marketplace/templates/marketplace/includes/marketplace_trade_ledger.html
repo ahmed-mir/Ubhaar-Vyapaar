@@ -15,6 +15,15 @@
         </div>
     </div>
 
+    <nav class="marketplace-category-shortcuts" aria-label="Browse manufacturing categories">
+        <span class="marketplace-category-shortcuts-label">Browse categories</span>
+        <ul>
+            {% for item in category_shortcuts %}
+                <li><a href="{{ item.url }}"{% if item.current %} aria-current="page"{% endif %}>{{ item.label }}</a></li>
+            {% endfor %}
+        </ul>
+    </nav>
+
     <div class="marketplace-results-layout">
         <details class="marketplace-filter-disclosure" open>
             <summary><span>Filters{% if active_filter_count %} ({{ active_filter_count }}){% endif %}</span><span aria-hidden="true">Refine</span></summary>

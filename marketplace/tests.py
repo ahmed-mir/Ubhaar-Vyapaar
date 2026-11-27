@@ -1055,6 +1055,55 @@ class MarketplaceDiscoveryTrustTests(TestCase):
         self.assertEqual(list(response.context["listings"].object_list), [matching])
         self.assertNotIn(demo_match, response.context["listings"].object_list)
 
+    def test_category_shortcuts_use_public_categories_and_preserve_other_state(self):
+        self.create_listing(self.verified, "Metal capacity for shortcuts")
+        packaging = self.create_listing(
+            self.verified, "Packaging capacity for shortcuts"
+        )
+        packaging.category = CapacityListing.Category.PACKAGING
+        packaging.save(update_fields=["category"])
+
+        response = self.client.get(
+            reverse("marketplace"),
+            {
+                "q": "capacity for shortcuts",
+                "category": CapacityListing.Category.METAL,
+                "location": "Pune",
+                "sort": "price",
+                "page": 2,
+            },
+        )
+
+        self.assertEqual(response.status_code, 200)
+        shortcuts = {
+            item["label"]: item
+            for item in response.context["category_shortcuts"]
+        }
+        self.assertIn("Metal & Fabrication", shortcuts)
+        self.assertIn("Packaging", shortcuts)
+        self.assertTrue(shortcuts["Metal & Fabrication"]["current"])
+        self.assertFalse(shortcuts["Packaging"]["current"])
+        self.assertEqual(
+            parse_qs(urlsplit(shortcuts["Packaging"]["url"]).query),
+            {
+                "q": ["capacity for shortcuts"],
+                "location": ["Pune"],
+                "sort": ["price"],
+                "category": [CapacityListing.Category.PACKAGING],
+            },
+        )
+        all_categories = parse_qs(
+            urlsplit(shortcuts["All categories"]["url"]).query
+        )
+        self.assertEqual(all_categories, {
+            "q": ["capacity for shortcuts"],
+            "location": ["Pune"],
+            "sort": ["price"],
+        })
+        self.assertNotIn("page", all_categories)
+        self.assertContains(response, 'aria-label="Browse manufacturing categories"')
+        self.assertContains(response, 'aria-current="page"')
+
     def test_filter_chip_removes_only_its_parameter_and_canonicalizes_state(self):
         self.create_listing(self.verified, "Canonical location filter")
         response = self.client.get(

@@ -1479,6 +1479,31 @@ def marketplace(request):
     }
     pagination_query = urlencode(pagination_params)
 
+    category_navigation_params = dict(pagination_params)
+    category_navigation_params.pop("category", None)
+    all_categories_url = reverse("marketplace")
+    if category_navigation_params:
+        all_categories_url = f"{all_categories_url}?{urlencode(category_navigation_params)}"
+    category_shortcuts = [
+        {
+            "label": "All categories",
+            "url": all_categories_url,
+            "current": not selected_category,
+        }
+    ]
+    for category in category_summaries:
+        category_params = {
+            **category_navigation_params,
+            "category": category["value"],
+        }
+        category_shortcuts.append(
+            {
+                "label": category["label"],
+                "url": f"{reverse('marketplace')}?{urlencode(category_params)}",
+                "current": selected_category == category["value"],
+            }
+        )
+
     clear_filter_params = {"sort": sort} if sort != "newest" else {}
     clear_filters_url = reverse("marketplace")
     if clear_filter_params:
@@ -1542,6 +1567,7 @@ def marketplace(request):
             "query": query,
             "categories": available_categories,
             "category_summaries": category_summaries,
+            "category_shortcuts": category_shortcuts,
             "has_more_categories": len(available_categories) < len(CapacityListing.Category.choices),
             "selected_category": selected_category,
             "location": location,
