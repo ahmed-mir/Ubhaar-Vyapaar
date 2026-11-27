@@ -21,6 +21,8 @@ class AuthPresentationTests(TestCase):
                 self.assertNotContains(response, "<legend>Contact</legend>")
                 self.assertNotContains(response, "Optional. Enter your 10-digit mobile number.")
                 self.assertContains(response, 'autocomplete="new-password"')
+                self.assertContains(response, "All fields are required unless marked Optional.")
+                self.assertContains(response, 'class="account-field-optionality">Optional</span>')
                 self.assertContains(response, "At least 8 characters")
                 self.assertContains(response, "At least 1 symbol (e.g. @ # $ &amp; !)")
                 self.assertContains(response, "Not entirely numeric")
@@ -49,6 +51,9 @@ class AuthPresentationTests(TestCase):
         self.assertContains(response, 'class="styled-form auth-form login-form"')
         self.assertContains(response, 'autocomplete="username"')
         self.assertContains(response, 'autocomplete="current-password"')
+        self.assertContains(response, "Use your email address or username.")
+        self.assertContains(response, "Phone sign-in is not available.")
+        self.assertContains(response, reverse("password_reset"))
         self.assertContains(response, 'class="password-input-shell"')
         self.assertNotContains(response, 'data-password-requirements')
 

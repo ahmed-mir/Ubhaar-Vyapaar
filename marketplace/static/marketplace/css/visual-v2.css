@@ -1706,6 +1706,57 @@ h1, h2, h3, h4 { letter-spacing: -0.02em; }
     line-height: 1.5;
 }
 
+.login-form .form-field .helptext {
+    margin: var(--space-2) 0 0;
+    color: var(--color-text-muted);
+    font-size: 14px;
+    line-height: 1.45;
+}
+
+.auth-flow-switch {
+    margin: 0 0 var(--space-3);
+    padding: 10px 12px;
+    border: 1px solid var(--color-border);
+    border-left: 3px solid var(--color-accent);
+    border-radius: var(--radius-sm);
+    background: var(--color-surface);
+    color: var(--color-text-muted);
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+.auth-flow-switch a {
+    color: var(--color-primary);
+    font-weight: var(--font-weight-medium);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+}
+
+.auth-required-note {
+    margin: 0 0 var(--space-3);
+    color: var(--color-text-muted);
+    font-size: 13px;
+    line-height: 1.45;
+}
+
+.account-field-label-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 3px 8px;
+    margin-bottom: var(--space-2);
+}
+
+.account-field-label-row label {
+    margin: 0;
+}
+
+.account-field-optionality {
+    color: var(--color-text-muted);
+    font-size: 12px;
+    font-weight: var(--font-weight-medium);
+}
+
 .login-form {
     display: grid;
     gap: var(--space-4);

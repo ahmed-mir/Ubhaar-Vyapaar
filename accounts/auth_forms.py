@@ -62,6 +62,9 @@ class EmailOrUsernameAuthenticationForm(
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.fields["username"].help_text = (
+            "Use your email address or username. Phone sign-in is not available."
+        )
         self.fields["password"].widget.attrs["autocomplete"] = "current-password"
 
 

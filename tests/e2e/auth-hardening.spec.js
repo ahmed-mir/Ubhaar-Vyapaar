@@ -1,5 +1,7 @@
 const { test, expect } = require("@playwright/test");
 const { dismissCookieBanner } = require("./helpers");
+const fs = require("node:fs");
+const path = require("node:path");
 
 const password = "Strong@4821";
 const viewports = [320, 390, 768, 1024, 1440];
@@ -37,8 +39,13 @@ test.describe("signup and login hardening", () => {
       "/accounts/register/",
       "/accounts/register/manufacturer/"
     ];
+    const screenshotDir = path.join(process.cwd(), "phase8g-screenshots");
+    fs.mkdirSync(screenshotDir, { recursive: true });
 
     for (const route of [...registrationRoutes, "/accounts/login/"]) {
+      const pageName = route.endsWith("manufacturer/")
+        ? "manufacturer-registration"
+        : route.endsWith("register/") ? "buyer-registration" : "login";
       await page.goto(route);
       await dismissCookieBanner(page);
       await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
@@ -48,6 +55,9 @@ test.describe("signup and login hardening", () => {
         await assertPageFits(page, width);
 
         if (registrationRoutes.includes(route)) {
+          await expect(page.locator(".auth-required-note")).toContainText("unless marked Optional");
+          await expect(page.locator(".account-field-optionality").first()).toHaveText("Optional");
+          await expect(page.locator(".auth-flow-switch a")).toBeVisible();
           const phone = page.locator('[name="phone"]');
           await expect(phone).toHaveAttribute("type", "tel");
           await expect(phone).toHaveAttribute("inputmode", "numeric");
@@ -62,6 +72,7 @@ test.describe("signup and login hardening", () => {
           await expect(requirements).not.toContainText("too common");
         } else {
           const username = page.getByLabel("Email or username");
+          await expect(page.locator("#id_username_helptext")).toContainText("Phone sign-in is not available");
           await expect(username).toHaveAttribute("autocomplete", "username");
           const loginPassword = page.locator('[name="password"]');
           await expect(loginPassword).toHaveAttribute("autocomplete", "current-password");
@@ -77,11 +88,42 @@ test.describe("signup and login hardening", () => {
             await page.keyboard.press("Enter");
             await expect(loginPassword).toHaveAttribute("type", "text");
             await expect(toggle).toHaveAttribute("aria-pressed", "true");
+            await toggle.click();
           }
         }
 
         await assertPageFits(page, width);
+        await page.screenshot({
+          path: path.join(screenshotDir, `${pageName}-${width}.png`),
+          fullPage: true
+        });
       }
+    }
+
+    await page.setViewportSize({ width: 390, height: 900 });
+    await page.goto("/accounts/register/");
+    await dismissCookieBanner(page);
+    await page.locator('[name="username"]').fill("phase8g-screenshot-buyer");
+    await page.locator('[name="email"]').fill("phase8g-screenshot@example.test");
+    await page.locator('[name="password1"]').fill(password);
+    await page.screenshot({
+      path: path.join(screenshotDir, "password-requirements-390.png"),
+      fullPage: true
+    });
+
+    for (const [route, name] of [
+      ["/accounts/register/", "buyer"],
+      ["/accounts/register/manufacturer/", "manufacturer"]
+    ]) {
+      await page.goto(route);
+      await dismissCookieBanner(page);
+      await page.setViewportSize({ width: 390, height: 900 });
+      await page.getByRole("button", { name: /Create .*account/ }).click();
+      await expect(page.locator(".form-error-summary")).toBeVisible();
+      await page.screenshot({
+        path: path.join(screenshotDir, `${name}-validation-390.png`),
+        fullPage: true
+      });
     }
   });
 

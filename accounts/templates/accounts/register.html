@@ -8,6 +8,8 @@
         <p class="eyebrow">Buyer registration</p>
         <h1 id="register-title">Create your buyer account</h1>
         <p class="buyer-registration-intro">Browse capacity, use Buy Now on eligible fixed-price listings, or Request Quote for custom terms.</p>
+        <p class="auth-flow-switch">Supplying manufacturing capacity? <a href="{% url 'register_manufacturer' %}">Register as a Manufacturer</a>.</p>
+        <p class="auth-required-note">All fields are required unless marked Optional.</p>
 
         <form method="post" class="styled-form auth-form buyer-registration-form" novalidate>
             {% csrf_token %}
@@ -34,7 +36,6 @@
 
         <div class="auth-links buyer-registration-links">
             <p>Already have an account? <a href="{% url 'login' %}">Log in</a></p>
-            <p>Want to offer manufacturing services? <a href="{% url 'register_manufacturer' %}">Register your business</a></p>
         </div>
     </div>
 

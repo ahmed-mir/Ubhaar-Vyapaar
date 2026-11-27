@@ -4,7 +4,10 @@
         {{ field|render_auth_field }}
         <div>{{ field.label_tag }}</div>
     {% else %}
-        {{ field.label_tag }}
+        <div class="account-field-label-row">
+            {{ field.label_tag }}
+            {% if not field.field.required %}<span class="account-field-optionality">Optional</span>{% endif %}
+        </div>
         {% if field.name == 'phone' %}
             <div class="phone-input-group" data-phone-input-group>
                 <span class="phone-country-prefix" aria-hidden="true">+91</span>

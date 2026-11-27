@@ -9,6 +9,8 @@
         <h1 id="business-title">Create your manufacturer account</h1>
         <p class="manufacturer-registration-intro">Complete your business profile for review, then list capacity and respond to Buyer quote requests.</p>
         <p class="message info manufacturer-review-note" role="note">Your business profile begins under review. Listings are public only after business verification.</p>
+        <p class="auth-flow-switch">Buying manufacturing services? <a href="{% url 'register' %}">Create a Buyer account</a>.</p>
+        <p class="auth-required-note">All fields are required unless marked Optional.</p>
 
         <form method="post" class="styled-form auth-form manufacturer-registration-form" novalidate>
             {% csrf_token %}
@@ -50,7 +52,6 @@
 
         <div class="auth-links manufacturer-registration-links">
             <p>Already registered? <a href="{% url 'login' %}">Log in</a></p>
-            <p>Looking for manufacturing services? <a href="{% url 'register' %}">Create a buyer account</a></p>
         </div>
     </div>
 
